@@ -1,0 +1,52 @@
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+    font-family: 'Montserrat', sans-serif;
+    font-optical-sizing: auto;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+:root {
+	background-color: var(--bg-primary);
+}
+
+html[data-theme="light"] {
+	--bg-primary: #ECECEC;
+	--bg-secondary: #F8F9FA;
+	--bg-outline: #CFCFCF;
+	--bg-hover: #ebebeb;
+	--bg-disabled: #D5D5D5;
+	--tg-primary: #1B1B1B;
+	--tg-secondary: #555555;
+	--tg-hovered: #E0E0E0;
+	--tg-hint: #888888;
+	--tg-disabled: #C0C0C0;
+	--accent-base: #FF9D00;
+	--accent-hovered: #DA8400;
+	--error-background: #FFAEC1;
+	--error-foreground: #E9204F;
+	--error-hover: #86102C;
+	--success-foreground: #00B450;
+}
+
+html[data-theme="dark"] {
+	--bg-primary: #121212;
+	--bg-secondary: #1A1A1A;
+	--bg-outline: #303030;
+	--bg-hover: #222222;
+	--bg-disabled: #202020;
+	--tg-primary: #E0E0E0;
+	--tg-secondary: #A5A5A5;
+	--tg-hovered: #121212;
+	--tg-hint: #6C6C6C;
+	--tg-disabled: #303030;
+	--accent-base: #FF9D00;
+	--accent-hovered: #FFAC2D;
+	--error-background: #4C1824;
+	--error-foreground: #E9204F;
+	--error-hover: #86102C;
+	--success-foreground: #00B450;
+}

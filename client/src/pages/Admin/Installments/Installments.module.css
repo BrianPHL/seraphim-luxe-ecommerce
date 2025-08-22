@@ -1,0 +1,224 @@
+@import url('../../../index.css');
+
+.wrapper {
+    flex-direction: column;
+    border-radius: 0.5rem;
+    align-self: stretch;
+    display: flex;
+    gap: 4rem;
+}
+
+.overview {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    display: flex;
+    width: 100%;
+    gap: 1rem;
+}
+
+.overview-item {
+    background-color: var(--bg-secondary);
+    flex-direction: column;
+    border-radius: 0.5rem;
+    min-width: 15rem;
+    display: flex;
+    border: 1px solid var(--bg-outline);
+    flex: 1 0 calc(20% - 1rem);
+    & > h2 {
+        font-weight: 600;
+        font-size: 2rem;
+        padding: 1rem;
+        color: var(--tg-primary);
+    }
+}
+
+.overview-item-header {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--bg-outline);
+    align-items: center;
+    padding: 1rem;
+    display: flex;
+    & > h3 {
+        font-weight: 400;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.table {
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    overflow: auto;
+    border: 1px solid var(--bg-outline);
+    height: 50vh;
+    width: 100%;
+}
+
+.table-wrapper {
+    min-width: 0px;
+}
+
+.stock-alerts {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.recent-reservations {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.section {
+    flex-direction: column;
+    display: flex;
+    gap: 2rem;
+    & > h2 {
+        font-weight: 600;
+        font-size: 2rem;
+        color: var(--tg-primary);
+    }
+}
+
+.section-header {
+    justify-content: space-between;
+    display: flex;
+    & > h2 {
+        font-weight: 600;
+        font-size: 2rem;
+        color: var(--tg-primary);
+    }
+}
+
+.table-header {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--bg-outline);
+    position: sticky;
+    display: grid;
+    padding: 1rem;
+    top: 0;
+    gap: 1rem;
+    & > h3 {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--tg-primary);
+        &:last-child {
+            text-align: center;
+        }
+    }
+}
+
+.table-rows {
+    transition: 0.25s ease all;
+    display: grid;
+    padding: 1rem;
+    gap: 1rem;
+    &:not(:last-child) {
+        border-bottom: 1px solid var(--bg-outline);
+    }
+    &:hover {
+        background-color: var(--bg-hover);
+    }
+}
+
+.table-cell {
+    font-weight: 400;
+    align-items: center;
+    font-size: 0.875rem;
+    overflow: hidden;
+    display: flex;
+    color: var(--tg-secondary);
+    & > img {
+        object-fit: contain;
+        height: 5rem;
+        width: 5rem;
+    }
+    &:last-child {
+        justify-content: center;
+    }
+}
+
+.empty-table {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    height: 26rem;
+    color: var(--tg-secondary);
+}
+
+.modal-infos {
+    flex-direction: column;
+    border-radius: 0.25rem;
+    display: flex;
+    padding: 1rem;
+    border: 1px solid var(--bg-outline);
+    gap: 1rem;
+    & > h3 {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--tg-primary);
+    }
+    & > span > p {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.modal-ctas {
+    justify-content: flex-end;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+    & > .modal-warn {
+        background-color: var(--error-foreground);
+        &:hover {
+            background-color: var(--error-hover);
+        }
+    }
+}
+
+.inputs-container {
+    flex-direction: column;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+}
+
+.input-wrapper {
+    justify-content: center;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    display: flex;
+    gap: 0.5rem;
+    & > input { width: 100%; }
+    & > label {
+        font-weight: 500;
+        font-size: 0.75rem;
+        color: var(--tg-primary);
+    }
+    & > textarea, select {
+        background-color: transparent;
+        border-radius: 0.25rem;
+        transition: 0.25s ease all;
+        font-size: 0.875rem;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid var(--bg-outline);
+        resize: vertical;
+        width: 100%;
+        color: var(--tg-secondary);
+        &:focus {
+            outline: 0;
+            border: 1px solid var(--accent-base);
+        }
+    }
+    & > p {
+        font-weight: 400;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.divider {
+    background-color: var(--bg-outline);
+    height: 1px;
+    width: 100%;
+}

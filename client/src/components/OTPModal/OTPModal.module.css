@@ -1,0 +1,137 @@
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.description {
+    color: var(--tg-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.email {
+    color: var(--tg-primary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.message {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    margin: 0;
+}
+
+.message.success {
+    background-color: var(--success-background);
+    color: var(--success-foreground);
+    border: 1px solid var(--success-foreground);
+}
+
+.message.error {
+    background-color: var(--error-background);
+    color: var(--error-foreground);
+    border: 1px solid var(--error-foreground);
+}
+
+.otpBoxes {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    cursor: text;
+    margin: 1rem 0;
+}
+
+.otpBox {
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid var(--bg-outline);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    background-color: var(--bg-secondary);
+    transition: border-color 0.2s ease;
+}
+
+.otpBox:nth-child(n+1):nth-child(-n+6) {
+    border-color: var(--accent-base);
+}
+
+.otpHidden {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.buttons button {
+    padding: 0.75rem 1.5rem;
+    min-width: 120px;
+}
+
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.loadingSpinner {
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid var(--bg-outline);
+    border-top: 3px solid var(--accent-base);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loadingContainer h3 {
+    margin: 0;
+    color: var(--tg-primary);
+    font-size: 1.25rem;
+}
+
+.loadingContainer .description {
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+.loadingContainer .email {
+    font-size: 0.875rem;
+    color: var(--tg-secondary);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .loadingContainer {
+        padding: 1.5rem 0.5rem;
+    }
+    
+    .loadingSpinner {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .loadingContainer h3 {
+        font-size: 1.125rem;
+    }
+}

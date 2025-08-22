@@ -1,0 +1,54 @@
+@import url('../../index.css');
+
+.dropdown {
+    background-color: var(--bg-secondary);
+    transform-origin: top;
+    list-style-type: none;
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    min-width: 10rem;
+    position: absolute;
+    z-index: 998;
+    opacity: 0;
+    border: 1px solid var(--bg-outline);
+    top: 100%;
+    & > li > a {
+        font-weight: 500;
+    }
+    & > li > button {
+        background-color: transparent;
+        font-weight: 500;
+        transition: 0.25s ease all;
+        text-align: left;
+        padding: 1rem;
+        border: 0;
+        width: 100%;
+        color: var(--tg-primary);
+        &:hover {
+            background-color: var(--bg-hover);
+            cursor: pointer;
+            color: var(--accent-base);
+        }
+    }
+}
+
+.dropdown-left {
+    left: 0;
+}
+
+.dropdown-right {
+    right: 0;
+}
+
+.dropdown-active {
+    pointer-events: auto;
+    transform: scaleY(1);
+    opacity: 1;
+}
+
+.dropdown-inactive {
+    pointer-events: none;
+    transform: scaleY(0);
+    opacity: 0;
+}

@@ -1,0 +1,217 @@
+@import url('../../index.css');
+
+.wrapper {
+    background-color: var(--bg-secondary);
+    flex-direction: column;
+    border-radius: 0.5rem;
+    position: relative;
+    display: flex;
+    padding: 1rem;
+    border: 1px solid var(--bg-outline);
+    width: 18rem;
+    gap: 1rem;
+}
+
+.product-img {
+    border-radius: 0.25rem;
+    object-fit: contain;
+    height: 16rem;
+}
+
+.details {
+    align-items: flex-start;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+    & > .text {
+        flex-direction: column;
+        min-width: 0;
+        display: flex;
+        flex: 1 1 0;
+        gap: 0.5rem;
+        & > h2 {
+            text-overflow: ellipsis;
+            font-weight: 700;
+            white-space: nowrap;
+            font-size: 1rem;
+            overflow: hidden;
+            color: var(--tg-primary);
+        }
+        & > h3 {
+            font-weight: 500;
+            font-size: 1rem;
+            color: var(--tg-secondary);
+        }
+        & > p {
+            margin-top: 1rem;
+            font-weight: 500;
+            font-size: 0.75rem;
+            color: var(--tg-secondary);
+        }
+    }
+}
+
+.ctas {
+    display: flex;
+    gap: 1rem;
+    & > .reserve {
+        width: 100%;
+    }
+}
+
+.stock-indicator {
+    background-color: var(--bg-secondary);
+    border-radius: 0.25rem;
+    align-items: center; 
+    margin-top: 0.25rem;
+    align-self: flex-start;
+    display: flex;
+    gap: 0.5rem;
+    & > p {
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: var(--tg-primary);
+    }
+}
+
+.stock-out > i, .stock-out > p {
+    color: var(--error-foreground);
+}
+
+.stock-low > i, .stock-low > p {
+    color: var(--accent-base);
+}
+
+.stock-good > i, .stock-good > p {
+    color: var(--success-foreground);
+}
+
+.out-of-stock-badge {
+    background-color: var(--error-foreground);
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    position: absolute;
+    z-index: 100;
+    padding: 0.25rem 0.5rem;
+    right: 1rem;
+    color: var(--tg-primary);
+    top: 1rem;
+}
+
+.low-stock-badge {
+    background-color: var(--bg-outline);
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    position: absolute;
+    z-index: 100;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--accent-base);
+    right: 1rem;
+    color: var(--accent-base);
+    top: 1rem;
+}
+
+.divider {
+    background-color: var(--bg-outline);
+    height: 1px;
+    width: 100%;
+}
+
+.modal-infos {
+    flex-direction: column;
+    border-radius: 0.25rem;
+    align-items: center;
+    display: flex;
+    padding: 1rem;
+    border: 1px solid var(--bg-outline);
+    gap: 1rem;
+    & > h3 {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--tg-primary);
+    }
+    & > span > p, & > p {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.modal-info {
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--tg-secondary);
+}
+
+.modal-payment {
+    flex-direction: row;
+    border-radius: 0.25rem;
+    align-items: flex-start;
+    display: flex;
+    padding: 1rem;
+    border: 1px solid var(--bg-outline);
+    align-self: stretch;
+    gap: 1rem;
+}
+
+.modal-payment-option {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    & > p {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.modal-ctas {
+    justify-content: flex-end;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+    & > .modal-confirm {
+        background-color: var(--error-foreground);
+        &:hover {
+            background-color: var(--error-hover);
+        }
+    }
+}
+
+.inputs-container {
+    flex-direction: column;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+}
+
+.input-wrapper {
+    justify-content: center;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    display: flex;
+    gap: 0.5rem;
+    & > label {
+        font-weight: 500;
+        font-size: 0.75rem;
+        color: var(--tg-primary);
+    }
+    & > textarea {
+        background-color: transparent;
+        border-radius: 0.25rem;
+        transition: 0.25s ease all;
+        font-size: 0.875rem;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid var(--bg-outline);
+        resize: vertical;
+        width: 100%;
+        color: var(--tg-secondary);
+        &:focus {
+            outline: 0;
+            border: 1px solid var(--accent-base);
+        }
+    }
+}

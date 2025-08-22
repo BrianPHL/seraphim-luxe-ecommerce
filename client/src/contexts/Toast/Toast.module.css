@@ -1,0 +1,16 @@
+@import url('../../index.css');
+
+.toast {
+    flex-direction: column;
+    margin-top: 7rem;
+    position: fixed;
+    display: flex;
+    z-index: 9999;
+    right: 1rem;
+    top: 1rem;
+    gap: 1rem;
+}
+
+@media only screen and (max-width: 1010px) {
+    .toast { top: 5.5rem; }
+}

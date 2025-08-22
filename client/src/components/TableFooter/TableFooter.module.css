@@ -1,0 +1,42 @@
+@import url('../../index.css');
+
+.wrapper {
+    background-color: var(--bg-secondary);
+    justify-content: space-between;
+    border-radius: 0.5rem;
+    align-items: center;
+    align-self: stretch;
+    padding: 1rem;
+    display: flex;
+    border: 1px solid var(--bg-outline);
+    gap: 1rem;
+}
+
+.info {
+    flex-direction: column;
+    align-items: flex-start;
+    display: flex;
+    gap: 0.5rem;
+    & > h3 {
+        font-weight: 400;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+        &:last-child { font-size: 0.75rem; }
+    }
+}
+
+.pagination {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+}
+
+@media only screen and (max-width: 640px) {
+    .wrapper {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .info {
+        align-items: center;
+    }
+}

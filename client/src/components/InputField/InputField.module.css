@@ -1,0 +1,62 @@
+@import url('../../index.css');
+
+.wrapper {
+    border-radius: 0.25rem;
+    display: flex;
+    border: 1px solid var(--bg-outline);
+    width: 100%;
+    flex: 1;
+    & > button {
+        border-radius: 0 0.2rem 0.2rem 0;
+    }
+    & > button > i {
+        border-radius: 0 0.2rem 0.2rem 0;
+        border: none;
+    }
+}
+
+.input-unnested {
+    background-color: transparent;
+    border-radius: 0.25rem;
+    align-items: center;
+    align-self: stretch;
+    transition: 0.25s ease all;
+    font-size: 1rem;
+    display: flex;
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--bg-outline);
+    width: 100%;
+    color: var(--tg-secondary);
+    &:focus {
+        outline: 0;
+        border: 1px solid var(--accent-base);
+    }
+}
+
+.input-icon {
+    background-color: transparent;
+    border-radius: 0.25rem 0 0 0.25rem; 
+    border-bottom: 0;
+    border-right: 1px solid var(--bg-outline);
+    border-left: 0;
+    align-items: center;
+    transition: 0.25s ease all;
+    border-top: 0;
+    align-self: stretch;
+    font-size: 1rem;
+    display: flex;
+    padding: 0.75rem 1.25rem;
+    width: 100%;
+    color: var(--tg-secondary);
+    &:focus {
+        outline: 0;
+        border: 1px solid var(--accent-base);
+    }
+}
+
+.input-button {
+    padding: 0.75rem;
+    &:hover {
+        background-color: var(--bg-hover);
+    }
+}

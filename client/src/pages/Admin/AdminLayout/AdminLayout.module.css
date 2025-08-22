@@ -1,0 +1,75 @@
+@import url('../../../index.css');
+
+.wrapper {
+    flex-direction: column;
+    padding: 12rem 16rem 6rem 16rem;
+    display: flex;
+    gap: 4rem;
+}
+
+.header {
+    flex-direction: column;
+    align-self: flex-start;
+    display: flex;
+    gap: 1rem;
+    & > button {
+        align-self: flex-start;
+    }
+    & > h1 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--tg-primary);
+    }
+}
+
+.container {
+    flex-direction: row;
+    display: flex;
+    gap: 2rem;
+}
+
+.nav {
+    background-color: var(--bg-secondary);
+    flex-direction: column;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    height: 100%;
+    border: 1px solid var(--bg-outline);
+    width: 15rem;
+}
+
+.admin-container {
+    width: 100%;
+}
+
+@media only screen and (max-width: 1575px) {
+
+    .wrapper { padding: 12rem 8rem 6rem 8rem; }
+
+}
+
+@media only screen and (max-width: 1320px) {
+
+    .wrapper { padding: 8rem 4rem 4rem 4rem; }
+
+}
+
+@media only screen and (max-width: 1192px) {
+
+    .wrapper { padding: 14rem 2rem 2rem 2rem; }
+
+}
+
+@media only screen and (max-width: 935px) {
+
+    .container {
+        flex-direction: column;
+    }
+
+    .nav {
+        width: 100%;
+    }
+
+}

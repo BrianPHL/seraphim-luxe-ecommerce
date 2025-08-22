@@ -1,0 +1,39 @@
+@import url('../../index.css');
+
+.wrapper {
+	background-color: rgba(0, 0, 0, 0.5);
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	display: flex;
+	z-index: 1000;
+	height: 100vh;
+	width: 100vw;
+	left: 0;
+	top: 0;
+}
+
+.modal {
+	background-color: var(--bg-secondary);
+	flex-direction: column;
+	border-radius: 0.5rem;
+	padding: 1rem;
+	display: flex;
+	max-height: 80vh;
+	overflow-y: scroll;
+	border: 1px solid var(--bg-outline);
+	margin: 2rem;
+	width: 30rem;
+	gap: 1rem;
+}
+
+.header {
+	justify-content: space-between;
+	align-items: center;
+	display: flex;
+	& > h3 {
+		font-weight: 500;
+		font-size: 0.875rem;
+		color: var(--tg-primary);
+	}
+}

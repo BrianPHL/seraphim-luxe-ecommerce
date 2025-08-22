@@ -1,0 +1,122 @@
+@import url('../../index.css');
+
+.wrapper {
+    position: relative;
+    display: inline-block;
+    flex: none;
+}
+
+.primary {
+    background-color: var(--accent-base);
+    justify-content: center;
+    border-radius: 0.25rem;
+    align-items: center;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    border: none;
+    color: var(--bg-primary);
+    gap: 0.5rem;
+    &:hover {
+        background-color: var(--accent-hovered);
+        cursor: pointer;
+        color: var(--tg-primary);
+    }
+}
+
+.secondary {
+    background-color: transparent;
+    justify-content: center;
+    border-radius: 0.25rem;
+    align-items: center;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-primary);
+    gap: 0.5rem;
+    &:hover {
+        background-color: var(--bg-hover);
+        cursor: pointer;
+        color: var(--accent-base);
+    }
+}
+
+.icon {
+    background-color: transparent;
+    place-content: center;
+    border-radius: 0.25rem;
+    transition: 0.25s ease all;
+    font-size: 1rem;
+    display: grid;
+    padding: 0.75rem;
+    border: 0;
+    color: var(--tg-primary);
+    &:hover {
+        background-color: var(--bg-hover);
+        cursor: pointer;
+        color: var(--accent-base);
+    }
+}
+
+.icon-outlined {
+    background-color: transparent;
+    border-radius: 0.25rem;
+    place-content: center;
+    transition: 0.25s ease all;
+    font-size: 1rem;
+    display: grid;
+    padding: 0.75rem;
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-primary);
+    &:hover {
+        background-color: var(--bg-hover);
+        cursor: pointer;
+        color: var(--accent-base);
+    }
+}
+
+.primary:disabled {
+    background-color: var(--bg-disabled);
+    border: 0;
+    color: var(--tg-disabled);
+    gap: 0.5rem;
+    &:hover {
+        cursor: not-allowed;
+    }
+}
+
+.icon-disabled {
+    color: var(--tg-disabled);
+    &:hover {
+        cursor: not-allowed;
+    }
+}
+
+.secondary:disabled, .icon-outlined:disabled {
+    background-color: var(--bg-disabled);
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-disabled);
+    gap: 0.5rem;
+    &:hover {
+        cursor: not-allowed;
+    }
+}
+
+.button-active {
+    background-color: var(--bg-hover);
+    color: var(--accent-base);
+}
+
+.chevron {
+    transition: transform 0.25s ease;
+}
+
+.chevron-active {
+    transition: transform 0.25s ease;
+    transform: rotate(180deg);
+}

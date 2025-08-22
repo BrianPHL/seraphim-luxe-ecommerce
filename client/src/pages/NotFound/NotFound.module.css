@@ -1,0 +1,79 @@
+@import url('../../index.css');
+
+.wrapper {
+    flex-direction: column;
+    padding: 12rem 16rem 6rem 16rem;
+    display: flex;
+    height: 100vh;
+    gap: 4rem;
+}
+
+.header {
+    flex-direction: column;
+    align-self: flex-start;
+    display: flex;
+    gap: 1rem;
+    & > button {
+        align-self: flex-start;
+    }
+    & > h1 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--tg-primary);
+    }
+}
+
+.info {
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+    gap: 4rem;
+    & > p {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.info-header {
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+    & > h2 {
+        font-size: 8rem;
+        color: var(--tg-primary);
+    }
+    & > h3 {
+        font-size: 1rem;
+        color: var(--tg-primary);
+    }
+}
+
+.ctas {
+    display: flex;
+    gap: 1rem;
+}
+
+@media only screen and (max-width: 1575px) {
+
+    .wrapper { padding: 12rem 8rem 6rem 8rem; }
+
+}
+
+@media only screen and (max-width: 1320px) {
+
+    .wrapper { padding: 8rem 4rem 4rem 4rem; }
+
+}
+
+@media only screen and (max-width: 1192px) {
+
+    .wrapper { padding: 14rem 2rem 2rem 2rem; }
+
+}
+
+@media only screen and (max-width: 740px) {
+
+    .ctas { flex-direction: column; }
+
+}

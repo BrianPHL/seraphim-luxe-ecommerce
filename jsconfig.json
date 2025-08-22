@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "baseUrl": ".", 
+      "paths": {
+        "@client/*": ["client/*"],
+        "@server/*": ["server/*"],
+        "@shared/*": ["shared/*"]
+      },
+      "allowSyntheticDefaultImports": true,
+      "esModuleInterop": true,
+      "checkJs": false,
+      "jsx": "react-jsx"
+    },
+    "include": ["client", "server"]
+}
