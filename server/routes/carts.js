@@ -8,11 +8,14 @@ router.get('/:account_id', async (req, res) => {
 	try {
 
         const { account_id } = req.params;
+
+        console.log(account_id);
+
         const [ rows ] = await pool.query(
           `
             SELECT cart.*, product.label, product.price, product.category, product.subcategory, product.image_url, product.stock_quantity
             FROM carts cart
-            JOIN products product ON cart.product_id = product.product_id
+            JOIN products product ON cart.product_id = product.id
             WHERE cart.account_id = ?
           `,
           [ account_id ]  

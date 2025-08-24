@@ -182,8 +182,8 @@ const Home = () => {
                 <div className={ styles['motorcycles-container'] }>
                     { featuredMotorcycles.map((motorcycle) => (
                         <ProductCard
-                            key={ motorcycle['product_id'] }
-                            product_id={ motorcycle['product_id'] }
+                            key={ motorcycle['id'] }
+                            product_id={ motorcycle['id'] }
                             category={ motorcycle['category'] }
                             subcategory={ motorcycle['subcategory'] }
                             image_url={ motorcycle['image_url'] }
@@ -214,8 +214,8 @@ const Home = () => {
                 <div className={ styles['parts-container'] }>
                     { featuredPartsAndAccessories.map((partsAndAccessories) => (
                         <ProductCard
-                            key={ partsAndAccessories['product_id'] }
-                            product_id={ partsAndAccessories['product_id'] }
+                            key={ partsAndAccessories['id'] }
+                            product_id={ partsAndAccessories['id'] }
                             category={ partsAndAccessories['category'] }
                             subcategory={ partsAndAccessories['subcategory'] }
                             image_url={ partsAndAccessories['image_url'] }

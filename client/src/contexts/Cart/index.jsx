@@ -15,7 +15,7 @@ export const CartProvider = ({ children }) => {
 
         try {
             setLoading(true);
-            const response = await fetch(`/api/carts/${ user['account_id'] }`, {
+            const response = await fetch(`/api/carts/${ user['id'] }`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -57,7 +57,7 @@ export const CartProvider = ({ children }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    account_id: user['account_id'],
+                    account_id: user['id'],
                     product_id: item['product_id'],
                     quantity: item['quantity']
                 })
@@ -173,7 +173,7 @@ export const CartProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        if (user?.account_id) fetchCartItems();
+        if (user?.id) fetchCartItems();
     }, [ user ])
     
     return (

@@ -4,7 +4,7 @@ import styles from './ProductCard.module.css';
 import { InputField, Button, Modal } from '@components';
 import { useAuth, useCart, useReservation, useToast } from '@contexts';
 
-const ProductCard = ({ product_id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
+const ProductCard = ({ id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
     
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ modalType, setModalType ] = useState('');
@@ -43,7 +43,7 @@ const ProductCard = ({ product_id, category, subcategory, image_url, label, pric
         
         try {
             await addToCart({ 
-                product_id: product_id, 
+                product_id: id,
                 category: category, 
                 subcategory: subcategory, 
                 image_url: image_url, 
@@ -55,12 +55,13 @@ const ProductCard = ({ product_id, category, subcategory, image_url, label, pric
             setModalOpen(false);
         } catch (err) {
             showToast(`Uh oh! An error occurred during the addition of ${ label } to your cart! Please try again later. ${ err }`, 'error');
+            console.error("ProductCard component handleAddToCart error: ", err);
         }
     };
 
     const handleAddToReservations = async () => {
         if (isOutOfStock) {
-            showToast(`Sorry, ${label} is currently out of stock.`, 'error');
+            showToast(`Sorry, ${ label } is currently out of stock.`, 'error');
             return;
         }
         
@@ -92,6 +93,7 @@ const ProductCard = ({ product_id, category, subcategory, image_url, label, pric
 
         } catch (err) {
             showToast(`Uh oh! An error occurred during the addition of ${ label } to your cart! Please try again later. ${ err }`, 'error');
+            console.error("ProductCard component handleAddToReservations error: ", err);
         }
     };
 

@@ -31,7 +31,7 @@ const ProductPage = () => {
     useEffect(() => {
         if (products && products['length'] > 0) {
             
-            const foundProduct = products.find(product => product.product_id.toString() === product_id);
+            const foundProduct = products.find(product => product.id.toString() === product_id);
             if (foundProduct) {
                 setProduct(foundProduct);
                 setIsOutOfStock(foundProduct['stock_quantity'] <= 0);
@@ -62,7 +62,7 @@ const ProductPage = () => {
         
         try {
             await addToCart({ 
-                product_id: product['product_id'], 
+                product_id: product['id'], 
                 category: product['category'],
                 subcategory: product['subcategory'],
                 image_url: product['image_url'],
@@ -73,6 +73,7 @@ const ProductPage = () => {
             showToast(`Successfully added ${ product['label'] } to your cart!`, 'success');
         } catch (err) {
             showToast(`Uh oh! An error occurred during the addition of ${ product['label'] } to your cart! Please try again later. ${ err }`, 'error');
+            console.error("Motorcycles ProductPage handleAddToCart error: ", err);
         }
     };
 
@@ -85,7 +86,7 @@ const ProductPage = () => {
         try {
             await addToReservations({
                 product: { 
-                    product_id: product['product_id'], 
+                    product_id: product['id'],
                     category: product['category'], 
                     subcategory: product['subcategory'], 
                     image_url: product['image_url'], 

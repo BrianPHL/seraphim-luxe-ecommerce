@@ -62,7 +62,7 @@ const ProductPage = () => {
         
         try {
             await addToCart({ 
-                product_id: product['product_id'], 
+                product_id: product['id'], 
                 category: product['category'],
                 subcategory: product['subcategory'],
                 image_url: product['image_url'],
@@ -73,6 +73,7 @@ const ProductPage = () => {
             showToast(`Successfully added ${ product['label'] } to your cart!`, 'success');
         } catch (err) {
             showToast(`Uh oh! An error occured during the addition of ${ product['label'] } to your cart! Please try again later. ${ err }`, 'error');
+            console.error("PartsAndAccessories ProductPage handleAddToCart error: ", err);
         }
     };
 
@@ -85,7 +86,7 @@ const ProductPage = () => {
         try {
             await addToReservations({
                 product: { 
-                    product_id: product['product_id'], 
+                    product_id: product['id'], 
                     category: product['category'], 
                     subcategory: product['subcategory'], 
                     image_url: product['image_url'], 

@@ -97,8 +97,6 @@ export const ProductsProvider = ({ children }) => {
     };
 
     const updateProduct = async (productData) => {
-
-        console.log('Attempt to update product data: ', productData['product_id'])
         
         try {
             setLoading(true);
