@@ -140,8 +140,8 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
                         icon='fa-solid fa-square-arrow-up-right'
                         action={ () => {
                             category.toLowerCase() === 'motorcycles'
-                            ? navigate(`/motorcycles/${ product_id }`)
-                            : navigate(`/parts-and-accessories/${ product_id }`)
+                            ? navigate(`/motorcycles/${ id }`)
+                            : navigate(`/parts-and-accessories/${ id }`)
                         }}
                     />
                 </div>
