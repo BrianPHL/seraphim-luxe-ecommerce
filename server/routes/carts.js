@@ -9,8 +9,6 @@ router.get('/:account_id', async (req, res) => {
 
         const { account_id } = req.params;
 
-        console.log(account_id);
-
         const [ rows ] = await pool.query(
           `
             SELECT cart.*, product.label, product.price, product.category, product.subcategory, product.image_url, product.stock_quantity
@@ -70,6 +68,7 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/', async (req, res) => {
+    
     try {
         const { account_id, product_id, quantity } = req.body;
 

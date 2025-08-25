@@ -2,8 +2,6 @@ import { ERROR_MESSAGES } from './constants.js';
 
 export const extractAccountData = (response) => {
 
-    console.log('[ DEBUG ] IN EXTRACTACCOUNT DATA: ', response.data)
-
     if (response.data?.value?.account) {
         return response.data.value.account;
     }
