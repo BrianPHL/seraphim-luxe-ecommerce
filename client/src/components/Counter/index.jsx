@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@components';
 import styles from './Counter.module.css';
 
-const Counter = ({ initialValue = 1, min = 1, max = 99, onChange, value: controlledValue }) => {
+const Counter = ({ initialValue = 1, min = 1, max = 99, value: controlledValue, onChange, onMinimumReached }) => {
 
     const [ internalValue, setInternalValue ] = useState(initialValue);
     const value = controlledValue !== undefined ? controlledValue : internalValue;
@@ -28,7 +28,8 @@ const Counter = ({ initialValue = 1, min = 1, max = 99, onChange, value: control
             if (onChange) {
                 onChange(newValue);
             }
-        }
+        } else if (value === min && onMinimumReached)
+            onMinimumReached();
     };
     
     const handleInputChange = (e) => {
@@ -49,7 +50,7 @@ const Counter = ({ initialValue = 1, min = 1, max = 99, onChange, value: control
                 type='icon-outlined'
                 icon='fa-solid fa-minus'
                 action={ handleDecrement }
-                disabled={ value <= min }
+                disabled={ false }
                 externalStyles={ styles['counter-button'] }
             />
             <input

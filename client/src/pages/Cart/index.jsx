@@ -189,7 +189,12 @@ const Cart = () => {
                                                         <Counter
                                                             initialValue={ item.quantity }
                                                             max={ availableStock }
-                                                            onChange={ (newValue) => updateQuantity(item['product_id'], newValue) }
+                                                            onChange={ (newValue) => updateQuantity(item.product_id, newValue) }
+                                                            onMinimumReached={ () => {
+                                                                setSelectedItem(item);
+                                                                setModalType('remove-confirmation');
+                                                                setModalOpen(true);
+                                                            }}
                                                         />
                                                     </div>
                                                 </div>
