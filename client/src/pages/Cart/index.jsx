@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Anchor, InputField, ReturnButton, Modal } from '@components';
+import { Button, Anchor, InputField, ReturnButton, Modal, Counter } from '@components';
 import styles from './Cart.module.css';
 import { useCart, useReservation, useToast } from '@contexts';
 
 const Cart = () => {
+
     const [ modalType, setModalType ] = useState('');
     const [ modalOpen, setModalOpen ] = useState(false);
     const { cartItems, updateQuantity, removeFromCart, clearCart, refreshCart } = useCart();
@@ -172,10 +173,7 @@ const Cart = () => {
                                             <div className={ styles['cart-item-details'] }>
                                                 <div className={ styles['cart-item-details-left'] }>
                                                     <span>
-                                                        <span>
-                                                            <h3>{ item['label'] }</h3>
-                                                            <h3>({ item['quantity'] }x)</h3>
-                                                        </span>
+                                                        <h3>{ item['label'] }</h3>
                                                         <h4>{ item['category'] }, {item['subcategory']}</h4>
                                                         {availableStock !== undefined && (
                                                             <p className={styles['stock-info']}>
@@ -188,19 +186,11 @@ const Cart = () => {
                                                         )}
                                                     </span>
                                                     <div className={ styles['cart-item-quantity'] }>
-                                                        <span style={{ display: 'flex', gap: '1rem' }}>
-                                                            <Button
-                                                                type='icon-outlined'
-                                                                icon='fa-solid fa-minus'
-                                                                action={ () => updateQuantity(item['product_id'], item['quantity'] - 1) }
-                                                            />
-                                                            <Button
-                                                                type='icon-outlined'
-                                                                icon='fa-solid fa-plus'
-                                                                action={ () => updateQuantity(item['product_id'], item['quantity'] + 1) }
-                                                                disabled={ item['quantity'] >= item['stock_quantity'] }
-                                                            />
-                                                        </span>
+                                                        <Counter
+                                                            initial={ item.quantity }
+                                                            max={ availableStock }
+                                                            onChange={ (newValue) => updateQuantity(item['product_id'], newValue) }
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className={ styles['cart-item-details-right'] }>
