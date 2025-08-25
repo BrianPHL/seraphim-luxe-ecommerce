@@ -16,6 +16,7 @@
     font-size: 0.875rem;
     padding: 0.75rem 1.25rem;
     display: flex;
+    height: 3rem;
     border: none;
     color: var(--bg-primary);
     gap: 0.5rem;
@@ -37,6 +38,7 @@
     padding: 0.75rem 1.25rem;
     display: flex;
     border: 1px solid var(--bg-outline);
+    height: calc(3rem + 2px);
     color: var(--tg-primary);
     gap: 0.5rem;
     &:hover {
@@ -67,11 +69,13 @@
     background-color: transparent;
     border-radius: 0.25rem;
     place-content: center;
+    flex-shrink: 0;
     transition: 0.25s ease all;
     font-size: 1rem;
     display: grid;
-    padding: 0.75rem;
     border: 1px solid var(--bg-outline);
+    height: 3rem;
+    width: 3rem;
     color: var(--tg-primary);
     &:hover {
         background-color: var(--bg-hover);
