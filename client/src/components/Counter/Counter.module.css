@@ -3,29 +3,31 @@
 .counter {
     border-radius: 0.25rem;
     align-items: center;
+    overflow: hidden;
     display: flex;
+    height: 3rem;
     border: 1px solid var(--bg-outline);
-    width: fit-content;
+}
+
+.counter-button {
+    border-radius: 0;
+    border: 0;
+    width: 3rem;
 }
 
 .counter-button:first-child {
-    border-radius: 0;
-    border: 0;
     border-right: 1px solid var(--bg-outline);
 }
 
 .counter-button:last-child {
-    border-radius: 0;
-    border: 0;
     border-left: 1px solid var(--bg-outline);
 }
 
 .counter-input {
     background-color: transparent;
-    text-align: center;
     font-weight: 600;
+    text-align: center;
     font-size: 0.875rem;
-    padding: 0.75rem;
     outline: none;
     border: none;
     width: 3rem;
