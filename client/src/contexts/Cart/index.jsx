@@ -94,11 +94,12 @@ export const CartProvider = ({ children }) => {
                 }
             }
 
+            
             setCartItems(previous => 
                 previous.map(item => 
                     item['product_id'] === product_id 
-                        ? { ...item, quantity: newQuantity } 
-                        : item
+                    ? { ...item, quantity: newQuantity } 
+                    : item
                 )
             );
 
@@ -106,7 +107,7 @@ export const CartProvider = ({ children }) => {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    account_id: user['account_id'],
+                    account_id: user['id'],
                     product_id,
                     quantity: newQuantity
                 })
@@ -130,7 +131,7 @@ export const CartProvider = ({ children }) => {
             
             setLoading(true);
             setCartItems(previous => previous.filter(item => item['product_id'] !== product_id));
-            await fetch(`/api/carts/${ user['account_id'] }/${ product_id }`, {
+            await fetch(`/api/carts/${ user['id'] }/${ product_id }`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -155,7 +156,7 @@ export const CartProvider = ({ children }) => {
 
             setCartItems([]);
             
-            await fetch(`/api/carts/clear/${ user['account_id'] }`, {
+            await fetch(`/api/carts/clear/${ user['id'] }`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });

@@ -183,7 +183,7 @@ const Home = () => {
                     { featuredMotorcycles.map((motorcycle) => (
                         <ProductCard
                             key={ motorcycle['id'] }
-                            product_id={ motorcycle['id'] }
+                            id={ motorcycle['id'] }
                             category={ motorcycle['category'] }
                             subcategory={ motorcycle['subcategory'] }
                             image_url={ motorcycle['image_url'] }
@@ -215,7 +215,7 @@ const Home = () => {
                     { featuredPartsAndAccessories.map((partsAndAccessories) => (
                         <ProductCard
                             key={ partsAndAccessories['id'] }
-                            product_id={ partsAndAccessories['id'] }
+                            id={ partsAndAccessories['id'] }
                             category={ partsAndAccessories['category'] }
                             subcategory={ partsAndAccessories['subcategory'] }
                             image_url={ partsAndAccessories['image_url'] }

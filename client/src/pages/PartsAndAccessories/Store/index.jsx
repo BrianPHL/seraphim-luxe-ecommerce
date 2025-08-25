@@ -99,7 +99,7 @@ const Store = () => {
                         { paginatedProducts.map(product => (
                             <ProductCard
                                 key={ product['id'] }
-                                product_id={ product['id'] }
+                                id={ product['id'] }
                                 category={ product['category'] }
                                 subcategory={ product['subcategory'] }
                                 image_url={ product['image_url'] }
