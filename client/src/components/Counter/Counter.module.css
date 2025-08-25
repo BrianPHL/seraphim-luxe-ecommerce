@@ -1,0 +1,50 @@
+@import url('../../index.css');
+
+.counter {
+    border-radius: 0.25rem;
+    align-items: center;
+    display: flex;
+    border: 1px solid var(--bg-outline);
+    width: fit-content;
+}
+
+.counter-button:first-child {
+    border-radius: 0;
+    border: 0;
+    border-right: 1px solid var(--bg-outline);
+}
+
+.counter-button:last-child {
+    border-radius: 0;
+    border: 0;
+    border-left: 1px solid var(--bg-outline);
+}
+
+.counter-input {
+    background-color: transparent;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    outline: none;
+    border: none;
+    width: 3rem;
+    color: var(--tg-primary);
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.counter-input::-webkit-outer-spin-button,
+.counter-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.counter-input::-moz-number-spinners {
+    display: none;
+}
+
+.counter-input:focus {
+    background-color: var(--bg-hover);
+}

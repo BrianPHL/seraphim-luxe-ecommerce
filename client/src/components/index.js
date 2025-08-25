@@ -15,3 +15,4 @@ export { default as Toast } from "./Toast";
 export { default as Carousel } from "./Carousel";
 export { default as GoogleLoginButton } from "./GoogleLoginButton";
 export { default as OTPModal } from "./OTPModal";
+export { default as Counter } from "./Counter";
