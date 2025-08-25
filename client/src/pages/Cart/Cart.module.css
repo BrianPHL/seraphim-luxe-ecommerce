@@ -129,12 +129,12 @@
         min-width: 0;
         display: flex;
     }
-    & > span > span {
+    & > span {
         min-width: 0;
         display: flex;
         gap: 0.5rem;
     }
-    & > span > span > h3 {
+    & > span > h3 {
         font-weight: 600;
         font-size: 1.25rem;
         color: var(--tg-primary);
