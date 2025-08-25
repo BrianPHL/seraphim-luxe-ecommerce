@@ -187,7 +187,7 @@ const Cart = () => {
                                                     </span>
                                                     <div className={ styles['cart-item-quantity'] }>
                                                         <Counter
-                                                            initial={ item.quantity }
+                                                            initialValue={ item.quantity }
                                                             max={ availableStock }
                                                             onChange={ (newValue) => updateQuantity(item['product_id'], newValue) }
                                                         />
