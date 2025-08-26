@@ -1,38 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Anchor, InputField, ReturnButton, Modal, Counter } from '@components';
+import { Button, Anchor, ReturnButton, Modal, Counter } from '@components';
 import styles from './Cart.module.css';
-import { useCart, useReservation, useToast } from '@contexts';
+import { useCart, useToast } from '@contexts';
 
 const Cart = () => {
 
+    const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+    const { showToast } = useToast();
     const [ modalType, setModalType ] = useState('');
     const [ modalOpen, setModalOpen ] = useState(false);
-    const { cartItems, updateQuantity, removeFromCart, clearCart, refreshCart } = useCart();
     const [ selectedItem, setSelectedItem ] = useState(null);
-    const [ reservePreferredDate, setReservePreferredDate ] = useState('');
-    const [ reserveNotes, setReserveNotes ] = useState('');
-    const [ paymentMethod, setPaymentMethod ] = useState('cash');
-    const [ installmentAmount, setInstallmentAmount ] = useState('');
-    const [ installmentPaymentDate, setInstallmentPaymentDate ] = useState('');
-    const [ installmentNotes, setInstallmentNotes ] = useState('');
-    const { addToReservations } = useReservation();
-    const { showToast } = useToast();
+    const [ selectedItems, setSelectedItems ] = useState(new Set());
+    const [ stockInfo, setStockInfo ] = useState({});
     const navigate = useNavigate();
-
-    const [stockInfo, setStockInfo] = useState({});
 
     const subtotal = cartItems.reduce(
         (sum, item) => {
             const priceValue = parseFloat(item.price);
             return sum + (priceValue * item.quantity);
         }, 0);
+
+    const selectedSubtotal = cartItems
+        .filter(item => selectedItems.has(item.product_id))
+        .reduce((sum, item) => {
+            const priceValue = parseFloat(item.price);
+            return sum + (priceValue * item.quantity);
+        }, 0);
+
     const tax = 0;
     const deductions = 0;
     const total = subtotal + tax - deductions;
+    const selectedTotal = selectedSubtotal + tax - deductions;
 
     useEffect(() => {
         const fetchStockInfo = async () => {
+
             const stockData = {};
             
             for (const item of cartItems) {
@@ -54,93 +57,66 @@ const Cart = () => {
         if (cartItems.length > 0) {
             fetchStockInfo();
         }
-    }, [cartItems]);
-    
-    const handleSingleReservation = async () => {
-        try {
-            const stockResponse = await fetch(`/api/stocks/${selectedItem.product_id}/stock`);
-            if (stockResponse.ok) {
-                const stockData = await stockResponse.json();
-                if (stockData.stock_quantity <= 0) {
-                    showToast(`Sorry, ${selectedItem.label} is currently out of stock.`, 'error');
-                    setModalOpen(false);
-                    await refreshCart();
-                    return;
-                }
-            }
+    }, [ cartItems ]);
 
-            await addToReservations({
-                product: { 
-                    product_id: selectedItem['product_id'],
-                    category: selectedItem['category'],
-                    subcategory: selectedItem['subcategory'],
-                    image_url: selectedItem['image_url'],
-                    label: selectedItem['label'],
-                    price: selectedItem['price'],
-                    quantity: selectedItem['quantity']
-                },
-                preferredDate: reservePreferredDate,
-                notes: reserveNotes
+    useEffect(() => {
+
+        setSelectedItems(prev => {
+
+            const newSelected = new Set();
+
+            prev.forEach(productId => {
+                if (cartItems.some(item => item.product_id === productId))
+                    newSelected.add(productId);
             });
-            removeFromCart(selectedItem['product_id']);
-            clearReservationForm();
-            setModalOpen(false);
-        } catch (err) {
-            showToast(`Error: ${err.message}`, 'error');
+            return newSelected;
+
+        });
+
+    }, [ cartItems ])
+
+    const handleItemSelect = (productId, isSelected) => {
+
+        const newSelectedItems = new Set(selectedItems);
+
+        if (isSelected) {
+            newSelectedItems.add(productId);
+        } else {
+            newSelectedItems.delete(productId);
         }
+        setSelectedItems(newSelectedItems);
+
     };
 
-    const handleBatchReservation = async () => {
-        if (cartItems.length === 0) return;
+    const handleSelectAll = () => {
 
-        try {
-            for (const item of cartItems) {
-                const stockResponse = await fetch(`/api/stocks/${item.product_id}/stock`);
-                if (stockResponse.ok) {
-                    const stockData = await stockResponse.json();
-                    if (stockData.stock_quantity < item.quantity) {
-                        showToast(`Sorry, not enough stock available for ${item.label}.`, 'error');
-                        setModalOpen(false);
-                        await refreshCart();
-                        return;
-                    }
-                }
-            }
-
-            let installmentDetails = null;
-            if (paymentMethod === 'cash_installment') {
-                installmentDetails = {
-                    amount: parseFloat(installmentAmount),
-                    payment_date: installmentPaymentDate || new Date(),
-                    notes: installmentNotes
-                };
-            }
-
-            await addToReservations({
-                products: cartItems.map(({ product_id, category, subcategory, image_url, label, price, quantity }) => ({
-                    product_id, category, subcategory, image_url, label, price, quantity
-                })),
-                preferredDate: reservePreferredDate,
-                notes: reserveNotes,
-                paymentMethod: paymentMethod,
-                installmentDetails: installmentDetails
-            });
-
-            clearCart();
-            clearReservationForm();
-            setModalOpen(false);
-        } catch (err) {
-            showToast(`Error: ${err.message}`, 'error');
+        if (selectedItems.size === cartItems.length) {
+            setSelectedItems(new Set());
+        } else {
+            setSelectedItems(new Set(cartItems.map(item => item.product_id)));
         }
+
     };
 
-    const clearReservationForm = () => {
-        setReservePreferredDate('');
-        setReserveNotes('');
-        setPaymentMethod('cash');
-        setInstallmentAmount('');
-        setInstallmentPaymentDate('');
-        setInstallmentNotes('');
+    const handleBatchRemove = () => {
+        
+        if (selectedItems.size === 0)
+            return;
+
+        setModalType('batch-remove-confirmation');
+        setModalOpen(true);
+
+    };
+
+    const handleCheckout = () => {
+        // TODO: Implement checkout functionality
+        showToast('Checkout functionality coming soon!', 'info');
+    };
+
+    const handleSelectedCheckout = () => {
+        if (selectedItems.size === 0) return;
+        // TODO: Implement selected items checkout functionality
+        showToast(`Checkout for ${selectedItems.size} selected items coming soon!`, 'info');
     };
 
     return (
@@ -155,39 +131,79 @@ const Cart = () => {
                     { cartItems.length === 0 ? (
                         <div className={ styles['empty'] }>
                             <h3>Your cart is empty!</h3>
-                            <p>Start browsing for items in <Anchor label="Motorcycles" link="/motorcycles" isNested={ false }/> or <Anchor label="Parts & Accessories" link="/parts-and-accessories" isNested={ false }/>.</p>
+                            <p>Start browsing for items in <Anchor label="Jewelry" link="/jewelry" isNested={ false }/> or <Anchor label="Accessories" link="/accessories" isNested={ false }/>.</p>
                         </div>
                     ) : (
                         <>
                             <div className={ styles['cart'] }>
+                                <div className={ styles['selection-controls'] }>
+                                    <div className={ styles['select-all'] }>
+                                        <label className={ styles['checkbox-container'] }>
+                                            <input
+                                                type="checkbox"
+                                                checked={cartItems.length > 0 && selectedItems.size === cartItems.length}
+                                                onChange={handleSelectAll}
+                                                className={ styles['checkbox'] }
+                                            />
+                                            <span className={ styles['checkmark'] }></span>
+                                            <b>Select All ({cartItems.length + ` items`})</b>
+                                        </label>
+                                    </div>
+                                    {selectedItems.size > 0 && (
+                                        <div className={ styles['batch-actions'] }>
+
+                                        </div>
+                                    )}
+                                    <Button
+                                        type='secondary'
+                                        label={ selectedItems.size <= 1 ? 'Remove Selected' : `Remove Selected (${ selectedItems.size })` }
+                                        icon='fa-solid fa-trash-can'
+                                        iconPosition='left'
+                                        action={ handleBatchRemove }
+                                        externalStyles={ styles['batch-remove'] }
+                                        disabled={ selectedItems.size <= 0 }
+                                    />
+                                </div>
                                 { cartItems.map(item => {
+
                                     const availableStock = stockInfo[item.product_id];
-                                    const isMaxQuantity = availableStock !== undefined && item.quantity >= availableStock;
+                                    const isSelected = selectedItems.has(item.product_id);
                                     
                                     return (
-                                        <div className={ styles['cart-item'] } key={ item['product_id'] }>
-                                            <img
-                                                src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ item['image_url'] }` }
-                                                alt={ `${ item['label'] }. Price: ${ item['price'] }` } 
-                                            />
-                                            <div className={ styles['cart-item-details'] }>
-                                                <div className={ styles['cart-item-details-left'] }>
-                                                    <span>
-                                                        <h3>{ item['label'] }</h3>
-                                                        <h4>{ item['category'] }, {item['subcategory']}</h4>
-                                                        {availableStock !== undefined && (
-                                                            <p className={styles['stock-info']}>
-                                                                {isMaxQuantity ? (
-                                                                    <span className={styles['max-quantity']}>Maximum quantity reached</span>
-                                                                ) : (
-                                                                    <span className={ styles['stock-available'] }>Available: {availableStock - item.quantity} more</span>
-                                                                )}
-                                                            </p>
-                                                        )}
-                                                    </span>
-                                                    <div className={ styles['cart-item-quantity'] }>
+                                        <div className={ `${styles['cart-item']} ${isSelected ? styles['cart-item-selected'] : ''}` } key={ item['product_id'] }>
+                                            <div className={ styles['cart-item-checkbox'] }>
+                                                <label className={ styles['checkbox-container'] }>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={(e) => handleItemSelect(item.product_id, e.target.checked)}
+                                                        className={ styles['checkbox'] }
+                                                    />
+                                                    <span className={ styles['checkmark'] }></span>
+                                                </label>
+                                            </div>
+                                            <div className={ styles['cart-item-content'] }>
+                                                <img
+                                                    src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ item['image_url'] }` }
+                                                    alt={ `${ item['label'] }. Price: ${ item['price'] }` } 
+                                                />
+                                                <div className={ styles['cart-item-details'] }>
+                                                    <div className={ styles['cart-item-details-left'] }>
+
+                                                        <span>
+                                                            <h3>{ item['label'] }</h3>
+                                                            <h4>₱{ parseFloat(item['price']).toLocaleString('en-PH', {
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2
+                                                            }) }</h4>
+                                                        </span>
+                                                        
+                                                        <h4><b>Category:</b> { item['category'] } | <b>Sub-category:</b> {item['subcategory']}</h4>
+
+                                                    </div>
+                                                    <div className={ styles['cart-item-details-right'] }>
                                                         <Counter
-                                                            initialValue={ item.quantity }
+                                                            value={ item.quantity }
                                                             max={ availableStock }
                                                             onChange={ (newValue) => updateQuantity(item.product_id, newValue) }
                                                             onMinimumReached={ () => {
@@ -196,45 +212,29 @@ const Cart = () => {
                                                                 setModalOpen(true);
                                                             }}
                                                         />
-                                                    </div>
-                                                </div>
-                                                <div className={ styles['cart-item-details-right'] }>
-                                                    <h3>₱{ parseFloat(item['price']).toLocaleString('en-PH', {
-                                                            minimumFractionDigits: 2,
-                                                            maximumFractionDigits: 2
-                                                        }) }</h3>
+                                                        <div className={ styles['cart-item-details-right-ctas'] }>
+                                                            
+                                                            <Button
+                                                                type='icon-outlined'
+                                                                icon='fa-solid fa-trash-can'
+                                                                externalStyles={ styles['cart-item-remove'] }
+                                                                action={ () => {
+                                                                    setSelectedItem(item);
+                                                                    setModalType('remove-confirmation');
+                                                                    setModalOpen(true);
+                                                                }}
+                                                            />
+                                                            <Button
+                                                                type='icon-outlined'
+                                                                icon='fa-solid fa-square-up-right'
+                                                                action={() => {
+                                                                    item.category.toLowerCase() === 'jewelry' 
+                                                                    ? navigate(`/jewelry/${item.product_id}`)
+                                                                    : navigate(`/accessories/${item.product_id}`);
+                                                                }}
+                                                            />
+                                                        </div>
 
-                                                    <div className={ styles['cart-item-details-cta'] }>
-                                                        <Button
-                                                            type='icon-outlined'
-                                                            icon='fa-solid fa-trash-can'
-                                                            externalStyles={ styles['cart-item-remove'] }
-                                                            action={ () => {
-                                                                setSelectedItem(item);
-                                                                setModalType('remove-confirmation');
-                                                                setModalOpen(true);
-                                                            }}
-                                                        />
-                                                        <Button
-                                                            type='icon-outlined'
-                                                            icon='fa-solid fa-square-up-right'
-                                                            action={() => {
-                                                                item.category.toLowerCase() === 'motorcycles' 
-                                                                ? navigate(`/motorcycles/${item.product_id}`)
-                                                                : navigate(`/parts-and-accessories/${item.product_id}`);
-                                                            }}
-                                                        />
-                                                        <Button
-                                                            type='primary'
-                                                            label='Reserve'
-                                                            icon='fa-solid fa-calendar'
-                                                            iconPosition='left'
-                                                            action={ () => {
-                                                                setSelectedItem(item);
-                                                                setModalType('single-reservation');
-                                                                setModalOpen(true);
-                                                            }}
-                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -244,46 +244,34 @@ const Cart = () => {
                             </div>
                             <div className={ styles['summary'] }>
                                 <h2>Summary</h2>
-                                <div className={ styles['divider'] }></div>
                                 <div className={ styles['summary-wrapper'] }>
                                     <div className={ styles['summary-item'] }>
-                                        <h3>Sub-total</h3>
-                                        <h3>₱{subtotal.toLocaleString('en-PH', {
+                                        <h3>{ selectedItems.size <= 1 ? 'Subtotal' : `Subtotal (${ selectedItems.size } items)` }</h3>
+                                        <h3>₱ { selectedSubtotal.toLocaleString('en-PH', {
                                             minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        })}</h3>
+                                            maximumFractionDigits: 2,
+                                        }) }</h3>
                                     </div>
                                     <div className={ styles['summary-item'] }>
-                                        <h3>Tax</h3>
-                                        <h3>₱{ tax.toLocaleString() }</h3>
+                                        <h3>Shipping Fee</h3>
+                                        <h3>₱0.00</h3>
                                     </div>
-                                    <div className={ styles['summary-item'] }>
-                                        <h3>Shipping</h3>
-                                        <h3 style={{ color: 'var(--accent-base)', fontWeight: '600' }}>FREE</h3>
-                                    </div>
+                                    <div className={ styles['divider'] }></div>
                                     <div className={ styles['summary-item'] }>
                                         <h3>Total</h3>
-                                        <h3>₱{total.toLocaleString('en-PH', {
+                                        <h3>₱{(selectedItems.size > 0 ? selectedTotal : total).toLocaleString('en-PH', {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2
                                         })}</h3>
                                     </div>
                                 </div>
-                                <div className={ styles['divider'] }></div>
                                 <div className={ styles['cta'] }>
                                     <Button
                                         type='primary'
-                                        label='Proceed to Checkout'
-                                        action={ () => {} }
-                                        disabled
-                                    />
-                                    <Button
-                                        type='primary'
-                                        label='Proceed to Reservation'
-                                        action={ () => {
-                                            setModalType('batch-reservation')
-                                            setModalOpen(true)
-                                        }}
+                                        label={selectedItems.size > 0 ? `Checkout Selected (${selectedItems.size})` : 'Checkout Selected'}
+                                        icon='fa-solid fa-credit-card'
+                                        action={ handleSelectedCheckout }
+                                        disabled={ selectedItems.size <= 0 }
                                     />
                                 </div>
                             </div>
@@ -291,140 +279,7 @@ const Cart = () => {
                     )}
                 </div>
             </div>
-            { modalType === 'single-reservation' ? (
-                <Modal
-                    label={ `Reserve ${ selectedItem['label'] }` }
-                    isOpen={ modalOpen && modalType === 'single-reservation' }
-                    onClose={ () => setModalOpen(false) }
-                >
-                    <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                        <h3>{ selectedItem['label'] }</h3>
-                        <span>
-                            <p>Fill out the form below to reserve <strong>{ selectedItem['label'] }</strong></p>
-                            <p>Stock Available: <strong>{ selectedItem['stock_quantity'] }</strong></p>
-                        </span>
-                    </div>
-
-                    <div className={ styles['inputs-container'] }>
-                        <div className={ styles['input-wrapper'] }>
-                            <label htmlFor="preferred_date">
-                                Preferred Date
-                            </label>
-                            <InputField
-                                hint='Your preferred date...'
-                                type='date'
-                                value={ reservePreferredDate }
-                                onChange={ (e) => setReservePreferredDate(e.target.value) }
-                                isSubmittable={ false }
-                            />
-                        </div>
-
-                        <div className={ styles['input-wrapper'] }>
-                            <label htmlFor="notes">
-                                Notes (Optional)
-                            </label>
-                            <textarea
-                                placeholder="Additional information..."
-                                value={ reserveNotes }
-                                onChange={ (e) => setReserveNotes(e.target.value) }
-                            ></textarea>
-                        </div>
-
-                        <div className={ styles['input-wrapper'] }>
-                            <label>Payment Method</label>
-                            <div className={ styles['modal-payment'] }>
-                                <label className={ styles['modal-payment-option'] }>
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="cash"
-                                        checked={paymentMethod === 'cash'}
-                                        onChange={() => setPaymentMethod('cash')}
-                                    />
-                                    <p>Cash Payment</p>
-                                </label>
-                                <label className={ styles['modal-payment-option'] }>
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="cash_installment"
-                                        checked={paymentMethod === 'cash_installment'}
-                                        onChange={() => setPaymentMethod('cash_installment')}
-                                    />
-                                    <p>Cash Installment</p>
-                                </label>
-                            </div>
-                        </div>
-
-                        {paymentMethod === 'cash_installment' && (
-                            <>
-                                <div className={ styles['divider'] } style={{ marginTop: '1rem' }}></div>
-                                <h3 style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--tg-primary)', marginBottom: '1rem' }} >Installment Details</h3>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="installment_amount">
-                                        Installment Amount (₱)
-                                    </label>
-                                    <InputField
-                                        hint='Enter amount (e.g., 1000)'
-                                        type='number'
-                                        value={ installmentAmount }
-                                        onChange={ (e) => setInstallmentAmount(e.target.value) }
-                                        isSubmittable={ false }
-                                    />
-                                    <span style={{ fontSize: '0.875rem' }} className={styles['modal-info']}>
-                                        Total price: ₱{parseFloat(selectedItem['price']).toLocaleString('en-PH', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        })}
-                                    </span>
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="installment_date">
-                                        Payment Date
-                                    </label>
-                                    <InputField
-                                        hint='Payment date...'
-                                        type='date'
-                                        value={ installmentPaymentDate }
-                                        onChange={ (e) => setInstallmentPaymentDate(e.target.value) }
-                                        isSubmittable={ false }
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="installment_notes">
-                                        Additional Notes (Optional)
-                                    </label>
-                                    <textarea
-                                        placeholder="Additional information about your installment..."
-                                        value={ installmentNotes }
-                                        onChange={ (e) => setInstallmentNotes(e.target.value) }
-                                    ></textarea>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    <div className={ styles['modal-ctas'] }>
-                        <Button 
-                            type="secondary" 
-                            label="Cancel" 
-                            action={ () => {
-                                clearReservationForm()
-                                setModalOpen(false)
-                            }} 
-                        />
-                        <Button 
-                            type="primary" 
-                            label={paymentMethod === 'cash_installment' ? "Submit Installment Request" : "Reserve"}
-                            action={ handleSingleReservation }
-                            disabled={!reservePreferredDate || (paymentMethod === 'cash_installment' && !installmentAmount)}
-                        />
-                    </div>
-                </Modal>
-            ) : modalType === 'remove-confirmation' ? (
+            { modalType === 'remove-confirmation' ? (
                 <Modal label='Remove from Cart Confirmation' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
                     <p className={ styles['modal-info'] }>Are you sure you want to remove <strong>{ selectedItem && selectedItem['label'] }</strong> from your cart?</p>
                     <div className={ styles['modal-ctas'] }>
@@ -470,138 +325,27 @@ const Cart = () => {
                         />
                     </div>
                 </Modal>
-            ) : modalType === 'batch-reservation' ? (
-                <Modal
-                    label='Reserve by Batch'
-                    isOpen={ modalOpen && modalType === 'batch-reservation' }
-                    onClose={ () => setModalOpen(false) }
-                >
-                    <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                        <p style={{ position: 'sticky', top: '0', padding: '0.25rem', backgroundColor: 'var(--bg-outline)', borderRadius: '0.125rem' }}>Fill out the form below to reserve the following products:</p>
-                        { cartItems.map(cartItem => (
-                            <span>
-                                <h3>{ cartItem['label'] }</h3>
-                                <p>Stock Available: <strong>{ cartItem['stock_quantity'] }</strong></p>
-                            </span>
-                        ))}
-
-                    </div><p style={{ fontSize: '0.875rem' }} className={ styles['modal-info'] }>Fill out the form below to reserve by batch</p>
-                    <div className={ styles['inputs-container'] }>
-                        <div className={ styles['input-wrapper'] }>
-                            <label htmlFor="preferred_date">
-                                Preferred Date
-                            </label>
-                            <InputField
-                                hint='Your preferred date...'
-                                type='date'
-                                value={ reservePreferredDate }
-                                onChange={ (e) => setReservePreferredDate(e.target.value) }
-                                isSubmittable={ false }
-                            />
-                        </div>
-
-                        <div className={ styles['input-wrapper'] }>
-                            <label htmlFor="notes">
-                                Notes (Optional)
-                            </label>
-                            <textarea
-                                placeholder="Additional information..."
-                                value={ reserveNotes }
-                                onChange={ (e) => setReserveNotes(e.target.value) }
-                            ></textarea>
-                        </div>
-
-                        <div className={ styles['input-wrapper'] }>
-                            <label>Payment Method</label>
-                            <div className={ styles['modal-payment'] }>
-                                <label className={ styles['modal-payment-option'] }>
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="cash"
-                                        checked={paymentMethod === 'cash'}
-                                        onChange={() => setPaymentMethod('cash')}
-                                    />
-                                    <p>Cash Payment</p>
-                                </label>
-                                <label className={ styles['modal-payment-option'] }>
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="cash_installment"
-                                        checked={paymentMethod === 'cash_installment'}
-                                        onChange={() => setPaymentMethod('cash_installment')}
-                                    />
-                                    <p>Cash Installment</p>
-                                </label>
-                            </div>
-                        </div>
-
-                        {paymentMethod === 'cash_installment' && (
-                            <>
-                                <div className={ styles['divider'] } style={{ marginTop: '1rem' }}></div>
-                                <h3 style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--tg-primary)', marginBottom: '1rem' }} >Installment Details</h3>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="installment_amount">
-                                        Installment Amount (₱)
-                                    </label>
-                                    <InputField
-                                        hint='Enter amount (e.g., 1000)'
-                                        type='number'
-                                        value={ installmentAmount }
-                                        onChange={ (e) => setInstallmentAmount(e.target.value) }
-                                        isSubmittable={ false }
-                                    />
-                                    <span style={{ fontSize: '0.875rem' }} className={styles['modal-info']}>
-                                        Total price: ₱{ parseFloat(total).toLocaleString('en-PH', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        })}
-                                    </span>
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="installment_date">
-                                        Payment Date
-                                    </label>
-                                    <InputField
-                                        hint='Payment date...'
-                                        type='date'
-                                        value={ installmentPaymentDate }
-                                        onChange={ (e) => setInstallmentPaymentDate(e.target.value) }
-                                        isSubmittable={ false }
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="installment_notes">
-                                        Additional Notes (Optional)
-                                    </label>
-                                    <textarea
-                                        placeholder="Additional information about your installment..."
-                                        value={ installmentNotes }
-                                        onChange={ (e) => setInstallmentNotes(e.target.value) }
-                                    ></textarea>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
+            ) : modalType === 'batch-remove-confirmation' ? (
+                <Modal label='Remove Selected Items' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to remove <strong>{selectedItems.size} selected item(s)</strong> from your cart?</p>
                     <div className={ styles['modal-ctas'] }>
-                        <Button 
-                            type="secondary" 
-                            label="Cancel" 
+                        <Button
+                            label='Confirm'
+                            type='primary'
                             action={ () => {
-                                clearReservationForm();
-                                setModalOpen(false)
-                            }} 
+                                selectedItems.forEach(productId => removeFromCart(productId));
+                                setSelectedItems(new Set());
+                                setModalOpen(false);
+                            }}
+                            externalStyles={ styles['modal-warn'] }
                         />
-                        <Button 
-                            type="primary" 
-                            label={paymentMethod === 'cash_installment' ? "Submit Installment Request" : "Reserve"}
-                            action={ handleBatchReservation }
-                            disabled={!reservePreferredDate || (paymentMethod === 'cash_installment' && !installmentAmount)}
+                        <Button
+                            label='Cancel'
+                            type='secondary'
+                            action={ () => {
+                                setModalType('');
+                                setModalOpen(false);
+                            }}
                         />
                     </div>
                 </Modal>
