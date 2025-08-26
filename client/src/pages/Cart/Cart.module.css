@@ -105,7 +105,6 @@
 
 .cart-item-selected {
     border-color: var(--accent-base);
-    background-color: var(--bg-hover);
 }
 
 .cart-item-content {
@@ -207,7 +206,7 @@
     flex-shrink: 0;
     align-self: flex-start;
     display: flex;
-    padding: 2rem;
+    padding: 1rem;
     border: 1px solid var(--bg-outline);
     width: 24rem;
     gap: 2rem;
@@ -221,7 +220,12 @@
 .summary-wrapper {
     flex-direction: column;
     display: flex;
-    gap: 1rem;
+    gap: 2rem;
+    & > span {
+        flex-direction: column;
+        display: flex;
+        gap: 1rem;
+    }
 }
 
 .summary-item {
@@ -232,11 +236,15 @@
         color: var(--tg-secondary);
         font-size: 0.875rem;
     }
-    &:last-child {
-        & > h3 {
-            font-weight: 600;
-            color: var(--tg-primary);
-        }
+}
+
+.summary-item-total {
+    justify-content: space-between;
+    display: flex;
+    & > h3 {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--tg-primary);
     }
 }
 

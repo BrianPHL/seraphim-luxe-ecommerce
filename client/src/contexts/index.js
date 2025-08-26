@@ -7,3 +7,4 @@ export { ToastProvider, useToast } from "./Toast";
 export { ProductsProvider, useProducts } from "./Products";
 export { InstallmentsProvider, useInstallments } from "./Installments";
 export { StocksProvider, useStocks } from "./Stocks";
+export { CheckoutProvider, useCheckout } from "./Checkout";

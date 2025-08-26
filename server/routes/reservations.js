@@ -217,7 +217,7 @@ router.put('/:reservation_id/reactivate', async (req, res) => {
 
         if (newStatus === 'pending') {
             for (const product of reservationProducts) {
-                // Stock update logic
+
                 const [currentStock] = await connection.query(
                     `SELECT stock_quantity FROM products WHERE id = ?`,
                     [product.product_id]
@@ -231,7 +231,6 @@ router.put('/:reservation_id/reactivate', async (req, res) => {
                     WHERE id = ?
                 `, [product.quantity, product.product_id]);
 
-                // Stock history entries
                 await connection.query(`
                     INSERT INTO stocks_history (
                         product_id,
@@ -256,7 +255,6 @@ router.put('/:reservation_id/reactivate', async (req, res) => {
             }
         }
 
-        // Update the reservation with the appropriate status
         await connection.query(`
             UPDATE reservations
             SET status = ?, modified_at = NOW()

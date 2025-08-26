@@ -61,7 +61,6 @@ const AdminInstallments = () => {
             );
         }
         
-        // Sort results
         switch(querySort) {
             case 'Sort by: Latest':
                 result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));

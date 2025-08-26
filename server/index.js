@@ -11,6 +11,7 @@ import cartsRouter from './routes/carts.js';
 import reservationsRouter from './routes/reservations.js';
 import installmentsRouter from './routes/installments.js';
 import stocksRouter from './routes/stocks.js';
+import ordersRouter from './routes/orders.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/carts', cartsRouter);
 app.use('/api/reservations', reservationsRouter);
 app.use('/api/installments', installmentsRouter);
 app.use('/api/stocks', stocksRouter);
+app.use('/api/orders', ordersRouter);
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 

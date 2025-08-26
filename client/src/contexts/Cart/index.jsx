@@ -5,6 +5,7 @@ import { useAuth, useToast } from "@contexts";
 export const CartProvider = ({ children }) => {
 
     const [ cartItems, setCartItems ] = useState([]);
+    const [ selectedItems, setSelectedItems ] = useState([]);
     const [ loading, setLoading ] = useState(false);
     const { user } = useAuth();
     const { showToast } = useToast();
@@ -103,6 +104,14 @@ export const CartProvider = ({ children }) => {
                 )
             );
 
+            setSelectedItems(previous => 
+                previous.map(item => 
+                    item['product_id'] === product_id 
+                    ? { ...item, quantity: newQuantity } 
+                    : item
+                )
+            );
+
             await fetch('/api/carts/', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -131,6 +140,8 @@ export const CartProvider = ({ children }) => {
             
             setLoading(true);
             setCartItems(previous => previous.filter(item => item['product_id'] !== product_id));
+            setSelectedItems(previous => previous.filter(item => item['product_id'] !== product_id));
+            
             await fetch(`/api/carts/${ user['id'] }/${ product_id }`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
@@ -155,6 +166,7 @@ export const CartProvider = ({ children }) => {
             setLoading(true);
 
             setCartItems([]);
+            setSelectedItems([]);
             
             await fetch(`/api/carts/clear/${ user['id'] }`, {
                 method: 'DELETE',
@@ -173,12 +185,85 @@ export const CartProvider = ({ children }) => {
 
     };
 
+    const toggleItemSelection = (product_id) => {
+        const item = cartItems.find(cartItem => cartItem['product_id'] === product_id);
+        if (!item) return;
+
+        setSelectedItems(previous => {
+            const isSelected = previous.some(selectedItem => selectedItem['product_id'] === product_id);
+            if (isSelected) {
+                return previous.filter(selectedItem => selectedItem['product_id'] !== product_id);
+            } else {
+                return [...previous, item];
+            }
+        });
+    };
+
+    const selectAllItems = () => {
+        setSelectedItems([...cartItems]);
+    };
+
+    const clearSelectedItems = () => {
+        setSelectedItems([]);
+    };
+
+    const clearSelectedCartItems = async () => {
+        if (!user || selectedItems.length === 0) return;
+
+        try {
+            setLoading(true);
+
+            const selectedProductIds = selectedItems.map(item => item['product_id']);
+            
+            setCartItems(previous => 
+                previous.filter(item => !selectedProductIds.includes(item['product_id']))
+            );
+            
+            setSelectedItems([]);
+
+            await Promise.all(
+                selectedProductIds.map(product_id =>
+                    fetch(`/api/carts/${ user['id'] }/${ product_id }`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                )
+            );
+
+        } catch (err) {
+            console.error("Failed to clear selected items:", err);
+            showToast("Failed to clear selected items", "error");
+            fetchCartItems();
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const selectedCartItems = selectedItems;
+    const isItemSelected = (product_id) => {
+        return selectedItems.some(item => item['product_id'] === product_id);
+    };
+
     useEffect(() => {
         if (user?.id) fetchCartItems();
     }, [ user ])
     
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, loading, refreshCart: fetchCartItems }}>
+        <CartContext.Provider value={{ 
+            cartItems, 
+            selectedCartItems,
+            addToCart, 
+            updateQuantity, 
+            removeFromCart, 
+            clearCart, 
+            toggleItemSelection,
+            selectAllItems,
+            clearSelectedItems,
+            clearSelectedCartItems,
+            isItemSelected,
+            loading, 
+            refreshCart: fetchCartItems 
+        }}>
             {children}
         </CartContext.Provider>
     );

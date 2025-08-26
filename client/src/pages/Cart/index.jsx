@@ -6,12 +6,21 @@ import { useCart, useToast } from '@contexts';
 
 const Cart = () => {
 
-    const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+    const { 
+        cartItems, 
+        selectedCartItems, 
+        updateQuantity, 
+        removeFromCart, 
+        clearCart,
+        toggleItemSelection,
+        selectAllItems,
+        clearSelectedItems,
+        isItemSelected
+    } = useCart();
     const { showToast } = useToast();
     const [ modalType, setModalType ] = useState('');
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ selectedItem, setSelectedItem ] = useState(null);
-    const [ selectedItems, setSelectedItems ] = useState(new Set());
     const [ stockInfo, setStockInfo ] = useState({});
     const navigate = useNavigate();
 
@@ -21,12 +30,10 @@ const Cart = () => {
             return sum + (priceValue * item.quantity);
         }, 0);
 
-    const selectedSubtotal = cartItems
-        .filter(item => selectedItems.has(item.product_id))
-        .reduce((sum, item) => {
-            const priceValue = parseFloat(item.price);
-            return sum + (priceValue * item.quantity);
-        }, 0);
+    const selectedSubtotal = selectedCartItems.reduce((sum, item) => {
+        const priceValue = parseFloat(item.price);
+        return sum + (priceValue * item.quantity);
+    }, 0);
 
     const tax = 0;
     const deductions = 0;
@@ -59,64 +66,30 @@ const Cart = () => {
         }
     }, [ cartItems ]);
 
-    useEffect(() => {
-
-        setSelectedItems(prev => {
-
-            const newSelected = new Set();
-
-            prev.forEach(productId => {
-                if (cartItems.some(item => item.product_id === productId))
-                    newSelected.add(productId);
-            });
-            return newSelected;
-
-        });
-
-    }, [ cartItems ])
-
     const handleItemSelect = (productId, isSelected) => {
-
-        const newSelectedItems = new Set(selectedItems);
-
-        if (isSelected) {
-            newSelectedItems.add(productId);
-        } else {
-            newSelectedItems.delete(productId);
-        }
-        setSelectedItems(newSelectedItems);
-
+        toggleItemSelection(productId);
     };
 
     const handleSelectAll = () => {
-
-        if (selectedItems.size === cartItems.length) {
-            setSelectedItems(new Set());
+        if (selectedCartItems.length === cartItems.length) {
+            clearSelectedItems();
         } else {
-            setSelectedItems(new Set(cartItems.map(item => item.product_id)));
+            selectAllItems();
         }
-
     };
 
     const handleBatchRemove = () => {
-        
-        if (selectedItems.size === 0)
-            return;
-
+        if (selectedCartItems.length === 0) return;
         setModalType('batch-remove-confirmation');
         setModalOpen(true);
-
-    };
-
-    const handleCheckout = () => {
-        // TODO: Implement checkout functionality
-        showToast('Checkout functionality coming soon!', 'info');
     };
 
     const handleSelectedCheckout = () => {
-        if (selectedItems.size === 0) return;
-        // TODO: Implement selected items checkout functionality
-        showToast(`Checkout for ${selectedItems.size} selected items coming soon!`, 'info');
+        if (selectedCartItems.length === 0) {
+            showToast('Please select items to checkout', 'error');
+            return;
+        }
+        navigate('/checkout');
     };
 
     return (
@@ -141,41 +114,36 @@ const Cart = () => {
                                         <label className={ styles['checkbox-container'] }>
                                             <input
                                                 type="checkbox"
-                                                checked={cartItems.length > 0 && selectedItems.size === cartItems.length}
+                                                checked={cartItems.length > 0 && selectedCartItems.length === cartItems.length}
                                                 onChange={handleSelectAll}
                                                 className={ styles['checkbox'] }
                                             />
                                             <span className={ styles['checkmark'] }></span>
-                                            <b>Select All ({cartItems.length + ` items`})</b>
+                                            <b>Select All ({cartItems.length} items)</b>
                                         </label>
                                     </div>
-                                    {selectedItems.size > 0 && (
-                                        <div className={ styles['batch-actions'] }>
-
-                                        </div>
-                                    )}
                                     <Button
                                         type='secondary'
-                                        label={ selectedItems.size <= 1 ? 'Remove Selected' : `Remove Selected (${ selectedItems.size })` }
+                                        label={ selectedCartItems.length <= 1 ? 'Remove Selected' : `Remove Selected (${selectedCartItems.length})` }
                                         icon='fa-solid fa-trash-can'
                                         iconPosition='left'
                                         action={ handleBatchRemove }
                                         externalStyles={ styles['batch-remove'] }
-                                        disabled={ selectedItems.size <= 0 }
+                                        disabled={ selectedCartItems.length <= 0 }
                                     />
                                 </div>
                                 { cartItems.map(item => {
 
                                     const availableStock = stockInfo[item.product_id];
-                                    const isSelected = selectedItems.has(item.product_id);
+                                    const itemSelected = isItemSelected(item.product_id);
                                     
                                     return (
-                                        <div className={ `${styles['cart-item']} ${isSelected ? styles['cart-item-selected'] : ''}` } key={ item['product_id'] }>
+                                        <div className={ `${styles['cart-item']} ${ itemSelected ? styles['cart-item-selected'] : ''}` } key={ item['product_id'] }>
                                             <div className={ styles['cart-item-checkbox'] }>
                                                 <label className={ styles['checkbox-container'] }>
                                                     <input
                                                         type="checkbox"
-                                                        checked={isSelected}
+                                                        checked={itemSelected}
                                                         onChange={(e) => handleItemSelect(item.product_id, e.target.checked)}
                                                         className={ styles['checkbox'] }
                                                     />
@@ -243,23 +211,25 @@ const Cart = () => {
                                 })}
                             </div>
                             <div className={ styles['summary'] }>
-                                <h2>Summary</h2>
+                                <h2>Cart Summary</h2>
                                 <div className={ styles['summary-wrapper'] }>
-                                    <div className={ styles['summary-item'] }>
-                                        <h3>{ selectedItems.size <= 1 ? 'Subtotal' : `Subtotal (${ selectedItems.size } items)` }</h3>
-                                        <h3>₱ { selectedSubtotal.toLocaleString('en-PH', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        }) }</h3>
-                                    </div>
-                                    <div className={ styles['summary-item'] }>
-                                        <h3>Shipping Fee</h3>
-                                        <h3>₱0.00</h3>
-                                    </div>
+                                    <span>
+                                        <div className={ styles['summary-item'] }>
+                                            <h3>{ selectedCartItems.length <= 1 ? 'Subtotal' : `Subtotal (${selectedCartItems.length} items)` }</h3>
+                                            <h3>₱{ selectedSubtotal.toLocaleString('en-PH', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            }) }</h3>
+                                        </div>
+                                        <div className={ styles['summary-item'] }>
+                                            <h3>Shipping Fee</h3>
+                                            <h3>₱0.00</h3>
+                                        </div>
+                                    </span>
                                     <div className={ styles['divider'] }></div>
-                                    <div className={ styles['summary-item'] }>
+                                    <div className={ styles['summary-item-total'] }>
                                         <h3>Total</h3>
-                                        <h3>₱{(selectedItems.size > 0 ? selectedTotal : total).toLocaleString('en-PH', {
+                                        <h3>₱{(selectedCartItems.length > 0 ? selectedTotal : total).toLocaleString('en-PH', {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2
                                         })}</h3>
@@ -268,10 +238,10 @@ const Cart = () => {
                                 <div className={ styles['cta'] }>
                                     <Button
                                         type='primary'
-                                        label={selectedItems.size > 0 ? `Checkout Selected (${selectedItems.size})` : 'Checkout Selected'}
+                                        label={selectedCartItems.length > 0 ? `Checkout Selected (${selectedCartItems.length})` : 'Checkout Selected'}
                                         icon='fa-solid fa-credit-card'
                                         action={ handleSelectedCheckout }
-                                        disabled={ selectedItems.size <= 0 }
+                                        disabled={ selectedCartItems.length <= 0 }
                                     />
                                 </div>
                             </div>
@@ -327,14 +297,13 @@ const Cart = () => {
                 </Modal>
             ) : modalType === 'batch-remove-confirmation' ? (
                 <Modal label='Remove Selected Items' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>Are you sure you want to remove <strong>{selectedItems.size} selected item(s)</strong> from your cart?</p>
+                    <p className={ styles['modal-info'] }>Are you sure you want to remove <strong>{selectedCartItems.length} selected item(s)</strong> from your cart?</p>
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
                             type='primary'
                             action={ () => {
-                                selectedItems.forEach(productId => removeFromCart(productId));
-                                setSelectedItems(new Set());
+                                selectedCartItems.forEach(item => removeFromCart(item.product_id));
                                 setModalOpen(false);
                             }}
                             externalStyles={ styles['modal-warn'] }

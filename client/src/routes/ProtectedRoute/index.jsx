@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         
         const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
         const isAdminRoute = location.pathname.startsWith('/admin');
-        const isCustomerRoute = ['/profile', '/cart', '/reservations'].includes(location.pathname);
+        const isCustomerRoute = ['/profile', '/cart', '/checkout', '/reservations'].includes(location.pathname);
         const isPublicRoute = ['/', '/about-us', '/motorcycles', '/parts-and-accessories'].includes(location.pathname) || location.pathname.startsWith('/motorcycles/') || location.pathname.startsWith('/parts-and-accessories/');
 
         if (!user && !isAuthPage && !isPublicRoute) {

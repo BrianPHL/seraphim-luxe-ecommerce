@@ -10,7 +10,8 @@ import {
   ToastProvider,
   ProductsProvider,
   InstallmentsProvider,
-  StocksProvider
+  StocksProvider,
+  CheckoutProvider
 } from '@contexts';
 import App from './App';
 
@@ -24,11 +25,13 @@ createRoot(document.getElementById('root')).render(
               <ProductsProvider>
                 <ReservationProvider>
                   <CartProvider>
-                    <InstallmentsProvider>
-                      <StocksProvider>
-                        <App />
-                      </StocksProvider>
-                    </InstallmentsProvider>
+                    <CheckoutProvider>
+                      <InstallmentsProvider>
+                        <StocksProvider>
+                          <App />
+                        </StocksProvider>
+                      </InstallmentsProvider>
+                    </CheckoutProvider>
                   </CartProvider>
                 </ReservationProvider>
               </ProductsProvider>
