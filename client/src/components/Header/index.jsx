@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Logo, Anchor, Button, Accordion, Modal } from '@components';
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from 'react-router';
-import { useTheme, useAuth, useCart, useReservation } from "@contexts";
+import { useTheme, useAuth, useCart } from "@contexts";
 
 const Header = () => {
 
@@ -14,7 +14,6 @@ const Header = () => {
     const [ drawerOpen, setDrawerOpen ] = useState(false);
     const { user, logout } = useAuth();
     const { cartItems } = useCart();
-    const { reservationItems } = useReservation();
     const handleLogout = () => setModalOpen(true);
 
     return (
@@ -66,22 +65,6 @@ const Header = () => {
                                     { cartItems['length'] !== 0 ? (
                                         <span className={ styles['indicator-badge'] }>
                                             { cartItems['length'] }
-                                        </span>
-                                    ) : null }
-                                </div>
-                                <div 
-                                    className={ styles['indicator-wrapper'] }
-                                    onClick={ () => navigate('/reservations')  }
-                                > 
-                                    <Button
-                                        type="icon"
-                                        action={ () => navigate('/reservations') }
-                                        icon='fa-solid fa-calendar'
-                                        externalStyles={ styles['indicator-btn'] }
-                                        />
-                                    { reservationItems['length'] !== 0 ? (
-                                        <span className={ styles['indicator-badge'] }>
-                                            { reservationItems['length'] }
                                         </span>
                                     ) : null }
                                 </div>
@@ -227,22 +210,6 @@ const Header = () => {
                                             </span>
                                         ) : null }
                                     </div>
-                                    <div 
-                                        className={ styles['indicator-wrapper'] }
-                                        onClick={ () => navigate('/reservations')  }
-                                    >
-                                        <Button
-                                            type="icon"
-                                            action={ () => navigate('/reservations') }
-                                            icon='fa-solid fa-calendar'
-                                            externalStyles={ styles['indicator-btn'] }
-                                            />
-                                        { reservationItems['length'] !== 0 ? (
-                                            <span className={ styles['indicator-badge'] }>
-                                                { reservationItems['length'] }
-                                            </span>
-                                        ) : null }
-                                    </div>
                                 </>
                             ) : null }
                             <Button
@@ -335,22 +302,6 @@ const Header = () => {
                                             { cartItems['length'] !== 0 ? (
                                                 <span className={ styles['indicator-badge'] }>
                                                     { cartItems['length'] }
-                                                </span>
-                                            ) : null }
-                                        </div>
-                                        <div 
-                                            className={ styles['indicator-wrapper'] }
-                                            onClick={ () => navigate('/reservations')  }
-                                        >    
-                                            <Button
-                                                type="icon"
-                                                action={ () => navigate('/reservations') }
-                                                icon='fa-solid fa-calendar'
-                                                externalStyles={ styles['indicator-btn'] }
-                                                />
-                                            { reservationItems['length'] !== 0 ? (
-                                                <span className={ styles['indicator-badge'] }>
-                                                    { reservationItems['length'] }
                                                 </span>
                                             ) : null }
                                         </div>
