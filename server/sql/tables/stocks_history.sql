@@ -18,7 +18,7 @@
 CREATE TABLE IF NOT EXISTS `stocks_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
-  `stock_history_type` enum('initial','restock','adjustment','reservation','return') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `stock_history_type` enum('initial','restock','adjustment','reservation','return','order') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `quantity_change` int NOT NULL,
   `previous_quantity` int NOT NULL,
   `new_quantity` int NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `stocks_history` (
   KEY `stocks_history_products_id_fkey` (`product_id`),
   CONSTRAINT `stocks_history_accounts_id_fkey` FOREIGN KEY (`admin_id`) REFERENCES `accounts` (`id`),
   CONSTRAINT `stocks_history_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
