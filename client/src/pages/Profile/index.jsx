@@ -22,18 +22,40 @@ const Profile = ({}) => {
         contact_number: ''
     });
     const [ addressInfo, setAddressInfo ] = useState({
-        address: ''
+        shipping_address: {
+            street: '',
+            city: '',
+            state: '',
+            postal_code: '',
+            country: 'Philippines'
+        },
+        billing_address: {
+            street: '',
+            city: '',
+            state: '',
+            postal_code: '',
+            country: 'Philippines',
+            same_as_shipping: true
+        }
     });
     const [ passwordInfo, setPasswordInfo ] = useState({
         password: '',
         confirmPassword: ''
     })
+    const [ generalAddressInfo, setGeneralAddressInfo ] = useState({
+        address: ''
+    });
     const [ isPersonalInfoChanged, setIsPersonalInfoChanged ] = useState(false);
     const [ isAddressInfoChanged, setIsAddressInfoChanged ] = useState(false);
     const [ isPasswordInfoChanged, setIsPasswordInfoChanged ] = useState(false);
+    const [ isGeneralAddressChanged, setIsGeneralAddressChanged ] = useState(false);
     const [ doPasswordsMatch, setDoPasswordsMatch ] = useState(true);
     const [ showPassword, setShowPassword ] = useState(false);
     const [ showConfirmPassword, setShowConfirmPassword ] = useState(false);
+    const [ validationErrors, setValidationErrors ] = useState({});
+    const [ isShippingAddressChanged, setIsShippingAddressChanged ] = useState(false);
+    const [ isBillingAddressChanged, setIsBillingAddressChanged ] = useState(false);
+
     const handleFileChange = (event) => {
         
         const file = event['target']['files'][0];
@@ -99,9 +121,34 @@ const Profile = ({}) => {
 
         setIsPersonalInfoChanged(hasChanged);
     };
-    const handleAddressInfoChange = (value) => {
-        setAddressInfo({ address: value });
-        setIsAddressInfoChanged(value !== (user?.address || ''));
+    const handleShippingAddressChange = (field, value) => {
+        const updatedShippingAddress = { ...addressInfo.shipping_address, [field]: value };
+        setAddressInfo({ ...addressInfo, shipping_address: updatedShippingAddress });
+        
+        // Check if shipping address has changed
+        const hasChanged = 
+            updatedShippingAddress.street !== (user?.shipping_street || '') ||
+            updatedShippingAddress.city !== (user?.shipping_city || '') ||
+            updatedShippingAddress.state !== (user?.shipping_state || '') ||
+            updatedShippingAddress.postal_code !== (user?.shipping_postal_code || '');
+        
+        setIsShippingAddressChanged(hasChanged);
+    };
+    const handleBillingAddressChange = (field, value) => {
+        const updatedBillingAddress = { ...addressInfo.billing_address, [field]: value };
+        setAddressInfo({ ...addressInfo, billing_address: updatedBillingAddress });
+        
+        // Check if billing address has changed
+        const hasChanged = 
+            updatedBillingAddress.same_as_shipping !== (user?.billing_same_as_shipping || true) ||
+            (!updatedBillingAddress.same_as_shipping && (
+                updatedBillingAddress.street !== (user?.billing_street || '') ||
+                updatedBillingAddress.city !== (user?.billing_city || '') ||
+                updatedBillingAddress.state !== (user?.billing_state || '') ||
+                updatedBillingAddress.postal_code !== (user?.billing_postal_code || '')
+            ));
+        
+        setIsBillingAddressChanged(hasChanged);
     };
     const handlePasswordChange = (field, value) => {
 
@@ -114,6 +161,11 @@ const Profile = ({}) => {
         setIsPasswordInfoChanged(hasContent && updatedInfo['password'] === updatedInfo['confirmPassword']);
 
     };
+    const handleGeneralAddressChange = (value) => {
+        setGeneralAddressInfo({ address: value });
+        const hasChanged = value !== (user?.address || '');
+        setIsGeneralAddressChanged(hasChanged);
+    };
     const updatePersonalInfo = async () => {
         const result = await updatePersonalInfoAPI(personalInfo);
 
@@ -125,14 +177,45 @@ const Profile = ({}) => {
         }
     };
 
-    const updateAddressInfo = async () => {
-        const result = await updateAddressAPI(addressInfo.address);
+    const updateShippingAddress = async () => {
+        const result = await updateAddressAPI({
+            type: 'shipping',
+            address: addressInfo.shipping_address
+        });
+
+        if (result?.error) {
+            showToast(`Failed to update shipping address: ${result.error}`, 'error');
+        } else {
+            showToast('Shipping address updated successfully', 'success');
+            setIsShippingAddressChanged(false);
+        }
+    };
+
+    const updateBillingAddress = async () => {
+        const result = await updateAddressAPI({
+            type: 'billing',
+            address: addressInfo.billing_address
+        });
+
+        if (result?.error) {
+            showToast(`Failed to update billing address: ${result.error}`, 'error');
+        } else {
+            showToast('Billing address updated successfully', 'success');
+            setIsBillingAddressChanged(false);
+        }
+    };
+
+    const updateGeneralAddress = async () => {
+        const result = await updateAddressAPI({
+            type: 'general',
+            address: generalAddressInfo.address
+        });
 
         if (result?.error) {
             showToast(`Failed to update address: ${result.error}`, 'error');
         } else {
             showToast('Address updated successfully', 'success');
-            setIsAddressInfoChanged(false);
+            setIsGeneralAddressChanged(false);
         }
     };
 
@@ -163,11 +246,32 @@ const Profile = ({}) => {
         setIsPersonalInfoChanged(false);
     };
     const resetAddressInfo = () => {
-        setAddressInfo({ address: user?.address || '' })
-        setIsAddressInfoChanged(false);
+        setAddressInfo({
+            shipping_address: {
+                street: user?.shipping_street || '',
+                city: user?.shipping_city || '',
+                state: user?.shipping_state || '',
+                postal_code: user?.shipping_postal_code || '',
+                country: 'Philippines'
+            },
+            billing_address: {
+                street: user?.billing_street || '',
+                city: user?.billing_city || '',
+                state: user?.billing_state || '',
+                postal_code: user?.billing_postal_code || '',
+                country: 'Philippines',
+                same_as_shipping: user?.billing_same_as_shipping ?? true
+            }
+        });
+        setIsShippingAddressChanged(false);
+        setIsBillingAddressChanged(false);
+    };
+    const resetGeneralAddress = () => {
+        setGeneralAddressInfo({ address: user?.address || '' });
+        setIsGeneralAddressChanged(false);
     };
     const resetPasswordInfo = () => {
-        setAddressInfo({ password: '', confirmPassword: '' });
+        setPasswordInfo({ password: '', confirmPassword: '' });
         setIsPasswordInfoChanged(false);
         setDoPasswordsMatch(true);
     };
@@ -176,6 +280,30 @@ const Profile = ({}) => {
     };
     const handleConfirmPasswordToggle = () => {
         setShowConfirmPassword(!showConfirmPassword);
+    };
+    const validatePersonalInfo = () => {
+        const errors = {};
+        
+        if (!personalInfo.first_name.trim()) {
+            errors.first_name = 'First name is required';
+        }
+        
+        if (!personalInfo.last_name.trim()) {
+            errors.last_name = 'Last name is required';
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(personalInfo.email)) {
+            errors.email = 'Please enter a valid email address';
+        }
+        
+        const phoneRegex = /^(\+63|0)?[0-9]{10}$/;
+        if (!phoneRegex.test(personalInfo.contact_number.replace(/\s/g, ''))) {
+            errors.contact_number = 'Please enter a valid Philippine phone number';
+        }
+        
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     useEffect(() => {
@@ -186,8 +314,25 @@ const Profile = ({}) => {
                 email: user.email || '',
                 contact_number: user.contact_number || ''
             });
-            setAddressInfo({
+            setGeneralAddressInfo({
                 address: user.address || ''
+            });
+            setAddressInfo({
+                shipping_address: {
+                    street: user.shipping_street || '',
+                    city: user.shipping_city || '',
+                    state: user.shipping_state || '',
+                    postal_code: user.shipping_postal_code || '',
+                    country: 'Philippines'
+                },
+                billing_address: {
+                    street: user.billing_street || '',
+                    city: user.billing_city || '',
+                    state: user.billing_state || '',
+                    postal_code: user.billing_postal_code || '',
+                    country: 'Philippines',
+                    same_as_shipping: user.billing_same_as_shipping ?? true
+                }
             });
         }
     }, [user]);
@@ -276,6 +421,7 @@ const Profile = ({}) => {
                                             isSubmittable={ false }
                                             value={ personalInfo['first_name'] }
                                             onChange={ event => handlePersonalInfoChange('first_name', event['target']['value'] )}
+                                            error={ validationErrors['first_name'] }
                                         />
                                     </div>
                                     <div className={ styles['input-wrapper'] }>
@@ -288,6 +434,7 @@ const Profile = ({}) => {
                                             isSubmittable={ false }
                                             value={ personalInfo['last_name'] }
                                             onChange={ event => handlePersonalInfoChange('last_name', event['target']['value'] )}
+                                            error={ validationErrors['last_name'] }
                                         />
                                     </div>
                                 </div>
@@ -302,6 +449,7 @@ const Profile = ({}) => {
                                             isSubmittable={ false }
                                             value={ personalInfo['email'] }
                                             onChange={ event => handlePersonalInfoChange('email', event['target']['value'] )}
+                                            error={ validationErrors['email'] }
                                         />
                                     </div>
                                     <div className={ styles['input-wrapper'] }>
@@ -314,6 +462,7 @@ const Profile = ({}) => {
                                             isSubmittable={ false }
                                             value={ personalInfo['contact_number'] }
                                             onChange={ event => handlePersonalInfoChange('contact_number', event['target']['value'] )}
+                                            error={ validationErrors['contact_number'] }
                                         />
                                     </div>
                                 </div>
@@ -345,16 +494,14 @@ const Profile = ({}) => {
                             </div>
                         </section>
                         <div className={ styles['divider-horizontal'] }></div>
-                        <section className={ styles['info-address'] }>
+                        <section className={ styles['info-address-general'] }>
                             <h2>Address Information</h2>
                             <div className={ styles['inputs-container'] }>
                                 <div className={ styles['input-wrapper'] }>
-                                    <label htmlFor="address">
-                                        Address
-                                    </label>
+                                    <label htmlFor="general_address">Address</label>
                                     <InputField
-                                        value={ addressInfo['address'] }
-                                        onChange={ event => handleAddressInfoChange(event['target']['value']) }
+                                        value={ generalAddressInfo.address }
+                                        onChange={ event => handleGeneralAddressChange(event['target']['value']) }
                                         hint='Your address...'
                                         type='text'
                                         isSubmittable={ false }
@@ -367,10 +514,10 @@ const Profile = ({}) => {
                                         iconPosition='left'
                                         label='Update address info'
                                         action={ () => {
-                                            setModalType('update-address-info-confirmation');
+                                            setModalType('update-general-address-confirmation');
                                             setIsModalOpen(true);
                                         }}
-                                        disabled={ !isAddressInfoChanged }
+                                        disabled={ !isGeneralAddressChanged }
                                     />
                                     <Button
                                         type='secondary'
@@ -378,11 +525,175 @@ const Profile = ({}) => {
                                         iconPosition='left'
                                         label='Reset'
                                         action={ () => {
-                                            setModalType('reset-address-info-confirmation');
+                                            setModalType('reset-general-address-confirmation');
                                             setIsModalOpen(true);
                                         }}
                                         externalStyles={ styles['action-warn'] }
-                                        disabled={ !isAddressInfoChanged }
+                                        disabled={ !isGeneralAddressChanged }
+                                    />
+                                </div>
+                            </div>
+                        </section>
+                        <div className={ styles['divider-horizontal'] }></div>
+                        <section className={ styles['info-address'] }>
+                            <h2>Shipping Address</h2>
+                            <div className={ styles['inputs-container'] }>
+                                <div className={ styles['inputs-wrapper'] }>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="shipping_street">Street Address</label>
+                                        <InputField
+                                            value={ addressInfo.shipping_address.street }
+                                            onChange={ event => handleShippingAddressChange('street', event['target']['value']) }
+                                            hint='Your street address...'
+                                            type='text'
+                                            isSubmittable={ false }
+                                        />
+                                    </div>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="shipping_city">City</label>
+                                        <InputField
+                                            value={ addressInfo.shipping_address.city }
+                                            onChange={ event => handleShippingAddressChange('city', event['target']['value']) }
+                                            hint='Your city...'
+                                            type='text'
+                                            isSubmittable={ false }
+                                        />
+                                    </div>
+                                </div>
+                                <div className={ styles['inputs-wrapper'] }>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="shipping_state">State/Province</label>
+                                        <InputField
+                                            value={ addressInfo.shipping_address.state }
+                                            onChange={ event => handleShippingAddressChange('state', event['target']['value']) }
+                                            hint='Your state or province...'
+                                            type='text'
+                                            isSubmittable={ false }
+                                        />
+                                    </div>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="shipping_postal">Postal Code</label>
+                                        <InputField
+                                            value={ addressInfo.shipping_address.postal_code }
+                                            onChange={ event => handleShippingAddressChange('postal_code', event['target']['value']) }
+                                            hint='Your postal code...'
+                                            type='text'
+                                            isSubmittable={ false }
+                                        />
+                                    </div>
+                                </div>
+                                <div className={ styles['info-address-ctas'] }>
+                                    <Button
+                                        type='primary'
+                                        icon='fa-solid fa-circle-check'
+                                        iconPosition='left'
+                                        label='Update shipping address'
+                                        action={ () => {
+                                            setModalType('update-shipping-address-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        disabled={ !isShippingAddressChanged }
+                                    />
+                                    <Button
+                                        type='secondary'
+                                        icon='fa-solid fa-rotate-left'
+                                        iconPosition='left'
+                                        label='Reset'
+                                        action={ () => {
+                                            setModalType('reset-shipping-address-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        externalStyles={ styles['action-warn'] }
+                                        disabled={ !isShippingAddressChanged }
+                                    />
+                                </div>
+                            </div>
+                        </section>
+                        <div className={ styles['divider-horizontal'] }></div>
+                        <section className={ styles['info-billing'] }>
+                            <h2>Billing Address</h2>
+                            <div className={ styles['inputs-container'] }>
+                                <div className={ styles['billing-same-address'] }>
+                                    <label className={ styles['checkbox-label'] }>
+                                        <input
+                                            type="checkbox"
+                                            checked={addressInfo.billing_address.same_as_shipping}
+                                            onChange={(e) => handleBillingAddressChange('same_as_shipping', e.target.checked)}
+                                        />
+                                        <span>Same as shipping address</span>
+                                    </label>
+                                </div>
+                                {!addressInfo.billing_address.same_as_shipping && (
+                                    <>
+                                        <div className={ styles['inputs-wrapper'] }>
+                                            <div className={ styles['input-wrapper'] }>
+                                                <label htmlFor="billing_street">Street Address</label>
+                                                <InputField
+                                                    value={ addressInfo.billing_address.street }
+                                                    onChange={ event => handleBillingAddressChange('street', event['target']['value']) }
+                                                    hint='Your billing street address...'
+                                                    type='text'
+                                                    isSubmittable={ false }
+                                                />
+                                            </div>
+                                            <div className={ styles['input-wrapper'] }>
+                                                <label htmlFor="billing_city">City</label>
+                                                <InputField
+                                                    value={ addressInfo.billing_address.city }
+                                                    onChange={ event => handleBillingAddressChange('city', event['target']['value']) }
+                                                    hint='Your billing city...'
+                                                    type='text'
+                                                    isSubmittable={ false }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={ styles['inputs-wrapper'] }>
+                                            <div className={ styles['input-wrapper'] }>
+                                                <label htmlFor="billing_state">State/Province</label>
+                                                <InputField
+                                                    value={ addressInfo.billing_address.state }
+                                                    onChange={ event => handleBillingAddressChange('state', event['target']['value']) }
+                                                    hint='Your billing state or province...'
+                                                    type='text'
+                                                    isSubmittable={ false }
+                                                />
+                                            </div>
+                                            <div className={ styles['input-wrapper'] }>
+                                                <label htmlFor="billing_postal">Postal Code</label>
+                                                <InputField
+                                                    value={ addressInfo.billing_address.postal_code }
+                                                    onChange={ event => handleBillingAddressChange('postal_code', event['target']['value']) }
+                                                    hint='Your billing postal code...'
+                                                    type='text'
+                                                    isSubmittable={ false }
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                <div className={ styles['info-address-ctas'] }>
+                                    <Button
+                                        type='primary'
+                                        icon='fa-solid fa-circle-check'
+                                        iconPosition='left'
+                                        label='Update billing address'
+                                        action={ () => {
+                                            setModalType('update-billing-address-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        disabled={ !isBillingAddressChanged }
+                                    />
+                                    <Button
+                                        type='secondary'
+                                        icon='fa-solid fa-rotate-left'
+                                        iconPosition='left'
+                                        label='Reset'
+                                        action={ () => {
+                                            setModalType('reset-billing-address-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        externalStyles={ styles['action-warn'] }
+                                        disabled={ !isBillingAddressChanged }
                                     />
                                 </div>
                             </div>
@@ -720,16 +1031,16 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            ) : modalType === 'update-address-info-confirmation' ? (
-                <Modal label='Update Address Info Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>Are you sure you want to save changes to your address information? This will update address information.</p>
+            ) : modalType === 'update-shipping-address-confirmation' ? (
+                <Modal label='Update Shipping Address Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to save changes to your shipping address? This will update where your orders will be delivered.</p>
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
                             type='primary'
                             action={ () => {
                                 setIsModalOpen(false);
-                                updateAddressInfo();
+                                updateShippingAddress();
                             }}
                             externalStyles={ styles['modal-warn'] }
                         />
@@ -743,9 +1054,55 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            ) : modalType === 'reset-address-info-confirmation' ? (
-                <Modal label='Reset Address Info Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>Are you sure you want to reset address information to its previous value? Any unsaved changes will be discarded.</p>
+            ) : modalType === 'update-billing-address-confirmation' ? (
+                <Modal label='Update Billing Address Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to save changes to your billing address? This will update where your invoices will be sent.</p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='primary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                updateBillingAddress();
+                            }}
+                            externalStyles={ styles['modal-warn'] }
+                        />
+                        <Button
+                            label='Cancel'
+                            type='secondary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                            }}
+                        />
+                    </div>
+                </Modal>
+            ) : modalType === 'reset-shipping-address-confirmation' ? (
+                <Modal label='Reset Shipping Address Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to reset shipping address to its previous values? Any unsaved changes will be discarded.</p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='primary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                resetAddressInfo();
+                            }}
+                            externalStyles={ styles['modal-warn'] }
+                        />
+                        <Button
+                            label='Cancel'
+                            type='secondary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                            }}
+                        />
+                    </div>
+                </Modal>
+            ) : modalType === 'reset-billing-address-confirmation' ? (
+                <Modal label='Reset Billing Address Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to reset billing address to its previous values? Any unsaved changes will be discarded.</p>
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
@@ -799,6 +1156,7 @@ const Profile = ({}) => {
                             type='primary'
                             action={ () => {
                                 setIsModalOpen(false);
+                                resetPasswordInfo();
                             }}
                             externalStyles={ styles['modal-warn'] }
                         />

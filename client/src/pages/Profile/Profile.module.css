@@ -112,14 +112,14 @@
     gap: 2rem;
 }
 
-.info-personal, .info-address, .info-reservation, .info-settings, .info-danger {
+.info-personal, .info-address, .info-reservation, .info-settings, .info-danger, .info-address-general, .info-billing {
     flex-direction: column;
     display: flex;
     gap: 4rem;
     & > h2 {
         font-weight: 600;
         font-size: 1.5rem;
-        color: var(--tg-primary);
+        color: var(--tg-primary); /* This makes all headers white/primary text color */
     }
 }
 
@@ -436,6 +436,45 @@
         background-color: var(--error-hover);
         color: var(--tg-primary);
     }
+}
+
+.info-billing-ctas {
+    
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+}
+
+.info-shipping-ctas {
+    display: flex;
+    gap: 1rem;
+    flex-direction: row;
+}
+
+.billing-same-address {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary); /* Changed from --background-secondary */
+    border-radius: 8px;
+    border: 1px solid var(--bg-outline); /* Changed from --border-color */
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-base, #007bff);
+}
+
+.checkbox-label span {
+    color: var(--tg-primary); /* Changed from --text-primary to match theme */
 }
 
 @media only screen and (max-width: 1660px) {
