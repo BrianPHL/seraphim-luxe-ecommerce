@@ -229,7 +229,7 @@ const Cart = () => {
                                     <div className={ styles['divider'] }></div>
                                     <div className={ styles['summary-item-total'] }>
                                         <h3>Total</h3>
-                                        <h3>₱{(selectedCartItems.length > 0 ? selectedTotal : total).toLocaleString('en-PH', {
+                                        <h3>₱{ selectedTotal.toLocaleString('en-PH', {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2
                                         })}</h3>
