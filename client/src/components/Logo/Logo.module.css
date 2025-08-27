@@ -1,28 +1,16 @@
 @import url('../../index.css');
 
 .logo {
-    flex-direction: row;
     display: flex;
-    gap: 0.25rem;
     &:hover {
         cursor: pointer;
     }
 }
 
-.left {
-    font-weight: 800;
-    line-height: normal;
-    font-size: 1.5rem;
+.logo-left {
     color: var(--tg-primary);
 }
 
-.right {
-    border-radius: 0.5rem;
-    border: 2px solid var(--accent-base);
-    line-height: normal;
-    font-weight: 700;
-    font-size: 1rem;
-    padding: 0.2rem 0.5rem;
-    border: 2px solid var(--accent-base);
+.logo-right {
     color: var(--accent-base);
 }
