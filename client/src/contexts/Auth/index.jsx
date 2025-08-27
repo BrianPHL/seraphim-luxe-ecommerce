@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }) => {
                 if (errorData.code === 'EMAIL_NOT_VERIFIED') {
                     await showOTP('email-verification', data.email, async (result) => {
 
-                        if (signInThruEmailResult.data.user) 
+                        if (result.data.user) 
                             signIn(data);
 
                     });
