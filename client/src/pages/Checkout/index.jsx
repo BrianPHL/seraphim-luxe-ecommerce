@@ -22,7 +22,7 @@ const Checkout = () => {
         }
     }, [selectedCartItems, navigate, showToast]);
 
-const subtotal = selectedCartItems?.reduce((sum, item) => {
+    const subtotal = selectedCartItems?.reduce((sum, item) => {
         const price = parseFloat(item.price) || 0;
         const quantity = parseInt(item.quantity) || 0;
         return sum + (price * quantity);
@@ -142,7 +142,7 @@ const subtotal = selectedCartItems?.reduce((sum, item) => {
                                         <div className={styles['checkout-item-details']}>
                                             <div className={styles['checkout-item-details-left']}>
                                                 <span>
-                                                    <h3>{item.label}</h3>
+                                                    <h3>{ item.label }</h3>
                                                     <h4>₱{parseFloat(item.price).toLocaleString('en-PH', {
                                                         minimumFractionDigits: 2,
                                                         maximumFractionDigits: 2
@@ -219,22 +219,30 @@ const subtotal = selectedCartItems?.reduce((sum, item) => {
                         />
                     </div>
 
-                    {/* Order Summary */}
-                    <div className={styles['order-summary']}>
-                        <div className={ styles['checkout-section-header'] }>
-                            <h2>Order Summary</h2>
-                        </div>
-                        <div className={styles['summary-line']}>
-                            <span>Subtotal ({selectedCartItems.length} items)</span>
-                            <span>₱{subtotal.toLocaleString()}</span>
-                        </div>
-                        <div className={styles['summary-line']}>
-                            <span>Shipping Fee</span>
-                            <span>Free</span>
-                        </div>
-                        <div className={styles['summary-total']}>
-                            <span>Total</span>
-                            <span>₱{total.toLocaleString()}</span>
+                    <div className={ styles['summary'] }>
+                        <h2>Order Summary</h2>
+                        <div className={ styles['summary-wrapper'] }>
+                            <span>
+                                <div className={ styles['summary-item'] }>
+                                    <h3>Subtotal ({selectedCartItems.length} items)</h3>
+                                    <h3>₱{ subtotal.toLocaleString('en-PH', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}</h3>
+                                </div>
+                                <div className={styles['summary-item']}>
+                                    <h3>Shipping Fee</h3>
+                                    <h3>Free</h3>
+                                </div>
+                            </span>
+                            <div className={ styles['divider'] }></div>
+                            <div className={styles['summary-item-total']}>
+                                <h3>Total</h3>
+                                <h3>₱{ total.toLocaleString('en-PH', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}</h3>
+                            </div>
                         </div>
                         
                         <Button

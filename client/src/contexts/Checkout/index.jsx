@@ -27,14 +27,19 @@ export const CheckoutProvider = ({ children }) => {
 
         try {
             setLoading(true);
-            const response = await fetch(`/api/orders/${user.id}`);
             
+            const response = await fetch(`/api/orders/${ user.id }`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
             if (!response.ok) {
                 throw new Error('Failed to fetch orders');
             }
             
             const data = await response.json();
             setOrders(data);
+
         } catch (err) {
             console.error("Failed to fetch orders:", err);
             showToast("Failed to load orders", "error");
