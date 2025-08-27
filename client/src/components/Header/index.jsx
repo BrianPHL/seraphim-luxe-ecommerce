@@ -89,6 +89,10 @@ const Header = () => {
                                         action: () => { navigate('/profile') },
                                     },
                                     {
+                                        label: 'Orders',
+                                        action: () => { navigate('/orders') },
+                                    },
+                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
