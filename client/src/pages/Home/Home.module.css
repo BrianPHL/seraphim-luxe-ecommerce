@@ -101,17 +101,16 @@
 }
 
 
-.motorcycles {
+.collections {
     flex-direction: column;
     display: flex;
     gap: 4rem;
 }
 
-.motorcycles-banner {
-    /* background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/v1746275497/motorcycles-banner_v55w0m.webp'); */
+.collections-banner {
+    /* background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/v1746275497/collections-banner_v55w0m.webp'); */
     background-position: center;
     background-repeat: no-repeat;
-    justify-content: center;
     background-size: 100%;
     border-radius: 0.5rem;
     align-items: center;
@@ -121,18 +120,18 @@
     border: 1px solid var(--bg-outline);
 }
 
-.motorcycles-header {
+.collections-header {
     justify-content: space-between;
     align-items: flex-start;
     display: flex;
     gap: 0.5rem;
 }
 
-.motorcycles-header-btn {
+.collections-header-btn {
     flex-shrink: 0;
 }
 
-.motorcycles-header-info {
+.collections-header-info {
     flex-direction: column;
     display: flex;
     gap: 0.5rem;
@@ -148,7 +147,7 @@
     }
 }
 
-.motorcycles-container {
+.collections-container {
     justify-content: center;
     flex-wrap: wrap;
     display: flex;

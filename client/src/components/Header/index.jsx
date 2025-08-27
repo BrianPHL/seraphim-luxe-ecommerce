@@ -19,15 +19,7 @@ const Header = () => {
     return (
         <>
             <div className={ styles['desktop-header'] }>
-                <div className={ styles['left'] }>
-                    <Logo />
-                    <Anchor
-                        label="About"
-                        link="/about-us"
-                        isNested={ false }
-                        isActive={ pathname === '/about-us' }
-                    />
-                </div>
+                <Logo />
                 <div className={ styles['right'] }>
                     <div className={ styles['nav'] }>
                         <Anchor
@@ -37,16 +29,16 @@ const Header = () => {
                             isActive={ pathname === '/' }
                         />
                         <Anchor
-                            label="Motorcycles"
-                            link="/motorcycles"
+                            label="About us"
+                            link="/about-us"
                             isNested={ false }
-                            isActive={ pathname === '/motorcycles' }
+                            isActive={ pathname === '/about-us' }
                         />
                         <Anchor
-                            label="Parts & Accessories"
-                            link="/parts-and-accessories"
+                            label="Our Collections"
+                            link="/collections"
                             isNested={ false }
-                            isActive={ pathname === '/parts-and-accessories' }
+                            isActive={ pathname === '/collections' }
                         />
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
@@ -340,7 +332,7 @@ const Header = () => {
                     </span>
                     <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
                         <Anchor
-                            label="About"
+                            label="About us"
                             link="/about-us"
                             isNested={ true }
                             isActive={ pathname === '/about-us' }
@@ -349,19 +341,10 @@ const Header = () => {
                     </span>
                     <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
                         <Anchor
-                            label="Motorcycles"
-                            link="/motorcycles"
+                            label="Our Collections"
+                            link="/collections"
                             isNested={ true }
-                            isActive={ pathname === '/motorcycles' }
-                            externalStyles={ styles['mobile-nav-anchor'] }
-                        />
-                    </span>
-                    <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
-                        <Anchor
-                            label="Parts & Accessories"
-                            link="/parts-and-accessories"
-                            isNested={ true }
-                            isActive={ pathname === '/parts-and-accessories' }
+                            isActive={ pathname === '/collections' }
                             externalStyles={ styles['mobile-nav-anchor'] }
                         />
                     </span>

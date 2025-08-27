@@ -109,6 +109,7 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
     useEffect(() => {
         setIsOutOfStock(stock_quantity <= 0);
         setIsLowStock(stock_quantity > 0 && stock_quantity <= 5);
+        console.log(image_url);
     }, [stock_quantity]);
 
     return (
@@ -126,7 +127,7 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
                 )}
                 <img
                     className={ styles['product-img'] }
-                    src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ image_url }` }
+                    src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${ image_url }` }
                     alt={ `${ label }. Price: ${ price }` } />
                 <div className={ styles['divider'] }></div>
                 <div className={ styles['details'] }>
@@ -138,11 +139,7 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
                     <Button
                         type='icon'
                         icon='fa-solid fa-square-arrow-up-right'
-                        action={ () => {
-                            category.toLowerCase() === 'motorcycles'
-                            ? navigate(`/motorcycles/${ id }`)
-                            : navigate(`/parts-and-accessories/${ id }`)
-                        }}
+                        action={ () => navigate(`/collections/${ id }`) }
                     />
                 </div>
                 <div className={ styles['divider'] }></div>

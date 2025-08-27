@@ -15,12 +15,12 @@ const Checkout = () => {
     const [notes, setNotes] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-    useEffect(() => {
-        if (!selectedCartItems || selectedCartItems.length === 0) {
-            showToast('No items selected for checkout', 'error');
-            navigate('/cart');
-        }
-    }, [selectedCartItems, navigate, showToast]);
+    // useEffect(() => {
+    //     if (!selectedCartItems || selectedCartItems.length === 0) {
+    //         showToast('No items selected for checkout', 'error');
+    //         navigate('/cart');
+    //     }
+    // }, [selectedCartItems, navigate, showToast]);
 
     const subtotal = selectedCartItems?.reduce((sum, item) => {
         const price = parseFloat(item.price) || 0;
@@ -136,7 +136,7 @@ const Checkout = () => {
                                 <div key={item.product_id} className={styles['checkout-item']}>
                                     <div className={styles['checkout-item-content']}>
                                         <img
-                                            src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
+                                            src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url}`}
                                             alt={`${item.label}. Price: ${item.price}`}
                                         />
                                         <div className={styles['checkout-item-details']}>

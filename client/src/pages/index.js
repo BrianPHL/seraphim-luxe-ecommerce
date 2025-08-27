@@ -8,6 +8,6 @@ export { default as Reservations } from "./Reservations";
 export { default as Profile } from "./Profile";
 export { default as NotFound } from "./NotFound";
 
-export * from './Motorcycles';
+export * from './Collections';
 export * from './PartsAndAccessories';
 export * from './Admin';

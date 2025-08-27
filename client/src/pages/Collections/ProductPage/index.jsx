@@ -38,7 +38,7 @@ const ProductPage = () => {
                 setIsLowStock(foundProduct['stock_quantity'] > 0 && foundProduct['stock_quantity'] <= 5);
             } else {
                 showToast('Product not found!', 'error');
-                navigate('/motorcycles');
+                navigate('/collections');
             }
             
             setLoading(false);
@@ -137,7 +137,7 @@ const ProductPage = () => {
                 <div className={ styles['product'] }>
                     <div className={ styles['product-image'] }>
                         <img
-                            src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ product['image_url'] }` }
+                            src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${ product['image_url'] }` }
                             alt={ `${ product['label'] }. Price: ${ product['price'] }` } 
                         />
                     </div>

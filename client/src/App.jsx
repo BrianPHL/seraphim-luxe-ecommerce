@@ -4,7 +4,7 @@ import { Header, Footer, OTPModal } from '@components';
 import { useAuth } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Checkout, NotFound } from '@pages';
-import { Store as MotorcyclesStore, ProductPage as MotorcyclesProductPage } from '@pages/Motorcycles';
+import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
 import { AdminLayout, AdminDashboard, AdminProducts, AdminReservations, AdminStocks, AdminInstallments } from '@pages/Admin';
 
@@ -13,7 +13,7 @@ const PAGE_TITLES = {
 	"/sign-in": "Seraphim Luxe | Sign In",
 	"/sign-up": "Seraphim Luxe | Sign Up",
 	"/about-us": "Seraphim Luxe | About Us",
-	"/motorcycles": "Seraphim Luxe | Motorcycles",
+	"/collections": "Seraphim Luxe | Collections",
 	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
 	"/reservations": "Seraphim Luxe | Reservations",
 	"/cart": "Seraphim Luxe | Cart",
@@ -55,27 +55,15 @@ const App = () => {
                     </ProtectedRoute>
                 } />
                 
-                <Route path="/motorcycles" element={
+                <Route path="/collections" element={
                     <ProtectedRoute>
-                        <MotorcyclesStore />
+                        <CollectionsStore />
                     </ProtectedRoute>
                 } />
                 
-                <Route path="/motorcycles/:product_id" element={
+                <Route path="/collections/:product_id" element={
                     <ProtectedRoute>
-                        <MotorcyclesProductPage />
-                    </ProtectedRoute>
-                } />
-                
-                <Route path="/parts-and-accessories" element={
-                    <ProtectedRoute>
-                        <PartsAndAccessoriesStore />
-                    </ProtectedRoute>
-                } />
-                
-                <Route path="/parts-and-accessories/:product_id" element={
-                    <ProtectedRoute>
-                        <PartsAndAccessoriesProductPage />
+                        <CollectionsProductPage />
                     </ProtectedRoute>
                 } />
 

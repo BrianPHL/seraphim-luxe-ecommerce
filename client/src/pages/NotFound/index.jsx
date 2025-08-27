@@ -25,7 +25,7 @@ const NotFound = () => {
                     <Button
                         type='secondary'
                         label='Explore our Motorcycles'
-                        action={ () => navigate('/motorcycles') }
+                        action={ () => navigate('/collections') }
                     />
                     <Button
                         type='secondary'

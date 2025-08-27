@@ -11,7 +11,15 @@ const Store = () => {
     const queryPage = parseInt(searchParams.get('page') || '1', 10);
     const querySort = searchParams.get('sort') || 'Sort by: Price (Low to High)';
     const querySearch = searchParams.get('search') || '';
+    const queryCategory = searchParams.get('category') || '';
+    const querySubcategory = searchParams.get('subcategory') || '';
     const ITEMS_PER_PAGE = 10;
+    
+    const jewelryCategories = ['jewelry', 'Male', 'Unisex'];
+    const filteredProducts = products.filter(product => 
+        jewelryCategories.includes(product.category)
+    );
+
     const {
         sortedProducts,
         categoryProducts,
@@ -23,7 +31,8 @@ const Store = () => {
         handleSearchSubmit,
         setSearchInput,
         setSearchQuery
-    } = useProductFilter(products, 'Motorcycles', querySort, querySearch);
+    } = useProductFilter(filteredProducts, 'Collections', querySort, querySearch);
+    
     const {
         currentPage,
         totalPages,
@@ -31,17 +40,19 @@ const Store = () => {
         handlePageChange,
         resetPagination
     } = usePagination(sortedProducts, ITEMS_PER_PAGE, queryPage);
-    const updateSearchParams = ({ page, sort, search }) => {
-        
+    
+    const updateSearchParams = ({ page, sort, search, category, subcategory }) => {
         const params = new URLSearchParams(searchParams);
 
         if (page !== undefined) params.set('page', page);
         if (sort !== undefined) params.set('sort', sort);
         if (search !== undefined) params.set('search', search);
+        if (category !== undefined) params.set('category', category);
+        if (subcategory !== undefined) params.set('subcategory', subcategory);
 
         setSearchParams(params);
-
     };
+    
     const handleSortChange = (sort) => {
         onSortChange(sort);
         updateSearchParams({ sort, page: 1 });
@@ -56,6 +67,23 @@ const Store = () => {
         handlePageChange(page);
         updateSearchParams({ page });
     };
+
+    useEffect(() => {
+        let filtered = sortedProducts;
+        
+        if (queryCategory) {
+            filtered = filtered.filter(product => 
+                product.category.toLowerCase() === queryCategory.toLowerCase()
+            );
+        }
+        
+        if (querySubcategory) {
+            filtered = filtered.filter(product => 
+                product.subcategory.toLowerCase() === querySubcategory.toLowerCase()
+            );
+        }
+
+    }, [queryCategory, querySubcategory, sortedProducts]);
     
     return (
         <div className={ styles['wrapper'] }>
@@ -64,10 +92,10 @@ const Store = () => {
                 <ReturnButton />
             </span>
 
-            <h2>Find Your Perfect Ride</h2>
+            <h2>Our Perfectly Curated Collection</h2>
             
             <TableHeader
-                tableName='motorcycles'
+                tableName='collections'
                 currentPage={ currentPage }
                 totalPages={ totalPages }
                 resultsLabel={ `Showing ${ paginatedProducts['length'] } out of ${ categoryProducts['length'] } results` }
@@ -97,18 +125,16 @@ const Store = () => {
                 ) : (
                     <>
                         { paginatedProducts.map(product => (
-                            <>
-                                <ProductCard
-                                    key={ product['id'] }
-                                    id={ product['id'] }
-                                    category={ product['category'] }
-                                    subcategory={ product['subcategory'] }
-                                    image_url={ product['image_url'] }
-                                    label={ product['label'] }
-                                    price={ product['price'] }
-                                    stock_quantity={ product['stock_quantity'] }
-                                />
-                            </>
+                            <ProductCard
+                                key={ product['id'] }
+                                id={ product['id'] }
+                                category={ product['category'] }
+                                subcategory={ product['subcategory'] }
+                                image_url={ product['image_url'] }
+                                label={ product['label'] }
+                                price={ product['price'] }
+                                stock_quantity={ product['stock_quantity'] }
+                            />
                         ))}
                     </>
                 )}

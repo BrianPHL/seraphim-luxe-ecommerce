@@ -8,8 +8,7 @@ const Home = () => {
 
     const navigate = useNavigate();
     const { products, loading } = useProducts();
-    const [ featuredMotorcycles, setFeaturedMotorcycles ] = useState([]);
-    const [ featuredPartsAndAccessories, setfeaturedPartsAndAccessories ] = useState([]);
+    const [ featuredCollections, setFeaturedCollections ] = useState([]);
 
     // * Fisher-Yates Shuffle Algorithm
     // * https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
@@ -26,17 +25,14 @@ const Home = () => {
     }
 
     useEffect(() => {
-
         if (products && products['length'] > 0) {
 
-            const motorcycles = products['filter'](product => product['category'] === 'Motorcycles');
-            const randomMotorcycles = shuffleArray(motorcycles)['slice'](0, 5);
-            const partsAndAccessories = products['filter'](product => product['category'] !== 'Motorcycles');
-            const randomPartsAndAccessories = shuffleArray(partsAndAccessories)['slice'](0, 5);
+            const collections = products['filter'](product => 
+                ['jewelry', 'Male', 'Unisex'].includes(product['category'])
+            );
+            const randomCollections = shuffleArray(collections)['slice'](0, 5);
 
-            setFeaturedMotorcycles(randomMotorcycles);
-            setfeaturedPartsAndAccessories(randomPartsAndAccessories);
-
+            setFeaturedCollections(randomCollections);
         }
 
     }, [ products ]);
@@ -62,15 +58,19 @@ const Home = () => {
                                 <Button
                                     id='hero-browse-inventory-1'
                                     type='secondary'
-                                    label='Browse our Inventory'
+                                    label='Browse our Collections'
                                     options={[
                                         {
-                                            label: 'Motorcycles',
-                                            link: '/motorcycles'
+                                            label: 'Female',
+                                            link: '/collections?category=Female'
                                         },
                                         {
-                                            label: 'Parts & Accessories',
-                                            link: '/parts-and-accessories'
+                                            label: 'Male',
+                                            link: '/collections?category=Male'
+                                        },
+                                        {
+                                            label: 'Unisex',
+                                            link: '/collections?category=Unisex'
                                         }
                                     ]}
                                 />
@@ -85,31 +85,35 @@ const Home = () => {
                 </div>
                 <div className={ styles['hero'] }>
                     <div className={ styles['hero-left'] }>
-                        <h5>Accessories</h5>
+                        <h5>Jewelry Collections</h5>
                         <div className={ styles['hero-left-info'] }>
                             <div className={ styles['hero-left-info-text'] }>
-                                <h2>Elevate Your Style With Premium Accessories</h2>
-                                <h3>Discover versatile pieces and statement accessories that enhance both form and personal expression.</h3>
+                                <h2>Discover Timeless Elegance</h2>
+                                <h3>Explore our curated selection of necklaces, earrings, and bracelets for every style and occasion.</h3>
                             </div>
                             <div className={ styles['hero-left-info-ctas'] }>
                                 <Button
                                     type='primary'
-                                    label='Shop Parts Now'
-                                    action={ () => { navigate('/parts-and-accessories') } }
+                                    label='Shop Collections'
+                                    action={ () => { navigate('/collections') } }
                                 />
                                 <h5>or</h5>
                                 <Button
                                     id='hero-browse-inventory-2'
                                     type='secondary'
-                                    label='View Top Categories'
+                                    label='View by Category'
                                     options={[
                                         {
-                                            label: 'Engine Components',
-                                            link: '/parts-and-accessories'
+                                            label: 'Necklaces',
+                                            link: '/collections?subcategory=Necklace'
                                         },
                                         {
-                                            label: 'Safety Gear',
-                                            link: '/parts-and-accessories'
+                                            label: 'Earrings',
+                                            link: '/collections?subcategory=Earrings'
+                                        },
+                                        {
+                                            label: 'Bracelets',
+                                            link: '/collections?subcategory=Bracelet'
                                         }
                                     ]}
                                 />
@@ -144,11 +148,11 @@ const Home = () => {
                                     options={[
                                         {
                                             label: 'Best Sellers',
-                                            link: '/motorcycles'
+                                            link: '/collections'
                                         },
                                         {
                                             label: 'New Arrivals',
-                                            link: '/parts-and-accessories'
+                                            link: '/collections?sort=newest'
                                         }
                                     ]}
                                 />
@@ -162,68 +166,42 @@ const Home = () => {
                     <div className={` ${ styles['hero-banner'] } ${ styles['hero-banner-third'] } `}></div>
                 </div>
             </Carousel>
-            <div className={ styles['motorcycles'] }>
-                <div className={ styles['motorcycles-banner'] }></div>
-                <div className={ styles['motorcycles-header'] }>
-                    <div className={ styles['motorcycles-header-info'] }>
-                        <h2>Top Picks for Riders</h2>
+            <div className={ styles['collections'] }>
+                <div className={ styles['collections-banner'] }></div>
+                <div className={ styles['collections-header'] }>
+                    <div className={ styles['collections-header-info'] }>
+                        <h2>Top Picks for Style Enthusiasts</h2>
                         <div className={ styles['highlight-divider'] }></div>
                         <h3>Check out our most popular jewelry pieces, handpicked for elegance and versatility.</h3>
                     </div>
                     <Button
                         type='primary'
-                        label='Browse More Motorcycles'
+                        label='Browse More Collections'
                         icon='fa-solid fa-long-arrow-right'
                         iconPosition='right'
-                        externalStyles={ styles['motorcycles-header-btn'] }
-                        action={ () => { navigate('/motorcycles') } }
+                        externalStyles={ styles['collections-header-btn'] }
+                        action={ () => { navigate('/collections') } }
                     />
                 </div>
-                <div className={ styles['motorcycles-container'] }>
-                    { featuredMotorcycles.map((motorcycle) => (
-                        <ProductCard
-                            key={ motorcycle['id'] }
-                            id={ motorcycle['id'] }
-                            category={ motorcycle['category'] }
-                            subcategory={ motorcycle['subcategory'] }
-                            image_url={ motorcycle['image_url'] }
-                            label={ motorcycle['label'] }
-                            price={ motorcycle['price'] }
-                            stock_quantity={ motorcycle['stock_quantity'] }
-                        />
-                    ))}
-                </div>
-            </div>
-            <div className={ styles['parts'] }>
-                <div className={ styles['parts-banner'] }></div>
-                <div className={ styles['parts-header'] }>
-                    <div className={ styles['parts-header-info'] }>
-                        <h2>Essential Accessories. Premium Quality. Timeless Style.</h2>
-                        <div className={ styles['highlight-divider'] }></div>
-                        <h3>Because every individual deserves the best. Discover versatile accessories and statement pieces made for self-expression.</h3>
-                    </div>
-                    <Button
-                        type='primary'
-                        label='Browse More Parts & Accessories'
-                        icon='fa-solid fa-long-arrow-right'
-                        iconPosition='right'
-                        externalStyles={ styles['parts-header-btn'] }
-                        action={ () => { navigate('/parts-and-accessories') } }
-                    />
-                </div>
-                <div className={ styles['parts-container'] }>
-                    { featuredPartsAndAccessories.map((partsAndAccessories) => (
-                        <ProductCard
-                            key={ partsAndAccessories['id'] }
-                            id={ partsAndAccessories['id'] }
-                            category={ partsAndAccessories['category'] }
-                            subcategory={ partsAndAccessories['subcategory'] }
-                            image_url={ partsAndAccessories['image_url'] }
-                            label={ partsAndAccessories['label'] }
-                            price={ partsAndAccessories['price'] }
-                            stock_quantity={ partsAndAccessories['stock_quantity'] }
-                        />
-                    ))}
+                <div className={ styles['collections-container'] }>
+                    { featuredCollections.length > 0 ? (
+                        featuredCollections.map((collection) => (
+                            <ProductCard
+                                key={ collection['id'] }
+                                id={ collection['id'] }
+                                category={ collection['category'] }
+                                subcategory={ collection['subcategory'] }
+                                image_url={ collection['image_url'] }
+                                label={ collection['label'] }
+                                price={ collection['price'] }
+                                stock_quantity={ collection['stock_quantity'] }
+                            />
+                        ))
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '2rem' }}>
+                            <p>No featured collections available at the moment.</p>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className={ styles['trust'] }>
@@ -234,82 +212,20 @@ const Home = () => {
                 </div>
                 <div className={ styles['trust-container'] }>
                     <div className={ styles['trust-container-card'] }>
-                        <i className='fa-solid fa-gem'></i>
-                        <div className={ styles['trust-container-card-header'] }>
-                            <h2>Wide Selection of Unisex Jewelry</h2>
-                            <div className={ styles['highlight-divider'] }></div>
-                            <h3>From everyday elegance to statement pieces, we have something for every style preference.</h3>
-                        </div>
-                        <div className={ styles['trust-container-card-details'] }>
-                            <div className={ styles['trust-container-card-details-info'] }>
-                                <i className='fa-solid fa-check'></i>
-                                <h4>Multiple Styles Available</h4>
-                            </div>
-                            <div className={ styles['trust-container-card-details-info'] }>
-                                <i className='fa-solid fa-check'></i>
-                                <h4>Trusted Local & International Designers</h4>
-                            </div>
-                        </div>
+                        <i className='fa-solid fa-truck'></i>
+                        <h3>Fast Delivery</h3>
+                        <p>Get your accessories delivered quickly and securely anywhere in the Philippines.</p>
                     </div>
                     <div className={ styles['trust-container-card'] }>
-                        <i className='fa-solid fa-shopping-bag'></i>
-                        <div className={ styles['trust-container-card-header'] }>
-                            <h2>Premium Quality Accessories</h2>
-                            <div className={ styles['highlight-divider'] }></div>
-                            <h3>Only the best and most durable accessories to keep your style fresh and timeless.</h3>
-                        </div>
-                        <div className={ styles['trust-container-card-details'] }>
-                            <div className={ styles['trust-container-card-details-info'] }>
-                                <i className='fa-solid fa-check'></i>
-                                <h4>Rigorously Quality Tested</h4>
-                            </div>
-                            <div className={ styles['trust-container-card-details-info'] }>
-                                <i className='fa-solid fa-check'></i>
-                                <h4>Sourced from Trusted Artisans</h4>
-                            </div>
-                        </div>
+                        <i className='fa-solid fa-star'></i>
+                        <h3>Quality Guaranteed</h3>
+                        <p>Every piece is carefully selected and quality-tested for durability and style.</p>
                     </div>
                     <div className={ styles['trust-container-card'] }>
-                        <i className='fa-solid fa-heart'></i>
-                        <div className={ styles['trust-container-card-header'] }>
-                            <h2>Trusted by Thousands of Customers</h2>
-                            <div className={ styles['highlight-divider'] }></div>
-                            <h3>With excellent customer satisfaction, we are the go-to destination for style enthusiasts across the country.</h3>
-                        </div>
-                        <div className={ styles['trust-container-card-details'] }>
-                            <div className={ styles['trust-container-card-details-info'] }>
-                                <i className='fa-solid fa-check'></i>
-                                <h4>98% Positive Feedback</h4>
-                            </div>
-                            <div className={ styles['trust-container-card-details-info'] }>
-                                <i className='fa-solid fa-check'></i>
-                                <h4>5,000+ Happy Customers</h4>
-                            </div>
-                        </div>
+                        <i className='fa-solid fa-headset'></i>
+                        <h3>Expert Support</h3>
+                        <p>Our team is ready to help you find the perfect pieces for your unique style.</p>
                     </div>
-                </div>
-                <div className={ styles['trust-ctas'] }>
-                    <Button
-                        type='primary'
-                        label='Shop Now'
-                        action={ () => { navigate('/jewelry') } }
-                    />
-                    <h5>or</h5>
-                    <Button
-                        id='hero-browse-inventory-4'
-                        type='secondary'
-                        label='Browse our Collection'
-                        options={[
-                            {
-                                label: 'Jewelry',
-                                link: '/jewelry'
-                            },
-                            {
-                                label: 'Accessories',
-                                link: '/accessories'
-                            }
-                        ]}
-                    />
                 </div>
             </div>
         </div>

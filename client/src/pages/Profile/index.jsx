@@ -764,7 +764,7 @@ const Profile = ({}) => {
                                                             }}
                                                         > 
                                                             <span>
-                                                                <img src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${ product['image_url'] }`} alt="" />
+                                                                <img src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products${ product['image_url'] }`} alt="" />
                                                                 <div className={ styles['info-reservation-list-item-product-details'] }>
                                                                     <span>
                                                                         <h3>{ product['label'] }</h3>

@@ -3,7 +3,7 @@ import styles from './TableHeader.module.css';
 
 const TableHeader = ({ tableName, currentPage, totalPages, resultsLabel, sortLabel, searchValue, onPageChange, onSortChange, onSearchChange, onSearchSubmit }) => {
 
-    if (tableName !== 'motorcycles' && tableName !== 'parts-and-accessories' && tableName !== 'products' && tableName !== 'reservations' && tableName !== 'installments') return null;
+    if (tableName !== 'collections' && tableName !== 'products' && tableName !== 'installments') return null;
     if (currentPage === undefined || totalPages === undefined || !onPageChange) return null;
 
     const pageNumbers = [];
@@ -74,10 +74,8 @@ const TableHeader = ({ tableName, currentPage, totalPages, resultsLabel, sortLab
 
     const getSearchPlaceholder = () => {
         switch (tableName) {
-            case 'reservations':
-                return 'Search for reservations...';
-            case 'motorcycles':
-                return 'Search for motorcycles...';
+            case 'collections':
+                return 'Search for jewelry, accessories, earrings, etc...';
             case 'products':
                 return 'Search for products...';
             case 'installments':
