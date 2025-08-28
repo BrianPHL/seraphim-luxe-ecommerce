@@ -412,6 +412,30 @@
     }
 }
 
+.input-error {
+    color: var(--error-foreground);
+    font-size: 0.95em;
+    margin-top: 4px;
+}
+
+.input-wrapper :global(.input-field-error) {
+    border: var(--error-foreground) !important;
+}
+
+.input-wrapper :global(.input-field-error:focus) {
+    border-color: var(--error-foreground) !important;
+
+}
+
+.input-wrapper.has-error input {
+    border: 2px solid var(--error-foreground)!important;
+}
+
+.input-wrapper.has-error input:focus {
+    border-color: var(--error-foreground) !important;
+    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2) !important;
+}
+
 .divider-vertical {
     background-color: var(--bg-outline);
     align-self: stretch;

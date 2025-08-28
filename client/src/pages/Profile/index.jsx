@@ -35,7 +35,7 @@ const Profile = ({}) => {
             state: '',
             postal_code: '',
             country: 'Philippines',
-            same_as_shipping: true
+            same_as_shipping: false // <-- set to false
         }
     });
     const [ passwordInfo, setPasswordInfo ] = useState({
@@ -55,6 +55,8 @@ const Profile = ({}) => {
     const [ validationErrors, setValidationErrors ] = useState({});
     const [ isShippingAddressChanged, setIsShippingAddressChanged ] = useState(false);
     const [ isBillingAddressChanged, setIsBillingAddressChanged ] = useState(false);
+    const [ shippingAddressErrors, setShippingAddressErrors] = useState({});
+    const [ billingAddressErrors, setBillingAddressErrors] = useState({});
 
     const handleFileChange = (event) => {
         
@@ -176,6 +178,9 @@ const Profile = ({}) => {
     };
 
     const updateShippingAddress = async () => {
+        if (!validateShippingAddress()) {
+            return; // Just return without showing toast
+        }
         const result = await updateAddressAPI({
             type: 'shipping',
             address: addressInfo.shipping_address
@@ -190,6 +195,9 @@ const Profile = ({}) => {
     };
 
     const updateBillingAddress = async () => {
+        if (!validateBillingAddress()) {
+            return; // Just return without showing toast
+        }
         const result = await updateAddressAPI({
             type: 'billing',
             address: addressInfo.billing_address
@@ -303,6 +311,42 @@ const Profile = ({}) => {
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
     };
+    const validateShippingAddress = () => {
+        const errors = {};
+        if (!addressInfo.shipping_address.street.trim()) {
+            errors.street = 'Street address is required';
+        }
+        if (!addressInfo.shipping_address.city.trim()) {
+            errors.city = 'City is required';
+        }
+        if (!addressInfo.shipping_address.state.trim()) {
+            errors.state = 'State/Province is required';
+        }
+        if (!addressInfo.shipping_address.postal_code.trim()) {
+            errors.postal_code = 'Postal code is required';
+        }
+        setShippingAddressErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+    const validateBillingAddress = () => {
+        const errors = {};
+        if (!addressInfo.billing_address.same_as_shipping) {
+            if (!addressInfo.billing_address.street.trim()) {
+                errors.street = 'Street address is required';
+            }
+            if (!addressInfo.billing_address.city.trim()) {
+                errors.city = 'City is required';
+            }
+            if (!addressInfo.billing_address.state.trim()) {
+                errors.state = 'State/Province is required';
+            }
+            if (!addressInfo.billing_address.postal_code.trim()) {
+                errors.postal_code = 'Postal code is required';
+            }
+        }
+        setBillingAddressErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     useEffect(() => {
         if (user) {
@@ -329,7 +373,7 @@ const Profile = ({}) => {
                     state: user.billing_state || '',
                     postal_code: user.billing_postal_code || '',
                     country: 'Philippines',
-                    same_as_shipping: user.billing_same_as_shipping ?? true
+                    same_as_shipping: false // <-- always false on load
                 }
             });
         }
@@ -493,7 +537,7 @@ const Profile = ({}) => {
                         </section>
                         <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-address-general'] }>
-                            <h2>Address Information</h2>
+                            <h2> Home Address</h2>
                             <div className={ styles['inputs-container'] }>
                                 <div className={ styles['input-wrapper'] }>
                                     <label htmlFor="general_address">Address</label>
@@ -537,7 +581,7 @@ const Profile = ({}) => {
                             <h2>Shipping Address</h2>
                             <div className={ styles['inputs-container'] }>
                                 <div className={ styles['inputs-wrapper'] }>
-                                    <div className={ styles['input-wrapper'] }>
+                                    <div className={`${styles['input-wrapper']} ${shippingAddressErrors.street ? styles['has-error'] : ''}`}>
                                         <label htmlFor="shipping_street">Street Address</label>
                                         <InputField
                                             value={ addressInfo.shipping_address.street }
@@ -545,9 +589,14 @@ const Profile = ({}) => {
                                             hint='Your street address...'
                                             type='text'
                                             isSubmittable={ false }
+                                            error={ shippingAddressErrors.street }
+                                            hasError={ !!shippingAddressErrors.street }
                                         />
+                                        {shippingAddressErrors.street && (
+                                            <div className={ styles['input-error'] }>{shippingAddressErrors.street}</div>
+                                        )}
                                     </div>
-                                    <div className={ styles['input-wrapper'] }>
+                                    <div className={`${styles['input-wrapper']} ${shippingAddressErrors.city ? styles['has-error'] : ''}`}>
                                         <label htmlFor="shipping_city">City</label>
                                         <InputField
                                             value={ addressInfo.shipping_address.city }
@@ -555,11 +604,16 @@ const Profile = ({}) => {
                                             hint='Your city...'
                                             type='text'
                                             isSubmittable={ false }
+                                            error={ shippingAddressErrors.city }
+                                            hasError={ !!shippingAddressErrors.city }
                                         />
+                                        {shippingAddressErrors.city && (
+                                            <div className={ styles['input-error'] }>{shippingAddressErrors.city}</div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className={ styles['inputs-wrapper'] }>
-                                    <div className={ styles['input-wrapper'] }>
+                                    <div className={`${styles['input-wrapper']} ${shippingAddressErrors.state ? styles['has-error'] : ''}`}>
                                         <label htmlFor="shipping_state">State/Province</label>
                                         <InputField
                                             value={ addressInfo.shipping_address.state }
@@ -567,9 +621,14 @@ const Profile = ({}) => {
                                             hint='Your state or province...'
                                             type='text'
                                             isSubmittable={ false }
+                                            error={ shippingAddressErrors.state }
+                                            hasError={ !!shippingAddressErrors.state }
                                         />
+                                        {shippingAddressErrors.state && (
+                                            <div className={ styles['input-error'] }>{shippingAddressErrors.state}</div>
+                                        )}
                                     </div>
-                                    <div className={ styles['input-wrapper'] }>
+                                    <div className={`${styles['input-wrapper']} ${shippingAddressErrors.postal_code ? styles['has-error'] : ''}`}>
                                         <label htmlFor="shipping_postal">Postal Code</label>
                                         <InputField
                                             value={ addressInfo.shipping_address.postal_code }
@@ -577,7 +636,12 @@ const Profile = ({}) => {
                                             hint='Your postal code...'
                                             type='text'
                                             isSubmittable={ false }
+                                            error={ shippingAddressErrors.postal_code }
+                                            hasError={ !!shippingAddressErrors.postal_code }
                                         />
+                                        {shippingAddressErrors.postal_code && (
+                                            <div className={ styles['input-error'] }>{shippingAddressErrors.postal_code}</div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className={ styles['info-address-ctas'] }>
@@ -624,7 +688,7 @@ const Profile = ({}) => {
                                 {!addressInfo.billing_address.same_as_shipping && (
                                     <>
                                         <div className={ styles['inputs-wrapper'] }>
-                                            <div className={ styles['input-wrapper'] }>
+                                            <div className={`${styles['input-wrapper']} ${billingAddressErrors.street ? styles['has-error'] : ''}`}>
                                                 <label htmlFor="billing_street">Street Address</label>
                                                 <InputField
                                                     value={ addressInfo.billing_address.street }
@@ -632,9 +696,14 @@ const Profile = ({}) => {
                                                     hint='Your billing street address...'
                                                     type='text'
                                                     isSubmittable={ false }
+                                                    error={ billingAddressErrors.street }
+                                                    hasError={ !!billingAddressErrors.street }
                                                 />
+                                                {billingAddressErrors.street && (
+                                                    <div className={ styles['input-error'] }>{billingAddressErrors.street}</div>
+                                                )}
                                             </div>
-                                            <div className={ styles['input-wrapper'] }>
+                                            <div className={`${styles['input-wrapper']} ${billingAddressErrors.city ? styles['has-error'] : ''}`}>
                                                 <label htmlFor="billing_city">City</label>
                                                 <InputField
                                                     value={ addressInfo.billing_address.city }
@@ -642,11 +711,17 @@ const Profile = ({}) => {
                                                     hint='Your billing city...'
                                                     type='text'
                                                     isSubmittable={ false }
+                                                    error={ billingAddressErrors.city }
+                                                    hasError={ !!billingAddressErrors.city }
+                                                    disabled={true}
                                                 />
+                                                {billingAddressErrors.city && (
+                                                    <div className={ styles['input-error'] }>{billingAddressErrors.city}</div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className={ styles['inputs-wrapper'] }>
-                                            <div className={ styles['input-wrapper'] }>
+                                            <div className={`${styles['input-wrapper']} ${billingAddressErrors.state ? styles['has-error'] : ''}`}>
                                                 <label htmlFor="billing_state">State/Province</label>
                                                 <InputField
                                                     value={ addressInfo.billing_address.state }
@@ -654,9 +729,14 @@ const Profile = ({}) => {
                                                     hint='Your billing state or province...'
                                                     type='text'
                                                     isSubmittable={ false }
+                                                    error={ billingAddressErrors.state }
+                                                    hasError={ !!billingAddressErrors.state }
                                                 />
+                                                {billingAddressErrors.state && (
+                                                    <div className={ styles['input-error'] }>{billingAddressErrors.state}</div>
+                                                )}
                                             </div>
-                                            <div className={ styles['input-wrapper'] }>
+                                            <div className={`${styles['input-wrapper']} ${billingAddressErrors.postal_code ? styles['has-error'] : ''}`}>
                                                 <label htmlFor="billing_postal">Postal Code</label>
                                                 <InputField
                                                     value={ addressInfo.billing_address.postal_code }
@@ -664,7 +744,12 @@ const Profile = ({}) => {
                                                     hint='Your billing postal code...'
                                                     type='text'
                                                     isSubmittable={ false }
+                                                    error={ billingAddressErrors.postal_code }
+                                                    hasError={ !!billingAddressErrors.postal_code }
                                                 />
+                                                {billingAddressErrors.postal_code && (
+                                                    <div className={ styles['input-error'] }>{billingAddressErrors.postal_code}</div>
+                                                )}
                                             </div>
                                         </div>
                                     </>
