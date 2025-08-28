@@ -30,8 +30,7 @@ export const auth = betterAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             redirectURI: "http://localhost:3000/api/auth/callback/google",
             prompt: "select_account",
-            disableImplicitSignUp: true
-            
+            disableImplicitSignUp: false
         },
     },
     plugins: [
