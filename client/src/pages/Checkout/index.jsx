@@ -8,24 +8,26 @@ const Checkout = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { selectedCartItems } = useCart();
-    const { createOrder, updateCheckoutData, checkoutData, loading } = useCheckout();
+    const { createOrder, updateCheckoutData, checkoutData, loading, directCheckoutItem } = useCheckout();
     const { showToast } = useToast();
 
     const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
     const [notes, setNotes] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-    // useEffect(() => {
-    //     if (!selectedCartItems || selectedCartItems.length === 0) {
-    //         showToast('No items selected for checkout', 'error');
-    //         navigate('/cart');
-    //     }
-    // }, [selectedCartItems, navigate, showToast]);
+    useEffect(() => {
 
-    const subtotal = selectedCartItems?.reduce((sum, item) => {
-        const price = parseFloat(item.price) || 0;
-        const quantity = parseInt(item.quantity) || 0;
-        return sum + (price * quantity);
+        console.log("isPlacingOrder: ", isPlacingOrder);
+        console.log("loading: ", loading);
+        console.log("directCheckoutItem: ", directCheckoutItem);
+        console.log("selectedCartItems: ", selectedCartItems);
+        console.log("checkoutItems: ", checkoutItems);
+
+    }, []);
+
+    const checkoutItems = directCheckoutItem ? [directCheckoutItem] : selectedCartItems;
+    const subtotal = checkoutItems?.reduce((sum, item) => {
+        return sum + (parseFloat(item.price) * parseInt(item.quantity));
     }, 0) || 0;
 
     const shippingFee = 0;
@@ -34,7 +36,7 @@ const Checkout = () => {
     const total = subtotal + shippingFee + tax - discount;
 
     const handlePlaceOrder = async () => {
-        if (!user || selectedCartItems.length === 0) return;
+        if (!user || checkoutItems.length === 0) return;
 
         if (!subtotal || subtotal <= 0 || isNaN(subtotal)) {
             showToast('Invalid order total. Please refresh and try again.', 'error');
@@ -48,7 +50,7 @@ const Checkout = () => {
             const shippingAddress = user.address;
                 
             const orderData = {
-                items: selectedCartItems.map(item => ({
+                items: checkoutItems.map(item => ({
                     product_id: parseInt(item.product_id),
                     quantity: parseInt(item.quantity),
                     price: parseFloat(item.price),
@@ -66,9 +68,9 @@ const Checkout = () => {
 
             const result = await createOrder(orderData);
             
-            if (result.success) {
-                navigate('/profile');
-            }
+            if (result.success)
+                navigate('/collections');
+
         } catch (err) {
             console.error("Error placing order:", err);
             showToast('Failed to place order. Please try again.', 'error');
@@ -77,7 +79,7 @@ const Checkout = () => {
         }
     };
 
-    if (!selectedCartItems || selectedCartItems.length === 0) {
+    if (!checkoutItems || checkoutItems.length === 0) {
         return <div>Loading...</div>;
     }
 
@@ -129,10 +131,10 @@ const Checkout = () => {
 
                     <div className={styles['checkout-section']}>
                         <div className={ styles['checkout-section-header'] }>
-                            <h2>Order Items ({selectedCartItems.length})</h2>
+                            <h2>Order Items ({checkoutItems.length})</h2>
                         </div>
                         <div className={styles['checkout-items']}>
-                            {selectedCartItems.map(item => (
+                            {checkoutItems.map(item => (
                                 <div key={item.product_id} className={styles['checkout-item']}>
                                     <div className={styles['checkout-item-content']}>
                                         <img
@@ -224,7 +226,7 @@ const Checkout = () => {
                         <div className={ styles['summary-wrapper'] }>
                             <span>
                                 <div className={ styles['summary-item'] }>
-                                    <h3>Subtotal ({selectedCartItems.length} items)</h3>
+                                    <h3>Subtotal ({checkoutItems.length} items)</h3>
                                     <h3>₱{ subtotal.toLocaleString('en-PH', {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2

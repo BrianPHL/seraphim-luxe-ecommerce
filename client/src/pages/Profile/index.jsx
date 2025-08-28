@@ -125,7 +125,6 @@ const Profile = ({}) => {
         const updatedShippingAddress = { ...addressInfo.shipping_address, [field]: value };
         setAddressInfo({ ...addressInfo, shipping_address: updatedShippingAddress });
         
-        // Check if shipping address has changed
         const hasChanged = 
             updatedShippingAddress.street !== (user?.shipping_street || '') ||
             updatedShippingAddress.city !== (user?.shipping_city || '') ||
@@ -138,7 +137,6 @@ const Profile = ({}) => {
         const updatedBillingAddress = { ...addressInfo.billing_address, [field]: value };
         setAddressInfo({ ...addressInfo, billing_address: updatedBillingAddress });
         
-        // Check if billing address has changed
         const hasChanged = 
             updatedBillingAddress.same_as_shipping !== (user?.billing_same_as_shipping || true) ||
             (!updatedBillingAddress.same_as_shipping && (

@@ -54,7 +54,7 @@
 .ctas {
     display: flex;
     gap: 1rem;
-    & > .reserve {
+    & > .checkout {
         width: 100%;
     }
 }

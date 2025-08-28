@@ -5,6 +5,7 @@ import { useAuth, useToast, useCart } from "@contexts";
 export const CheckoutProvider = ({ children }) => {
     const [orders, setOrders] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
+    const [directCheckoutItem, setDirectCheckoutItem] = useState(null); // Add this
     const [checkoutData, setCheckoutData] = useState({
         shippingAddress: null,
         paymentMethod: 'cash',
@@ -22,12 +23,19 @@ export const CheckoutProvider = ({ children }) => {
         return `ORD-${timestamp}-${random}`;
     };
 
+    const setDirectCheckout = (product) => {
+        setDirectCheckoutItem(product);
+    };
+
+    const clearDirectCheckout = () => {
+        setDirectCheckoutItem(null);
+    };
+
     const fetchOrders = async () => {
         if (!user) return;
 
         try {
             setLoading(true);
-            
             const response = await fetch(`/api/orders/${ user.id }`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
@@ -84,7 +92,7 @@ export const CheckoutProvider = ({ children }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderPayload)
-            });
+            }); 
 
             const data = await response.json();
 
@@ -92,8 +100,12 @@ export const CheckoutProvider = ({ children }) => {
                 throw new Error(data.error || 'Failed to create order');
             }
 
-            await clearSelectedCartItems();
-            
+            if (!directCheckoutItem) {
+                await clearSelectedCartItems();
+            } else {
+                clearDirectCheckout();
+            }
+
             setCurrentOrder(data);
             showToast(`Order ${orderNumber} placed successfully!`, 'success');
             
@@ -116,7 +128,7 @@ export const CheckoutProvider = ({ children }) => {
 
         try {
             setLoading(true);
-            
+
             const response = await fetch(`/api/orders/${orderId}/cancel`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -157,13 +169,16 @@ export const CheckoutProvider = ({ children }) => {
         <CheckoutContext.Provider value={{ 
             orders, 
             currentOrder, 
+            directCheckoutItem,
             checkoutData, 
             loading, 
             fetchOrders, 
             createOrder, 
             updateCheckoutData, 
             cancelOrder, 
-            setCurrentOrder 
+            setCurrentOrder,
+            setDirectCheckout,
+            clearDirectCheckout
         }}>
             {children}
         </CheckoutContext.Provider>

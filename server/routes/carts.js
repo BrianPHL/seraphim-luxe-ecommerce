@@ -107,6 +107,8 @@ router.delete('/:account_id/:product_id', async (req, res) => {
             `,
             [ account_id, product_id ]
         );
+
+        res.status(200).json({ success: true });
         
     } catch (err) {
         res.status(500).json({ error: err.message });
