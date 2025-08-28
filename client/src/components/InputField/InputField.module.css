@@ -23,7 +23,9 @@
     transition: 0.25s ease all;
     font-size: 1rem;
     display: flex;
+    outline: 0;
     padding: 0.75rem 1.25rem;
+    height: 3rem;
     border: 1px solid var(--bg-outline);
     width: 100%;
     color: var(--tg-secondary);
@@ -53,6 +55,7 @@
     font-size: 1rem;
     display: flex;
     padding: 0.75rem 1.25rem;
+    height: 3rem;
     width: 100%;
     color: var(--tg-secondary);
     &:focus {
@@ -68,8 +71,5 @@
 }
 
 .input-button {
-    padding: 0.75rem;
-    &:hover {
-        background-color: var(--bg-hover);
-    }
+    width: 3rem;
 }
