@@ -19,7 +19,7 @@ const Dashboard = () => {
     const { user, userCount, fetchUserCount } = useAuth();
     const { showToast } = useToast();
     const { pendingCount, fetchPendingCount } = useInstallments();
-    const { recentReservations, pendingReservationsCount, fetchRecentReservations } = useReservation();
+    const { recentReservations, pendingReservationsCount } = useReservation();
     const { lowStockProducts, addStock } = useStocks();
 
     const handleAddStock = async () => {
@@ -50,7 +50,7 @@ const Dashboard = () => {
 
                 await Promise.all([
                     fetchUserCount(),
-                    fetchRecentReservations(),
+                    // fetchRecentReservations(),
                     fetchPendingCount()
                 ]);
 
