@@ -31,6 +31,13 @@
         outline: 0;
         border: 1px solid var(--accent-base);
     }
+    &:disabled {
+        background-color: var(--bg-disabled);
+        color: var(--tg-disabled);
+        &:hover {
+            cursor: not-allowed;
+        }
+    }
 }
 
 .input-icon {
@@ -50,7 +57,13 @@
     color: var(--tg-secondary);
     &:focus {
         outline: 0;
-        border: 1px solid var(--accent-base);
+    }
+    &:disabled {
+        background-color: var(--bg-disabled);
+        color: var(--tg-disabled);
+        &:hover {
+            cursor: not-allowed;
+        }
     }
 }
 

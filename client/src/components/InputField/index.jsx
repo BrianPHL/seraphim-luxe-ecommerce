@@ -1,7 +1,7 @@
 import { Button } from '@components';
 import styles from './InputField.module.css';
 
-const InputField = ({ hint, icon, action, isSubmittable, externalStyles, ...props }) => {
+const InputField = ({ hint, icon, action, isSubmittable, externalStyles, disabled, ...props }) => {
 
     if (!hint || isSubmittable === undefined) return null;
 
@@ -10,6 +10,7 @@ const InputField = ({ hint, icon, action, isSubmittable, externalStyles, ...prop
             <input
                 className={`${ styles['input-unnested'] } ${ externalStyles }`}
                 placeholder={ hint }
+                disabled={ disabled }
                 { ...props }
             />
         );
@@ -21,12 +22,14 @@ const InputField = ({ hint, icon, action, isSubmittable, externalStyles, ...prop
                 <input
                     className={ styles['input-icon'] }
                     placeholder={ hint }
+                    disabled={ disabled }
                     { ...props }
                 />
                 <Button
                     type='icon'
                     icon={ icon }
                     action={ action }
+                    disabled={ disabled }
                     externalStyles={ styles['input-button'] }
                 />
             </div>
@@ -38,6 +41,7 @@ const InputField = ({ hint, icon, action, isSubmittable, externalStyles, ...prop
             <input
                 className={ styles['input-icon'] }
                 placeholder={ hint }
+                disabled={ disabled }
                 { ...props }
             />
             <Button
