@@ -27,6 +27,16 @@
     }
 }
 
+.primary:disabled {
+    background-color: var(--bg-disabled);
+    border: 0;
+    color: var(--tg-disabled);
+    gap: 0.5rem;
+    &:hover {
+        cursor: not-allowed;
+    }
+}
+
 .secondary {
     background-color: transparent;
     justify-content: center;
@@ -65,6 +75,14 @@
     }
 }
 
+.icon:disabled {
+    background-color: var(--bg-disabled);
+    color: var(--tg-disabled);
+    &:hover {
+        cursor: not-allowed;
+    }
+}
+
 .icon-outlined {
     background-color: transparent;
     border-radius: 0.25rem;
@@ -81,23 +99,6 @@
         background-color: var(--bg-hover);
         cursor: pointer;
         color: var(--accent-base);
-    }
-}
-
-.primary:disabled {
-    background-color: var(--bg-disabled);
-    border: 0;
-    color: var(--tg-disabled);
-    gap: 0.5rem;
-    &:hover {
-        cursor: not-allowed;
-    }
-}
-
-.icon-disabled {
-    color: var(--tg-disabled);
-    &:hover {
-        cursor: not-allowed;
     }
 }
 
