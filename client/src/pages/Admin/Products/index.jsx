@@ -412,21 +412,24 @@ const Products = () => {
                             onChange={handleInputChange}
                         >
                             <option value="">Select category</option>
-                            <option value="motorcycles">Motorcycles</option>
-                            <option value="parts">Parts</option>
-                            <option value="accessories">Accessories</option>
+                            <option value="Unisex">Unisex</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
                         </select>
                     </div>
                     
                     <div className={styles['input-wrapper']}>
-                        <label>Subcategory</label>
-                        <InputField
-                            name="subcategory"
-                            hint="The product subcategory..."
+                        <label>Sub-category</label>
+                        <select 
+                            name="subcategory" 
                             value={formData.subcategory}
                             onChange={handleInputChange}
-                            isSubmittable={false}
-                        />
+                        >
+                            <option value="">Select subcategory</option>
+                            <option value="Bracelets">Bracelets</option>
+                            <option value="Earrings">Earrings</option>
+                            <option value="Necklaces">Necklaces</option>
+                        </select>
                     </div>
                     
                     <div className={styles['input-wrapper']}>
