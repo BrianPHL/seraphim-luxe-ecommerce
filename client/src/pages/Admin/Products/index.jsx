@@ -72,7 +72,7 @@ const Products = () => {
 
     const handleConfirmDelete = () => {
         if (productToDelete) {
-            deleteProduct(productToDelete.product_id);
+            deleteProduct(productToDelete.id);
             setDeleteModalOpen(false);
             setProductToDelete(null);
         }
