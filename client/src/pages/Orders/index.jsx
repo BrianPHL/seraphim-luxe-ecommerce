@@ -238,7 +238,7 @@ const Orders = () => {
                                             {order.items.slice(0, 3).map((item, index) => (
                                                 <div key={index} className={styles['item-with-status']}>
                                                     <img
-                                                        src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
+                                                        src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url}`}
                                                         alt={item.label}
                                                         className={styles['preview-image']}
                                                     />
@@ -356,7 +356,7 @@ const Orders = () => {
                                 {selectedOrder.items.map(item => (
                                     <div className={styles['order-item-detail']} key={item.product_id}>
                                         <img
-                                            src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
+                                            src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url}`}
                                             alt={item.label}
                                             className={styles['item-image']}
                                         />
