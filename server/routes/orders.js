@@ -55,26 +55,62 @@ router.get('/:account_id', async (req, res) => {
                 ORDER BY o.created_at DESC
             `,
             [account_id]
-        );
+        ).catch(err => {
+            console.error('Database error fetching orders:', err);
+            throw new Error('Failed to fetch orders');
+        });
 
-        for (let i = 0; i < orders['length']; i++) {
-            const [items] = await pool.query(
-                `
-                    SELECT order_item.*, product.label, product.price, product.category, product.subcategory, product.image_url
-                    FROM order_items order_item
-                    JOIN products product ON order_item.product_id = product.id
-                    WHERE order_item.order_id = ?
-                `,
-                [orders[i]['order_id']]
-            );
-
-            orders[i]['items'] = items;
+        if (!orders || !Array.isArray(orders)) {
+            return res.status(404).json({ error: 'No orders found' });
         }
 
-        res.json(orders);
-    } catch (err) {
-        console.error('Error fetching orders:', err);
-        res.status(500).json({ error: err.message });
+        const ordersWithItems = await Promise.all(
+            orders.map(async (order) => {
+                try {
+                    const [orderItems] = await pool.query(
+                        `
+                            SELECT oi.*, p.label, p.image_url, p.category, p.subcategory
+                            FROM order_items oi
+                            LEFT JOIN products p ON oi.product_id = p.id
+                            WHERE oi.order_id = ?
+                        `,
+                        [order.id]
+                    );
+
+                    return {
+                        ...order,
+                        item_count: orderItems.length,
+                        items: orderItems.map(item => ({
+                            product_id: item.product_id,
+                            quantity: item.quantity,
+                            unit_price: item.unit_price,
+                            total_price: item.total_price,
+                            label: item.label,
+                            image_url: item.image_url,
+                            category: item.category,
+                            subcategory: item.subcategory
+                        }))
+                    };
+                } catch (itemError) {
+                    console.error(`Error fetching items for order ${order.id}:`, itemError);
+                    return {
+                        ...order,
+                        item_count: 0,
+                        items: [],
+                        error: 'Failed to fetch order items'
+                    };
+                }
+            })
+        );
+
+        res.json(ordersWithItems);
+
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch orders',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 

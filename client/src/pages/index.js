@@ -7,6 +7,7 @@ export { default as Checkout } from "./Checkout";
 export { default as Reservations } from "./Reservations";
 export { default as Profile } from "./Profile";
 export { default as NotFound } from "./NotFound";
+export { default as Orders } from "./Orders";
 
 export * from './Collections';
 export * from './PartsAndAccessories';
