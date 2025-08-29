@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
 import { createOTPEmail } from "../utils/email.js";
 import nodemailer from 'nodemailer';
 import pool from "./db.js";
@@ -64,19 +65,23 @@ export const auth = betterAuth({
         additionalFields: {
             first_name: {
                 type: "string",
-                required: false
+                required: false,
+                defaultValue: ""
             },
             last_name: {
                 type: "string",
                 required: false,
+                defaultValue: ""
             },
             address: {
                 type: "string",
                 required: false,
+                defaultValue: ""
             },
             contact_number: {
                 type: "string",
                 required: false,
+                defaultValue: ""
             },
             role: {
                 type: "string",
@@ -124,5 +129,56 @@ export const auth = betterAuth({
         database: {
             generateId: false
         }
+    },
+    hooks: {
+        
+        after: createAuthMiddleware(async (ctx) => {
+
+            const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
+
+            if (user) {
+
+                const isProfileSetupNeeded = (!user.first_name || !user.last_name) && user.name;
+
+                if (isProfileSetupNeeded) {
+
+                    try {
+
+                        const capitalizeWord = (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                        const fullName = user.name.trim().split(' ').filter(part => part.length > 0);
+                        let firstName, lastName;
+
+                        if (fullName.length === 0)
+                            return;
+
+                        if (fullName.length === 1) {
+                            firstName = capitalizeWord(fullName[0]);
+                            lastName = '';
+                        } else if (fullName.length === 2) {
+                            firstName = capitalizeWord(fullName[0]);
+                            lastName = capitalizeWord(fullName[1]);
+                        } else {
+
+                            const lastNamePart = fullName[fullName.length - 1];
+                            const firstNameParts = fullName.slice(0, -1);
+                            
+                            firstName = firstNameParts.map(capitalizeWord).join(' ');
+                            lastName = capitalizeWord(lastNamePart);
+                        }
+
+                        await ctx?.context?.internalAdapter?.updateUser(user.id, {
+                            first_name: firstName,
+                            last_name: lastName
+                        });
+
+                    } catch(err) {
+                        console.error("betterAuth hook error: ", err);
+                    }
+
+                }
+
+            }
+
+        })
     }
 });
