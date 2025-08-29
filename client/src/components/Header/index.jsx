@@ -354,10 +354,14 @@ const Header = () => {
                         <div className={ styles['profile-display'] }>
                             <div className={ styles['profile-display-container'] }>
                                 <img
-                                    src={user?.image_url 
-                                        ? `https://res.cloudinary.com/dfvy7i4uc/image/upload/${user['image_url']}` 
-                                        : "https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small_2x/default-avatar-photo-placeholder-profile-picture-vector.jpg"} 
-                                    alt={` ${ user['first_name'] + ' ' + user['last_name'] }'s profile avatar `} 
+                                    src={
+                                        !user?.image_url && !user?.image
+                                            ? "https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small_2x/default-avatar-photo-placeholder-profile-picture-vector.jpg"
+                                            : (user?.image_url?.includes('res.cloudinary.com') || user?.image?.includes('res.cloudinary.com'))
+                                                ? `https://res.cloudinary.com/dfvy7i4uc/image/upload/${user.image_url || user.image}` 
+                                                : user?.image || user?.image_url
+                                    }
+                                    alt={`${user?.first_name || ''} ${user?.last_name || ''}'s profile avatar`} 
                                 />
                                 <span>
                                     <span>
