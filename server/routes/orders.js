@@ -4,10 +4,15 @@ import express from 'express';
 const router = express.Router();
 
 router.get('/:account_id', async (req, res) => {
-
     try {
         const { account_id } = req.params;
         
+        // Validate account_id
+        if (!account_id) {
+            return res.status(400).json({ error: 'Account ID is required' });
+        }
+
+        // Get orders with error handling
         const [orders] = await pool.query(
             `
                 SELECT * FROM orders 
@@ -15,34 +20,51 @@ router.get('/:account_id', async (req, res) => {
                 ORDER BY created_at DESC
             `,
             [account_id]
-        );
+        ).catch(err => {
+            console.error('Database error fetching orders:', err);
+            throw new Error('Failed to fetch orders');
+        });
+
+        if (!orders || !Array.isArray(orders)) {
+            return res.status(404).json({ error: 'No orders found' });
+        }
 
         const ordersWithItems = await Promise.all(
             orders.map(async (order) => {
-                const [orderItems] = await pool.query(
-                    `
-                        SELECT oi.*, p.label, p.image_url, p.category, p.subcategory
-                        FROM order_items oi
-                        LEFT JOIN products p ON oi.product_id = p.id
-                        WHERE oi.order_id = ?
-                    `,
-                    [order.id]
-                );
+                try {
+                    const [orderItems] = await pool.query(
+                        `
+                            SELECT oi.*, p.label, p.image_url, p.category, p.subcategory
+                            FROM order_items oi
+                            LEFT JOIN products p ON oi.product_id = p.id
+                            WHERE oi.order_id = ?
+                        `,
+                        [order.id]
+                    );
 
-                return {
-                    ...order,
-                    item_count: orderItems.length,
-                    items: orderItems.map(item => ({
-                        product_id: item.product_id,
-                        quantity: item.quantity,
-                        unit_price: item.unit_price,
-                        total_price: item.total_price,
-                        label: item.label,
-                        image_url: item.image_url,
-                        category: item.category,
-                        subcategory: item.subcategory
-                    }))
-                };
+                    return {
+                        ...order,
+                        item_count: orderItems.length,
+                        items: orderItems.map(item => ({
+                            product_id: item.product_id,
+                            quantity: item.quantity,
+                            unit_price: item.unit_price,
+                            total_price: item.total_price,
+                            label: item.label,
+                            image_url: item.image_url,
+                            category: item.category,
+                            subcategory: item.subcategory
+                        }))
+                    };
+                } catch (itemError) {
+                    console.error(`Error fetching items for order ${order.id}:`, itemError);
+                    return {
+                        ...order,
+                        item_count: 0,
+                        items: [],
+                        error: 'Failed to fetch order items'
+                    };
+                }
             })
         );
 
@@ -50,7 +72,10 @@ router.get('/:account_id', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            error: 'Failed to fetch orders',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
