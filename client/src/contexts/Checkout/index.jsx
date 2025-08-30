@@ -107,7 +107,7 @@ export const CheckoutProvider = ({ children }) => {
             }
 
             setCurrentOrder(data);
-            showToast(`Order ${orderNumber} placed successfully!`, 'success');
+            showToast(`Order ${data.order_number} placed successfully!`, 'success');
             
             return { success: true, order: data };
         } catch (err) {
