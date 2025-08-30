@@ -147,7 +147,7 @@ const Orders = () => {
         setSelectedOrder(order);
         setModalType('view');
         setIsModalOpen(true);
-        await loadOrderItems(order.order_id);
+        await loadOrderItems(order.id);
     };
 
     const loadOrderItems = async (orderId) => {
@@ -186,7 +186,7 @@ const Orders = () => {
         if (!selectedOrder) return;
         
         try {
-            const response = await fetch(`/api/orders/${selectedOrder.order_id}/status`, {
+            const response = await fetch(`/api/orders/${selectedOrder.id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -194,7 +194,7 @@ const Orders = () => {
                 body: JSON.stringify({
                     status: newStatus,
                     notes: statusUpdateNotes,
-                    admin_id: user.id  
+                    admin_id: user.account_id
                 }),
             });
             
@@ -202,9 +202,14 @@ const Orders = () => {
                 await fetchRecentOrders(); 
                 setIsModalOpen(false);
                 setStatusUpdateNotes('');
+                showToast(`Order status updated to ${newStatus} successfully!`, 'success');
+            } else {
+                const errorData = await response.json();
+                showToast(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
             }
         } catch (error) {
             console.error('Error updating status:', error);
+            showToast('Network error occurred while updating status', 'error');
         }
     };
 
@@ -246,9 +251,9 @@ const Orders = () => {
                 notes: statusUpdateNotes
             };
             
-            const success = await processRefund(selectedOrder.order_id, refundData);
+            const success = await processRefund(selectedOrder.id, refundData);
             if (success) {
-                await fetchRecentOrders(); // Refresh the orders list
+                await fetchRecentOrders(); 
                 setIsModalOpen(false);
                 setRefundAmount('');
                 setRefundReason('');
@@ -256,6 +261,7 @@ const Orders = () => {
             }
         } catch (error) {
             console.error('Error processing refund:', error);
+            showToast('Failed to process refund', 'error');
         }
     };
 
@@ -283,7 +289,7 @@ const Orders = () => {
                 <div class="order-info">
                     <p><strong>Order Number:</strong> ${order.order_number || order.order_id}</p>
                     <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
-                    <p><strong>Customer:</strong> ${order.first_name} ${order.last_name}</p>
+                    <p><strong>Customer:</strong> ${order.last_name} ${order.first_name}</p>
                     <p><strong>Email:</strong> ${order.email}</p>
                     <p><strong>Status:</strong> ${order.status}</p>
                 </div>
@@ -431,14 +437,14 @@ const Orders = () => {
                 <div className={styles['table']}>
                     <div className={styles['table-wrapper']}>
                         <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
-                            <h3>order_number</h3>
-                            <h3>customer_name</h3>
-                            <h3>email</h3>
-                            <h3>status</h3>
-                            <h3>total_amount</h3>
-                            <h3>order_date</h3>
-                            <h3>modified_at</h3>
-                            <h3>actions</h3>
+                            <h3>Order Number</h3>
+                            <h3>Customer Name</h3>
+                            <h3>Email</h3>
+                            <h3>Status</h3>
+                            <h3>Total Amount</h3>
+                            <h3>Order Date</h3>
+                            <h3>Modified At</h3>
+                            <h3>Actions</h3>
                         </div>
                         
                         {!recentOrders ? (

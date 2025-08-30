@@ -3,6 +3,37 @@ import express from 'express';
 
 const router = express.Router();
 
+async function generateOrderNumber(connection) {
+
+    const [rows] = await connection.query(`
+        SELECT order_number 
+        FROM orders 
+        WHERE order_number IS NOT NULL
+        ORDER BY id DESC 
+        LIMIT 1
+    `);
+    
+    if (rows.length === 0) {
+        return 'SL-000001'; 
+    }
+    
+    const lastOrderNumber = rows[0].order_number;
+    
+    if (!lastOrderNumber || !lastOrderNumber.includes('-')) {
+        return 'SL-000001';
+    }
+    
+    const lastNumber = parseInt(lastOrderNumber.split('-')[1]);
+
+    if (isNaN(lastNumber)) {
+        return 'SL-000001';
+    }
+    
+    const newNumber = lastNumber + 1;
+    
+    return `SL-${String(newNumber).padStart(6, '0')}`;
+}
+
 router.get('/recent', async (req, res) => {
     try {
         const [rows] = await pool.query(`
@@ -28,7 +59,7 @@ router.get('/details/:order_id', async (req, res) => {
                 a.name as customer_name
             FROM orders o
             JOIN accounts a ON o.account_id = a.id
-            WHERE o.order_id = ?
+            WHERE o.id = ?
         `, [req.params.order_id]);
         
         if (orders.length === 0) {
@@ -139,16 +170,8 @@ router.put('/:order_id/status', async (req, res) => {
         const { status, admin_id, notes } = req.body;
         const orderId = req.params.order_id;
 
-        await pool.query(`
-            UPDATE orders 
-            SET status = ?, 
-                admin_notes = COALESCE(admin_notes, '') + CASE WHEN ? != '' THEN CONCAT('\n', ?) ELSE '' END,
-                modified_by = ?
-            WHERE order_id = ?
-        `, [status, notes || '', notes || '', admin_id, orderId]);
-
         const [currentOrder] = await connection.query(
-            `SELECT status FROM orders WHERE order_id = ?`,
+            `SELECT id, status FROM orders WHERE id = ?`,
             [orderId]
         );
 
@@ -159,9 +182,16 @@ router.put('/:order_id/status', async (req, res) => {
 
         await connection.query(`
             UPDATE orders
-            SET status = ?, admin_notes = IFNULL(?, admin_notes), modified_by = ?, modified_at = NOW()
-            WHERE order_id = ?
-        `, [status, notes, admin_id, orderId]);
+            SET status = ?, 
+                admin_notes = CASE 
+                    WHEN ? IS NOT NULL AND ? != '' 
+                    THEN CONCAT(COALESCE(admin_notes, ''), '\n', ?) 
+                    ELSE admin_notes 
+                END,
+                modified_by = ?, 
+                modified_at = NOW()
+            WHERE id = ?
+        `, [status, notes, notes, notes, admin_id, orderId]);
 
         await connection.commit();
         res.json({ success: true });
@@ -181,7 +211,6 @@ router.post('/', async (req, res) => {
 
         const { account_id, items, total_amount, shipping_address, payment_method, notes } = req.body;
 
-        // Get user details
         const [userResult] = await connection.query(
             'SELECT first_name, last_name, email FROM accounts WHERE id = ?',
             [account_id]
@@ -194,20 +223,20 @@ router.post('/', async (req, res) => {
 
         const user = userResult[0];
 
-        // Insert order
+        const orderNumber = await generateOrderNumber(connection);
+
         const [result] = await connection.query(`
             INSERT INTO orders (
-                account_id, first_name, last_name, email, 
+                order_number, account_id, first_name, last_name, email, 
                 total_amount, shipping_address, payment_method, notes, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
-            account_id, user.first_name, user.last_name, user.email,
+            orderNumber, account_id, user.first_name, user.last_name, user.email,
             total_amount, shipping_address, payment_method, notes, account_id
         ]);
 
         const orderId = result.insertId;
 
-        // Insert order items
         if (items && items.length > 0) {
             for (const item of items) {
                 await connection.query(`
@@ -224,6 +253,7 @@ router.post('/', async (req, res) => {
         await connection.commit();
         res.status(201).json({ 
             order_id: orderId,
+            order_number: orderNumber,
             success: true
         });
     } catch (err) {
@@ -246,7 +276,7 @@ router.post('/:order_id/refund', async (req, res) => {
 
         // Check if order exists
         const [currentOrder] = await connection.query(
-            `SELECT order_id, total_amount, payment_method FROM orders WHERE order_id = ?`,
+            `SELECT id, total_amount, payment_method FROM orders WHERE id = ?`,
             [orderId]
         );
 
@@ -264,10 +294,10 @@ router.post('/:order_id/refund', async (req, res) => {
             orderId, 
             amount, 
             reason, 
-            notes,  // reason_description
-            currentOrder[0].payment_method, // refund_method
-            notes,  // notes
-            admin_id // processed_by - this should now work correctly
+            notes,  
+            currentOrder[0].payment_method,
+            notes, 
+            admin_id 
         ]);
 
         // Update order status to refunded
@@ -277,7 +307,7 @@ router.post('/:order_id/refund', async (req, res) => {
                 admin_notes = CONCAT(IFNULL(admin_notes, ''), '\nRefund processed: ₱', ?, ' - Reason: ', ?),
                 modified_by = ?, 
                 modified_at = NOW()
-            WHERE order_id = ?
+            WHERE id = ?
         `, [amount, reason, admin_id, orderId]);
 
         await connection.commit();
@@ -301,9 +331,8 @@ router.delete('/:order_id', async (req, res) => {
         
         const { order_id } = req.params;
 
-        // Check if order exists
         const [orderCheck] = await connection.query(
-            `SELECT order_id FROM orders WHERE order_id = ?`,
+            `SELECT id FROM orders WHERE id = ?`,
             [order_id]
         );
 
@@ -316,10 +345,9 @@ router.delete('/:order_id', async (req, res) => {
             `DELETE FROM order_items WHERE order_id = ?`,
             [order_id]
         );
-        
-        // Delete order
+
         await connection.query(
-            `DELETE FROM orders WHERE order_id = ?`,
+            `DELETE FROM orders WHERE id = ?`,
             [order_id]
         );
 
