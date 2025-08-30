@@ -12,6 +12,7 @@ import reservationsRouter from './routes/reservations.js';
 import installmentsRouter from './routes/installments.js';
 import stocksRouter from './routes/stocks.js';
 import ordersRouter from './routes/orders.js';
+import oauthRouter from './routes/oauth.js';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use('/api/reservations', reservationsRouter);
 app.use('/api/installments', installmentsRouter);
 app.use('/api/stocks', stocksRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/oauth', oauthRouter);
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 

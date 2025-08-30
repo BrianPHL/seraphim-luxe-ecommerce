@@ -20,6 +20,7 @@ export const ERROR_MESSAGES = {
     'VERIFICATION_TOKEN_EXPIRED': 'Verification link has expired. Please request a new one.',
     'INVALID_VERIFICATION_TOKEN': 'Invalid verification link. Please request a new one.',
     'SIGNUP_DISABLED': 'No account associated with the email used in Social Sign-On. Please sign up and try again.',
+    'ACCOUNT_DOES_NOT_HAVE_A_PASSWORD': 'The account was created using Google Sign-In therefore no password was set. You may sign in with Google or set a password in the profile page.',
     
     // Better Auth Session Error Codes
     'SESSION_NOT_FOUND': 'Your session has expired. Please sign in again.',

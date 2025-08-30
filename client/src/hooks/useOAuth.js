@@ -27,14 +27,35 @@ const useOAuth = () => {
         },
         signInThruEmail: async (data) => {
 
-            
+            try {
+
+            const { email, password } = data;
+
+            const response = await fetch(`/api/oauth/check-password-exists/${ email }`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                throw new Error(responseData.error);
+            }
+
+            if (!responseData.doesPasswordExist)
+                throw new Error("ACCOUNT_DOES_NOT_HAVE_A_PASSWORD");
+
             const result = await authClient.signIn.email({
-                email: data.email,
-                password: data.password,
+                email: email,
+                password: password,
                 rememberMe: false
             });
 
             return result;
+
+            } catch (err) {
+                console.log("useOauth hook signInThruEmail function error: ", err);
+                throw err;
+            }
 
         },
         signUpThruEmail: (data, callbackURL = 'http://localhost:5173/') => {
