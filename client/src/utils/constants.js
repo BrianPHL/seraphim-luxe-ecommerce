@@ -21,7 +21,8 @@ export const ERROR_MESSAGES = {
     'INVALID_VERIFICATION_TOKEN': 'Invalid verification link. Please request a new one.',
     'SIGNUP_DISABLED': 'No account associated with the email used in Social Sign-On. Please sign up and try again.',
     'ACCOUNT_DOES_NOT_HAVE_A_PASSWORD': 'The account was created using Google Sign-In therefore no password was set. You may sign in with Google or set a password in the profile page.',
-    
+    'INVALID_TOKEN': 'Something went wrong which invalidated your token. "Click Set/Change account password" first then try again.',
+
     // Better Auth Session Error Codes
     'SESSION_NOT_FOUND': 'Your session has expired. Please sign in again.',
     'INVALID_SESSION': 'Invalid session. Please sign in again.',

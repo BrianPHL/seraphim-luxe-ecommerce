@@ -213,11 +213,13 @@ export const AuthProvider = ({ children }) => {
             await signOut();
             localStorage.removeItem('user');
             setUser(null);
+            navigate('/sign-in');
 
         } catch (err) {
             console.error('Auth context logout function error:', err);
             localStorage.removeItem('user');
             setUser(null);
+            navigate('/');
         }
     };
 

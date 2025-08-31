@@ -119,8 +119,23 @@
     & > h2 {
         font-weight: 600;
         font-size: 1.5rem;
-        color: var(--tg-primary); /* This makes all headers white/primary text color */
+        color: var(--tg-primary);
     }
+}
+
+.info-settings-set_password {
+    flex-direction: column;
+    align-self: start;
+    display: flex;
+    gap: 1rem;
+    & > p {
+        font-size: 0.75rem;
+        color: var(--tg-secondary);
+    }
+}
+
+.info-settings-set_password-cta {
+    align-self: flex-start;
 }
 
 .info-personal-ctas, .info-address-ctas, .info-settings-ctas {
@@ -356,6 +371,10 @@
     color: var(--tg-secondary);
 }
 
+.modal-warn {
+    color: var(--error-foreground);
+}
+
 .modal-ctas {
     justify-content: flex-end;
     align-self: stretch;
@@ -478,9 +497,9 @@
 .billing-same-address {
     margin-bottom: 1rem;
     padding: 1rem;
-    background-color: var(--bg-secondary); /* Changed from --background-secondary */
+    background-color: var(--bg-secondary);
     border-radius: 8px;
-    border: 1px solid var(--bg-outline); /* Changed from --border-color */
+    border: 1px solid var(--bg-outline);
 }
 
 .checkbox-label {
@@ -498,7 +517,7 @@
 }
 
 .checkbox-label span {
-    color: var(--tg-primary); /* Changed from --text-primary to match theme */
+    color: var(--tg-primary);
 }
 
 @media only screen and (max-width: 1660px) {
@@ -544,6 +563,12 @@
 
     .wrapper { padding: 14rem 2rem 2rem 2rem; }
 
+}
+
+@media only screen and (max-width: 890px) {
+    .info-settings > .inputs-container > .inputs-wrapper {
+        flex-direction: column;
+    }
 }
 
 @media only screen and (max-width: 630px) {

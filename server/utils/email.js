@@ -27,3 +27,26 @@ export const createOTPEmail = (email, otp, type) => {
         </div>
     `;
 };
+
+export const createChangePasswordVerificationLinkEmail = (email, url) => {
+    return `
+        <div style="background: #f6f1ea; font-family: 'Lora', serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(180, 140, 90, 0.08); border: 1px solid #e5d4c0;">
+            <h2 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Change Password Verification</h2>
+            <p style="color: #7c5a3a; font-size: 1.1em;">Hi <strong>${email}</strong>,</p>
+            <p style="color: #7c5a3a;">Here is your verification link encapsulated in a button:</p>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${url}" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                    Change Password
+                </a>
+            </div>
+            <p style="color: #7c5a3a; word-break: break-all; text-align: center; font-size: 0.95em; margin-bottom: 24px;">
+                If the button above does not work, copy and paste this link into your browser:<br>
+                <span style="background: #fff8f0; color: #a67c52; padding: 6px 10px; border-radius: 6px; display: inline-block; margin-top: 8px; font-family: monospace;">${url}</span>
+            </p>
+            <p style="text-align: center; color: #b08d57; font-size: 14px;">
+                Click the provided link to change your password.<br>
+                If you did not request this, please ignore this email.
+            </p>
+        </div>
+    `;
+}

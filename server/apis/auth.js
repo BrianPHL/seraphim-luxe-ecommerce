@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { createAuthMiddleware } from "better-auth/api";
-import { createOTPEmail } from "../utils/email.js";
+import { createOTPEmail, createChangePasswordVerificationLinkEmail } from "../utils/email.js";
 import nodemailer from 'nodemailer';
 import pool from "./db.js";
 
@@ -23,7 +23,16 @@ export const auth = betterAuth({
         enabled: true,
         requireEmailVerification: true,
         minPasswordLength: 1, // TODO: REMOVE ON PRODUCTION
-        maxPasswordLength: 10000 // TODO: REMOVE ON PRODUCTION
+        maxPasswordLength: 10000, // TODO: REMOVE ON PRODUCTION
+        sendResetPassword: async ({ user, url, token }, request) => {
+            const { email } = user;
+            await transporter.sendMail({
+                from: process.env.GOOGLE_APP_EMAIL_USER,
+                to: email,
+                subject: "Change Password Confirmation | Seraphim Luxe",
+                html: createChangePasswordVerificationLinkEmail(email, url)
+            });
+        }
     },
     socialProviders: {
         google: {
@@ -44,7 +53,7 @@ export const auth = betterAuth({
                 await transporter.sendMail({
                     from: process.env.GOOGLE_APP_EMAIL_USER,
                     to: email,
-                    subject: 'Your Verification Code | Seraphim Luxe',
+                    subject: "Email Verification Code | Seraphim Luxe",
                     html: createOTPEmail(email, otp, type)
                 });
             }

@@ -53,7 +53,7 @@ const useOAuth = () => {
             return result;
 
             } catch (err) {
-                console.log("useOauth hook signInThruEmail function error: ", err);
+                console.error("useOauth hook signInThruEmail function error: ", err);
                 throw err;
             }
 
@@ -84,14 +84,25 @@ const useOAuth = () => {
             return result;
 
         },
-        sendForgetAndResetPasswordOTP: async (email) => {
+        sendChangePasswordVerificationLink: async (email, redirectToURL) => {
 
-            const result = authClient.forgetPassword.emailOtp({
-                email: email
-            })
+            const result = await authClient.requestPasswordReset({
+                email: email,
+                redirectTo: redirectToURL
+            });
 
             return result;
 
+        },
+        changePassword: async (newPassword, token) => {
+
+            const result = authClient.resetPassword({
+                newPassword: newPassword,
+                token: token
+            });
+            
+            return result;
+            
         },
         resetPassword: (email, otp, password) => {
             

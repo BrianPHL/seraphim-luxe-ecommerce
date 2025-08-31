@@ -1,1 +1,1 @@
-export { createOTPEmail } from './email.js';
+export { createOTPEmail, createChangePasswordVerificationLinkEmail } from './email.js';

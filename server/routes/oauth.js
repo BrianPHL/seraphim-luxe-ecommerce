@@ -24,11 +24,12 @@ router.get("/check-password-exists/:email", async (req, res) => {
 
         const [ oauthAccountRows ] = await pool.query(
             `
-                SELECT password IS NOT NULL AND password != "" AS has_password
+                SELECT
+                    MAX(password IS NOT NULL AND password != "") AS has_password
                 FROM oauth_accounts
                 WHERE user_id = ?
             `,
-            [ accountId ]
+            [ accountId, accountId ]
         );
 
         const doesPasswordExist = Boolean(oauthAccountRows[0]?.has_password);

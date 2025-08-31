@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { InputField, Button, Anchor, ReturnButton, Accordion, Modal } from '@components';
 import { useToast, useAuth, useReservation } from '@contexts';
+import { useOAuth } from '@hooks';
+import { getErrorMessage } from '@utils';
 import styles from './Profile.module.css';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 const Profile = ({}) => {
 
     const navigate = useNavigate();
     const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, updateAddress: updateAddressAPI, updatePassword: updatePasswordAPI, remove } = useAuth();
     const { reservationItems, clearReservations } = useReservation();
+    const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
     const { showToast } = useToast();
-    const cancelledReservations = reservationItems.filter(reservation => reservation['status'].toLowerCase() === 'cancelled');
+    const [ searchParams, setSearchParams ] = useSearchParams();
     const [ avatarFile, setAvatarFile ] = useState(null);
     const [ avatarPreview, setAvatarPreview ] = useState(null);
     const [ modalType, setModalType ] = useState('');
@@ -39,8 +42,8 @@ const Profile = ({}) => {
         }
     });
     const [ passwordInfo, setPasswordInfo ] = useState({
-        password: '',
-        confirmPassword: ''
+        newPassword: '',
+        confirmNewPassword: ''
     })
     const [ generalAddressInfo, setGeneralAddressInfo ] = useState({
         address: ''
@@ -48,6 +51,7 @@ const Profile = ({}) => {
     const [ isPersonalInfoChanged, setIsPersonalInfoChanged ] = useState(false);
     const [ isAddressInfoChanged, setIsAddressInfoChanged ] = useState(false);
     const [ isPasswordInfoChanged, setIsPasswordInfoChanged ] = useState(false);
+    const [ isPasswordSet, setIsPasswordSet ] = useState(false);
     const [ isGeneralAddressChanged, setIsGeneralAddressChanged ] = useState(false);
     const [ doPasswordsMatch, setDoPasswordsMatch ] = useState(true);
     const [ showPassword, setShowPassword ] = useState(false);
@@ -57,6 +61,8 @@ const Profile = ({}) => {
     const [ isBillingAddressChanged, setIsBillingAddressChanged ] = useState(false);
     const [ shippingAddressErrors, setShippingAddressErrors] = useState({});
     const [ billingAddressErrors, setBillingAddressErrors] = useState({});
+    const queryToken = searchParams.get('token') || null;
+    const errorToken = searchParams.get('error') || null;
 
     const handleFileChange = (event) => {
         
@@ -151,20 +157,33 @@ const Profile = ({}) => {
         setIsBillingAddressChanged(hasChanged);
     };
     const handlePasswordChange = (field, value) => {
+    
+        const updatedInfo = { ...passwordInfo, [field]: value };
+        const hasContent = updatedInfo['newPassword'] !== '' && updatedInfo['confirmNewPassword'] !== '';
+        const doMatch = updatedInfo['newPassword'] === updatedInfo['confirmNewPassword'];
 
-        const updatedInfo = { ...passwordInfo, [ field ]: value };
         setPasswordInfo(updatedInfo);
-
-        setDoPasswordsMatch(updatedInfo['password'] === '' || updatedInfo['confirmPassword'] === '' || updatedInfo['password'] === updatedInfo['confirmPassword']);
-
-        const hasContent = updatedInfo['password'] !== '' && updatedInfo['confirmPassword'] !== '';
-        setIsPasswordInfoChanged(hasContent && updatedInfo['password'] === updatedInfo['confirmPassword']);
-
+        setDoPasswordsMatch(doMatch);
+        setIsPasswordInfoChanged(hasContent && doMatch);
+    
     };
     const handleGeneralAddressChange = (value) => {
         setGeneralAddressInfo({ address: value });
         const hasChanged = value !== (user?.address || '');
         setIsGeneralAddressChanged(hasChanged);
+    };
+    const handleChangeAccountPassword = async () => {
+        
+        try {
+
+            const { email } = user;
+
+            await sendChangePasswordVerificationLink(email, "http://localhost:5173/profile?redirect=yes");
+            
+        } catch (err) {
+            
+        }
+
     };
     const updatePersonalInfo = async () => {
         const result = await updatePersonalInfoAPI(personalInfo);
@@ -226,21 +245,26 @@ const Profile = ({}) => {
     };
 
     const updatePasswordInfo = async () => {
-        if (passwordInfo.password !== passwordInfo.confirmPassword) {
-            showToast('Passwords do not match', 'error');
-            return;
+
+        try {
+
+            const { newPassword, confirmNewPassword } = passwordInfo;
+            const result = await changePassword(newPassword, queryToken);
+
+            if (result?.error) {
+                showToast(`Failed to update password: ${ result.error }`, 'error');
+            } else {
+                showToast('Password updated successfully', 'success');
+                setPasswordInfo({ newPassword: '', confirmNewPassword: '' });
+                setIsPasswordInfoChanged(false);
+                setDoPasswordsMatch(true);
+                logout();
+            }
+
+        } catch (err) {
+            console.error("Profile page updatePasswordInfo function error: ", err);
         }
 
-        const result = await updatePasswordAPI(passwordInfo.password);
-
-        if (result?.error) {
-            showToast(`Failed to update password: ${result.error}`, 'error');
-        } else {
-            showToast('Password updated successfully', 'success');
-            setPasswordInfo({ password: '', confirmPassword: '' });
-            setIsPasswordInfoChanged(false);
-            setDoPasswordsMatch(true);
-        }
     };
     const resetPersonalInfo = () => {
         setPersonalInfo({
@@ -277,7 +301,7 @@ const Profile = ({}) => {
         setIsGeneralAddressChanged(false);
     };
     const resetPasswordInfo = () => {
-        setPasswordInfo({ password: '', confirmPassword: '' });
+        setPasswordInfo({ newPassword: '', confirmNewPassword: '' });
         setIsPasswordInfoChanged(false);
         setDoPasswordsMatch(true);
     };
@@ -347,8 +371,25 @@ const Profile = ({}) => {
         setBillingAddressErrors(errors);
         return Object.keys(errors).length === 0;
     };
+    const validateIfPasswordExists = async () => {
+
+        const response = await fetch(`/api/oauth/check-password-exists/${ user.email }`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const responseData = await response.json();
+       
+        if (!response.ok) {
+            throw new Error(responseData.error);
+        }
+
+        if (responseData.doesPasswordExist)
+            setIsPasswordSet(true);
+
+    };
 
     useEffect(() => {
+
         if (user) {
             setPersonalInfo({
                 first_name: user.first_name || '',
@@ -373,11 +414,14 @@ const Profile = ({}) => {
                     state: user.billing_state || '',
                     postal_code: user.billing_postal_code || '',
                     country: 'Philippines',
-                    same_as_shipping: false // <-- always false on load
+                    same_as_shipping: false
                 }
             });
+            validateIfPasswordExists();
         }
-    }, [user]);
+    }, [ user ]);
+
+    if (loading || !user) return null;
 
     return(
         <>
@@ -786,140 +830,64 @@ const Profile = ({}) => {
                             </div>
                         </section>
                         <div className={ styles['divider-horizontal'] }></div>
-                        <section className={ styles['info-reservation'] }>
-                            <h2>Reservation History</h2>
-                            { cancelledReservations.length === 0 ? (
-                                <div className={ styles['info-reservation-empty'] }>
-                                    <h3>You Currently Do Not Have a Cancelled Reservation</h3>
-                                    <p>Start browsing for items in <Anchor label="Motorcycles" link="/motorcycles" isNested={ false }/> or <Anchor label="Parts & Accessories" link="/parts-and-accessories" isNested={ false }/>.</p>
-                                    <p>or</p>
-                                    <p>Add items to <Anchor label="Cart" link="/cart" isNested={ false }/> to reserve by batch.</p>
-                                </div>
-                            ) : (
-                                <div className={ styles['info-reservation-list'] }>
-                                    { cancelledReservations.map(reservation => (
-                                        <Accordion
-                                            key={ reservation['reservation_id'] }
-                                            label={` Reservation #${ reservation['reservation_id'] } `}
-                                            externalStyles={ styles['info-reservation-list-item'] }
-                                            isOpenByDefault={ false }
-                                        >
-                                            <div className={ styles['info-reservation-list-item-container'] }>
-                                                <div className={ styles['info-reservation-list-item-details'] }>
-                                                    <span>
-                                                        <h3>Reservation Details</h3>
-                                                        <h4>{ reservation['status'].charAt(0).toUpperCase() + reservation['status'].slice(1) }</h4>
-                                                    </span>
-                                                    <div className={ styles['info-reservation-list-item-details-container'] }>
-                                                        <div className={ styles['info-reservation-list-item-details-item'] }>
-                                                            <h4>Account Id</h4>
-                                                            <h4>{ user['account_id'] }</h4>
-                                                        </div>
-                                                        <div className={ styles['info-reservation-list-item-details-item'] }>
-                                                            <h4>Full Name</h4>
-                                                            <h4>{ user['first_name'] + ' ' + user['last_name'] }</h4>
-                                                        </div>
-                                                        <div className={ styles['info-reservation-list-item-details-item'] }>
-                                                            <h4>Contact Number</h4>
-                                                            <h4>{ user['contact_number'] }</h4>
-                                                        </div>
-                                                        <div className={ styles['info-reservation-list-item-details-item'] }>
-                                                            <h4>Email Address</h4>
-                                                            <h4>{ user['email'] }</h4>
-                                                        </div>
-                                                        <div className={ styles['info-reservation-list-item-details-item'] }>
-                                                            <h4>Preferred Date</h4>
-                                                            <h4>{new Date(reservation['preferred_date']).toLocaleDateString('en-US', {
-                                                                year: 'numeric',
-                                                                month: 'long', 
-                                                                day: 'numeric'
-                                                            })}</h4>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className={ styles['divider-horizontal'] }></div>
-                                                <div className={ styles['info-reservation-list-item-products'] }>
-                                                    <h3>Reserved Products</h3>
-                                                    { reservation['products'] && reservation['products'].map(product => (
-                                                        <div 
-                                                            key={ product['product_id'] }
-                                                            className={ styles['info-reservation-list-item-product'] }
-                                                            onClick={ () => {
-                                                                product['category'].toLowerCase() === 'motorcycles'
-                                                                ? navigate(`/motorcycles/${ product['product_id'] }`)
-                                                                : navigate(`/parts-and-accessories/${ product['product_id'] }`)
-                                                            }}
-                                                        > 
-                                                            <span>
-                                                                <img src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products${ product['image_url'] }`} alt="" />
-                                                                <div className={ styles['info-reservation-list-item-product-details'] }>
-                                                                    <span>
-                                                                        <h3>{ product['label'] }</h3>
-                                                                        <h4>₱{ parseFloat(product['price']).toLocaleString('en-PH', {
-                                                                                minimumFractionDigits: 2,
-                                                                                maximumFractionDigits: 2
-                                                                            })}
-                                                                        </h4>
-                                                                    </span>
-                                                                    <h4>{`Qty.: ${ product['quantity'] }`}</h4>
-                                                                </div>
-                                                            </span>
-                                                            <i className='fa-solid fa-square-up-right'></i>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </Accordion>
-                                    ))}
-                                </div>
-                            )}
-                            <div className={ styles['info-reservation-action'] }>
-                                <p>View your complete reservation history, including active, completed, and cancelled reservations with detailed status tracking.</p>
-                                <Button
-                                    type='secondary'
-                                    label='Go to my reservations'
-                                    icon='fa-solid fa-arrow-up-right-from-square'
-                                    iconPosition='right'
-                                    action={ () => navigate('/reservations') }
-                                />
-                            </div>
-                        </section>
-                        <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-settings'] }>
                             <h2>Account Settings</h2>
                             <div className={ styles['inputs-container'] }>
-                                {!doPasswordsMatch && (
+                                { !doPasswordsMatch && (
                                     <div className={ styles['info-settings-notice'] }>
                                         <i className='fa-solid fa-triangle-exclamation'></i>
                                         <p>Passwords do not match</p>
                                     </div>
                                 )}
+                                { errorToken && (
+                                    <div className={ styles['info-settings-notice'] }>
+                                        <i className='fa-solid fa-triangle-exclamation'></i>
+                                        <p>{ getErrorMessage(errorToken) }</p>
+                                    </div>
+                                )}
+                                <div className={ styles['info-settings-set_password'] }>
+                                    <Button
+                                        type='primary'
+                                        icon='fa-solid fa-key'
+                                        iconPosition='left'
+                                        label={ isPasswordSet ? 'Change account password' : 'Set account password' }
+                                        action={ () => {
+                                            setModalType('set-account-password-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        disabled={ queryToken }
+                                        externalStyles={ styles['info-settings-set_password-cta'] }
+                                    />
+                                    <p>{ isPasswordSet? "In order to change your password, you must verify first by clicking the link sent to your email." : "In order to sign in with password, set your password first." }</p>
+                                </div>
                                 <div className={ styles['inputs-wrapper'] }>
                                     <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="password">
-                                            Password
+                                        <label htmlFor="new_password">
+                                            New Password
                                         </label>
                                         <InputField
-                                            value={ passwordInfo['password'] }
-                                            onChange={event => handlePasswordChange('password', event['target']['value'])}
-                                            hint='Your password...'
+                                            value={ passwordInfo['newPassword'] }
+                                            onChange={event => handlePasswordChange('newPassword', event['target']['value'])}
+                                            hint='Your new password...'
                                             type={ showPassword ? 'text' : 'password' }
                                             icon={ showPassword ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash' }
                                             action={ handlePasswordToggle }
+                                            disabled={ !queryToken }
                                             isSubmittable={ false }
                                         />
                                     </div>
                                     <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="confirmPassword">
-                                            Confirm Password
+                                        <label htmlFor="confirmNewPassword">
+                                            Confirm New Password
                                         </label>
                                         <InputField
-                                            value={ passwordInfo['confirmPassword'] }
-                                            onChange={event => handlePasswordChange('confirmPassword', event['target']['value'])}
+                                            value={ passwordInfo['confirmNewPassword'] }
+                                            onChange={event => handlePasswordChange('confirmNewPassword', event['target']['value'])}
                                             hint='Confirm your new password...'
                                             type={ showConfirmPassword ? 'text' : 'password' }
                                             icon={ showConfirmPassword ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash' }
                                             action={ handleConfirmPasswordToggle }
+                                            disabled={ !queryToken }
                                             isSubmittable={ false }
                                         />
                                     </div>
@@ -1212,16 +1180,45 @@ const Profile = ({}) => {
                 </Modal>
             ) : modalType === 'update-account-password-confirmation' ? (
                 <Modal label='Update Account Password Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>Are you sure you want to change your account password? You'll need to use your new password the next time you log in.</p>
+                    <p className={ styles['modal-info'] }>Are you sure you want to update your account password? <span className={ styles['modal-warn'] }>You will be logged out of your account.</span></p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='secondary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                updatePasswordInfo();
+                            }}
+                        />
+                        <Button
+                            label='Cancel'
+                            type='primary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                                resetPasswordInfo();
+                            }}
+                        />
+                    </div>
+                </Modal>
+            ) : modalType === 'set-account-password-confirmation' ? (
+                <Modal label={ isPasswordSet ? 'Change Account Password Confirmation' : 'Set Account Password Confirmation' } isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>
+                        An email with a confirmation link will be sent to you. 
+                    {
+                        isPasswordSet
+                        ? ' You will need to click that link in order to change your account password.'
+                        : ' You will need to click that link in order to set your account password.'
+                    }
+                    </p>
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
                             type='primary'
                             action={ () => {
                                 setIsModalOpen(false);
-                                updatePasswordInfo();
+                                handleChangeAccountPassword();
                             }}
-                            externalStyles={ styles['modal-warn'] }
                         />
                         <Button
                             label='Cancel'
@@ -1229,7 +1226,6 @@ const Profile = ({}) => {
                             action={ () => {
                                 setModalType('');
                                 setIsModalOpen(false);
-                                resetPasswordInfo();
                             }}
                         />
                     </div>
@@ -1240,16 +1236,15 @@ const Profile = ({}) => {
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
-                            type='primary'
+                            type='secondary'
                             action={ () => {
                                 setIsModalOpen(false);
                                 resetPasswordInfo();
                             }}
-                            externalStyles={ styles['modal-warn'] }
                         />
                         <Button
                             label='Cancel'
-                            type='secondary'
+                            type='primary'
                             action={ () => {
                                 setModalType('');
                                 setIsModalOpen(false);

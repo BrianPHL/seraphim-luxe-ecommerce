@@ -16,6 +16,9 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders', '/reservations'].includes(location.pathname);
         const isPublicRoute = ['/', '/about-us', '/motorcycles', '/parts-and-accessories'].includes(location.pathname) || location.pathname.startsWith('/motorcycles/') || location.pathname.startsWith('/parts-and-accessories/');
 
+        if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
+            return;
+
         if (!user && !isAuthPage && !isPublicRoute) {
 
             navigate('/sign-in');
@@ -23,12 +26,9 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         }
 
         if (user && isAuthPage) {
-            if (user.role === 'admin') {
-                navigate('/admin');
-            } else {
-                           console.log('Redirecting to sign-in from', location.pathname);
-                navigate('/');
-            }
+            user.role === 'admin'
+                ? navigate('/admin')
+                : navigate('/')
             return;
         }
 
@@ -45,6 +45,9 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
     }, [user, loading, navigate, location.pathname]);
 
     if (loading) return null;
+
+    if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
+        return children;
 
     const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
     const isAdminRoute = location.pathname.startsWith('/admin');
