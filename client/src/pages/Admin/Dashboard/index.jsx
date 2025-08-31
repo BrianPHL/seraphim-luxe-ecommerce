@@ -50,7 +50,6 @@ const Dashboard = () => {
 
                 await Promise.all([
                     fetchUserCount(),
-                    // fetchRecentReservations(),
                     fetchPendingCount()
                 ]);
 

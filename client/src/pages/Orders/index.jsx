@@ -11,28 +11,26 @@ const Orders = () => {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('current'); // Add tab state
+    const [activeTab, setActiveTab] = useState('current');
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    // Calculate estimated arrival time for reserved products
     const calculateReservedArrivalTime = (orderDate, productType) => {
         const orderDateTime = new Date(orderDate);
         const now = new Date();
-        
-        // Different processing times based on product type
+
         let processingDays;
         switch (productType.toLowerCase()) {
             case 'custom jewelry':
             case 'bespoke':
-                processingDays = 14; // Custom items take longer
+                processingDays = 14;
                 break;
             case 'premium':
             case 'luxury':
-                processingDays = 7; // Premium items take moderate time
+                processingDays = 7;
                 break;
             default:
-                processingDays = 5; // Standard items
+                processingDays = 5;
         }
         
         const estimatedArrival = new Date(orderDateTime);
@@ -47,7 +45,6 @@ const Orders = () => {
         };
     };
 
-    // Check if order contains reserved products
     const hasReservedProducts = (order) => {
         return order.items.some(item => 
             item.status?.toLowerCase() === 'reserved' || 
@@ -55,7 +52,6 @@ const Orders = () => {
         );
     };
 
-    // Fetch orders from API
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -68,29 +64,13 @@ const Orders = () => {
                 
                 if (response.ok) {
                     const data = await response.json();
-                   
-                    console.log('Raw API response:', data);
-                    
-                    // Debug: Check the structure of the first order
-                    if (data.length > 0) {
-                        console.log('First order structure:', data[0]);
-                        console.log('Available order fields:', Object.keys(data[0]));
-                        console.log('Order ID field:', data[0].order_id || data[0].id);
-                        console.log('Order date field:', data[0].order_date || data[0].created_at || data[0].date);
-                        if (data[0].items && data[0].items.length > 0) {
-                            console.log('First item structure:', data[0].items[0]);
-                            console.log('Available item fields:', Object.keys(data[0].items[0]));
-                        }
-                    }
 
-                    // Add reservation info to orders with reserved products
                     const ordersWithReservationInfo = data.map(order => {
                         if (hasReservedProducts(order)) {
                             const reservedItems = order.items.filter(item => 
                                 item.status?.toLowerCase() === 'reserved'
                             );
-                            
-                            // Use first reserved item to calculate arrival time
+                        
                             const firstReservedItem = reservedItems[0];
                             return {
                                 ...order,
@@ -151,8 +131,7 @@ const Orders = () => {
         
         try {
             const date = new Date(dateString);
-            
-            // Check if date is valid
+
             if (isNaN(date.getTime())) {
                 return 'N/A';
             }

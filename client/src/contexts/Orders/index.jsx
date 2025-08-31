@@ -48,8 +48,6 @@ export const OrderProvider = ({ children }) => {
 
     const fetchRecentOrders = async () => {
         if (!user) return;
-        
-        console.log('Fetching recent orders...');
 
         try {
             const response = await fetch('/api/orders/recent', {
@@ -57,11 +55,7 @@ export const OrderProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            console.log('Response status:', response.status);
-
             const data = await response.json();
-
-            console.log('Orders data:', data);
             
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to fetch recent orders');
@@ -70,8 +64,7 @@ export const OrderProvider = ({ children }) => {
             setRecentOrders(data);
             const pendingCount = data.filter(o => o.status === 'pending').length;
             setPendingOrdersCount(pendingCount);
-            
-            // Calculate stats
+
             const stats = {
                 pending: data.filter(o => o.status === 'pending').length,
                 processing: data.filter(o => o.status === 'processing').length,
@@ -249,9 +242,6 @@ export const OrderProvider = ({ children }) => {
                 const data = await response.json();
                 throw new Error(data.error || 'Failed to process refund!');
             }
-            
-            // Update order status to refunded
-            // await updateOrderStatus(order_id, 'refunded', `Refund processed: ${refundData.reason}`);
             
             showToast('Refund processed successfully!', "success");
             return true;

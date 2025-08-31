@@ -5,7 +5,7 @@ import { useAuth, useToast, useCart } from "@contexts";
 export const CheckoutProvider = ({ children }) => {
     const [orders, setOrders] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
-    const [directCheckoutItem, setDirectCheckoutItem] = useState(null); // Add this
+    const [directCheckoutItem, setDirectCheckoutItem] = useState(null);
     const [checkoutData, setCheckoutData] = useState({
         shippingAddress: null,
         paymentMethod: 'cash',

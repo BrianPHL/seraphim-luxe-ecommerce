@@ -58,7 +58,6 @@ export const ProductsProvider = ({ children }) => {
             
             showToast('Product successfully deleted', 'success');
 
-            // TODO: Add a function for context changes instead of relying on fully products fetch.
             fetchProducts(true);
 
         } catch (error) {
@@ -83,7 +82,6 @@ export const ProductsProvider = ({ children }) => {
                 throw new Error('Failed to create product');
             }
 
-            // TODO: Add a function for context changes instead of relying on fully products fetch.
             fetchProducts(true);
             
             showToast('Product successfully created', 'success');

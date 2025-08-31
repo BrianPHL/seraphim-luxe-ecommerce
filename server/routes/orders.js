@@ -274,7 +274,6 @@ router.post('/:order_id/refund', async (req, res) => {
         const { amount, reason, admin_id, notes } = req.body;
         const orderId = req.params.order_id;
 
-        // Check if order exists
         const [currentOrder] = await connection.query(
             `SELECT id, total_amount, payment_method FROM orders WHERE id = ?`,
             [orderId]
@@ -285,7 +284,6 @@ router.post('/:order_id/refund', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        // Insert into order_refunds table - FIX: Remove duplicate notes parameter
         await connection.query(`
             INSERT INTO order_refunds 
             (order_id, refund_amount, reason, reason_description, refund_method, notes, processed_by, processed_at, status)
@@ -300,7 +298,6 @@ router.post('/:order_id/refund', async (req, res) => {
             admin_id 
         ]);
 
-        // Update order status to refunded
         await connection.query(`
             UPDATE orders 
             SET status = 'refunded', 

@@ -39,7 +39,6 @@ const Orders = () => {
         'Sort by: Status (Pending First)'
     ];
 
-    // Initialize and fetch orders
     useEffect(() => {
         const loadOrders = async () => {
             try {
@@ -101,7 +100,6 @@ const Orders = () => {
         
     }, [recentOrders, querySearch, querySort]);
 
-    // Paginate orders
     useEffect(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;

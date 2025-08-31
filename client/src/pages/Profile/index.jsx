@@ -38,7 +38,7 @@ const Profile = ({}) => {
             state: '',
             postal_code: '',
             country: 'Philippines',
-            same_as_shipping: false // <-- set to false
+            same_as_shipping: false
         }
     });
     const [ passwordInfo, setPasswordInfo ] = useState({
@@ -198,7 +198,7 @@ const Profile = ({}) => {
 
     const updateShippingAddress = async () => {
         if (!validateShippingAddress()) {
-            return; // Just return without showing toast
+            return;
         }
         const result = await updateAddressAPI({
             type: 'shipping',
@@ -215,7 +215,7 @@ const Profile = ({}) => {
 
     const updateBillingAddress = async () => {
         if (!validateBillingAddress()) {
-            return; // Just return without showing toast
+            return;
         }
         const result = await updateAddressAPI({
             type: 'billing',

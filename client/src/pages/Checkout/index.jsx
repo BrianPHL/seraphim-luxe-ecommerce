@@ -14,17 +14,6 @@ const Checkout = () => {
     const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
     const [notes, setNotes] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-
-    useEffect(() => {
-
-        console.log("isPlacingOrder: ", isPlacingOrder);
-        console.log("loading: ", loading);
-        console.log("directCheckoutItem: ", directCheckoutItem);
-        console.log("selectedCartItems: ", selectedCartItems);
-        console.log("checkoutItems: ", checkoutItems);
-
-    }, []);
-
     const checkoutItems = directCheckoutItem ? [directCheckoutItem] : selectedCartItems;
     const subtotal = checkoutItems?.reduce((sum, item) => {
         return sum + (parseFloat(item.price) * parseInt(item.quantity));
