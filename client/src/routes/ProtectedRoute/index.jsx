@@ -13,8 +13,8 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         
         const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
         const isAdminRoute = location.pathname.startsWith('/admin');
-        const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders', '/reservations'].includes(location.pathname);
-        const isPublicRoute = ['/', '/about-us', '/motorcycles', '/parts-and-accessories'].includes(location.pathname) || location.pathname.startsWith('/motorcycles/') || location.pathname.startsWith('/parts-and-accessories/');
+        const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
+        const isPublicRoute = ['/', '/about-us', '/collections'].includes(location.pathname) || location.pathname.startsWith('/collections/') || isAdminRoute;
 
         if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
             return;
@@ -51,8 +51,8 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
 
     const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
     const isAdminRoute = location.pathname.startsWith('/admin');
-    const isCustomerRoute = ['/profile', '/cart', '/orders', '/reservations'].includes(location.pathname);
-    const isPublicRoute = ['/', '/about-us', '/motorcycles', '/parts-and-accessories'].includes(location.pathname) || location.pathname.startsWith('/motorcycles/') || location.pathname.startsWith('/parts-and-accessories/');
+    const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
+    const isPublicRoute = ['/', '/about-us', '/collections'].includes(location.pathname) || location.pathname.startsWith('/collections/') || isAdminRoute;
 
     if (!user && !isAuthPage && !isPublicRoute) return null;
     if (user && isAuthPage) return null;

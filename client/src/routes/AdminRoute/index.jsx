@@ -11,12 +11,7 @@ const AdminRoute = ({ children }) => {
 
         if (loading) return;
 
-        if (!user) {
-            navigate('/sign-in');
-            return;
-        }
-
-        if (user.role !== 'admin') {
+        if (user && user.role !== 'admin') {
             navigate('/');
             return;
         }
@@ -26,7 +21,7 @@ const AdminRoute = ({ children }) => {
     if (loading)
         return null;
     
-    if (!user || user.role !== 'admin')
+    if (user && user.role !== 'admin')
         return null;
 
     return children;

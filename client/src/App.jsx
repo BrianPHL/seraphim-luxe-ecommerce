@@ -6,7 +6,7 @@ import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, NotFound } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
-import { AdminLayout, AdminDashboard, AdminOrders, AdminProducts, AdminReservations, AdminStocks, AdminInstallments } from '@pages/Admin';
+import { AdminLayout, AdminLanding, AdminDashboard, AdminOrders, AdminProducts, AdminReservations, AdminStocks, AdminInstallments } from '@pages/Admin';
 
 const PAGE_TITLES = {
 	"/": "Seraphim Luxe | Style Without Boundaries",
@@ -19,12 +19,6 @@ const PAGE_TITLES = {
 	"/cart": "Seraphim Luxe | Cart",
 	"/profile": "Seraphim Luxe | Profile",
     "/orders": "Seraphim Luxe | Orders",
-	"/admin": "Seraphim Luxe | Admin Dashboard",
-	"/admin/products": "Seraphim Luxe | Admin Products",
-	"/admin/reservations": "Seraphim Luxe | Admin Reservations",
-	"/admin/stocks": "Seraphim Luxe | Admin Stocks",
-	"/admin/installments": "Seraphim Luxe | Admin Installments",
-    "/admin/orders": "Seraphim Luxe | Admin Orders",
 };
 
 const App = () => {
@@ -42,86 +36,108 @@ const App = () => {
 
     return (
         <>
-            <Header />
+
             <Routes>
 
                 <Route path="/" element={
                     <ProtectedRoute>
-                        <Home />
+                        <Header />
+                            <Home />
+                        <Footer />
                     </ProtectedRoute>
                 } />
                 
                 <Route path="/about-us" element={
                     <ProtectedRoute>
-                        <AboutUs />
+                        <Header />
+                            <AboutUs />
+                        <Footer />
                     </ProtectedRoute>
                 } />
                 
                 <Route path="/collections" element={
                     <ProtectedRoute>
-                        <CollectionsStore />
+                        <Header />
+                            <CollectionsStore />
+                        <Footer />
                     </ProtectedRoute>
                 } />
                 
                 <Route path="/collections/:product_id" element={
                     <ProtectedRoute>
-                        <CollectionsProductPage />
+                        <Header />
+                            <CollectionsProductPage />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/sign-in/*" element={
                     <ProtectedRoute>
-                        <SignIn />
+                        <Header />
+                            <SignIn />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/sign-up/*" element={
                     <ProtectedRoute>
-                        <SignUp />
+                        <Header />
+                            <SignUp />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/profile" element={
                     <ProtectedRoute>
-                        <Profile />
+                        <Header />
+                            <Profile />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/orders" element={
                     <ProtectedRoute>
-                        <Orders />
-                    </ProtectedRoute>
-                } />
-
-                <Route path="/reservations" element={
-                    <ProtectedRoute>
-                        <Reservations />
+                        <Header />
+                            <Orders />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/cart" element={
                     <ProtectedRoute>
-                        <Cart />
+                        <Header />
+                            <Cart />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/checkout" element={
                     <ProtectedRoute>
-                        <Checkout />
+                        <Header />
+                            <Checkout />
+                        <Footer />
                     </ProtectedRoute>
                 } />
 
                 <Route path="/admin" element={
                     <ProtectedRoute>
-                        <AdminLayout />
+                        <AdminLanding />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/admin/*" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <AdminLayout />
+                        <Footer />
                     </ProtectedRoute>
                 }>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="products" element={<AdminProducts />} />
-                    <Route path="orders" element={<AdminOrders />} />
-                    <Route path="reservations" element={<AdminReservations />} />
-                    <Route path="stocks" element={<AdminStocks />} />
-                    <Route path="installments" element={<AdminInstallments />} />
+                    <Route path="dashboard" element={ <AdminDashboard /> } />
+                    <Route path="products" element={ <AdminProducts /> } />
+                    <Route path="orders" element={ <AdminOrders /> } />
+                    <Route path="reservations" element={ <AdminReservations /> } />
+                    <Route path="stocks" element={ <AdminStocks /> } />
+                    <Route path="installments" element={ <AdminInstallments /> } />
                 </Route>
 
                 <Route path="*" element={
@@ -140,7 +156,6 @@ const App = () => {
                 onSuccess={ handleOTPSuccess }
             />
 
-            <Footer />
         </>
       );
 };

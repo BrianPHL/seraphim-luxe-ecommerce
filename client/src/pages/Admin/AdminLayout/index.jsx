@@ -6,7 +6,8 @@ const AdminLayout = () => {
 
     const HEADER_TITLES = {
 	    "/": "Seraphim Luxe | Style Without Boundaries",
-        "/admin": "Seraphim Luxe | Admin Dashboard",
+        "/admin": "Seraphim Luxe | Admin Landing Page",
+        "/admin/dashboard": "Seraphim Luxe | Admin Dashboard",
         "/admin/products": "Seraphim Luxe | Admin Products",
         "/admin/reservations": "Seraphim Luxe | Admin Reservations",
         "/admin/stocks": "Seraphim Luxe | Admin Stocks",
@@ -26,9 +27,9 @@ const AdminLayout = () => {
                 <div className={ styles['nav'] }>
                     <Anchor
                         label="Dashboard"
-                        link="/admin"
+                        link="/admin/dashboard"
                         isNested={ true }
-                        isActive={ pathname === '/admin' }
+                        isActive={ pathname === '/admin/dashboard' }
                     />
                     <Anchor
                         label="Orders"
