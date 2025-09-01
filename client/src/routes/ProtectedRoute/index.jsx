@@ -12,15 +12,18 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         if (loading) return;
         
         const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
-        const isAdminRoute = location.pathname.startsWith('/admin');
+        const isAdminRoute = location.pathname.startsWith('/admin/');
         const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
-        const isPublicRoute = ['/', '/about-us', '/collections'].includes(location.pathname) || location.pathname.startsWith('/collections/') || isAdminRoute;
+        const isPublicRoute = ['/', '/admin', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
 
         if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
             return;
 
+        console.log(user, isPublicRoute, isAdminRoute);
+
         if (!user && !isPublicRoute) {
             if (isAdminRoute) {
+                console.log("hey???")
                 navigate('/admin');
             } else {
                 navigate('/sign-in');
@@ -30,7 +33,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
 
         if (user && isAuthPage) {
             user.role === 'admin'
-                ? navigate('/admin/dashobard')
+                ? navigate('/admin/dashboard')
                 : navigate('/')
             return;
         }
@@ -60,7 +63,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
     const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
     const isAdminRoute = location.pathname.startsWith('/admin');
     const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
-    const isPublicRoute = ['/', '/about-us', '/collections'].includes(location.pathname) || location.pathname.startsWith('/collections/') || isAdminRoute;
+    const isPublicRoute = ['/', '/admin', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
 
     if (!user && !isAuthPage && !isPublicRoute) return null;
     if (user && isAuthPage) return null;
