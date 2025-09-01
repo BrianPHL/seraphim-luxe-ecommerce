@@ -29,28 +29,37 @@ const useOAuth = () => {
 
             try {
 
-            const { email, password } = data;
+                const { email, password, type } = data;
+                
+                const passwordCheckResponse = await fetch(`/api/oauth/check-password-exists/${ email }`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const passwordCheckResponseData = await passwordCheckResponse.json();
 
-            const response = await fetch(`/api/oauth/check-password-exists/${ email }`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const responseData = await response.json();
+                if (!passwordCheckResponse.ok) {
+                    throw new Error(passwordCheckResponseData.error);
+                }
 
-            if (!response.ok) {
-                throw new Error(responseData.error);
-            }
+                if (!passwordCheckResponseData.doesPasswordExist)
+                    throw new Error("ACCOUNT_DOES_NOT_HAVE_A_PASSWORD");
 
-            if (!responseData.doesPasswordExist)
-                throw new Error("ACCOUNT_DOES_NOT_HAVE_A_PASSWORD");
+                const typeCheckResponse = await fetch(`/api/oauth/check-role-matches/${ type }/${ email }`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const typeCheckResponseData = await typeCheckResponse.json();
 
-            const result = await authClient.signIn.email({
-                email: email,
-                password: password,
-                rememberMe: false
-            });
+                if (!typeCheckResponseData.doesRoleMatchType)
+                    throw new Error(`TYPE_DOES_NOT_MATCH_ROLE_${ type.toUpperCase() }`);
 
-            return result;
+                const result = await authClient.signIn.email({
+                    email: email,
+                    password: password,
+                    rememberMe: false
+                });
+
+                return result;
 
             } catch (err) {
                 console.error("useOauth hook signInThruEmail function error: ", err);

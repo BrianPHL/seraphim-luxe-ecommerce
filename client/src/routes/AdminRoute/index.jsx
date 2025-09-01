@@ -11,6 +11,11 @@ const AdminRoute = ({ children }) => {
 
         if (loading) return;
 
+        if (user && user.role === 'admin') {
+            navigate('/admin/dashboard');
+            return;
+        }
+
         if (user && user.role !== 'admin') {
             navigate('/');
             return;
@@ -21,7 +26,7 @@ const AdminRoute = ({ children }) => {
     if (loading)
         return null;
     
-    if (user && user.role !== 'admin')
+    if (user)
         return null;
 
     return children;

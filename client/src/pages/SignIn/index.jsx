@@ -53,7 +53,8 @@ const SignIn = () => {
             
             const result = await signIn({
                 email: email,
-                password: password
+                password: password,
+                type: 'customer'
             });
 
             if (result?.error) {

@@ -38,9 +38,40 @@ router.get("/check-password-exists/:email", async (req, res) => {
 
     } catch (err) {
 
-        console.error('Auth /check-password-exists/:email route error:', err);
+        console.error('OAuth /check-password-exists/:email route error:', err);
         res.status(500).json({ doesPasswordExist: false, error: err.message });
     
+    }
+
+});
+
+router.get("/check-role-matches/:type/:email", async (req, res) => {
+
+    try {
+
+        const { type, email } = req.params;
+
+        const [ accountRows ] = await pool.query(
+            `
+                SELECT role = ? AS does_role_match_type
+                FROM accounts
+                WHERE email = ?
+            `,
+            [ type, email ]
+        );
+
+        if (accountRows.length <= 0)
+            throw new Error("Account does not exist!");
+    
+        const doesRoleMatchType = Boolean(accountRows[0]?.does_role_match_type);
+
+        res.status(200).json({ doesRoleMatchType });
+
+    } catch (err) {
+
+        console.error('OAuth /check-role-matches/:type/:email route error:', err);
+        res.status(500).json({ doesRoleMatchType: false, error: err.message });
+        
     }
 
 });

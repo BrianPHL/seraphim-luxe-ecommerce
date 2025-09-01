@@ -19,16 +19,24 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
             return;
 
-        if (!user && !isAuthPage && !isPublicRoute) {
-
-            navigate('/sign-in');
+        if (!user) {
+            if (isAdminRoute) {
+                navigate('/admin');
+            } else {
+                navigate('/sign-in');
+            }
             return;
         }
 
         if (user && isAuthPage) {
             user.role === 'admin'
-                ? navigate('/admin')
+                ? navigate('/admin/dashobard')
                 : navigate('/')
+            return;
+        }
+
+        if (user && isAdminRoute && user.role === 'admin') {
+            navigate('/admin/dashboard');
             return;
         }
 
@@ -38,7 +46,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         }
 
         if (user && user.role === 'admin' && !isAdminRoute) {
-            navigate('/admin');
+            navigate('/admin/dashboard');
             return;
         }
 
