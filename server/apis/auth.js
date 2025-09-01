@@ -143,6 +143,32 @@ export const auth = betterAuth({
         
         after: createAuthMiddleware(async (ctx) => {
 
+            if (ctx.path === '/callback/:id') {
+
+                const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
+                const responseHeaders = ctx.context?.responseHeaders?.get('location') || '';
+
+                if (user?.email) {
+
+                    const isAdminPlatform = responseHeaders.includes('/admin');
+                    const expectedRole = isAdminPlatform ? 'admin' : 'customer';
+
+                    const [rows] = await pool.query('SELECT role FROM accounts WHERE email = ?', [ user.email ]);
+
+                    if (rows.length > 0 && rows[0].role !== expectedRole) {
+
+                        await pool.query('DELETE FROM oauth_sessions WHERE user_id = ?', [ user.id ]);
+
+                        const redirectURL = isAdminPlatform 
+                            ? `http://localhost:5173/admin?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
+                            : `http://localhost:5173/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
+
+                        ctx.redirect(redirectURL);
+                        return;
+                    }
+                }
+            }
+
             const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
 
             if (user) {

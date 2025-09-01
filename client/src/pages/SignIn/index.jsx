@@ -124,7 +124,10 @@ const SignIn = () => {
                             disabled={ !email || !password }
                         />
                         <p>or</p>
-                        <GoogleLoginButton callbackURL='http://localhost:5173/sign-in' />
+                        <GoogleLoginButton
+                            type='customer'
+                            callbackURL='http://localhost:5173/sign-in'
+                        />
                         <p>Don't have an account yet? <Anchor label="Sign up" link="/sign-up" isNested={ false }/></p>
                     </div>
                 </form>

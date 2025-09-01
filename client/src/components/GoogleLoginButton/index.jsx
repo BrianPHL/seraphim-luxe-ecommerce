@@ -2,7 +2,7 @@ import { useOAuth } from '@hooks';
 import { performOperationWithTimeout, TIMEOUTS } from '@utils';
 import { Button } from '@components';
 
-const GoogleLoginButton = ({ callbackURL, ...props }) => {
+const GoogleLoginButton = ({ type, callbackURL, ...props }) => {
 
     const { signInThruGoogleSSO } = useOAuth();
     const handleGoogleLogin = async () => {
@@ -10,7 +10,7 @@ const GoogleLoginButton = ({ callbackURL, ...props }) => {
         try {
 
             const result = await performOperationWithTimeout(
-                await signInThruGoogleSSO(callbackURL),
+                await signInThruGoogleSSO({type, callbackURL}),
                 TIMEOUTS.AUTH_EXTERNAL
             );
 
@@ -23,12 +23,27 @@ const GoogleLoginButton = ({ callbackURL, ...props }) => {
                 };
 
                 console.error("GoogleLoginButton component Better Auth API error: ", errorData.code, errorData.message, errorData.details || "No error details provided");
+
+                if (errorData.message?.includes('TYPE_DOES_NOT_MATCH_ROLE')) {
+                    if (onError) {
+                        onError(errorData.message);
+                    }
+                    return { error: errorData };
+                }
+
                 return { error: errorData };
 
             }
  
         } catch (err) {
             console.error("GoogleLoginButton component error: ", err);
+
+            if (err.message?.includes('TYPE_DOES_NOT_MATCH_ROLE')) {
+                if (onError) {
+                    onError(err.message);
+                }
+            }
+
             return err.message;
         }
 

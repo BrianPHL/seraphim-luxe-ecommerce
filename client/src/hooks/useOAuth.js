@@ -15,14 +15,21 @@ const useOAuth = () => {
 
     return {
         authClient,
-        signInThruGoogleSSO: async (callbackURL = 'http://localhost:5173') => {
-            
+        signInThruGoogleSSO: async (data) => {
+
+            const { type, callbackURL } = data;
             const result = await authClient.signIn.social({
                 provider: 'google',
                 callbackURL: callbackURL,
-                errorCallbackURL: callbackURL
+                errorCallbackURL: callbackURL,
+                fetchOptions: {
+                    body: JSON.stringify({
+                        expectedRole: type,
+                        callbackURL: callbackURL
+                    })
+                }
             });
-            
+        
             return result;
         },
         signInThruEmail: async (data) => {
