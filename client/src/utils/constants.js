@@ -22,8 +22,8 @@ export const ERROR_MESSAGES = {
     'SIGNUP_DISABLED': 'No account associated with the email used in Social Sign-On. Please sign up and try again.',
     'ACCOUNT_DOES_NOT_HAVE_A_PASSWORD': 'The account was created using Google Sign-In therefore no password was set. You may sign in with Google or set a password in the profile page.',
     'INVALID_TOKEN': 'Something went wrong which invalidated your token. "Click Set/Change account password" first then try again.',
-    'TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER': 'Please sign into the appropriate platforms. You can\'t sign in as a customer here.',
-    'TYPE_DOES_NOT_MATCH_ROLE_ADMIN': 'Please sign into the appropriate platforms. You can\'t sign in as an admin here.',
+    'TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER': 'Please sign into the appropriate platforms. You can\'t sign in as an admin here.',
+    'TYPE_DOES_NOT_MATCH_ROLE_ADMIN': 'Please sign into the appropriate platforms. You can\'t sign in as a customer here.',
 
     // Better Auth Session Error Codes
     'SESSION_NOT_FOUND': 'Your session has expired. Please sign in again.',
