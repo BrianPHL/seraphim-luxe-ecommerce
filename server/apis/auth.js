@@ -154,8 +154,11 @@ export const auth = betterAuth({
                     const isNewlyCreated = (!user.first_name || !user.last_name) && user.name;
 
                     if (!isNewlyCreated) {
-
+                                                
                         try {
+
+                            if (expectedRole === user.role)
+                                return;
                             
                             await ctx?.context?.internalAdapter?.deleteSessions(user.id);
                             const redirectURL = isAdminPlatform 
@@ -169,7 +172,7 @@ export const auth = betterAuth({
                         }
 
                     } else {
-                    
+
                         try {
 
                             const capitalizeWord = (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
