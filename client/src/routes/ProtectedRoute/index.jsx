@@ -20,7 +20,6 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
             return;
 
         if (!user && !isPublicRoute) {
-            console.log("1")
             if (isAdminRoute) {
                 navigate('/admin');
             } else {
@@ -30,7 +29,6 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         }
 
         if (user && isAuthPage) {
-            console.log("2")
             user.role === 'admin'
                 ? navigate('/admin/dashboard')
                 : navigate('/')
@@ -48,7 +46,6 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         }
 
         if (user && user.role === 'admin' && !isAdminRoute) {
-            console.log("4")
             navigate('/admin/dashboard');
             return;
         }
@@ -64,8 +61,6 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
     const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin');
     const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
     const isPublicRoute = ['/', '/admin', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
-
-    console.log("before?")
 
     if (!user && !isPublicRoute && !isAuthPage) return null;
     if (user && isAuthPage) return null;
