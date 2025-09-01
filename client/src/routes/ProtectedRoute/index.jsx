@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         if (loading) return;
         
         const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
-        const isAdminRoute = location.pathname.startsWith('/admin/');
+        const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
         const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
         const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
 
@@ -58,9 +58,9 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         return children;
 
     const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
-    const isAdminRoute = location.pathname === '/admin/sign-in' || location.pathname.startsWith('/admin');
+    const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
     const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
-        const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
+    const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
 
     if (!user && !isPublicRoute && !isAuthPage) return null;
     if (user && isAuthPage) return null;
