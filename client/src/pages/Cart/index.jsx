@@ -79,7 +79,10 @@ const Cart = () => {
     };
 
     const handleBatchRemove = () => {
-        if (selectedCartItems.length === 0) return;
+        if (selectedCartItems.length === 0) {
+            showToast('No items selected to remove.', 'error');
+            return;
+        }
         setModalType('batch-remove-confirmation');
         setModalOpen(true);
     };
@@ -89,6 +92,7 @@ const Cart = () => {
             showToast('Please select items to checkout', 'error');
             return;
         }
+        showToast('Proceeding to checkout...', 'success');
         navigate('/checkout');
     };
 
@@ -257,7 +261,12 @@ const Cart = () => {
                             label='Confirm'
                             type='primary'
                             action={ () => {
-                                removeFromCart(selectedItem['product_id']);
+                                try {
+                                    removeFromCart(selectedItem['product_id']);
+                                    showToast('Item removed from cart.', 'success');
+                                } catch (err) {
+                                    showToast('Failed to remove item from cart.', 'error');
+                                }
                                 setModalOpen(false);
                             }}
                             externalStyles={ styles['modal-warn'] }
@@ -280,7 +289,12 @@ const Cart = () => {
                             label='Confirm'
                             type='primary'
                             action={ () => {
-                                clearCart();
+                                try {
+                                    clearCart();
+                                    showToast('Cart cleared successfully.', 'success');
+                                } catch (err) {
+                                    showToast('Failed to clear cart.', 'error');
+                                }
                                 setModalOpen(false);
                             }}
                             externalStyles={ styles['modal-warn'] }
@@ -303,7 +317,12 @@ const Cart = () => {
                             label='Confirm'
                             type='primary'
                             action={ () => {
-                                selectedCartItems.forEach(item => removeFromCart(item.product_id));
+                                try {
+                                    selectedCartItems.forEach(item => removeFromCart(item.product_id));
+                                    showToast('Selected items removed from cart.', 'success');
+                                } catch (err) {
+                                    showToast('Failed to remove selected items.', 'error');
+                                }
                                 setModalOpen(false);
                             }}
                             externalStyles={ styles['modal-warn'] }
