@@ -102,10 +102,6 @@ const Header = () => {
                                         action: () => { navigate('/profile') },
                                     },
                                     {
-                                        label: 'Admin',
-                                        action: () => { navigate('/admin') },
-                                    },
-                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
@@ -159,10 +155,6 @@ const Header = () => {
                                 {
                                     label: 'Profile',
                                     action: () => { navigate('/profile') },
-                                },
-                                {
-                                    label: 'Admin',
-                                    action: () => { navigate('/admin') },
                                 },
                                 {
                                     label: 'Logout',
@@ -259,10 +251,6 @@ const Header = () => {
                                     {
                                         label: 'Profile',
                                         action: () => { navigate('/profile') },
-                                    },
-                                    {
-                                        label: 'Admin',
-                                        action: () => { navigate('/admin') },
                                     },
                                     {
                                         label: 'Logout',
