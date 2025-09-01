@@ -3,35 +3,10 @@ import express from 'express';
 
 const router = express.Router();
 
-async function generateOrderNumber(connection) {
-
-    const [rows] = await connection.query(`
-        SELECT order_number 
-        FROM orders 
-        WHERE order_number IS NOT NULL
-        ORDER BY id DESC 
-        LIMIT 1
-    `);
-    
-    if (rows.length === 0) {
-        return 'SL-000001'; 
-    }
-    
-    const lastOrderNumber = rows[0].order_number;
-    
-    if (!lastOrderNumber || !lastOrderNumber.includes('-')) {
-        return 'SL-000001';
-    }
-    
-    const lastNumber = parseInt(lastOrderNumber.split('-')[1]);
-
-    if (isNaN(lastNumber)) {
-        return 'SL-000001';
-    }
-    
-    const newNumber = lastNumber + 1;
-    
-    return `SL-${String(newNumber).padStart(6, '0')}`;
+function generateOrderNumber() {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `ORD-${timestamp}-${random}`;
 }
 
 router.get('/recent', async (req, res) => {
@@ -223,7 +198,7 @@ router.post('/', async (req, res) => {
 
         const user = userResult[0];
 
-        const orderNumber = await generateOrderNumber(connection);
+        const orderNumber = generateOrderNumber();
 
         const [result] = await connection.query(`
             INSERT INTO orders (
