@@ -236,10 +236,10 @@ const Orders = () => {
                             ) : (
                                 <div className={styles['orders-list']}>
                                     {currentOrders.map(order => (
-                                        <div className={styles['order-item']} key={order.order_id}>
+                                        <div className={styles['order-item']} key={order.order_number || order.id}>
                                             <div className={styles['order-header']}>
                                                 <div className={styles['order-info']}>
-                                                    <h3>Order #: {order.order_id || order.id || 'N/A'}</h3>
+                                                    <h3>Order #: {order.order_number || 'N/A'}</h3>
                                                     <p>Placed on: {formatDate(order.order_date || order.created_at || order.date)}</p>
                                                 </div>
                                                 <div className={`${styles['order-status']} ${getStatusColor(order.status)}`}>
@@ -328,10 +328,10 @@ const Orders = () => {
                             ) : (
                                 <div className={styles['orders-list']}>
                                     {pastOrders.map(order => (
-                                        <div className={styles['order-item']} key={order.order_id}>
+                                        <div className={styles['order-item']} key={order.order_number || order.id}>
                                             <div className={styles['order-header']}>
                                                 <div className={styles['order-info']}>
-                                                    <h3>Order #: {order.order_id || order.id || 'N/A'}</h3>
+                                                    <h3>Order #: {order.order_number || 'N/A'}</h3>
                                                     <p>Delivered on: {formatDate(order.delivered_date || order.order_date || order.created_at || order.date)}</p>
                                                 </div>
                                                 <div className={`${styles['order-status']} ${getStatusColor(order.status)}`}>
@@ -404,7 +404,7 @@ const Orders = () => {
             
             {selectedOrder && (
                 <Modal 
-                    label={`Order Details - #${selectedOrder.order_id || selectedOrder.id || 'N/A'}`} 
+                    label={`Order Details - #${selectedOrder.order_number || 'N/A'}`} 
                     isOpen={modalOpen} 
                     onClose={() => setModalOpen(false)}
                     size="large"
@@ -413,7 +413,7 @@ const Orders = () => {
                         {/* Header with Order Status Badge */}
                         <div className={styles['order-details-header']}>
                             <div className={styles['order-id-section']}>
-                                <h2>Order #{selectedOrder.order_id || selectedOrder.id || 'N/A'}</h2>
+                                <h2>Order #{selectedOrder.order_number || 'N/A'}</h2>
                                 <div className={`${styles['status-badge']} ${getStatusColor(selectedOrder.status)}`}>
                                     <i className={getStatusIcon(selectedOrder.status)}></i>
                                     <span>{selectedOrder.status}</span>
