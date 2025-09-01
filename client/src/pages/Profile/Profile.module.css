@@ -473,11 +473,11 @@
 }
 
 .action-danger {
-    background-color: var(--error-foreground);
-    color: var(--tg-primary);
+    background-color: var(--error-background);
+    color: var(--error-foreground);
     &:hover {
         background-color: var(--error-hover);
-        color: var(--tg-primary);
+        color: var(--error-foreground);
     }
 }
 
