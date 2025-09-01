@@ -22,25 +22,6 @@ const Dashboard = () => {
     const { recentReservations, pendingReservationsCount } = useReservation();
     const { lowStockProducts, addStock } = useStocks();
 
-    const handleAddStock = async () => {
-        if (!selectedProduct) return;
-
-        const success = await addStock(
-            selectedProduct.product_id,
-            quantityToAdd,
-            newThreshold,
-            notes
-        );
-
-        if (success) {
-            setIsModalOpen(false);
-            setSelectedProduct(null);
-            setQuantityToAdd(1);
-            setNewThreshold('');
-            setNotes('');
-        }
-    };
-
     useEffect(() => {
         const loadDashboardData = async () => {
             if (!user) return;
@@ -146,16 +127,6 @@ const Dashboard = () => {
                 <div className={ styles['section'] }>
                     <div className={ styles['section-header'] }>
                         <h2>Stock Alerts</h2>
-                        <Button
-                            type='primary'
-                            icon='fa-solid fa-plus'
-                            iconPosition='left'
-                            label='Add Stocks'
-                            action={ () => {
-                                setModalType('add-stock');
-                                setIsModalOpen(true);
-                            }}
-                        />
                     </div>
                     <div className={ styles['table'] }>
                         <div className={ styles['table-wrapper'] }>
@@ -252,83 +223,6 @@ const Dashboard = () => {
                 </div>
 
             </div>
-            <Modal
-                isOpen={ isModalOpen && modalType === 'add-stock' }
-                onClose={ () => setIsModalOpen(false) }
-                label="Add Stock Prompt"
-            >
-                { selectedProduct && (
-                    <div className={ styles['modal-infos'] }>
-                        <h3>{ selectedProduct.label || 0 }</h3>
-                        <span>
-                            <p>Current Stock: { selectedProduct.stock_quantity || 0 }</p>
-                            <p>Stock Threshold: { selectedProduct.stock_threshold || 0 }</p>
-                        </span>
-                    </div>
-                )}
-                <div className={ styles['input-wrapper'] }>
-                    <label>Select Product</label>
-                    <select 
-                        value={selectedProduct?.product_id || ''} 
-                        onChange={(e) => {
-                            const product = products.find(p => p.product_id.toString() === e.target.value);
-                            setSelectedProduct(product);
-                            setNewThreshold(product?.stock_threshold || '');
-                        }}
-                    >
-                        <option value="">-- Select a Product --</option>
-                        {products.map(p => (
-                            <option key={p.product_id} value={p.product_id}>
-                                {p.label} ({p.category})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className={ styles['input-wrapper'] }>
-                    <label>Quantity to Add</label>
-                    <InputField
-                        type="number"
-                        hint="The quantity to add..." 
-                        min="1"
-                        value={quantityToAdd}
-                        onChange={(e) => setQuantityToAdd(parseInt(e.target.value) || 1)}
-                        isSubmittable={ false }
-                    />
-                </div>
-                <div className={ styles['input-wrapper'] }>
-                    <label>Update Stock Threshold (Optional)</label>
-                    <InputField 
-                        hint="The product's stock threshold..."
-                        type="number"
-                        min="0"
-                        placeholder="Keep current threshold"
-                        value={ newThreshold }
-                        onChange={(e) => setNewThreshold(e.target.value)}
-                        isSubmittable={ false }
-                    />
-                </div>
-                <div className={ styles['input-wrapper'] }>
-                    <label>Notes (Optional)</label>
-                    <textarea
-                        placeholder="Reason for stock addition..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                    />
-                </div>
-                <div className={styles['modal-ctas']}>
-                    <Button 
-                        type="secondary" 
-                        label="Cancel" 
-                        action={() => setIsModalOpen(false)} 
-                    />
-                    <Button 
-                        type="primary" 
-                        label="Add Stock" 
-                        action={handleAddStock} 
-                        disabled={!selectedProduct || quantityToAdd < 1}
-                    />
-                </div>
-            </Modal>
         </>
     );
 };
