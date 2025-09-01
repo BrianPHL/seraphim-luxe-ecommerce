@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
             return;
 
-        if (!user) {
+        if (!user && !isPublicRoute) {
             if (isAdminRoute) {
                 navigate('/admin');
             } else {
