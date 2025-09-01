@@ -148,47 +148,32 @@ router.put('/:account_id/password', async (req, res) => {
 });
 
 router.delete('/:account_id', async (req, res) => {
-    const connection = await pool.getConnection();
     
+    const connection = await pool.getConnection();
+
     try {
         await connection.beginTransaction();
         
         const { account_id } = req.params;
 
-        await connection.query(
-            `
-                DELETE rp FROM reservation_products rp
-                JOIN reservations r ON rp.id = r.id
-                WHERE r.id = ?
-            `,
-            [account_id]
-        );
-        
-        await connection.query(
-            `
-                DELETE
-                FROM reservations
-                WHERE id = ?
-            `,
-            [account_id]
-        );
+        console.log("ACCOUNT ID: ", account_id);
         
         await connection.query(
             `
                 DELETE
                 FROM carts
-                WHERE id = ?
-            `
-            [account_id]
+                WHERE account_id = ?
+            `,
+            [ account_id ]
         );
 
-        const [accounts] = await connection.query(
+        const [ accounts ] = await connection.query(
             `
                 SELECT image_url 
                 FROM accounts
                 WHERE id = ?
             `,
-            [account_id]
+            [ account_id ]
         );
         
         await connection.query(
@@ -197,8 +182,17 @@ router.delete('/:account_id', async (req, res) => {
                 FROM accounts
                 WHERE id = ?
             `,
-            [account_id]
+            [ account_id ]
         );
+
+        await connection.query(
+            `
+                DELETE
+                FROM orders
+                WHERE account_id = ?
+            `,
+            [ account_id ]
+        )
         
         if (accounts.length > 0 && accounts[0].image_url) {
             await cloudinary.uploader.destroy(accounts[0].image_url);
