@@ -13,7 +13,7 @@ const Home = () => {
     // * Fisher-Yates Shuffle Algorithm
     // * https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
     const shuffleArray = (array) => {
-        
+                
         const shuffled = [ ...array ];
         
         for (let i = shuffled['length'] - 1; i > 0; i--) {

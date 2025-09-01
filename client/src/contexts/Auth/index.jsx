@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
     const signIn = async (data) => {
 
         try {
-
+            
             
             const signInThruEmailResult = await performOperationWithTimeout(
                 await signInThruEmail(data),
@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }) => {
 
                 return { error: errorData };
 
-            }
+}
 
             completeSignInProcess();
 
@@ -213,6 +213,7 @@ export const AuthProvider = ({ children }) => {
             await signOut();
             localStorage.removeItem('user');
             setUser(null);
+            showToast('Logged out successfully.', 'success');
             navigate('/sign-in');
 
         } catch (err) {
@@ -267,7 +268,7 @@ export const AuthProvider = ({ children }) => {
             const updatedUser = { ...data };
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
-
+            showToast('Address updated successfully!', 'success');
         } catch (err) {
             console.error("Failed to update address:", err);
             return { error: err.message };
@@ -294,7 +295,7 @@ export const AuthProvider = ({ children }) => {
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to update password');
             }
-
+            showToast('Password updated successfully!', 'success');
             return { success: true };
         } catch (err) {
             console.error("Failed to update password:", err);
@@ -321,7 +322,7 @@ export const AuthProvider = ({ children }) => {
                 const data = await response.json();
                 throw new Error(data.error || 'Failed to delete account');
             }
-
+            showToast('Account deleted successfully.', 'success');
             logout();
 
             return { success: true };
@@ -357,7 +358,7 @@ export const AuthProvider = ({ children }) => {
             const updatedUser = { ...user, image_url: data['image_url'] };
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
-
+            showToast('Avatar updated successfully!', 'success');
             return data;
 
         } catch (err) {

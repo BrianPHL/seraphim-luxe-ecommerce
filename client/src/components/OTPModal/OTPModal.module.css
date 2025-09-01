@@ -6,6 +6,10 @@
     text-align: center;
 }
 
+.content h3 {
+        color: var(--tg-primary);
+}
+
 .description {
     color: var(--tg-secondary);
     font-size: 0.9rem;
