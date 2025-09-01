@@ -95,7 +95,6 @@ export const auth = betterAuth({
             role: {
                 type: "string",
                 required: false,
-                input: false,
                 defaultValue: "customer"
             }
         }
@@ -140,7 +139,7 @@ export const auth = betterAuth({
         }
     },
     hooks: {
-        
+
         after: createAuthMiddleware(async (ctx) => {
 
             if (ctx.path === '/callback/:id') {
@@ -148,70 +147,69 @@ export const auth = betterAuth({
                 const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
                 const responseHeaders = ctx.context?.responseHeaders?.get('location') || '';
 
-                if (user?.email) {
+                if (user) {
 
                     const isAdminPlatform = responseHeaders.includes('/admin');
                     const expectedRole = isAdminPlatform ? 'admin' : 'customer';
+                    const isNewlyCreated = (!user.first_name || !user.last_name) && user.name;
 
-                    const [rows] = await pool.query('SELECT role FROM accounts WHERE email = ?', [ user.email ]);
+                    if (!isNewlyCreated) {
 
-                    if (rows.length > 0 && rows[0].role !== expectedRole) {
-
-                        await pool.query('DELETE FROM oauth_sessions WHERE user_id = ?', [ user.id ]);
-
-                        const redirectURL = isAdminPlatform 
-                            ? `http://localhost:5173/admin?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
-                            : `http://localhost:5173/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
-
-                        ctx.redirect(redirectURL);
-                        return;
-                    }
-                }
-            }
-
-            const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
-
-            if (user) {
-
-                const isProfileSetupNeeded = (!user.first_name || !user.last_name) && user.name;
-
-                if (isProfileSetupNeeded) {
-
-                    try {
-
-                        const capitalizeWord = (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                        const fullName = user.name.trim().split(' ').filter(part => part.length > 0);
-                        let firstName, lastName;
-
-                        if (fullName.length === 0)
+                        try {
+                            
+                            await ctx?.context?.internalAdapter?.deleteSessions(user.id);
+                            const redirectURL = isAdminPlatform 
+                                ? `http://localhost:5173/admin/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
+                                : `http://localhost:5173/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
+                            ctx.redirect(redirectURL);
                             return;
 
-                        if (fullName.length === 1) {
-                            firstName = capitalizeWord(fullName[0]);
-                            lastName = '';
-                        } else if (fullName.length === 2) {
-                            firstName = capitalizeWord(fullName[0]);
-                            lastName = capitalizeWord(fullName[1]);
-                        } else {
-
-                            const lastNamePart = fullName[fullName.length - 1];
-                            const firstNameParts = fullName.slice(0, -1);
-                            
-                            firstName = firstNameParts.map(capitalizeWord).join(' ');
-                            lastName = capitalizeWord(lastNamePart);
+                        } catch (err) {
+                            console.error("Auth betterAuth signIn hook error: ", err);
                         }
 
-                        await ctx?.context?.internalAdapter?.updateUser(user.id, {
-                            first_name: firstName,
-                            last_name: lastName
-                        });
+                    } else {
+                    
+                        try {
 
-                    } catch(err) {
-                        console.error("betterAuth hook error: ", err);
+                            const capitalizeWord = (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                            const fullName = user.name.trim().split(' ').filter(part => part.length > 0);
+                            let firstName, lastName;
+
+                            if (fullName.length === 0)
+                                return;
+
+                            if (fullName.length === 1) {
+
+                                firstName = capitalizeWord(fullName[0]);
+                                lastName = '';
+
+                            } else if (fullName.length === 2) {
+
+                                firstName = capitalizeWord(fullName[0]);
+                                lastName = capitalizeWord(fullName[1]);
+                            } else {
+
+                                const lastNamePart = fullName[fullName.length - 1];
+                                const firstNameParts = fullName.slice(0, -1);
+                                firstName = firstNameParts.map(capitalizeWord).join(' ');
+                                lastName = capitalizeWord(lastNamePart);
+                            }
+
+                            await ctx?.context?.internalAdapter?.updateUser(user.id, {
+                                first_name: firstName,
+                                last_name: lastName,
+                                role: expectedRole
+                            });
+                            return;
+
+                        } catch(err) {
+                            console.error("Auth betterAuth signUp hook error: ", err);
+                        }
+
                     }
 
                 }
-
             }
 
         })

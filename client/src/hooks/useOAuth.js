@@ -22,12 +22,6 @@ const useOAuth = () => {
                 provider: 'google',
                 callbackURL: callbackURL,
                 errorCallbackURL: callbackURL,
-                fetchOptions: {
-                    body: JSON.stringify({
-                        expectedRole: type,
-                        callbackURL: callbackURL
-                    })
-                }
             });
         
             return result;
@@ -84,7 +78,8 @@ const useOAuth = () => {
                 contact_number: data.contactNumber,
                 address: data.address,
                 password: data.password,
-                callbackURL: callbackURL
+                role: data.role,
+                callbackURL: callbackURL,
             });
 
             return result;

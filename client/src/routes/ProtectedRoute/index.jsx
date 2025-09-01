@@ -12,16 +12,16 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         if (loading) return;
         
         const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
-        const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+        const isAdminRoute = location.pathname.startsWith('/admin/');
         const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
-        const isPublicRoute = ['/', '/admin', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
+        const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
 
         if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
             return;
 
         if (!user && !isPublicRoute) {
             if (isAdminRoute) {
-                navigate('/admin');
+                navigate('/admin/sign-in');
             } else {
                 navigate('/sign-in');
             }
@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
             return;
         }
 
-        if (user && location.pathname === '/admin' && user.role === 'admin') {
+        if (user && location.pathname === '/admin/sign-in' && user.role === 'admin') {
             navigate('/admin/dashboard');
             return;
         }
@@ -58,9 +58,9 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         return children;
 
     const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
-    const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin');
+    const isAdminRoute = location.pathname === '/admin/sign-in' || location.pathname.startsWith('/admin');
     const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
-    const isPublicRoute = ['/', '/admin', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
+        const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up'].includes(location.pathname) || location.pathname.startsWith('/collections/');
 
     if (!user && !isPublicRoute && !isAuthPage) return null;
     if (user && isAuthPage) return null;

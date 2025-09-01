@@ -1,5 +1,6 @@
 export { default as AdminLayout } from './AdminLayout';
-export { default as AdminLanding } from './Landing';
+export { default as AdminSignIn } from './SignIn';
+export { default as AdminSignUp } from './SignUp';
 export { default as AdminDashboard } from './Dashboard';
 export { default as AdminInstallments } from './Installments';
 export { default as AdminProducts } from './Products';

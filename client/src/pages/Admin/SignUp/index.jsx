@@ -66,7 +66,7 @@ const SignUp = () => {
                 address: address,
                 contactNumber: contactNumber,
                 password: password,
-                role: 'customer'
+                role: 'admin'
             });
 
             if (result?.error) {
@@ -75,7 +75,7 @@ const SignUp = () => {
                 return;
             } else {
                 setFormError('');
-                navigate('/sign-in');
+                navigate('/admin/sign-in');
             }
         } catch (err) {
             setFormError('Server error. Please try again later.')
@@ -85,10 +85,6 @@ const SignUp = () => {
     };
     return (
         <div className={ styles['wrapper'] }>
-            <div className={ styles['header'] }>
-                <ReturnButton />
-                <h1>Create your account</h1>
-            </div>
             <div className={ styles['container'] }>
                 <form className={ styles['form'] }>
                     { formError &&
@@ -194,10 +190,9 @@ const SignUp = () => {
                             action={ () => setModalOpen(true) }
                             disabled={ !firstName || !lastName || !email || !address || !password ||!confirmPassword }
                         />
-                        <p>Already have an account? <Anchor label="Sign in" link="/sign-in" isNested={ false }/></p>
+                        <p>Already have an account? <Anchor label="Sign in" link="/admin/sign-in" isNested={ false }/></p>
                     </div>
                 </form>
-                <div className={ styles['banner'] }></div>
             </div>
             <Modal label='Account Creation Confirmation' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
                 <p className={ styles['modal-info'] }>Creating an account with <strong>Seraphim Luxe</strong> means you agree with our Terms and Conditions. Do you wish to continue?</p>

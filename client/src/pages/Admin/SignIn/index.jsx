@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton } from '@components';
 import { useSearchParams, useNavigate } from 'react-router';
-import styles from './Landing.module.css';
+import styles from './SignIn.module.css';
 import { useAuth, useToast } from '@contexts';
 import { getErrorMessage } from '@utils';
 
-const Landing = () => {
+const SignIn = () => {
     const [ showPassword, setShowPassword ] = useState(false);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ email, setEmail ] = useState('');
@@ -27,7 +27,7 @@ const Landing = () => {
                     const errorMessage = getErrorMessage(error.toUpperCase());
                     setFormError(errorMessage);
                 } catch (err) {
-                    console.error('Admin Landing page handleRedirectErrors function error: ', err);
+                    console.error('Admin SignIn page handleRedirectErrors function error: ', err);
                     setFormError('An error occurred during sign-in. Please try again.');
                 }
             }
@@ -70,7 +70,7 @@ const Landing = () => {
         } catch (error) {
             setFormError('Server error. Please try again. Error: ' + error);
             setIsLoading(false);            
-            console.error('Admin Landing page handleSignIn function error: ', err);
+            console.error('Admin SignIn page handleSignIn function error: ', err);
         }
 
     };
@@ -124,7 +124,7 @@ const Landing = () => {
                             type='admin'
                             callbackURL='http://localhost:5173/admin'
                         />
-                        <p>Don't have an account yet? <Anchor label="Sign up" link="/sign-up" isNested={ false }/></p>
+                        <p>Don't have an account yet? <Anchor label="Sign up" link="/admin/sign-up" isNested={ false }/></p>
                     </div>
                 </form>
             </div>
@@ -132,4 +132,4 @@ const Landing = () => {
     );
 };
 
-export default Landing;
+export default SignIn;
