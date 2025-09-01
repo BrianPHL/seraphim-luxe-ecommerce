@@ -27,14 +27,14 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { label, price, category, subcategory, description, image_url } = req.body;
+        const { label, price, category, subcategory, description, image_url, stock_quantity, stock_threshold } = req.body;
         
         const [ result ] = await pool.query(
             `
-                INSERT INTO products (label, price, category, subcategory, description, image_url)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO products (label, price, category, subcategory, description, image_url, stock_quantity, stock_threshold)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `,
-            [ label, price, category, subcategory, description || null, image_url || null ]
+            [ label, price, category, subcategory, description || null, image_url || null, stock_quantity, stock_threshold ]
         );
         
         const newProductId = result['insertId'];
@@ -54,15 +54,17 @@ router.put('/:product_id', async (req, res) => {
     try {
 
         const { product_id } = req.params;
-        const { label, price, category, subcategory, description, image_url } = req.body;
+        const { label, price, category, subcategory, description, image_url, stock_quantity, stock_threshold } = req.body;
+
+        console.log(product_id)
 
         const [ result ] = await pool.query(
             `
                 UPDATE products
-                SET label = ?, price = ?, category = ?, subcategory = ?, description = ?, image_url = ?
+                SET label = ?, price = ?, category = ?, subcategory = ?, description = ?, image_url = ?, stock_quantity = ?, stock_threshold = ?
                 WHERE id = ?
             `,
-            [ label, price, category, subcategory, description || null, image_url, product_id ]
+            [ label, price, category, subcategory, description || null, image_url, stock_quantity, stock_threshold, product_id ]
         );
 
         if (result.affectedRows === 0) {

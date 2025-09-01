@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Products.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
@@ -32,8 +32,14 @@ const Products = () => {
     });
 
     const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts();
-        const { lowStockProducts } = useStocks();
+    const { lowStockProducts } = useStocks();
     const { showToast } = useToast();
+
+    useEffect(() => {
+
+        console.log(products);
+
+    }, []);
 
     const {
         sortedProducts,
@@ -209,7 +215,7 @@ const Products = () => {
             } else if (modalType === 'edit' && selectedProduct) {
                 await updateProduct({
                     ...updatedFormData,
-                    product_id: selectedProduct.product_id
+                    product_id: selectedProduct.id
                 });
             }
             setIsModalOpen(false);
@@ -290,7 +296,7 @@ const Products = () => {
                         ) : paginatedProducts.length > 0 ? (
                             paginatedProducts.map(product => (
                                 <div 
-                                    key={product.product_id} 
+                                    key={product.id} 
                                     className={styles['table-rows']} 
                                     style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}
                                 >
@@ -302,7 +308,7 @@ const Products = () => {
                                             />
                                         ) : '—'}
                                     </div>
-                                    <div className={styles['table-cell']}>{product.product_id}</div>
+                                    <div className={styles['table-cell']}>{product.id}</div>
                                     <div className={styles['table-cell']}>{product.label}</div>
                                     <div className={styles['table-cell']}>
                                         {product.category} / {product.subcategory}
