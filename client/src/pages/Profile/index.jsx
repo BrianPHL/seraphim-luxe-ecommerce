@@ -1304,16 +1304,15 @@ const Profile = ({}) => {
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
-                            type='primary'
+                            type='secondary'
                             action={ () => {
                                 setIsModalOpen(false);
-                                remove(user['account_id']);
+                                remove(user?.id);
                             }}
-                            externalStyles={ styles['modal-warn'] }
                         />
                         <Button
                             label='Cancel'
-                            type='secondary'
+                            type='primary'
                             action={ () => {
                                 setModalType('');
                                 setIsModalOpen(false);
