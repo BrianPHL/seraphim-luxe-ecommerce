@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { performOperationWithTimeout, apiRequest, extractAccountData, TIMEOUTS } from '@utils';
+import { performOperationWithTimeout, fetchWithTimeout, apiRequest, extractAccountData, TIMEOUTS } from '@utils';
 import { useOAuth } from "@hooks";
 import { useToast } from "@contexts";
 import AuthContext from "./context";
