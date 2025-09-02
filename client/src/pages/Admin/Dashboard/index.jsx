@@ -188,49 +188,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className={ styles['divider'] }></div>
-
-                <div className={ styles['section'] }>
-                    <h2>Recent Reservations</h2>
-                    <div className={ styles['table'] }>
-                        <div className={ styles['table-wrapper'] }>
-                            <div className={` ${ styles['table-header'] } ${ styles['recent-reservations'] } `}>
-                                <h3>reservation_id</h3>
-                                <h3>customer_name</h3>
-                                <h3>status</h3>
-                                <h3>notes</h3>
-                                <h3>preferred_date</h3>
-                            </div>
-                                {recentReservations.length > 0 ? (
-                                    recentReservations.map(reservation => (
-                                        <div key={reservation.reservation_id} className={`${styles['table-rows']} ${styles['recent-reservations']}`}>
-                                            <div className={styles['table-cell']}>{reservation.reservation_id}</div>
-                                            <div className={styles['table-cell']}>
-                                                {reservation.first_name} {reservation.last_name}
-                                            </div>
-                                            <div className={styles['table-cell']}>
-                                                <span className={styles[`status-${reservation.status}`]}>
-                                                    {reservation.status}
-                                                </span>
-                                            </div>
-                                            <div className={styles['table-cell']}>
-                                                {reservation.notes || '—'}
-                                            </div>
-                                            <div className={styles['table-cell']}>
-                                                {new Date(reservation.preferred_date).toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className={styles['empty-table']}>
-                                        <p>No recent reservations!</p>
-                                    </div>
-                                )}
-                        </div>
-
-                    </div>
-                </div>
-
             </div>
         </>
     );
