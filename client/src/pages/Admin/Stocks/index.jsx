@@ -178,59 +178,63 @@ const Stocks = () => {
                             action={() => setIsModalOpen(true)}
                         />
                     </div>
-                    <div className={styles['table']}>
-                        <div className={styles['table-wrapper']}>
-                            <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                    <div className={ styles['table'] }>
+                        <div className={ styles['table-wrapper'] }>
+                            <div className={` ${ styles['table-header'] } ${ styles['stock-alerts'] } `}>
+                                <h3></h3>
                                 <h3>product_id</h3>
                                 <h3>label</h3>
                                 <h3>category</h3>
-                                <h3>stock_quantity / threshold</h3>
+                                <h3>stock_quantity</h3>
+                                <h3>stock_threshold</h3>
+                                <h3>modified_at</h3>
                                 <h3>actions</h3>
                             </div>
-                            
-                            {isLoading ? (
-                                <div className={styles['empty-table']}>
-                                    <i className="fa-solid fa-spinner fa-spin"></i>
-                                </div>
-                            ) : lowStockProducts.length > 0 ? (
-                                lowStockProducts.map(product => (
-                                    <div 
-                                        key={product.product_id} 
-                                        className={styles['table-rows']} 
-                                        style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}
-                                    >
-                                        <div className={styles['table-cell']}>{product.product_id}</div>
-                                        <div className={styles['table-cell']}>{product.label}</div>
-                                        <div className={styles['table-cell']}>
-                                            {product.category} / {product.subcategory}
+                                {lowStockProducts.length > 0 ? (
+                                    lowStockProducts.map(product => (
+                                        <div key={ product.product_id } className={`${ styles['table-rows'] } ${ styles['stock-alerts'] }`}>
+                                            <div className={styles['table-cell']}>
+                                                {product.image_url ? (
+                                                    <img 
+                                                        src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`}
+                                                        alt={product.label}
+                                                    />
+                                                ) : '—'}
+                                            </div>
+                                            <div className={styles['table-cell']}>{product.id}</div>
+                                            <div className={styles['table-cell']}>{product.label}</div>
+                                            <div className={styles['table-cell']}>{product.category}</div>
+                                            <div className={styles['table-cell']}>
+                                                <span className={
+                                                    product.stock_quantity <= 0 
+                                                        ? styles['stock-out'] 
+                                                        : product.stock_quantity <= product.stock_threshold 
+                                                            ? styles['stock-low'] 
+                                                            : styles['stock-ok']
+                                                }>
+                                                    {product.stock_quantity}
+                                                </span>
+                                            </div>
+                                            <div className={styles['table-cell']}>{product.stock_threshold}</div>
+                                            <div className={styles['table-cell']}>
+                                                {product.modified_at }
+                                            </div>
+                                            <div className={styles['table-cell']}>
+                                                <Button
+                                                    type="icon"
+                                                    icon="fa-solid fa-square-plus"
+                                                    action={() => handleOpenAddStockModal(product)}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className={styles['table-cell']}>
-                                            <span className={
-                                                product.stock_quantity <= 0 
-                                                    ? styles['stock-out'] 
-                                                    : product.stock_quantity <= product.stock_threshold 
-                                                        ? styles['stock-low'] 
-                                                        : styles['stock-ok']
-                                            }>
-                                                {product.stock_quantity}
-                                            </span>
-                                            &nbsp;/ {product.stock_threshold}
-                                        </div>
-                                        <div className={styles['table-cell']}>
-                                            <Button
-                                                type="icon"
-                                                icon="fa-solid fa-square-plus"
-                                                action={() => handleOpenAddStockModal(product)}
-                                            />
-                                        </div>
+                                    ))
+                                ) : (
+                                    <div className={styles['empty-table']}>
+                                        <p>No low stock products!</p>
                                     </div>
-                                ))
-                            ) : (
-                                <div className={styles['empty-table']}>
-                                    <p>No low stock products!</p>
-                                </div>
-                            )}
+                                )}
                         </div>
+
                     </div>
                 </div>
 

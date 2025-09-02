@@ -156,7 +156,7 @@ const Cart = () => {
                                             </div>
                                             <div className={ styles['cart-item-content'] }>
                                                 <img
-                                                    src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${ item['image_url'] }` }
+                                                    src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ item['image_url'] }` }
                                                     alt={ `${ item['label'] }. Price: ${ item['price'] }` } 
                                                 />
                                                 <div className={ styles['cart-item-details'] }>

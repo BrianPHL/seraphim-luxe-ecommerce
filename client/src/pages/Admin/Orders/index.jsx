@@ -595,7 +595,7 @@ const Orders = () => {
                                         <div key={index} className={styles['order-item-card']}>
                                             <div className={styles['item-image']}>
                                                 <img 
-                                                    src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url}`}
+                                                    src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
                                                     alt={item.label}
                                                     onError={(e) => {
                                                         e.target.src = '/placeholder-image.jpg';

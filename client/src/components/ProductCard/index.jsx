@@ -33,7 +33,7 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
         if (!image_url || image_url.trim() === '') {
             return null;
         }
-        return `https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${image_url}`;
+        return `https://res.cloudinary.com/dfvy7i4uc/image/upload/${image_url}`;
     };
 
     const requireAuth = (action) => {

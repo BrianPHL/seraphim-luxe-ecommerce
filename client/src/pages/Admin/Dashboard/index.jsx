@@ -131,6 +131,7 @@ const Dashboard = () => {
                     <div className={ styles['table'] }>
                         <div className={ styles['table-wrapper'] }>
                             <div className={` ${ styles['table-header'] } ${ styles['stock-alerts'] } `}>
+                                <h3></h3>
                                 <h3>product_id</h3>
                                 <h3>label</h3>
                                 <h3>category</h3>
@@ -142,7 +143,15 @@ const Dashboard = () => {
                                 {lowStockProducts.length > 0 ? (
                                     lowStockProducts.map(product => (
                                         <div key={ product.product_id } className={`${ styles['table-rows'] } ${ styles['stock-alerts'] }`}>
-                                            <div className={styles['table-cell']}>{product.product_id}</div>
+                                            <div className={styles['table-cell']}>
+                                                {product.image_url ? (
+                                                    <img 
+                                                        src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`}
+                                                        alt={product.label}
+                                                    />
+                                                ) : '—'}
+                                            </div>
+                                            <div className={styles['table-cell']}>{product.id}</div>
                                             <div className={styles['table-cell']}>{product.label}</div>
                                             <div className={styles['table-cell']}>{product.category}</div>
                                             <div className={styles['table-cell']}>

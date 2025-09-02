@@ -303,7 +303,7 @@ const Products = () => {
                                     <div className={styles['table-cell']}>
                                         {product.image_url ? (
                                             <img 
-                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${product.image_url}`}
+                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`}
                                                 alt={product.label}
                                             />
                                         ) : '—'}
@@ -485,7 +485,7 @@ const Products = () => {
                                     <img 
                                         src={imagePreview || 
                                             (formData.image_url ? 
-                                                `https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${formData.image_url}` : 
+                                                `https://res.cloudinary.com/dfvy7i4uc/image/upload/${formData.image_url}` : 
                                                 '')} 
                                         alt="Product preview" 
                                         style={{ maxHeight: '200px', maxWidth: '100%', objectFit: 'contain' }}

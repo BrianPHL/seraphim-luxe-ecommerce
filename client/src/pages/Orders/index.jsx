@@ -277,7 +277,7 @@ const Orders = () => {
                                                     {order.items.slice(0, 3).map((item, index) => (
                                                         <div key={index} className={styles['item-with-status']}>
                                                             <img
-                                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url}`}
+                                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
                                                                 alt={item.label}
                                                                 className={styles['preview-image']}
                                                             />
@@ -345,7 +345,7 @@ const Orders = () => {
                                                     {order.items.slice(0, 3).map((item, index) => (
                                                         <div key={index} className={styles['item-with-status']}>
                                                             <img
-                                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url}`}
+                                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
                                                                 alt={item.label}
                                                                 className={styles['preview-image']}
                                                             />
@@ -530,7 +530,7 @@ const Orders = () => {
                                         <div className={styles['item-card']} key={item.product_id || index}>
                                             <div className={styles['item-image-container']}>
                                                 <img
-                                                    src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/products/${item.image_url || item.image}`}
+                                                    src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url || item.image}`}
                                                     alt={item.label || item.name || 'Product'}
                                                     className={styles['item-image']}
                                                 />
