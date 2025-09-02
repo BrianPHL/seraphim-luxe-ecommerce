@@ -25,9 +25,9 @@ CREATE TABLE IF NOT EXISTS `oauth_verifications` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `oauth_verifications_id_index` (`id`),
   KEY `oauth_verifications_expires_at_index` (`expires_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=207 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=382 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Data exporting was unselected.
+-- Dumping data for table seraphim_luxe.oauth_verifications: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

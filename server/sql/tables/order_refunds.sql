@@ -14,23 +14,25 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Dumping structure for table seraphim_luxe.order_tracking
-CREATE TABLE IF NOT EXISTS `order_tracking` (
+-- Dumping structure for table seraphim_luxe.order_refunds
+CREATE TABLE IF NOT EXISTS `order_refunds` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
-  `tracking_number` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `carrier` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `status` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `location` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
-  `tracked_at` datetime DEFAULT NULL,
+  `refund_amount` decimal(10,2) NOT NULL,
+  `reason` enum('customer_request','defective_product','wrong_item','damaged_shipping','other') COLLATE utf8mb4_general_ci NOT NULL,
+  `reason_description` text COLLATE utf8mb4_general_ci,
+  `refund_method` enum('cash','gcash','bank_transfer','credit_card','store_credit') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` enum('pending','processing','completed','failed') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `processed_by` int DEFAULT NULL,
+  `processed_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `order_tracking_orders_id_fkey` (`order_id`),
-  CONSTRAINT `order_tracking_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+  KEY `order_refunds_orders_id_fkey` (`order_id`),
+  CONSTRAINT `order_refunds_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.order_tracking: ~0 rows (approximately)
+-- Dumping data for table seraphim_luxe.order_refunds: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
