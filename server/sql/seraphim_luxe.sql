@@ -14,6 +14,233 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+
+-- Dumping database structure for seraphim_luxe
+CREATE DATABASE IF NOT EXISTS `seraphim_luxe` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `seraphim_luxe`;
+
+-- Dumping structure for table seraphim_luxe.accounts
+CREATE TABLE IF NOT EXISTS `accounts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `first_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `role` enum('customer','vendor','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'customer',
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `contact_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email_verified` tinyint NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.accounts: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.carts
+CREATE TABLE IF NOT EXISTS `carts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `account_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `quantity` int NOT NULL DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `modified_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `carts_accounts_id_fkey` (`account_id`),
+  KEY `carts_products_id_fkey` (`product_id`),
+  CONSTRAINT `carts_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `carts_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.carts: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.installments
+CREATE TABLE IF NOT EXISTS `installments` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `reservation_id` int NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `payment_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('pending','completed','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `admin_id` int DEFAULT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `processed_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `installments_reservations_id_fkey` (`reservation_id`),
+  KEY `installments_accounts_id_fkey` (`admin_id`),
+  CONSTRAINT `installments_accounts_id_fkey` FOREIGN KEY (`admin_id`) REFERENCES `accounts` (`id`),
+  CONSTRAINT `installments_reservations_id_fkey` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.installments: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.oauth_accounts
+CREATE TABLE IF NOT EXISTS `oauth_accounts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `oauth_account_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `provider_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `access_token` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `refresh_token` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `scope` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `id_token` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `access_token_expires_at` timestamp NULL DEFAULT NULL,
+  `refresh_token_expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `oauth_accounts_unique` (`provider_id`,`oauth_account_id`),
+  KEY `oauth_accounts_provider_id_index` (`provider_id`),
+  KEY `oauth_accounts_accounts_id_fkey` (`user_id`),
+  CONSTRAINT `oauth_accounts_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.oauth_accounts: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.oauth_sessions
+CREATE TABLE IF NOT EXISTS `oauth_sessions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `expires_at` timestamp NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `oauth_sessions_token_unique` (`token`) USING BTREE,
+  KEY `oauth_sessions_user_id_fk` (`user_id`) USING BTREE,
+  KEY `oauth_sessions_expires_at_index` (`expires_at`),
+  CONSTRAINT `oauth_sessions_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=302 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.oauth_sessions: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.oauth_verifications
+CREATE TABLE IF NOT EXISTS `oauth_verifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `identifier` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `expires_at` timestamp NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `oauth_verifications_id_index` (`id`),
+  KEY `oauth_verifications_expires_at_index` (`expires_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=390 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.oauth_verifications: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.orders
+CREATE TABLE IF NOT EXISTS `orders` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_number` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_id` int NOT NULL,
+  `first_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` enum('pending','processing','shipped','delivered','cancelled','returned','refunded') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `total_amount` decimal(10,2) NOT NULL,
+  `shipping_address` text COLLATE utf8mb4_general_ci,
+  `billing_address` text COLLATE utf8mb4_general_ci,
+  `payment_method` enum('cash_on_delivery','gcash','bank_transfer','credit_card') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'cash_on_delivery',
+  `payment_status` enum('pending','paid','failed','refunded') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `shipping_method` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `shipping_cost` decimal(10,2) DEFAULT '0.00',
+  `discount_amount` decimal(10,2) DEFAULT '0.00',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `admin_notes` text COLLATE utf8mb4_general_ci,
+  `tracking_number` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `shipped_at` datetime DEFAULT NULL,
+  `delivered_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `modified_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `orders_accounts_id_fkey` (`account_id`),
+  CONSTRAINT `orders_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.orders: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.order_items
+CREATE TABLE IF NOT EXISTS `order_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `quantity` int NOT NULL DEFAULT '1',
+  `price` decimal(10,2) NOT NULL,
+  `discount_amount` decimal(10,2) DEFAULT '0.00',
+  `total_amount` decimal(10,2) NOT NULL,
+  `image_url` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `order_items_orders_id_fkey` (`order_id`),
+  KEY `order_items_products_id_fkey` (`product_id`),
+  CONSTRAINT `order_items_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `order_items_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.order_items: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.order_refunds
+CREATE TABLE IF NOT EXISTS `order_refunds` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `refund_amount` decimal(10,2) NOT NULL,
+  `reason` enum('customer_request','defective_product','wrong_item','damaged_shipping','other') COLLATE utf8mb4_general_ci NOT NULL,
+  `reason_description` text COLLATE utf8mb4_general_ci,
+  `refund_method` enum('cash','gcash','bank_transfer','credit_card','store_credit') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` enum('pending','processing','completed','failed') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `processed_by` int DEFAULT NULL,
+  `processed_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `order_refunds_orders_id_fkey` (`order_id`),
+  CONSTRAINT `order_refunds_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.order_refunds: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.order_status_history
+CREATE TABLE IF NOT EXISTS `order_status_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `old_status` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `new_status` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `notes` text COLLATE utf8mb4_general_ci,
+  `changed_by` int DEFAULT NULL,
+  `changed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `order_status_history_orders_id_fkey` (`order_id`),
+  CONSTRAINT `order_status_history_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.order_status_history: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.order_tracking
+CREATE TABLE IF NOT EXISTS `order_tracking` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `tracking_number` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `carrier` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `location` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `tracked_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `order_tracking_orders_id_fkey` (`order_id`),
+  CONSTRAINT `order_tracking_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.order_tracking: ~0 rows (approximately)
+
 -- Dumping structure for table seraphim_luxe.products
 CREATE TABLE IF NOT EXISTS `products` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -84,6 +311,101 @@ INSERT INTO `products` (`id`, `label`, `price`, `category_id`, `subcategory_id`,
 	(43, 'GLAMIRA Minimalist Necklace', 2800.00, 3, 9, 'Sleek minimalist necklace design by GLAMIRA', 'products/glamira_minimalist_necklaces_gold_01', '[{"price": 2800, "stock": 10, "images": ["glamira_minimalist_necklaces_gold_01.webp", "glamira_minimalist_necklaces_gold_02.webp", "glamira_minimalist_necklaces_gold_03.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40'),
 	(44, 'Minimalist Lab Roman Numerals Diamond Band Necklace', 5500.00, 3, 9, 'Sophisticated roman numerals diamond band necklace', 'products/minimalist_lab_roman_numerals_diamond_band_necklace_gold_01', '[{"price": 5500, "stock": 8, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_gold_01.webp", "minimalist_lab_roman_numerals_diamond_band_necklace_gold_04.webp"], "material": "Gold with Diamonds"}, {"price": 5400, "stock": 4, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_rosegold_02.webp"], "material": "Rose Gold with Diamonds"}, {"price": 5200, "stock": 3, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_silver_03"], "material": "Silver with Diamonds"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40'),
 	(45, 'Tiffany T Smile Necklace', 8500.00, 3, 9, 'Iconic Tiffany T Smile collection necklace', 'products/tiffany_t_smile_necklace_gold_01', '[{"price": 8500, "stock": 10, "images": ["tiffany_t_smile_necklace_gold_01.webp", "tiffany_t_smile_necklace_gold_02.webp", "tiffany_t_smile_necklace_gold_03.webp", "tiffany_t_smile_necklace_gold_04.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40');
+
+-- Dumping structure for table seraphim_luxe.product_categories
+CREATE TABLE IF NOT EXISTS `product_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `is_active` tinyint(1) DEFAULT '1',
+  `sort_order` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.product_categories: ~3 rows (approximately)
+INSERT INTO `product_categories` (`id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
+	(1, 'Male', 'Jewelry and accessories for men', 1, 1, '2025-09-03 14:29:17', '2025-09-03 16:43:00'),
+	(2, 'Female', 'Jewelry and accessories for women', 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(3, 'Unisex', 'Jewelry and accessories suitable for all genders', 1, 3, '2025-09-03 14:29:17', '2025-09-03 14:29:17');
+
+-- Dumping structure for table seraphim_luxe.product_subcategories
+CREATE TABLE IF NOT EXISTS `product_subcategories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `category_id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `is_active` tinyint(1) DEFAULT '1',
+  `sort_order` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_category_subcategory` (`category_id`,`name`),
+  CONSTRAINT `product_subcategories_product_categories_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.product_subcategories: ~9 rows (approximately)
+INSERT INTO `product_subcategories` (`id`, `category_id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
+	(1, 1, 'Bracelets', NULL, 1, 1, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(2, 1, 'Earrings', NULL, 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(3, 1, 'Necklaces', '', 1, 3, '2025-09-03 14:29:17', '2025-09-03 17:34:06'),
+	(4, 2, 'Bracelets', NULL, 1, 1, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(5, 2, 'Earrings', NULL, 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(6, 2, 'Necklaces', NULL, 1, 3, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(7, 3, 'Bracelets', NULL, 1, 1, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(8, 3, 'Earrings', NULL, 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
+	(9, 3, 'Necklaces', NULL, 1, 3, '2025-09-03 14:29:17', '2025-09-03 14:29:17');
+
+-- Dumping structure for table seraphim_luxe.reservations
+CREATE TABLE IF NOT EXISTS `reservations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `account_id` int NOT NULL,
+  `status` enum('pending','pending_approval','rejected','cancelled','completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `preferred_date` date NOT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `modified_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `reservations_accounts_id_fkey` (`account_id`),
+  CONSTRAINT `reservations_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.reservations: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.reservation_products
+CREATE TABLE IF NOT EXISTS `reservation_products` (
+  `id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `quantity` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`,`product_id`) USING BTREE,
+  KEY `reservations_products_product_id_fkey` (`product_id`),
+  CONSTRAINT `reservations_products_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
+  CONSTRAINT `reservations_products_reservation_id_fkey` FOREIGN KEY (`id`) REFERENCES `reservations` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.reservation_products: ~0 rows (approximately)
+
+-- Dumping structure for table seraphim_luxe.stocks_history
+CREATE TABLE IF NOT EXISTS `stocks_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `stock_history_type` enum('initial','restock','adjustment','reservation','return','order') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `quantity_change` int NOT NULL,
+  `previous_quantity` int NOT NULL,
+  `new_quantity` int NOT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `admin_id` int NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `stocks_history_accounts_id_fkey` (`admin_id`),
+  KEY `stocks_history_products_id_fkey` (`product_id`),
+  CONSTRAINT `stocks_history_accounts_id_fkey` FOREIGN KEY (`admin_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `stocks_history_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=95 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.stocks_history: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
