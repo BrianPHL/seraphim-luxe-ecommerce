@@ -8,7 +8,7 @@ router.get('/history', async (req, res) => {
         const [rows] = await pool.query(`
             SELECT sh.*, 
                    p.label as product_name, 
-                   p.category,
+                   p.category_id,
                    a.first_name, a.last_name
             FROM stocks_history sh
             JOIN products p ON sh.product_id = p.id

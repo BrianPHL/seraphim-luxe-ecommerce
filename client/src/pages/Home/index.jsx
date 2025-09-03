@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Button, ProductCard, Carousel } from '@components';
 import styles from './Home.module.css';
 import { useNavigate } from 'react-router';
-import { useProducts } from '@contexts';
+import { useProducts, useCategories } from '@contexts';
 
 const Home = () => {
 
     const navigate = useNavigate();
     const { products, loading } = useProducts();
+    const { getActiveCategories, getActiveSubcategories } = useCategories();
     const [ featuredCollections, setFeaturedCollections ] = useState([]);
 
     // * Fisher-Yates Shuffle Algorithm
@@ -24,18 +25,73 @@ const Home = () => {
 
     }
 
+    const getCategoryNames = () => {
+        const activeCategories = getActiveCategories();
+        return activeCategories.map(cat => cat.name);
+    };
+
+    const getSubcategoryNames = () => {
+        const activeCategories = getActiveCategories();
+        const subcategoryNames = [];
+        
+        activeCategories.forEach(category => {
+            const subcategories = getActiveSubcategories(category.id);
+            subcategories.forEach(sub => {
+                subcategoryNames.push({ name: sub.name, category_id: category.id, subcategory_id: sub.id });
+            });
+        });
+        
+        return subcategoryNames;
+    };
+
+    const getCategoryDisplayName = (categoryId) => {
+        const activeCategories = getActiveCategories();
+        const category = activeCategories.find(cat => cat.id === categoryId);
+        return category?.name || 'Unknown';
+    };
+
+    const getSubcategoryDisplayName = (subcategoryId) => {
+        const activeCategories = getActiveCategories();
+        
+        for (const category of activeCategories) {
+            const subcategories = getActiveSubcategories(category.id);
+            const subcategory = subcategories.find(sub => sub.id === subcategoryId);
+            if (subcategory) {
+                return subcategory.name;
+            }
+        }
+        return 'Unknown';
+    };
+
     useEffect(() => {
         if (products && products['length'] > 0) {
-
-            const collections = products['filter'](product => 
-                ['jewelry', 'Male', 'Unisex'].includes(product['category'])
-            );
+            const categoryNames = getCategoryNames();
+            const collections = products['filter'](product => {
+                const categoryName = getCategoryDisplayName(product.category_id);
+                return categoryNames.includes(categoryName);
+            });
             const randomCollections = shuffleArray(collections)['slice'](0, 5);
 
             setFeaturedCollections(randomCollections);
         }
 
     }, [ products ]);
+
+    const getCategoryOptions = () => {
+        const activeCategories = getActiveCategories();
+        return activeCategories.map(category => ({
+            label: category.name,
+            link: `/collections?category_id=${category.id}`
+        }));
+    };
+
+    const getSubcategoryOptions = () => {
+        const subcategories = getSubcategoryNames();
+        return subcategories.slice(0, 3).map(sub => ({
+            label: sub.name,
+            link: `/collections?subcategory_id=${sub.subcategory_id}`
+        }));
+    };
 
     return (
         <div className={ styles['wrapper'] }>
@@ -59,20 +115,7 @@ const Home = () => {
                                     id='hero-browse-inventory-1'
                                     type='secondary'
                                     label='Browse our Collections'
-                                    options={[
-                                        {
-                                            label: 'Female',
-                                            link: '/collections?category=Female'
-                                        },
-                                        {
-                                            label: 'Male',
-                                            link: '/collections?category=Male'
-                                        },
-                                        {
-                                            label: 'Unisex',
-                                            link: '/collections?category=Unisex'
-                                        }
-                                    ]}
+                                    options={getCategoryOptions()}
                                 />
                             </div>
                         </div>
@@ -102,20 +145,7 @@ const Home = () => {
                                     id='hero-browse-inventory-2'
                                     type='secondary'
                                     label='View by Category'
-                                    options={[
-                                        {
-                                            label: 'Necklaces',
-                                            link: '/collections?subcategory=Necklace'
-                                        },
-                                        {
-                                            label: 'Earrings',
-                                            link: '/collections?subcategory=Earrings'
-                                        },
-                                        {
-                                            label: 'Bracelets',
-                                            link: '/collections?subcategory=Bracelet'
-                                        }
-                                    ]}
+                                    options={getSubcategoryOptions()}
                                 />
                             </div>
                         </div>
@@ -189,8 +219,8 @@ const Home = () => {
                             <ProductCard
                                 key={ collection['id'] }
                                 id={ collection['id'] }
-                                category={ collection['category'] }
-                                subcategory={ collection['subcategory'] }
+                                category={ getCategoryDisplayName(collection['category_id']) }
+                                subcategory={ getSubcategoryDisplayName(collection['subcategory_id']) }
                                 image_url={ collection['image_url'] }
                                 label={ collection['label'] }
                                 price={ collection['price'] }

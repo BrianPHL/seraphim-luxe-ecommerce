@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import styles from './ProductCard.module.css';
 import { InputField, Button, Modal } from '@components';
-import { useAuth, useCart, useReservation, useToast, useCheckout } from '@contexts';
+import { useAuth, useCart, useReservation, useToast, useCheckout, useCategories } from '@contexts';
 
-const ProductCard = ({ id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
+const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
     
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ modalType, setModalType ] = useState('');
@@ -23,11 +23,35 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
     const { setDirectCheckout } = useCheckout();
     const { user } = useAuth();
     const { showToast } = useToast();
+    const { getCategoryById, getActiveSubcategories } = useCategories();
     const navigate = useNavigate();
+    
     const formattedPrice = parseFloat(price).toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
+
+    const getCategoryDisplayName = () => {
+        if (category) return category;
+        if (category_id) {
+            const categoryData = getCategoryById(category_id);
+            return categoryData?.name || 'Unknown';
+        }
+        return 'Unknown';
+    };
+
+    const getSubcategoryDisplayName = () => {
+        if (subcategory) return subcategory;
+        if (category_id && subcategory_id) {
+            const subcategories = getActiveSubcategories(category_id);
+            const subcategoryData = subcategories.find(sub => sub.id === subcategory_id);
+            return subcategoryData?.name || 'Unknown';
+        }
+        return 'Unknown';
+    };
+
+    const finalCategoryName = getCategoryDisplayName();
+    const finalSubcategoryName = getSubcategoryDisplayName();
 
     const getImageSrc = () => {
         if (!image_url || image_url.trim() === '') {
@@ -53,8 +77,8 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
         try {
             await addToCart({ 
                 product_id: id,
-                category: category, 
-                subcategory: subcategory, 
+                category: finalCategoryName, 
+                subcategory: finalSubcategoryName, 
                 image_url: image_url, 
                 label: label, 
                 price: price,
@@ -75,11 +99,10 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
         }
 
         try {
-            
             const directItem = {
                 product_id: id,
-                category: category,
-                subcategory: subcategory,
+                category: finalCategoryName,
+                subcategory: finalSubcategoryName,
                 image_url: image_url,
                 label: label,
                 price: price,
@@ -204,6 +227,13 @@ const ProductCard = ({ id, category, subcategory, image_url, label, price, stock
 
                     <p style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--tg-primary)' }}>{ productQuantity }x</p>
 
+                </div>
+
+                <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
+                    <h3>Total: ₱{(parseFloat(price) * productQuantity).toLocaleString('en-PH', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}</h3>
                 </div>
                 <div className={ styles['modal-ctas'] }>
                     <Button 

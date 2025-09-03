@@ -12,29 +12,37 @@ const upload = multer({
 
 router.get('/', async (req, res) => {
     
-	try {
-
-        const [ rows ] = await pool.query('SELECT * FROM products');
+    try {
+        const [ rows ] = await pool.query(`
+            SELECT 
+                p.*,
+                pc.name as category,
+                ps.name as subcategory
+            FROM products p
+            LEFT JOIN product_categories pc ON p.category_id = pc.id
+            LEFT JOIN product_subcategories ps ON p.subcategory_id = ps.id
+            ORDER BY p.created_at DESC
+        `);
         res.json(rows);
     
-	} catch (err) {
+    } catch (err) {
     
-		res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     
-	}
+    }
 
 });
 
 router.post('/', async (req, res) => {
     try {
-        const { label, price, category, subcategory, description, image_url, stock_quantity, stock_threshold } = req.body;
+        const { label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold } = req.body;
         
         const [ result ] = await pool.query(
             `
-                INSERT INTO products (label, price, category, subcategory, description, image_url, stock_quantity, stock_threshold)
+                INSERT INTO products (label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `,
-            [ label, price, category, subcategory, description || null, image_url || null, stock_quantity, stock_threshold ]
+            [ label, price, category_id, subcategory_id, description || null, image_url || null, stock_quantity, stock_threshold ]
         );
         
         const newProductId = result['insertId'];
@@ -54,17 +62,17 @@ router.put('/:product_id', async (req, res) => {
     try {
 
         const { product_id } = req.params;
-        const { label, price, category, subcategory, description, image_url, stock_quantity, stock_threshold } = req.body;
+        const { label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold } = req.body;
 
         console.log(product_id)
 
         const [ result ] = await pool.query(
             `
                 UPDATE products
-                SET label = ?, price = ?, category = ?, subcategory = ?, description = ?, image_url = ?, stock_quantity = ?, stock_threshold = ?
+                SET label = ?, price = ?, category_id = ?, subcategory_id = ?, description = ?, image_url = ?, stock_quantity = ?, stock_threshold = ?
                 WHERE id = ?
             `,
-            [ label, price, category, subcategory, description || null, image_url, stock_quantity, stock_threshold, product_id ]
+            [ label, price, category_id, subcategory_id, description || null, image_url, stock_quantity, stock_threshold, product_id ]
         );
 
         if (result.affectedRows === 0) {
@@ -136,7 +144,7 @@ router.delete('/:product_id', async (req, res) => {
                 console.error('Error deleting image from Cloudinary:', imageError);
             }
         }
-        
+
         await pool.query(
             `
                 DELETE

@@ -172,7 +172,6 @@ const Orders = () => {
         }
     };
 
-    // Filter orders by status
     const currentOrders = orders.filter(order => 
         !['delivered', 'completed'].includes(order.status.toLowerCase())
     );

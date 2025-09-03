@@ -75,7 +75,7 @@ router.get('/:account_id', async (req, res) => {
                 try {
                     const [orderItems] = await pool.query(
                         `
-                            SELECT oi.*, p.label, p.image_url, p.category, p.subcategory
+                            SELECT oi.*, p.label, p.image_url, p.category_id, p.subcategory_id
                             FROM order_items oi
                             LEFT JOIN products p ON oi.product_id = p.id
                             WHERE oi.order_id = ?
@@ -93,8 +93,8 @@ router.get('/:account_id', async (req, res) => {
                             total_price: item.total_price,
                             label: item.label,
                             image_url: item.image_url,
-                            category: item.category,
-                            subcategory: item.subcategory
+                            category_id: item.category_id,
+                            subcategory_id: item.subcategory_id
                         }))
                     };
                 } catch (itemError) {
@@ -123,7 +123,7 @@ router.get('/:account_id', async (req, res) => {
 router.get('/:order_id/items', async (req, res) => {
     try {
         const [rows] = await pool.query(`
-            SELECT oi.*, p.label, p.price, p.category, p.subcategory, p.image_url
+            SELECT oi.*, p.label, p.price, p.category_id, p.subcategory_id, p.image_url
             FROM order_items oi
             JOIN products p ON oi.product_id = p.id
             WHERE oi.order_id = ?

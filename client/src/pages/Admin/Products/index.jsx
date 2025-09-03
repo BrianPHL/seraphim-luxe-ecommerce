@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Products.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
-import { useProducts, useToast, useStocks } from '@contexts';
+import { useProducts, useToast, useStocks, useCategories } from '@contexts';
 import { useProductFilter, usePagination } from '@hooks';
 
 const Products = () => {
@@ -23,8 +23,8 @@ const Products = () => {
     const [formData, setFormData] = useState({
         label: '',
         price: '',
-        category: '',
-        subcategory: '',
+        category_id: '',
+        subcategory_id: '',
         description: '',
         stock_quantity: '',
         stock_threshold: '',
@@ -34,11 +34,16 @@ const Products = () => {
     const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts();
     const { lowStockProducts } = useStocks();
     const { showToast } = useToast();
+    const { 
+        categories, 
+        getActiveCategories, 
+        getActiveSubcategories, 
+        fetchSubcategories, 
+        getCategoryById 
+    } = useCategories();
 
     useEffect(() => {
-
         console.log(products);
-
     }, []);
 
     const {
@@ -163,8 +168,8 @@ const Products = () => {
         setFormData({
             label: '',
             price: '',
-            category: '',
-            subcategory: '',
+            category_id: '',
+            subcategory_id: '',
             description: '',
             stock_quantity: '0',
             stock_threshold: '5',
@@ -181,8 +186,8 @@ const Products = () => {
         setFormData({
             label: product.label,
             price: product.price,
-            category: product.category,
-            subcategory: product.subcategory,
+            category_id: product.category_id || '',
+            subcategory_id: product.subcategory_id || '',
             description: product.description || '',
             stock_quantity: product.stock_quantity,
             stock_threshold: product.stock_threshold,
@@ -192,11 +197,28 @@ const Products = () => {
         setImagePreview(null);
         setModalType('edit');
         setIsModalOpen(true);
+
+        if (product.category_id) {
+            fetchSubcategories(product.category_id);
+        }
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCategoryChange = async (e) => {
+        const categoryId = e.target.value;
+        setFormData(prev => ({ 
+            ...prev, 
+            category_id: categoryId,
+            subcategory_id: ''
+        }));
+        
+        if (categoryId) {
+            await fetchSubcategories(categoryId);
+        }
     };
 
     const handleSubmit = async () => {
@@ -224,6 +246,17 @@ const Products = () => {
         } catch (error) {
             showToast(`Error: ${error.message}`, 'error');
         }
+    };
+
+    const getCategoryDisplay = (product) => {
+        const category = getCategoryById(product.category_id);
+        const subcategories = getActiveSubcategories(product.category_id);
+        const subcategory = subcategories.find(sub => sub.id === product.subcategory_id);
+        
+        const categoryName = category?.name || product.category || 'N/A';
+        const subcategoryName = subcategory?.name || product.subcategory || 'N/A';
+        
+        return `${categoryName} / ${subcategoryName}`;
     };
 
     return (
@@ -311,7 +344,7 @@ const Products = () => {
                                     <div className={styles['table-cell']}>{product.id}</div>
                                     <div className={styles['table-cell']}>{product.label}</div>
                                     <div className={styles['table-cell']}>
-                                        {product.category} / {product.subcategory}
+                                        {getCategoryDisplay(product)}
                                     </div>
                                     <div className={styles['table-cell']}>
                                         ₱{parseFloat(product.price).toLocaleString('en-PH', {
@@ -413,28 +446,33 @@ const Products = () => {
                     <div className={styles['input-wrapper']}>
                         <label>Category</label>
                         <select 
-                            name="category" 
-                            value={formData.category}
-                            onChange={handleInputChange}
+                            name="category_id" 
+                            value={formData.category_id}
+                            onChange={handleCategoryChange}
                         >
                             <option value="">Select category</option>
-                            <option value="Unisex">Unisex</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
+                            {getActiveCategories().map(category => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     
                     <div className={styles['input-wrapper']}>
                         <label>Sub-category</label>
                         <select 
-                            name="subcategory" 
-                            value={formData.subcategory}
+                            name="subcategory_id" 
+                            value={formData.subcategory_id}
                             onChange={handleInputChange}
+                            disabled={!formData.category_id}
                         >
                             <option value="">Select subcategory</option>
-                            <option value="Bracelets">Bracelets</option>
-                            <option value="Earrings">Earrings</option>
-                            <option value="Necklaces">Necklaces</option>
+                            {formData.category_id && getActiveSubcategories(formData.category_id).map(subcategory => (
+                                <option key={subcategory.id} value={subcategory.id}>
+                                    {subcategory.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     
@@ -474,7 +512,6 @@ const Products = () => {
                     
                     <div className={styles['input-wrapper']}>
                         <label>Product Image</label>
-                        {/* Show current image or preview */}
                         {(imagePreview || formData.image_url) && (
                             <div className={styles['image-preview']}>
                                 {isUploadingImage ? (
@@ -504,7 +541,6 @@ const Products = () => {
                         <p className={styles['upload-hint']}>
                             Recommended: Square image (1:1). Max size: 5MB. Formats: JPEG, PNG, GIF, WEBP
                         </p>
-
                     </div>
                 </div>
                 
@@ -549,7 +585,6 @@ const Products = () => {
                     />
                 </div>
             </Modal>
-
         </div>
     );
 };

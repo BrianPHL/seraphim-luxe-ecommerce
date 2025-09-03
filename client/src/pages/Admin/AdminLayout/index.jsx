@@ -10,7 +10,8 @@ const AdminLayout = () => {
         "/admin/dashboard": "Seraphim Luxe | Admin Dashboard",
         "/admin/products": "Seraphim Luxe | Admin Products",
         "/admin/stocks": "Seraphim Luxe | Admin Stocks",
-        "/admin/orders": "Seraphim Luxe | Admin Orders"
+        "/admin/orders": "Seraphim Luxe | Admin Orders",
+        "/admin/categories": "Seraphim Luxe | Admin Categories"
     };
     const location = useLocation();
     const pathname = location['pathname'];
@@ -46,6 +47,12 @@ const AdminLayout = () => {
                         link="/admin/stocks"
                         isNested={ true }
                         isActive={ pathname === '/admin/stocks' }
+                    />
+                    <Anchor
+                        label="Categories"
+                        link="/admin/categories"
+                        isNested={ true }
+                        isActive={ pathname === '/admin/categories' }
                     />
                 </div>
                 <div className={ styles['admin-container'] }>
