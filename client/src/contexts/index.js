@@ -10,3 +10,4 @@ export { StocksProvider, useStocks } from "./Stocks";
 export { CheckoutProvider, useCheckout } from "./Checkout";
 export { OrderProvider, useOrder } from "./Orders";
 export { CategoriesProvider, useCategories } from "./Categories";
+export { useSettings, SettingsProvider } from './Settings';
