@@ -35,17 +35,58 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+app.use((req, res, next) => {
+    console.log(`${ new Date().toISOString() } - ${ req.method } ${ req.url }`);
+    next();
+});
+
+app.use((err, req, res, next) => {
+    console.error('Global error handler:', err);
+    res.status(500).json({ 
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    });
+});
+
 app.all("/api/auth/*splat", toNodeHandler(auth));
+
 app.use(express.json());
-app.use('/api/accounts', accountsRouter);
-app.use('/api/products', productsRouter);
-app.use('/api/carts', cartsRouter);
-app.use('/api/reservations', reservationsRouter);
-app.use('/api/installments', installmentsRouter);
-app.use('/api/stocks', stocksRouter);
-app.use('/api/orders', ordersRouter);
-app.use('/api/oauth', oauthRouter);
-app.use('/api/categories', categoriesRouter);
+
+app.use('/api/accounts', (req, res, next) => {
+    accountsRouter(req, res, next).catch(next);
+});
+
+app.use('/api/products', (req, res, next) => {
+    productsRouter(req, res, next).catch(next);
+});
+
+app.use('/api/carts', (req, res, next) => {
+    cartsRouter(req, res, next).catch(next);
+});
+
+app.use('/api/reservations', (req, res, next) => {
+    reservationsRouter(req, res, next).catch(next);
+});
+
+app.use('/api/installments', (req, res, next) => {
+    installmentsRouter(req, res, next).catch(next);
+});
+
+app.use('/api/stocks', (req, res, next) => {
+    stocksRouter(req, res, next).catch(next);
+});
+
+app.use('/api/orders', (req, res, next) => {
+    ordersRouter(req, res, next).catch(next);
+});
+
+app.use('/api/oauth', (req, res, next) => {
+    oauthRouter(req, res, next).catch(next);
+});
+
+app.use('/api/categories', (req, res, next) => {
+    categoriesRouter(req, res, next).catch(next);
+});
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
@@ -54,5 +95,7 @@ app.get(/^(?!\/api\/).*/, (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port: ${ PORT }`)
+    console.log(`Server running on port: ${ PORT }`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Database URL configured: ${!!process.env.DATABASE_URL}`);
 });
