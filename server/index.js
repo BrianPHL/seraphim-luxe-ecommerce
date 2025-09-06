@@ -40,6 +40,20 @@ app.use((req, res, next) => {
     next();
 });
 
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
+app.use(express.json());
+
+app.use('/api/accounts', accountsRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/api/reservations', reservationsRouter);
+app.use('/api/installments', installmentsRouter);
+app.use('/api/stocks', stocksRouter);
+app.use('/api/orders', ordersRouter);
+app.use('/api/oauth', oauthRouter);
+app.use('/api/categories', categoriesRouter);
+
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);
     res.status(500).json({ 
@@ -48,54 +62,37 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.all("/api/auth/*splat", toNodeHandler(auth));
-
-app.use(express.json());
-
-app.use('/api/accounts', (req, res, next) => {
-    accountsRouter(req, res, next).catch(next);
-});
-
-app.use('/api/products', (req, res, next) => {
-    productsRouter(req, res, next).catch(next);
-});
-
-app.use('/api/carts', (req, res, next) => {
-    cartsRouter(req, res, next).catch(next);
-});
-
-app.use('/api/reservations', (req, res, next) => {
-    reservationsRouter(req, res, next).catch(next);
-});
-
-app.use('/api/installments', (req, res, next) => {
-    installmentsRouter(req, res, next).catch(next);
-});
-
-app.use('/api/stocks', (req, res, next) => {
-    stocksRouter(req, res, next).catch(next);
-});
-
-app.use('/api/orders', (req, res, next) => {
-    ordersRouter(req, res, next).catch(next);
-});
-
-app.use('/api/oauth', (req, res, next) => {
-    oauthRouter(req, res, next).catch(next);
-});
-
-app.use('/api/categories', (req, res, next) => {
-    categoriesRouter(req, res, next).catch(next);
-});
-
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
 app.get(/^(?!\/api\/).*/, (req, res) => {
-	res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port: ${ PORT }`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Database URL configured: ${!!process.env.DATABASE_URL}`);
-});
+const testDatabaseConnection = async () => {
+    try {
+        const pool = await import('./apis/db.js');
+        await pool.default.query('SELECT 1');
+        console.log('✅ Database connection successful');
+        return true;
+    } catch (error) {
+        console.error('❌ Database connection failed:', error.message);
+        return false;
+    }
+};
+
+const startServer = async () => {
+    const dbConnected = await testDatabaseConnection();
+    
+    if (!dbConnected && process.env.NODE_ENV === 'production') {
+        console.error('Database connection required for production. Exiting...');
+        process.exit(1);
+    }
+    
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port: ${PORT}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV}`);
+        console.log(`🗄️  Database URL configured: ${!!process.env.DATABASE_URL}`);
+    });
+};
+
+startServer();
