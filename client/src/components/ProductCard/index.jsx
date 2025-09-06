@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import styles from './ProductCard.module.css';
 import { InputField, Button, Modal } from '@components';
-import { useAuth, useCart, useReservation, useToast, useCheckout, useCategories } from '@contexts';
+import { useAuth, useCart, useReservation, useToast, useCheckout, useCategories, useSettings } from '@contexts';
 
 const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
     
@@ -25,29 +25,81 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
     const { showToast } = useToast();
     const { getCategoryById, getActiveSubcategories } = useCategories();
     const navigate = useNavigate();
-    
-    const formattedPrice = parseFloat(price).toLocaleString('en-PH', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+
+    const { settings, convertPrice, formatPrice } = useSettings();
+    const [displayPrice, setDisplayPrice] = useState(price);
+
+    const safeFormatPrice = (price, currency = null) => {
+        try {
+            if (formatPrice && typeof formatPrice === 'function') {
+                return formatPrice(price, currency);
+            }
+
+            const numPrice = Number(price);
+            if (isNaN(numPrice)) {
+                return 'Price unavailable';
+            }
+
+            const currentCurrency = currency || settings?.currency || 'PHP';
+            
+            switch (currentCurrency?.toUpperCase()) {
+                case 'USD':
+                    return `$${numPrice.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'EUR':
+                    return `€${numPrice.toLocaleString('en-EU', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'JPY':
+                    return `¥${Math.round(numPrice).toLocaleString('ja-JP')}`;
+                case 'CAD':
+                    return `C$${numPrice.toLocaleString('en-CA', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'PHP':
+                default:
+                    return `₱${numPrice.toLocaleString('en-PH', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+            }
+        } catch (error) {
+            console.error('Error formatting price:', error);
+            return `₱${Number(price).toFixed(2)}`;
+        }
+    };
 
     const getCategoryDisplayName = () => {
-        if (category) return category;
-        if (category_id) {
-            const categoryData = getCategoryById(category_id);
-            return categoryData?.name || 'Unknown';
+        try {
+            if (category) return category;
+            if (category_id) {
+                const categoryData = getCategoryById(category_id);
+                return categoryData?.name || 'Unknown';
+            }
+            return 'Unknown';
+        } catch (error) {
+            console.error('Error getting category name:', error);
+            return 'Unknown';
         }
-        return 'Unknown';
     };
 
     const getSubcategoryDisplayName = () => {
-        if (subcategory) return subcategory;
-        if (category_id && subcategory_id) {
-            const subcategories = getActiveSubcategories(category_id);
-            const subcategoryData = subcategories.find(sub => sub.id === subcategory_id);
-            return subcategoryData?.name || 'Unknown';
+        try {
+            if (subcategory) return subcategory;
+            if (category_id && subcategory_id) {
+                const subcategories = getActiveSubcategories(category_id);
+                const subcategoryData = subcategories.find(sub => sub.id === subcategory_id);
+                return subcategoryData?.name || 'Unknown';
+            }
+            return 'Unknown';
+        } catch (error) {
+            console.error('Error getting subcategory name:', error);
+            return 'Unknown';
         }
-        return 'Unknown';
     };
 
     const finalCategoryName = getCategoryDisplayName();
@@ -120,10 +172,37 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
         }
     };
 
+    const handleImageError = (e) => {
+        e.target.style.display = 'none';
+        if (e.target.nextSibling) {
+            e.target.nextSibling.style.display = 'flex';
+        }
+    };
+
     useEffect(() => {
         setIsOutOfStock(stock_quantity <= 0);
         setIsLowStock(stock_quantity > 0 && stock_quantity <= 5);
     }, [stock_quantity]);
+
+    useEffect(() => {
+        const updatePrice = async () => {
+            try {
+                if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                    const converted = await convertPrice(price, settings.currency);
+                    setDisplayPrice(converted);
+                } else {
+                    setDisplayPrice(price);
+                }
+            } catch (error) {
+                console.error('Error converting price:', error);
+                setDisplayPrice(price);
+            }
+        };
+        
+        if (settings) {
+            updatePrice();
+        }
+    }, [price, settings?.currency, convertPrice, settings]);
 
     const imageSrc = getImageSrc();
 
@@ -145,6 +224,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                         className={ styles['product-img'] }
                         src={ imageSrc }
                         alt={ `${ label }. Price: ${ price }` }
+                        onError={handleImageError}
                     />
                 ) : (
                     <div className={ styles['product-img-placeholder'] }>
@@ -156,7 +236,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                 <div className={ styles['details'] }>
                     <div className={ styles['text'] }>
                         <h2>{ label }</h2>
-                        <h3>₱{ formattedPrice }</h3>
+                        <h3>{ safeFormatPrice(displayPrice) }</h3>
                         <p>Available Stocks: { stock_quantity }</p>
                     </div>
                     <Button
@@ -230,10 +310,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                 </div>
 
                 <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                    <h3>Total: ₱{(parseFloat(price) * productQuantity).toLocaleString('en-PH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })}</h3>
+                    <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
                 </div>
                 <div className={ styles['modal-ctas'] }>
                     <Button 
@@ -283,10 +360,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                 </div>
 
                 <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                    <h3>Total: ₱{(parseFloat(price) * productQuantity).toLocaleString('en-PH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })}</h3>
+                    <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
                 </div>
 
                 <div className={ styles['modal-ctas'] }>

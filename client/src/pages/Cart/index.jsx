@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Anchor, ReturnButton, Modal, Counter } from '@components';
 import styles from './Cart.module.css';
-import { useCart, useToast } from '@contexts';
+import { useCart, useToast, useSettings } from '@contexts';
 
 const Cart = () => {
 
@@ -18,22 +18,113 @@ const Cart = () => {
         isItemSelected
     } = useCart();
     const { showToast } = useToast();
+    const { settings, convertPrice, formatPrice } = useSettings();
     const [ modalType, setModalType ] = useState('');
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ selectedItem, setSelectedItem ] = useState(null);
     const [ stockInfo, setStockInfo ] = useState({});
+    const [ convertedItems, setConvertedItems ] = useState([]);
     const navigate = useNavigate();
 
-    const subtotal = cartItems.reduce(
+    const safeFormatPrice = (price, currency = null) => {
+        try {
+            if (formatPrice && typeof formatPrice === 'function') {
+                return formatPrice(price, currency);
+            }
+            
+            const numPrice = Number(price);
+            if (isNaN(numPrice)) {
+                return 'Price unavailable';
+            }
+
+            const currentCurrency = currency || settings?.currency || 'PHP';
+            
+            switch (currentCurrency?.toUpperCase()) {
+                case 'USD':
+                    return `$${numPrice.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'EUR':
+                    return `€${numPrice.toLocaleString('en-EU', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'JPY':
+                    return `¥${Math.round(numPrice).toLocaleString('ja-JP')}`;
+                case 'CAD':
+                    return `C$${numPrice.toLocaleString('en-CA', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'PHP':
+                default:
+                    return `₱${numPrice.toLocaleString('en-PH', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+            }
+        } catch (error) {
+            console.error('Error formatting price:', error);
+            return `₱${Number(price).toFixed(2)}`;
+        }
+    };
+
+    useEffect(() => {
+        const convertItemPrices = async () => {
+            if (!cartItems.length) {
+                setConvertedItems([]);
+                return;
+            }
+
+            try {
+                const itemsWithConvertedPrices = await Promise.all(
+                    cartItems.map(async (item) => {
+                        let convertedPrice = item.price;
+                        
+                        if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                            try {
+                                convertedPrice = await convertPrice(item.price, settings.currency);
+                            } catch (error) {
+                                console.error('Error converting price for item:', item.product_id, error);
+                                convertedPrice = item.price;
+                            }
+                        }
+                        
+                        return {
+                            ...item,
+                            displayPrice: convertedPrice
+                        };
+                    })
+                );
+                
+                setConvertedItems(itemsWithConvertedPrices);
+            } catch (error) {
+                console.error('Error converting cart item prices:', error);
+                setConvertedItems(cartItems.map(item => ({
+                    ...item,
+                    displayPrice: item.price
+                })));
+            }
+        };
+
+        if (settings) {
+            convertItemPrices();
+        }
+    }, [cartItems, settings?.currency, convertPrice, settings]);
+
+    const subtotal = convertedItems.reduce(
         (sum, item) => {
-            const priceValue = parseFloat(item.price);
+            const priceValue = parseFloat(item.displayPrice || item.price);
             return sum + (priceValue * item.quantity);
         }, 0);
 
-    const selectedSubtotal = selectedCartItems.reduce((sum, item) => {
-        const priceValue = parseFloat(item.price);
-        return sum + (priceValue * item.quantity);
-    }, 0);
+    const selectedSubtotal = convertedItems
+        .filter(item => isItemSelected(item.product_id))
+        .reduce((sum, item) => {
+            const priceValue = parseFloat(item.displayPrice || item.price);
+            return sum + (priceValue * item.quantity);
+        }, 0);
 
     const tax = 0;
     const deductions = 0;
@@ -136,7 +227,7 @@ const Cart = () => {
                                         disabled={ selectedCartItems.length <= 0 }
                                     />
                                 </div>
-                                { cartItems.map(item => {
+                                { convertedItems.map(item => {
 
                                     const availableStock = stockInfo[item.product_id];
                                     const itemSelected = isItemSelected(item.product_id);
@@ -164,10 +255,7 @@ const Cart = () => {
 
                                                         <span>
                                                             <h3>{ item['label'] }</h3>
-                                                            <h4>₱{ parseFloat(item['price']).toLocaleString('en-PH', {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2
-                                                            }) }</h4>
+                                                            <h4>{ safeFormatPrice(item.displayPrice || item.price) }</h4>
                                                         </span>
                                                         
                                                         <h4><b>Category:</b> { item['category'] } | <b>Sub-category:</b> {item['subcategory']}</h4>
@@ -220,23 +308,17 @@ const Cart = () => {
                                     <span>
                                         <div className={ styles['summary-item'] }>
                                             <h3>{ selectedCartItems.length <= 1 ? 'Subtotal' : `Subtotal (${selectedCartItems.length} items)` }</h3>
-                                            <h3>₱{ selectedSubtotal.toLocaleString('en-PH', {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            }) }</h3>
+                                            <h3>{ safeFormatPrice(selectedSubtotal) }</h3>
                                         </div>
                                         <div className={ styles['summary-item'] }>
                                             <h3>Shipping Fee</h3>
-                                            <h3>₱0.00</h3>
+                                            <h3>{ safeFormatPrice(0) }</h3>
                                         </div>
                                     </span>
                                     <div className={ styles['divider'] }></div>
                                     <div className={ styles['summary-item-total'] }>
                                         <h3>Total</h3>
-                                        <h3>₱{ selectedTotal.toLocaleString('en-PH', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        })}</h3>
+                                        <h3>{ safeFormatPrice(selectedTotal) }</h3>
                                     </div>
                                 </div>
                                 <div className={ styles['cta'] }>

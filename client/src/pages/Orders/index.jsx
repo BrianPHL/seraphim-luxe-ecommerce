@@ -2,18 +2,63 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Anchor, ReturnButton, Modal } from '@components';
 import styles from './Orders.module.css';
-import { useToast, useAuth } from '@contexts';
-import { username } from 'better-auth/plugins';
+import { useToast, useAuth, useSettings } from '@contexts';
 
 const Orders = () => {
     const { showToast } = useToast();
+    const { settings, convertPrice, formatPrice } = useSettings();
     const [orders, setOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('current');
+    const [convertedOrders, setConvertedOrders] = useState([]);
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    const safeFormatPrice = (price, currency = null) => {
+        try {
+            if (formatPrice && typeof formatPrice === 'function') {
+                return formatPrice(price, currency);
+            }
+            
+            const numPrice = Number(price);
+            if (isNaN(numPrice)) {
+                return 'Price unavailable';
+            }
+
+            const currentCurrency = currency || settings?.currency || 'PHP';
+            
+            switch (currentCurrency?.toUpperCase()) {
+                case 'USD':
+                    return `$${numPrice.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'EUR':
+                    return `€${numPrice.toLocaleString('en-EU', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'JPY':
+                    return `¥${Math.round(numPrice).toLocaleString('ja-JP')}`;
+                case 'CAD':
+                    return `C$${numPrice.toLocaleString('en-CA', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'PHP':
+                default:
+                    return `₱${numPrice.toLocaleString('en-PH', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+            }
+        } catch (error) {
+            console.error('Error formatting price:', error);
+            return `₱${Number(price).toFixed(2)}`;
+        }
+    };
 
     const calculateReservedArrivalTime = (orderDate, productType) => {
         const orderDateTime = new Date(orderDate);
@@ -51,6 +96,74 @@ const Orders = () => {
             order.status?.toLowerCase() === 'reserved'
         );
     };
+
+    useEffect(() => {
+        const convertOrderPrices = async () => {
+            if (!orders.length) {
+                setConvertedOrders([]);
+                return;
+            }
+
+            try {
+                const ordersWithConvertedPrices = await Promise.all(
+                    orders.map(async (order) => {
+                        let convertedTotalAmount = order.total_amount;
+                        
+                        if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                            try {
+                                convertedTotalAmount = await convertPrice(order.total_amount, settings.currency);
+                            } catch (error) {
+                                console.error('Error converting total amount for order:', order.order_number, error);
+                                convertedTotalAmount = order.total_amount;
+                            }
+                        }
+
+                        const convertedItems = await Promise.all(
+                            (order.items || []).map(async (item) => {
+                                let convertedPrice = item.price || item.unit_price;
+                                
+                                if (settings?.currency && settings.currency !== 'PHP' && convertPrice && convertedPrice) {
+                                    try {
+                                        convertedPrice = await convertPrice(convertedPrice, settings.currency);
+                                    } catch (error) {
+                                        console.error('Error converting item price:', item.label, error);
+                                        convertedPrice = item.price || item.unit_price;
+                                    }
+                                }
+                                
+                                return {
+                                    ...item,
+                                    displayPrice: convertedPrice
+                                };
+                            })
+                        );
+                        
+                        return {
+                            ...order,
+                            displayTotalAmount: convertedTotalAmount,
+                            items: convertedItems
+                        };
+                    })
+                );
+                
+                setConvertedOrders(ordersWithConvertedPrices);
+            } catch (error) {
+                console.error('Error converting order prices:', error);
+                setConvertedOrders(orders.map(order => ({
+                    ...order,
+                    displayTotalAmount: order.total_amount,
+                    items: (order.items || []).map(item => ({
+                        ...item,
+                        displayPrice: item.price || item.unit_price
+                    }))
+                })));
+            }
+        };
+
+        if (settings && orders.length > 0) {
+            convertOrderPrices();
+        }
+    }, [orders, settings?.currency, convertPrice, settings]);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -172,11 +285,13 @@ const Orders = () => {
         }
     };
 
-    const currentOrders = orders.filter(order => 
+    const displayOrders = convertedOrders.length > 0 ? convertedOrders : orders;
+
+    const currentOrders = displayOrders.filter(order => 
         !['delivered', 'completed'].includes(order.status.toLowerCase())
     );
     
-    const pastOrders = orders.filter(order => 
+    const pastOrders = displayOrders.filter(order => 
         ['delivered', 'completed'].includes(order.status.toLowerCase())
     );
 
@@ -293,10 +408,7 @@ const Orders = () => {
                                                 </div>
                                                 
                                                 <div className={styles['order-total']}>
-                                                    <h4>Total: ₱{parseFloat(order.total_amount).toLocaleString('en-PH', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
-                                                    })}</h4>
+                                                    <h4>Total: {safeFormatPrice(order.displayTotalAmount || order.total_amount)}</h4>
                                                 </div>
                                             </div>
                                             
@@ -358,10 +470,7 @@ const Orders = () => {
                                                 </div>
                                                 
                                                 <div className={styles['order-total']}>
-                                                    <h4>Total: ₱{parseFloat(order.total_amount).toLocaleString('en-PH', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
-                                                    })}</h4>
+                                                    <h4>Total: {safeFormatPrice(order.displayTotalAmount || order.total_amount)}</h4>
                                                 </div>
                                             </div>
                                             
@@ -450,10 +559,7 @@ const Orders = () => {
                                 <div>
                                     <span className={styles['summary-label']}>Total Amount</span>
                                     <span className={styles['summary-value']}>
-                                        ₱{parseFloat(selectedOrder.total_amount || 0).toLocaleString('en-PH', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        })}
+                                        {safeFormatPrice(selectedOrder.displayTotalAmount || selectedOrder.total_amount || 0)}
                                     </span>
                                 </div>
                             </div>
@@ -492,12 +598,15 @@ const Orders = () => {
                                     <div>
                                         <span className={styles['shipping-label']}>Delivery Address</span>
                                         <span className={styles['shipping-value']}>
-                                            {selectedOrder.shipping_address ? (
+                                            {/* Use preferred shipping address from settings if available */}
+                                            {settings?.preferred_shipping_address === 'billing' && user?.address ? (
+                                                user.address
+                                            ) : selectedOrder.shipping_address ? (
                                                 `${selectedOrder.shipping_address.street || ''}, ${selectedOrder.shipping_address.city || ''}, ${selectedOrder.shipping_address.province || selectedOrder.shipping_address.state || ''} ${selectedOrder.shipping_address.postal_code || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '') || 'N/A'
                                             ) : (
                                                 selectedOrder.shipping_street ? 
                                                 `${selectedOrder.shipping_street}, ${selectedOrder.shipping_city}, ${selectedOrder.shipping_state} ${selectedOrder.shipping_postal_code}` : 
-                                                'N/A'
+                                                user?.address || 'N/A'
                                             )}
                                         </span>
                                     </div>
@@ -552,19 +661,13 @@ const Orders = () => {
                                                     <div className={styles['item-detail']}>
                                                         <span className={styles['detail-label']}>Unit Price</span>
                                                         <span className={styles['detail-value']}>
-                                                            ₱{parseFloat(item.price || item.unit_price || 0).toLocaleString('en-PH', {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2
-                                                            })}
+                                                            {safeFormatPrice(item.displayPrice || item.price || item.unit_price || 0)}
                                                         </span>
                                                     </div>
                                                     <div className={styles['item-detail']}>
                                                         <span className={styles['detail-label']}>Subtotal</span>
                                                         <span className={styles['detail-value']}>
-                                                            ₱{(parseFloat(item.price || item.unit_price || 0) * (item.quantity || 1)).toLocaleString('en-PH', {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2
-                                                            })}
+                                                            {safeFormatPrice((parseFloat(item.displayPrice || item.price || item.unit_price || 0) * (item.quantity || 1)))}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -595,10 +698,7 @@ const Orders = () => {
                             <div className={styles['total-breakdown']}>
                                 <div className={styles['total-line']}>
                                     <span>Subtotal:</span>
-                                    <span>₱{parseFloat(selectedOrder.total_amount || 0).toLocaleString('en-PH', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    })}</span>
+                                    <span>{safeFormatPrice(selectedOrder.displayTotalAmount || selectedOrder.total_amount || 0)}</span>
                                 </div>
                                 <div className={styles['total-line']}>
                                     <span>Shipping:</span>
@@ -606,10 +706,7 @@ const Orders = () => {
                                 </div>
                                 <div className={styles['total-line-final']}>
                                     <span>Total:</span>
-                                    <span>₱{parseFloat(selectedOrder.total_amount || 0).toLocaleString('en-PH', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    })}</span>
+                                    <span>{safeFormatPrice(selectedOrder.displayTotalAmount || selectedOrder.total_amount || 0)}</span>
                                 </div>
                             </div>
                         </div>

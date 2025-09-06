@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, ReturnButton } from '@components';
-import { useAuth, useCart, useCheckout, useToast } from '@contexts';
+import { useAuth, useCart, useCheckout, useToast, useSettings } from '@contexts';
 import styles from './Checkout.module.css';
 
 const Checkout = () => {
@@ -10,19 +10,121 @@ const Checkout = () => {
     const { selectedCartItems } = useCart();
     const { createOrder, updateCheckoutData, checkoutData, loading, directCheckoutItem } = useCheckout();
     const { showToast } = useToast();
+    const { settings, convertPrice, formatPrice } = useSettings();
 
-    const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
+    const [paymentMethod, setPaymentMethod] = useState('');
     const [notes, setNotes] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const [convertedItems, setConvertedItems] = useState([]);
+    
     const checkoutItems = directCheckoutItem ? [directCheckoutItem] : selectedCartItems;
-    const subtotal = checkoutItems?.reduce((sum, item) => {
-        return sum + (parseFloat(item.price) * parseInt(item.quantity));
-    }, 0) || 0;
+
+    const safeFormatPrice = (price, currency = null) => {
+        try {
+            if (formatPrice && typeof formatPrice === 'function') {
+                return formatPrice(price, currency);
+            }
+            
+            const numPrice = Number(price);
+            if (isNaN(numPrice)) {
+                return 'Price unavailable';
+            }
+
+            const currentCurrency = currency || settings?.currency || 'PHP';
+            
+            switch (currentCurrency?.toUpperCase()) {
+                case 'USD':
+                    return `$${numPrice.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'EUR':
+                    return `€${numPrice.toLocaleString('en-EU', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'JPY':
+                    return `¥${Math.round(numPrice).toLocaleString('ja-JP')}`;
+                case 'CAD':
+                    return `C$${numPrice.toLocaleString('en-CA', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'PHP':
+                default:
+                    return `₱${numPrice.toLocaleString('en-PH', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+            }
+        } catch (error) {
+            console.error('Error formatting price:', error);
+            return `₱${Number(price).toFixed(2)}`;
+        }
+    };
+
+    useEffect(() => {
+        const convertItemPrices = async () => {
+            if (!checkoutItems.length) {
+                setConvertedItems([]);
+                return;
+            }
+
+            try {
+                const itemsWithConvertedPrices = await Promise.all(
+                    checkoutItems.map(async (item) => {
+                        let convertedPrice = item.price;
+                        
+                        if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                            try {
+                                convertedPrice = await convertPrice(item.price, settings.currency);
+                            } catch (error) {
+                                console.error('Error converting price for item:', item.product_id, error);
+                                convertedPrice = item.price; 
+                            }
+                        }
+                        
+                        return {
+                            ...item,
+                            displayPrice: convertedPrice
+                        };
+                    })
+                );
+                
+                setConvertedItems(itemsWithConvertedPrices);
+            } catch (error) {
+                console.error('Error converting checkout item prices:', error);
+                setConvertedItems(checkoutItems.map(item => ({
+                    ...item,
+                    displayPrice: item.price
+                })));
+            }
+        };
+
+        if (settings) {
+            convertItemPrices();
+        }
+    }, [checkoutItems, settings?.currency, convertPrice, settings]);
+
+    const subtotal = convertedItems.reduce((sum, item) => {
+        const priceValue = parseFloat(item.displayPrice || item.price);
+        return sum + (priceValue * parseInt(item.quantity));
+    }, 0);
 
     const shippingFee = 0;
     const tax = 0;
     const discount = 0;
     const total = subtotal + shippingFee + tax - discount;
+
+    useEffect(() => {
+        if (settings?.preferred_payment_method && settings.preferred_payment_method.trim() !== '') {
+            setPaymentMethod(settings.preferred_payment_method);
+        } else if (user?.payment_method && user.payment_method.trim() !== '') {
+            setPaymentMethod(user.payment_method);
+        } else {
+            setPaymentMethod('cash_on_delivery');
+        }
+    }, [settings, user]);
 
     const handlePlaceOrder = async () => {
         if (!user || checkoutItems.length === 0) return;
@@ -35,22 +137,21 @@ const Checkout = () => {
         setIsPlacingOrder(true);
         
         try {
-                `${user.street || ''}, ${user.city || ''}, ${user.province || ''}, ${user.postal_code || ''}`.replace(/,\s*,/g, ',').trim();
             const shippingAddress = user.address;
                 
             const orderData = {
                 items: checkoutItems.map(item => ({
                     product_id: parseInt(item.product_id),
                     quantity: parseInt(item.quantity),
-                    price: parseFloat(item.price),
+                    price: parseFloat(item.price), 
                     total: parseFloat(item.price) * parseInt(item.quantity)
                 })),
                 paymentMethod,
-                subtotal: parseFloat(subtotal.toFixed(2)),
+                subtotal: parseFloat(checkoutItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0).toFixed(2)), 
                 shippingFee: parseFloat(shippingFee.toFixed(2)),
                 tax: parseFloat(tax.toFixed(2)),
                 discount: parseFloat(discount.toFixed(2)),
-                totalAmount: parseFloat(total.toFixed(2)),
+                totalAmount: parseFloat((checkoutItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0) + shippingFee + tax - discount).toFixed(2)),
                 notes: notes.trim(),
                 shippingAddress: shippingAddress
             };
@@ -95,17 +196,10 @@ const Checkout = () => {
                                 action={ () => {} }
                             />
                         </div>
-                        {/* <h2 className={styles['checkout-section-header']}>Shipping Address</h2> */}
                         <div className={styles['address-display']}>
                             <div className={styles['address-line']}>
                                 <strong>{user?.first_name} {user?.last_name}</strong>
                             </div>
-                            {/* <div className={styles['address-line']}>
-                                {user?.street || 'No street address provided'}
-                            </div>
-                            <div className={styles['address-line']}>
-                                {user?.city}, {user?.province} {user?.postal_code}
-                            </div> */}
                             <div className={ styles['address-line'] }>
                                 { user?.address }
                             </div>
@@ -123,7 +217,7 @@ const Checkout = () => {
                             <h2>Order Items ({checkoutItems.length})</h2>
                         </div>
                         <div className={styles['checkout-items']}>
-                            {checkoutItems.map(item => (
+                            {convertedItems.map(item => (
                                 <div key={item.product_id} className={styles['checkout-item']}>
                                     <div className={styles['checkout-item-content']}>
                                         <img
@@ -134,10 +228,7 @@ const Checkout = () => {
                                             <div className={styles['checkout-item-details-left']}>
                                                 <span>
                                                     <h3>{ item.label }</h3>
-                                                    <h4>₱{parseFloat(item.price).toLocaleString('en-PH', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
-                                                    })}</h4>
+                                                    <h4>{ safeFormatPrice(item.displayPrice || item.price) }</h4>
                                                 </span>
                                                 <h4><b>Category:</b> {item.category} | <b>Sub-category:</b> {item.subcategory}</h4>
                                             </div>
@@ -146,10 +237,7 @@ const Checkout = () => {
                                                     <span className={styles['quantity-label']}>Qty: {item.quantity}</span>
                                                 </div>
                                                 <div className={styles['checkout-item-total']}>
-                                                    <h4>₱{(parseFloat(item.price) * item.quantity).toLocaleString('en-PH', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
-                                                    })}</h4>
+                                                    <h4>{ safeFormatPrice((parseFloat(item.displayPrice || item.price) * item.quantity)) }</h4>
                                                 </div>
                                             </div>
                                         </div>
@@ -216,10 +304,7 @@ const Checkout = () => {
                             <span>
                                 <div className={ styles['summary-item'] }>
                                     <h3>Subtotal ({checkoutItems.length} items)</h3>
-                                    <h3>₱{ subtotal.toLocaleString('en-PH', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    })}</h3>
+                                    <h3>{ safeFormatPrice(subtotal) }</h3>
                                 </div>
                                 <div className={styles['summary-item']}>
                                     <h3>Shipping Fee</h3>
@@ -229,10 +314,7 @@ const Checkout = () => {
                             <div className={ styles['divider'] }></div>
                             <div className={styles['summary-item-total']}>
                                 <h3>Total</h3>
-                                <h3>₱{ total.toLocaleString('en-PH', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                })}</h3>
+                                <h3>{ safeFormatPrice(total) }</h3>
                             </div>
                         </div>
                         
