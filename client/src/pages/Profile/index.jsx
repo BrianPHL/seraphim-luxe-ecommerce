@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { InputField, Button, Anchor, ReturnButton, Accordion, Modal } from '@components';
-import { useToast, useAuth, useReservation } from '@contexts';
+import { InputField, Button, Anchor, ReturnButton, Accordion, Modal, Dropdown } from '@components';
+import { useToast, useAuth, useReservation, useSettings } from '@contexts';
 import { useOAuth } from '@hooks';
 import { getErrorMessage } from '@utils';
 import styles from './Profile.module.css';
@@ -11,6 +11,7 @@ const Profile = ({}) => {
     const navigate = useNavigate();
     const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, updateAddress: updateAddressAPI, updatePassword: updatePasswordAPI, remove } = useAuth();
     const { reservationItems, clearReservations } = useReservation();
+    const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
     const { showToast } = useToast();
     const [ searchParams, setSearchParams ] = useSearchParams();
@@ -45,6 +46,36 @@ const Profile = ({}) => {
         newPassword: '',
         confirmNewPassword: ''
     })
+    
+    const [ platformSettings, setPlatformSettings ] = useState({
+        currency: 'PHP',
+        preferred_shipping_address: 'home',
+        preferred_payment_method: 'cash_on_delivery'
+    });
+    
+    const [dropdownStates, setDropdownStates] = useState({
+        currency: false,
+        shipping_address: false,
+        payment_method: false
+    });
+
+    const toggleDropdown = (dropdownName) => {
+        setDropdownStates(prev => ({
+            ...prev,
+            [dropdownName]: !prev[dropdownName]
+        }));
+    };
+
+    const closeAllDropdowns = () => {
+        setDropdownStates({
+            currency: false,
+            shipping_address: false,
+            payment_method: false
+        });
+    };
+
+    const [ isPlatformSettingsChanged, setIsPlatformSettingsChanged ] = useState(false);
+
     const [ generalAddressInfo, setGeneralAddressInfo ] = useState({
         address: ''
     });
@@ -64,6 +95,67 @@ const Profile = ({}) => {
     const queryToken = searchParams.get('token') || null;
     const errorToken = searchParams.get('error') || null;
 
+    const getCurrencyLabel = (currency) => {
+        const labels = {
+            'PHP': 'Philippine Peso (₱)',
+            'USD': 'US Dollar ($)',
+            'EUR': 'Euro (€)',
+            'JPY': 'Japanese Yen (¥)',
+            'CAD': 'Canadian Dollar (C$)'
+        };
+        return labels[currency] || 'Select Currency';
+    };
+
+    const getShippingLabel = (address) => {
+        const labels = {
+            'home': 'Home Address',
+            'billing': 'Billing Address',
+            'shipping': 'Shipping Address'
+        };
+        return labels[address] || 'Select Address';
+    };
+
+    const getPaymentLabel = (method) => {
+        const labels = {
+            'cash_on_delivery': 'Cash on Delivery',
+            'bank_transfer': 'Bank Transfer',
+            'gcash': 'GCash'
+        };
+        return labels[method] || 'Select Payment Method';
+    };
+
+    const handlePlatformSettingsChange = (field, value) => {
+        const updatedSettings = { ...platformSettings, [field]: value };
+        setPlatformSettings(updatedSettings);
+        
+        const hasChanged = 
+            updatedSettings.currency !== settings.currency ||
+            updatedSettings.preferred_shipping_address !== settings.preferred_shipping_address ||
+            updatedSettings.preferred_payment_method !== settings.preferred_payment_method;
+        
+        setIsPlatformSettingsChanged(hasChanged);
+    };
+
+    const updatePlatformSettings = async () => {
+        const result = await updateSettings(platformSettings);
+        
+        if (result?.error) {
+            showToast(`Failed to update platform settings: ${result.error}`, 'error');
+        } else {
+            showToast('Platform settings updated successfully', 'success');
+            setIsPlatformSettingsChanged(false);
+        }
+    };
+
+    const resetPlatformSettings = () => {
+        setPlatformSettings({
+            currency: settings?.currency || 'PHP',
+            preferred_shipping_address: settings?.preferred_shipping_address || 'home',
+            preferred_payment_method: settings?.preferred_payment_method || 'cash_on_delivery'
+        });
+        setIsPlatformSettingsChanged(false);
+    };
+    
     const handleFileChange = (event) => {
         
         const file = event['target']['files'][0];
@@ -421,7 +513,30 @@ const Profile = ({}) => {
         }
     }, [ user ]);
 
+    useEffect(() => {
+        if (settings) {
+            setPlatformSettings({
+                currency: settings.currency || 'PHP',
+                preferred_shipping_address: settings.preferred_shipping_address || 'home',
+                preferred_payment_method: settings.preferred_payment_method || 'cash_on_delivery'
+            });
+        }
+    }, [ settings ]);
+
     if (loading || !user) return null;
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest(`.${styles['dropdown-container']}`)) {
+                closeAllDropdowns();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return(
         <>
@@ -584,6 +699,175 @@ const Profile = ({}) => {
                             </div>
                         </section>
                         <div className={ styles['divider-horizontal'] }></div>
+                        <section className={ styles['user-settings'] }>
+                            <h2>Settings</h2>
+                            <div className={ styles['inputs-container'] }>
+                                <div className={ styles['inputs-wrapper'] }>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="currency">Preferred Currency</label>
+                                        <div className={ styles['dropdown-container'] }>
+                                            <Button
+                                                type='dropdown'
+                                                label={`${getCurrencyLabel(platformSettings.currency)}`}
+                                                icon='fa-solid fa-chevron-down'
+                                                iconPosition='right'
+                                                action={() => toggleDropdown('currency')}
+                                                externalStyles={styles['dropdown-trigger']}
+                                            />
+                                            <Dropdown
+                                                isOpen={dropdownStates.currency}
+                                                position='left'
+                                                options={[
+                                                    {
+                                                        label: 'Philippine Peso (₱)',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('currency', 'PHP');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'US Dollar ($)',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('currency', 'USD');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'Euro (€)',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('currency', 'EUR');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'Japanese Yen (¥)',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('currency', 'JPY');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'Canadian Dollar (C$)',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('currency', 'CAD');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="shipping_address">Preferred Shipping Address</label>
+                                        <div className={ styles['dropdown-container'] }>
+                                            <Button
+                                                type='dropdown'
+                                                label={`${getShippingLabel(platformSettings.preferred_shipping_address)}`}
+                                                icon='fa-solid fa-chevron-down'
+                                                iconPosition='right'
+                                                action={() => toggleDropdown('shipping_address')}
+                                                externalStyles={styles['dropdown-trigger']}
+                                            />
+                                            <Dropdown
+                                                isOpen={dropdownStates.shipping_address}
+                                                position='left'
+                                                options={[
+                                                    {
+                                                        label: 'Home Address',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('preferred_shipping_address', 'home');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'Billing Address',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('preferred_shipping_address', 'billing');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'Shipping Address',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('preferred_shipping_address', 'shipping');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={ styles['inputs-wrapper'] }>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="payment_method">Preferred Payment Method</label>
+                                        <div className={ styles['dropdown-container'] }>
+                                            <Button
+                                                type='dropdown'
+                                                label={`${getPaymentLabel(platformSettings.preferred_payment_method)}`}
+                                                icon='fa-solid fa-chevron-down'
+                                                iconPosition='right'
+                                                action={() => toggleDropdown('payment_method')}
+                                                externalStyles={styles['dropdown-trigger']}
+                                            />
+                                            <Dropdown
+                                                isOpen={dropdownStates.payment_method}
+                                                position='left'
+                                                options={[
+                                                    {
+                                                        label: 'Cash on Delivery',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('preferred_payment_method', 'cash_on_delivery');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'Bank Transfer',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('preferred_payment_method', 'bank_transfer');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'GCash',
+                                                        action: () => {
+                                                            handlePlatformSettingsChange('preferred_payment_method', 'gcash');
+                                                            closeAllDropdowns();
+                                                        }
+                                                    }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={ styles['info-platform-ctas'] }>
+                                    <Button
+                                        type='primary'
+                                        icon='fa-solid fa-circle-check'
+                                        iconPosition='left'
+                                        label='Update settings'
+                                        action={ () => {
+                                            setModalType('update-platform-settings-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        disabled={ !isPlatformSettingsChanged || settingsLoading }
+                                    />
+                                    <Button
+                                        type='secondary'
+                                        icon='fa-solid fa-rotate-left'
+                                        iconPosition='left'
+                                        label='Reset'
+                                        action={ () => {
+                                            setModalType('reset-platform-settings-confirmation');
+                                            setIsModalOpen(true);
+                                        }}
+                                        externalStyles={ styles['action-warn'] }
+                                        disabled={ !isPlatformSettingsChanged || settingsLoading }
+                                    />
+                                </div>
+                            </div>
+                        </section>
+                        <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-address-general'] }>
                             <h2> Home Address</h2>
                             <div className={ styles['inputs-container'] }>
@@ -638,7 +922,6 @@ const Profile = ({}) => {
                                             type='text'
                                             isSubmittable={ false }
                                             error={ shippingAddressErrors.street }
-                                            hasError={ !!shippingAddressErrors.street }
                                         />
                                         {shippingAddressErrors.street && (
                                             <div className={ styles['input-error'] }>{shippingAddressErrors.street}</div>
@@ -653,7 +936,6 @@ const Profile = ({}) => {
                                             type='text'
                                             isSubmittable={ false }
                                             error={ shippingAddressErrors.city }
-                                            hasError={ !!shippingAddressErrors.city }
                                         />
                                         {shippingAddressErrors.city && (
                                             <div className={ styles['input-error'] }>{shippingAddressErrors.city}</div>
@@ -670,7 +952,6 @@ const Profile = ({}) => {
                                             type='text'
                                             isSubmittable={ false }
                                             error={ shippingAddressErrors.state }
-                                            hasError={ !!shippingAddressErrors.state }
                                         />
                                         {shippingAddressErrors.state && (
                                             <div className={ styles['input-error'] }>{shippingAddressErrors.state}</div>
@@ -685,7 +966,6 @@ const Profile = ({}) => {
                                             type='text'
                                             isSubmittable={ false }
                                             error={ shippingAddressErrors.postal_code }
-                                            hasError={ !!shippingAddressErrors.postal_code }
                                         />
                                         {shippingAddressErrors.postal_code && (
                                             <div className={ styles['input-error'] }>{shippingAddressErrors.postal_code}</div>
@@ -745,7 +1025,6 @@ const Profile = ({}) => {
                                                     type='text'
                                                     isSubmittable={ false }
                                                     error={ billingAddressErrors.street }
-                                                    hasError={ !!billingAddressErrors.street }
                                                 />
                                                 {billingAddressErrors.street && (
                                                     <div className={ styles['input-error'] }>{billingAddressErrors.street}</div>
@@ -760,7 +1039,6 @@ const Profile = ({}) => {
                                                     type='text'
                                                     isSubmittable={ false }
                                                     error={ billingAddressErrors.city }
-                                                    hasError={ !!billingAddressErrors.city }
                                                     disabled={true}
                                                 />
                                                 {billingAddressErrors.city && (
@@ -778,7 +1056,6 @@ const Profile = ({}) => {
                                                     type='text'
                                                     isSubmittable={ false }
                                                     error={ billingAddressErrors.state }
-                                                    hasError={ !!billingAddressErrors.state }
                                                 />
                                                 {billingAddressErrors.state && (
                                                     <div className={ styles['input-error'] }>{billingAddressErrors.state}</div>
@@ -793,7 +1070,6 @@ const Profile = ({}) => {
                                                     type='text'
                                                     isSubmittable={ false }
                                                     error={ billingAddressErrors.postal_code }
-                                                    hasError={ !!billingAddressErrors.postal_code }
                                                 />
                                                 {billingAddressErrors.postal_code && (
                                                     <div className={ styles['input-error'] }>{billingAddressErrors.postal_code}</div>
@@ -1073,6 +1349,51 @@ const Profile = ({}) => {
                             action={ () => {
                                 setIsModalOpen(false);
                                 resetPersonalInfo();
+                            }}
+                            externalStyles={ styles['modal-warn'] }
+                        />
+                        <Button
+                            label='Cancel'
+                            type='secondary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                            }}
+                        />
+                    </div>
+                </Modal>
+            ) : modalType === 'update-platform-settings-confirmation' ? (
+                <Modal label='Update Platform Settings Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to update your platform settings? This will change how prices are displayed and your default preferences.</p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='primary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                updatePlatformSettings();
+                            }}
+                        />
+                        <Button
+                            label='Cancel'
+                            type='secondary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                            }}
+                        />
+                    </div>
+                </Modal>
+            ) : modalType === 'reset-platform-settings-confirmation' ? (
+                <Modal label='Reset Platform Settings Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to reset platform settings to their previous values? Any unsaved changes will be discarded.</p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='primary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                resetPlatformSettings();
                             }}
                             externalStyles={ styles['modal-warn'] }
                         />
