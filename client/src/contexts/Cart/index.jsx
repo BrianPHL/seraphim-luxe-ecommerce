@@ -67,7 +67,7 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to add item to cart:", err);
             showToast("Failed to add item to cart", "error");
-            fetchCartItems();
+            await fetchCartItems();
         } finally {
             setLoading(false);
         }
@@ -112,7 +112,7 @@ export const CartProvider = ({ children }) => {
                 )
             );
 
-            await fetch('/api/carts/', {
+            await fetch(`/api/carts/${ user.id }/${ product_id }`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -125,7 +125,7 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to update quantity:", err);
             showToast("Failed to update quantity", "error");
-            fetchCartItems();
+            await fetchCartItems();
         } finally {
             setLoading(false);
         }
@@ -150,7 +150,7 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to remove item:", err);
             showToast("Failed to remove item from cart", "error");
-            fetchCartItems();            
+            await fetchCartItems();            
         } finally {
             setLoading(false);
         }
@@ -178,7 +178,7 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to clear cart:", err);
             showToast("Failed to clear cart", "error");
-            fetchCartItems();
+            await fetchCartItems();
         } finally {
             setLoading(false);
         }
@@ -233,7 +233,7 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to clear selected items:", err);
             showToast("Failed to clear selected items", "error");
-            fetchCartItems();
+            await fetchCartItems();
         } finally {
             setLoading(false);
         }
