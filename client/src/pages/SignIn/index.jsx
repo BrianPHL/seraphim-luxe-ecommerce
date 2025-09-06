@@ -16,6 +16,17 @@ const SignIn = () => {
     const { showToast } = useToast();
     const navigate = useNavigate();
 
+    const getBaseURL = () => {
+
+        if (typeof window !== 'undefined') {
+            return window.location.origin;
+        }
+        return process.env.NODE_ENV === 'production' 
+            ? 'https://seraphim-luxe-ecommerce-production.up.railway.app'
+            : 'http://localhost:5173';
+            
+    };
+
     useEffect(() => {
 
         const handleRedirectErrors = () => {
@@ -126,7 +137,7 @@ const SignIn = () => {
                         <p>or</p>
                         <GoogleLoginButton
                             type='customer'
-                            callbackURL='http://localhost:5173/sign-in'
+                            callbackURL={ `${ getBaseURL() }/sign-in` }
                         />
                         <p>Don't have an account yet? <Anchor label="Sign up" link="/sign-up" isNested={ false }/></p>
                     </div>
