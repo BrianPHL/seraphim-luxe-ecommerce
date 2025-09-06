@@ -28,7 +28,7 @@ html[data-theme="light"] {
 	--accent-hovered: #5D3B32;
 	--error-background: #FFAEC1;
 	--error-foreground: #E9204F;
-	--error-hover: #86102C;
+	--error-hover: #5A081B;
 	--success-foreground: #00B450;
 }
 
@@ -47,6 +47,6 @@ html[data-theme="dark"] {
 	--accent-hovered: #202020;
 	--error-background: #4C1824;
 	--error-foreground: #E9204F;
-	--error-hover: #86102C;
+	--error-hover: #750D25;
 	--success-foreground: #00B450;
 }
