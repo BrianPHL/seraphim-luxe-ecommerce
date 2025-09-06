@@ -26,9 +26,14 @@ export const ProductsProvider = ({ children }) => {
                 if (!response['ok']) throw new Error('Failed to fetch products');
                 
                 const data = await response.json();
-                setProducts(data);
-                setLastFetched(Date.now());
-                setError(null);
+
+                if (Array.isArray(data)) {
+                    setProducts(data);
+                } else {
+                    console.error('Products data is not an array:', data);
+                    setProducts([]);
+                    throw new Error('Invalid data format received');
+                }
 
             } catch (err) {
                 console.error("Product fetch error:", err);
@@ -58,7 +63,7 @@ export const ProductsProvider = ({ children }) => {
             
             showToast('Product successfully deleted', 'success');
 
-            fetchProducts(true);
+            await fetchProducts(true);
 
         } catch (error) {
             console.error('Error deleting product:', error);
@@ -82,7 +87,7 @@ export const ProductsProvider = ({ children }) => {
                 throw new Error('Failed to create product');
             }
 
-            fetchProducts(true);
+            await fetchProducts(true);
             
             showToast('Product successfully created', 'success');
             
@@ -112,7 +117,7 @@ export const ProductsProvider = ({ children }) => {
                 throw new Error('Failed to update product data!');
             }
 
-            fetchProducts(true);
+            await fetchProducts(true);
 
             showToast(`Product updated successfully! Product Id: ${ data['product_id'] }`, 'success')
 
