@@ -18,6 +18,10 @@ export const auth = betterAuth({
     session: {
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
+        cookieCache: {
+            enabled: true,
+            maxAge: 5 * 60 * 1000
+        }
     },
     emailAndPassword: {
         enabled: true,
@@ -38,7 +42,9 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            redirectURI: "http://localhost:3000/api/auth/callback/google",
+            redirectURI: process.env.NODE_ENV === 'production' 
+                ? "https://seraphim-luxe-ecommerce-production.up.railway.app/api/auth/callback/google"
+                : "http://localhost:3000/api/auth/callback/google",
             prompt: "select_account",
             disableImplicitSignUp: false
         },
@@ -59,10 +65,16 @@ export const auth = betterAuth({
             }
         })
     ],
-    trustedOrigins: [
-        "http://localhost:5173",
-        "http://localhost:3000"
-    ],
+    trustedOrigins: process.env.NODE_ENV === 'production' 
+        ? [
+            "https://seraphim-luxe-ecommerce-production.up.railway.app",
+            "https://seraphim-luxe-production.up.railway.app"
+        ]
+        : [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000"
+        ],
     user: {
         modelName: "accounts",
         fields: {
