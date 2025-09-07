@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { createAuthMiddleware } from "better-auth/api";
 import { createOTPEmail, createChangePasswordVerificationLinkEmail } from "../utils/email.js";
+import { getBaseURL } from "../utils/urls.js";
 import nodemailer from 'nodemailer';
 import pool from "./db.js";
 
@@ -42,9 +43,7 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            redirectURI: process.env.NODE_ENV === 'production' 
-                ? "https://seraphim-luxe-ecommerce-production.up.railway.app/api/auth/callback/google"
-                : "http://localhost:3000/api/auth/callback/google",
+            redirectURI: `${ getBaseURL() }/api/auth/callback/google`,
             prompt: "select_account",
             disableImplicitSignUp: false
         },

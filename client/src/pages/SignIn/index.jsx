@@ -3,7 +3,7 @@ import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton } from '@co
 import { useSearchParams, useNavigate } from 'react-router';
 import styles from './SignIn.module.css';
 import { useAuth, useToast } from '@contexts';
-import { getErrorMessage } from '@utils';
+import { getErrorMessage, getBaseURL } from '@utils';
 
 const SignIn = () => {
     const [ showPassword, setShowPassword ] = useState(false);
@@ -15,17 +15,6 @@ const SignIn = () => {
     const { signIn } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
-
-    const getBaseURL = () => {
-
-        if (typeof window !== 'undefined') {
-            return window.location.origin;
-        }
-        return process.env.NODE_ENV === 'production' 
-            ? 'https://seraphim-luxe-ecommerce-production.up.railway.app'
-            : 'http://localhost:5173';
-            
-    };
 
     useEffect(() => {
 

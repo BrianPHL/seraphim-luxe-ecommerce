@@ -2,7 +2,7 @@ import { useOAuth } from '@hooks';
 import { performOperationWithTimeout, TIMEOUTS } from '@utils';
 import { Button } from '@components';
 
-const GoogleLoginButton = ({ type, callbackURL, ...props }) => {
+const GoogleLoginButton = ({ type, ...props }) => {
 
     const { signInThruGoogleSSO } = useOAuth();
     const handleGoogleLogin = async () => {
@@ -10,7 +10,7 @@ const GoogleLoginButton = ({ type, callbackURL, ...props }) => {
         try {
 
             const result = await performOperationWithTimeout(
-                await signInThruGoogleSSO({type, callbackURL}),
+                await signInThruGoogleSSO({ type }),
                 TIMEOUTS.AUTH_EXTERNAL
             );
 

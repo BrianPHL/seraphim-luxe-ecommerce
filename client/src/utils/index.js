@@ -4,3 +4,4 @@ export * from './data.js';
 
 export { performOperationWithTimeout, TIMEOUTS } from './api.js';
 export { extractAccountData, getErrorMessage } from './data.js';
+export { getBaseURL } from './urls.js';

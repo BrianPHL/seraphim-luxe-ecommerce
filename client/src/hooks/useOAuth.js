@@ -1,10 +1,9 @@
 import { createAuthClient } from "better-auth/react";
 import { emailOTPClient } from "better-auth/client/plugins";
+import { getBaseURL } from "@utils";
 
 const authClient = createAuthClient({
-    baseURL: process.env.NODE_ENV === 'production' 
-        ? "https://seraphim-luxe-ecommerce-production.up.railway.app/api/auth"
-        : "http://localhost:3000/api/auth",
+    baseURL: `${ getBaseURL() }/api/auth`,
     fetchOptions: {
         credentials: 'include'
     },
@@ -19,11 +18,12 @@ const useOAuth = () => {
         authClient,
         signInThruGoogleSSO: async (data) => {
 
-            const { type, callbackURL } = data;
+            const { type } = data;
+            const parsedURL = type === 'admin' ? `${ getBaseURL() }/admin` : `${ getBaseURL() }/customer` 
             const result = await authClient.signIn.social({
                 provider: 'google',
-                callbackURL: callbackURL,
-                errorCallbackURL: callbackURL,
+                callbackURL: parsedURL,
+                errorCallbackURL: parsedURL,
             });
         
             return result;
@@ -70,7 +70,7 @@ const useOAuth = () => {
             }
 
         },
-        signUpThruEmail: (data, callbackURL = 'http://localhost:5173/') => {
+        signUpThruEmail: (data) => {
 
             const result = authClient.signUp.email({
                 email: data.email,
@@ -80,8 +80,7 @@ const useOAuth = () => {
                 contact_number: data.contactNumber,
                 address: data.address,
                 password: data.password,
-                role: data.role,
-                callbackURL: callbackURL,
+                role: data.role
             });
 
             return result;
@@ -97,11 +96,11 @@ const useOAuth = () => {
             return result;
 
         },
-        sendChangePasswordVerificationLink: async (email, redirectToURL) => {
+        sendChangePasswordVerificationLink: async (email) => {
 
             const result = await authClient.requestPasswordReset({
                 email: email,
-                redirectTo: redirectToURL
+                redirectTo: `${ getBaseURL() }/profile?redirect=yes`
             });
 
             return result;

@@ -270,7 +270,7 @@ const Profile = ({}) => {
 
             const { email } = user;
 
-            await sendChangePasswordVerificationLink(email, "http://localhost:5173/profile?redirect=yes");
+            await sendChangePasswordVerificationLink(email);
             
         } catch (err) {
             
