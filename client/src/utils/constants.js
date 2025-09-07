@@ -16,6 +16,7 @@ export const ERROR_MESSAGES = {
     'USER_NOT_FOUND': 'No account found with this email address.',
     'INCORRECT_PASSWORD': 'Incorrect password. Please try again.',
     'USER_ALREADY_EXISTS': 'An account with this email already exists.',
+    'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL': 'An account with this email already exists.',
     'EMAIL_NOT_VERIFIED': 'Please verify your email address before signing in.',
     'VERIFICATION_TOKEN_EXPIRED': 'Verification link has expired. Please request a new one.',
     'INVALID_VERIFICATION_TOKEN': 'Invalid verification link. Please request a new one.',
