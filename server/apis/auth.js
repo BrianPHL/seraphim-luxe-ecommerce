@@ -11,8 +11,19 @@ export const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.GOOGLE_APP_EMAIL_USER,
         pass: process.env.GOOGLE_APP_EMAIL_PASS
-    }
+    },
+    debug: true
 })
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("Nodemailer transporter error!");
+  } else {
+    console.log("Nodemailer transporter is ready!");
+  }
+  console.log("Nodemailer error: ", error, "Nodemailer success: ", success);
+});
+
 export const auth = betterAuth({
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET,
