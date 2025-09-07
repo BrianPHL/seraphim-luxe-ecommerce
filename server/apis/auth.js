@@ -31,6 +31,7 @@ export const auth = betterAuth({
         maxPasswordLength: 10000, // TODO: REMOVE ON PRODUCTION
         sendResetPassword: async ({ user, url, token }, request) => {
             const { email } = user;
+            console.log("sendResetPassword in emailAndPassword data: ", user, url, token, request);
             await transporter.sendMail({
                 from: process.env.GOOGLE_APP_EMAIL_USER,
                 to: email,
