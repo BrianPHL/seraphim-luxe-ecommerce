@@ -3,26 +3,10 @@ import { emailOTP } from "better-auth/plugins";
 import { createAuthMiddleware } from "better-auth/api";
 import { createOTPEmail, createChangePasswordVerificationLinkEmail } from "../utils/email.js";
 import { getBaseURL } from "../utils/urls.js";
-import nodemailer from 'nodemailer';
+import { Resend } from "resend";
 import pool from "./db.js";
 
-export const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.GOOGLE_APP_EMAIL_USER,
-        pass: process.env.GOOGLE_APP_EMAIL_PASS
-    },
-    debug: true
-})
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("Nodemailer transporter error!");
-  } else {
-    console.log("Nodemailer transporter is ready!");
-  }
-  console.log("Nodemailer error: ", error, "Nodemailer success: ", success);
-});
+const resend = new Resend(process.env.RESEND_KEY);
 
 export const auth = betterAuth({
     database: pool,
@@ -42,13 +26,13 @@ export const auth = betterAuth({
         maxPasswordLength: 10000, // TODO: REMOVE ON PRODUCTION
         sendResetPassword: async ({ user, url, token }, request) => {
             const { email } = user;
-            console.log("sendResetPassword in emailAndPassword data: ", user, url, token, request);
-            await transporter.sendMail({
-                from: process.env.GOOGLE_APP_EMAIL_USER,
+            const { _, err } = await resend.emails.send({
+                from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                 to: email,
                 subject: "Change Password Confirmation | Seraphim Luxe",
                 html: createChangePasswordVerificationLinkEmail(email, url)
             });
+            if (err) console.error(err);
         }
     },
     socialProviders: {
@@ -67,12 +51,13 @@ export const auth = betterAuth({
             expiresIn: 300,
             allowedAttempts: 3,
             async sendVerificationOTP({ email, otp, type }) {
-                await transporter.sendMail({
-                    from: process.env.GOOGLE_APP_EMAIL_USER,
+                const { _, err } = await resend.emails.send({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                     to: email,
                     subject: "Email Verification Code | Seraphim Luxe",
                     html: createOTPEmail(email, otp, type)
                 });
+                if (err) console.error(err);
             }
         })
     ],
