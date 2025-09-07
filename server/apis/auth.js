@@ -65,16 +65,11 @@ export const auth = betterAuth({
             }
         })
     ],
-    trustedOrigins: process.env.NODE_ENV === 'production' 
-        ? [
-            "https://seraphim-luxe-ecommerce-production.up.railway.app",
-            "https://seraphim-luxe-production.up.railway.app"
-        ]
-        : [
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000"
-        ],
+    trustedOrigins: [
+      'https://seraphim-luxe-ecommerce-production.up.railway.app',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ],
     user: {
         modelName: "accounts",
         fields: {
