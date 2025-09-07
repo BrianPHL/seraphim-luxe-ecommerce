@@ -273,7 +273,7 @@ const Profile = ({}) => {
             await sendChangePasswordVerificationLink(email);
             
         } catch (err) {
-            
+            console.error("Profile page handleChangeAccountPassword function error: ", err);
         }
 
     };
