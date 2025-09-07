@@ -511,9 +511,7 @@ const Profile = ({}) => {
             });
             validateIfPasswordExists();
         }
-    }, [ user ]);
 
-    useEffect(() => {
         if (settings) {
             setPlatformSettings({
                 currency: settings.currency || 'PHP',
@@ -521,11 +519,7 @@ const Profile = ({}) => {
                 preferred_payment_method: settings.preferred_payment_method || 'cash_on_delivery'
             });
         }
-    }, [ settings ]);
 
-    if (loading || !user) return null;
-
-    useEffect(() => {
         const handleClickOutside = (event) => {
             if (!event.target.closest(`.${styles['dropdown-container']}`)) {
                 closeAllDropdowns();
@@ -536,7 +530,10 @@ const Profile = ({}) => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+
+    }, [ user, settings ]);
+
+    if (loading || !user) return null;
 
     return(
         <>
