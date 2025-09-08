@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.4.5 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.10.0.7000
+-- HeidiSQL Version:             12.11.0.7065
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   PRIMARY KEY (`id`),
   KEY `orders_accounts_id_fkey` (`account_id`),
   CONSTRAINT `orders_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.orders: ~0 rows (approximately)
 

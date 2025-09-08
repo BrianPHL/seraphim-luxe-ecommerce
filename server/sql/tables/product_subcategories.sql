@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.4.5 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.10.0.7000
+-- HeidiSQL Version:             12.11.0.7065
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `product_subcategories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_category_subcategory` (`category_id`,`name`),
   CONSTRAINT `product_subcategories_product_categories_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.product_subcategories: ~9 rows (approximately)
 INSERT INTO `product_subcategories` (`id`, `category_id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES

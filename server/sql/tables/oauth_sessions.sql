@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.4.5 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.10.0.7000
+-- HeidiSQL Version:             12.11.0.7065
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -29,9 +29,11 @@ CREATE TABLE IF NOT EXISTS `oauth_sessions` (
   KEY `oauth_sessions_user_id_fk` (`user_id`) USING BTREE,
   KEY `oauth_sessions_expires_at_index` (`expires_at`),
   CONSTRAINT `oauth_sessions_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=302 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.oauth_sessions: ~0 rows (approximately)
+-- Dumping data for table seraphim_luxe.oauth_sessions: ~1 rows (approximately)
+INSERT INTO `oauth_sessions` (`id`, `user_id`, `token`, `ip_address`, `user_agent`, `expires_at`, `created_at`, `updated_at`) VALUES
+	(332, 125, 'dzTIUe8Qt8O5GvG07JAyvhfRx5WMXodR', '', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0', '2025-09-15 08:51:32', '2025-09-08 08:51:32', '2025-09-08 08:51:32');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

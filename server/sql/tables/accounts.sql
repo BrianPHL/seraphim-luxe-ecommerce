@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.4.5 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.10.0.7000
+-- HeidiSQL Version:             12.11.0.7065
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -22,16 +22,26 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `last_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `role` enum('customer','vendor','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'customer',
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `contact_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `currency` enum('CAD','PHP','YEN','USD') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PHP',
+  `preferred_shipping_address` enum('home','billing','shipping') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `preferred_payment_method` enum('cash_on_delivery','bank_transfer') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `default_billing_address` int DEFAULT NULL,
+  `default_shipping_address` int DEFAULT NULL,
   `email_verified` tinyint NOT NULL DEFAULT '0',
   `created_at` timestamp NOT NULL DEFAULT (now()),
   `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `accounts_account_addresses_default_billing_address_fkey` (`default_billing_address`),
+  KEY `accounts_account_addresses_default_shipping_address_fkey` (`default_shipping_address`),
+  CONSTRAINT `accounts_account_addresses_default_billing_address_fkey` FOREIGN KEY (`default_billing_address`) REFERENCES `account_addresses` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `accounts_account_addresses_default_shipping_address_fkey` FOREIGN KEY (`default_shipping_address`) REFERENCES `account_addresses` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.accounts: ~0 rows (approximately)
+-- Dumping data for table seraphim_luxe.accounts: ~1 rows (approximately)
+INSERT INTO `accounts` (`id`, `name`, `first_name`, `last_name`, `role`, `email`, `contact_number`, `image_url`, `currency`, `preferred_shipping_address`, `preferred_payment_method`, `default_billing_address`, `default_shipping_address`, `email_verified`, `created_at`, `updated_at`) VALUES
+	(125, 'Brian Pasco', 'Brian', 'Pasco', 'customer', 'brianpasco1206@gmail.com', NULL, 'https://lh3.googleusercontent.com/a/ACg8ocI3-3SafE-8yuKFrqJSjy5v3Rb01M-X0DQqXMIlLZmgYlG65Zcq=s96-c', 'PHP', NULL, NULL, NULL, NULL, 1, '2025-09-08 08:51:32', '2025-09-08 17:32:46');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.4.5 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.10.0.7000
+-- HeidiSQL Version:             12.11.0.7065
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -27,16 +27,46 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `last_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `role` enum('customer','vendor','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'customer',
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `contact_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `currency` enum('CAD','PHP','YEN','USD') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PHP',
+  `preferred_shipping_address` enum('home','billing','shipping') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `preferred_payment_method` enum('cash_on_delivery','bank_transfer') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `default_billing_address` int DEFAULT NULL,
+  `default_shipping_address` int DEFAULT NULL,
   `email_verified` tinyint NOT NULL DEFAULT '0',
   `created_at` timestamp NOT NULL DEFAULT (now()),
   `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `accounts_account_addresses_default_billing_address_fkey` (`default_billing_address`),
+  KEY `accounts_account_addresses_default_shipping_address_fkey` (`default_shipping_address`),
+  CONSTRAINT `accounts_account_addresses_default_billing_address_fkey` FOREIGN KEY (`default_billing_address`) REFERENCES `account_addresses` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `accounts_account_addresses_default_shipping_address_fkey` FOREIGN KEY (`default_shipping_address`) REFERENCES `account_addresses` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.accounts: ~0 rows (approximately)
+-- Dumping data for table seraphim_luxe.accounts: ~1 rows (approximately)
+INSERT INTO `accounts` (`id`, `name`, `first_name`, `last_name`, `role`, `email`, `contact_number`, `image_url`, `currency`, `preferred_shipping_address`, `preferred_payment_method`, `default_billing_address`, `default_shipping_address`, `email_verified`, `created_at`, `updated_at`) VALUES
+	(125, 'Brian Pasco', 'Brian', 'Pasco', 'customer', 'brianpasco1206@gmail.com', NULL, 'https://lh3.googleusercontent.com/a/ACg8ocI3-3SafE-8yuKFrqJSjy5v3Rb01M-X0DQqXMIlLZmgYlG65Zcq=s96-c', 'PHP', NULL, NULL, NULL, NULL, 1, '2025-09-08 08:51:32', '2025-09-08 17:32:46');
+
+-- Dumping structure for table seraphim_luxe.account_addresses
+CREATE TABLE IF NOT EXISTS `account_addresses` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `account_id` int NOT NULL,
+  `full_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `phone_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `province` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `city` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `barangay` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `postal_code` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `street_address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `modified_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `account_addresses_accounts_id_fkey` (`account_id`),
+  CONSTRAINT `account_addresses_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table seraphim_luxe.account_addresses: ~0 rows (approximately)
 
 -- Dumping structure for table seraphim_luxe.carts
 CREATE TABLE IF NOT EXISTS `carts` (
@@ -51,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `carts` (
   KEY `carts_products_id_fkey` (`product_id`),
   CONSTRAINT `carts_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
   CONSTRAINT `carts_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.carts: ~0 rows (approximately)
 
@@ -95,9 +125,11 @@ CREATE TABLE IF NOT EXISTS `oauth_accounts` (
   KEY `oauth_accounts_provider_id_index` (`provider_id`),
   KEY `oauth_accounts_accounts_id_fkey` (`user_id`),
   CONSTRAINT `oauth_accounts_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.oauth_accounts: ~0 rows (approximately)
+-- Dumping data for table seraphim_luxe.oauth_accounts: ~1 rows (approximately)
+INSERT INTO `oauth_accounts` (`id`, `user_id`, `oauth_account_id`, `provider_id`, `access_token`, `refresh_token`, `scope`, `id_token`, `password`, `access_token_expires_at`, `refresh_token_expires_at`, `created_at`, `updated_at`) VALUES
+	(129, 125, '113861719059680368230', 'google', 'ya29.a0AS3H6NwyTrsb-XsnmagpaX5HWeIi-I7DN9mY5aC0ljMqUwjPhUBx1ybOjxAfzVuAvxSYoxQfIgLrPAdJRGQNU3-s_pI9FKVjFskepB1GZuBWblJlE-RXgzrfTRFsERqQKsD-gcobw8tYAiY1QLy4hL6zq6iGiztfnb1Y-sVxxz8ZtfNLiS5oJI2FYLlHlvuedz-kfe-DmAaCgYKAdMSARESFQHGX2MiQVsWDFwEJK9oHyahotELTA0209', NULL, 'https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/userinfo.profile,openid', 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjljNjI1MTU4Nzk1MDg0NGE2NTZiZTM1NjNkOGM1YmQ2Zjg5NGM0MDciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDg0ODE1MjU2NTQxLXV2dWxtamlrZ20yb2trNTI2cm1wam11MzI0bnMxa2c3LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTA4NDgxNTI1NjU0MS11dnVsbWppa2dtMm9razUyNnJtcGptdTMyNG5zMWtnNy5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjExMzg2MTcxOTA1OTY4MDM2ODIzMCIsImVtYWlsIjoiYnJpYW5wYXNjbzEyMDZAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJOLTBwQkpkVmd5bEo1ZGlVbTRKV2J3IiwibmFtZSI6IkJyaWFuIFBhc2NvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0kzLTNTYWZFLTh5dUtGcnFKU2p5NXYzUmIwMU0tWDBEUXFYTUlsTFptZ1lsRzY1WmNxPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6IkJyaWFuIiwiZmFtaWx5X25hbWUiOiJQYXNjbyIsImlhdCI6MTc1NzM1MDI5MSwiZXhwIjoxNzU3MzUzODkxfQ.wDH3oGSuamfXQY4kiAq_9Hcui7pB4n4Mq3MK6ftRvIEfdTO4WIuIwu4JZ7r4t2rLCCERjK__mNlo8XyfsZ0X52g1aMxHh0Oaf76aqRZpAxZlMnVATmu4rs2aQCegjtZxXy8c6ABFm6gyNwkP5y3nzjVxXf7DC6SL6s3gP6Nq6zwX2k7rmhN3WSYFcj1W-JFa1rqh-IEAG3epTu9toD-VUNTQzyXdWIJ2z_6rP4DDNjyYN0ZW4su-0cA84LOQuTcEcEfia27t4f3E-tEK7inccTKectpeECHIXgQOvSrGEASvOvYBK1YR-X2KR_GUINCeiAwZQGeGDRx6qqqZQRC9bQ', NULL, '2025-09-08 09:51:31', NULL, '2025-09-08 08:51:32', '2025-09-08 08:51:32');
 
 -- Dumping structure for table seraphim_luxe.oauth_sessions
 CREATE TABLE IF NOT EXISTS `oauth_sessions` (
@@ -114,9 +146,11 @@ CREATE TABLE IF NOT EXISTS `oauth_sessions` (
   KEY `oauth_sessions_user_id_fk` (`user_id`) USING BTREE,
   KEY `oauth_sessions_expires_at_index` (`expires_at`),
   CONSTRAINT `oauth_sessions_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=302 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.oauth_sessions: ~0 rows (approximately)
+-- Dumping data for table seraphim_luxe.oauth_sessions: ~1 rows (approximately)
+INSERT INTO `oauth_sessions` (`id`, `user_id`, `token`, `ip_address`, `user_agent`, `expires_at`, `created_at`, `updated_at`) VALUES
+	(332, 125, 'dzTIUe8Qt8O5GvG07JAyvhfRx5WMXodR', '', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0', '2025-09-15 08:51:32', '2025-09-08 08:51:32', '2025-09-08 08:51:32');
 
 -- Dumping structure for table seraphim_luxe.oauth_verifications
 CREATE TABLE IF NOT EXISTS `oauth_verifications` (
@@ -129,7 +163,7 @@ CREATE TABLE IF NOT EXISTS `oauth_verifications` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `oauth_verifications_id_index` (`id`),
   KEY `oauth_verifications_expires_at_index` (`expires_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=390 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=439 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.oauth_verifications: ~0 rows (approximately)
 
@@ -162,7 +196,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   PRIMARY KEY (`id`),
   KEY `orders_accounts_id_fkey` (`account_id`),
   CONSTRAINT `orders_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.orders: ~0 rows (approximately)
 
@@ -183,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   KEY `order_items_products_id_fkey` (`product_id`),
   CONSTRAINT `order_items_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_items_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.order_items: ~0 rows (approximately)
 
@@ -262,7 +296,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   KEY `products_product_subcategories_id_fkey` (`subcategory_id`),
   CONSTRAINT `products_product_categories_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE,
   CONSTRAINT `products_product_subcategories_id_fkey` FOREIGN KEY (`subcategory_id`) REFERENCES `product_subcategories` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.products: ~45 rows (approximately)
 INSERT INTO `products` (`id`, `label`, `price`, `category_id`, `subcategory_id`, `description`, `image_url`, `variants`, `stock_status`, `stock_quantity`, `stock_threshold`, `reserved_quantity`, `created_at`, `modified_at`) VALUES
@@ -287,7 +321,7 @@ INSERT INTO `products` (`id`, `label`, `price`, `category_id`, `subcategory_id`,
 	(19, 'Tiffany Lock Bangle', 7500.00, 1, 1, 'Luxury lock design bangle bracelet', 'products/tiffany_lock_bangle_steel_01', '[{"price": 7500, "stock": 10, "images": ["tiffany_lock_bangle_steel_01.webp", "tiffany_lock_bangle_steel_02.webp"], "material": "Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:17'),
 	(20, 'Vesper Chain Bracelet Gold', 6200.00, 1, 1, 'Premium vesper chain bracelet in gold finish', 'products/vesper_chain_bracelet_gold_01', '[{"price": 6200, "stock": 10, "images": ["vesper_chain_bracelet_gold_01.webp", "vesper_chain_bracelet_gold_01.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:17'),
 	(21, 'Celestial Cross Earrings', 2800.00, 1, 2, 'Bold celestial cross design earrings', 'products/celestial_cross_earrings_mixed_metal_01', '[{"price": 2800, "stock": 10, "images": ["celestial_cross_earrings_mixed_metal_01.webp", "celestial_cross_earrings_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36'),
-	(22, 'Hammered Silver Stud', 2200.00, 1, 2, 'Textured hammered silver stud earrings', 'products/hammered_silver_stud_01', '[{"price": 2200, "stock": 10, "images": ["hammered_silver_stud_01.webp", "hammered_silver_stud_02.webp"], "material": "Silver"}]', 'in_stock', 0000000006, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36'),
+	(22, 'Hammered Silver Stud', 2200.00, 1, 2, 'Textured hammered silver stud earrings', 'products/hammered_silver_stud_01', '[{"price": 2200, "stock": 10, "images": ["hammered_silver_stud_01.webp", "hammered_silver_stud_02.webp"], "material": "Silver"}]', 'in_stock', 0000000005, 5, 0, '2025-08-27 20:17:17', '2025-09-07 06:56:08'),
 	(23, 'Nyx Ear Silver Stud', 2500.00, 1, 2, 'Sleek Nyx collection silver stud earrings', 'products/nyx_ear_silver_stud_01', '[{"price": 2500, "stock": 10, "images": ["nyx_ear_silver_stud_01.webp", "nyx_ear_silver_stud_01.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36'),
 	(24, 'Square Stud Earrings', 2400.00, 1, 2, 'Modern square design stud earrings', 'products/square_stud_earrings_mixed_metal_01', '[{"price": 2400, "stock": 10, "images": ["square_stud_earrings_mixed_metal_01.webp", "square_stud_earrings_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36'),
 	(25, 'Tiffany Titan Earrings', 4500.00, 1, 2, 'Premium Tiffany Titan collection earrings', 'products/tiffany_titan_earrings_titanium_01', '[{"price": 4500, "stock": 10, "images": ["tiffany_titan_earrings_titanium_01.webp", "tiffany_titan_earrings_titanium_02.webp"], "material": "Titanium"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36'),
@@ -296,7 +330,7 @@ INSERT INTO `products` (`id`, `label`, `price`, `category_id`, `subcategory_id`,
 	(28, 'Monieyta Rectangular Spiral Bar Pendant', 5800.00, 1, 3, 'Unique rectangular spiral bar pendant design', 'products/monieyta_rectangular_spiral_bar_pendant_steel_01', '[{"price": 5800, "stock": 15, "images": ["monieyta_rectangular_spiral_bar_pendant_steel_01.webp", "monieyta_rectangular_spiral_bar_pendant_steel_02.webp"], "material": "Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45'),
 	(29, 'N917 Curb Necklace', 5200.00, 1, 3, 'Classic N917 curb chain necklace', 'products/n917_curb_necklace_mixed_metal_01', '[{"price": 5200, "stock": 18, "images": ["n917_curb_necklace_mixed_metal_01.webp", "n917_curb_necklace_mixed_metal_02.webp", "n917_curb_necklace_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45'),
 	(30, 'Sleek Apex Titanium Steel Bar Pendant', 6500.00, 1, 3, 'Modern titanium steel bar pendant with sleek design', 'products/sleek_apex_titanium_steel_bar_pendant_01', '[{"price": 6500, "stock": 12, "images": ["sleek_apex_titanium_steel_bar_pendant_01.webp", "sleek_apex_titanium_steel_bar_pendant_02.webp"], "material": "Titanium Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45'),
-	(31, 'David Yurman Box Chain Bracelet', 8500.00, 3, 7, 'Luxury David Yurman box chain bracelet for all genders', 'products/david_yurman_box_chain_bracelet_silver_01', '[{"price": 8500, "stock": 6, "images": ["david_yurman_box_chain_bracelet_silver_01.webp", "david_yurman_box_chain_bracelet_silver_02.webp"], "material": "Silver"}, {"price": 8800, "stock": 6, "images": ["david_yurman_box_chain_bracelet_black_01.webp", "david_yurman_box_chain_bracelet_black_02.webp"], "material": "Black"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20'),
+	(31, 'David Yurman Box Chain Bracelet', 8500.00, 3, 7, 'Luxury David Yurman box chain bracelet for all genders', 'products/david_yurman_box_chain_bracelet_silver_01', '[{"price": 8500, "stock": 6, "images": ["david_yurman_box_chain_bracelet_silver_01.webp", "david_yurman_box_chain_bracelet_silver_02.webp"], "material": "Silver"}, {"price": 8800, "stock": 6, "images": ["david_yurman_box_chain_bracelet_black_01.webp", "david_yurman_box_chain_bracelet_black_02.webp"], "material": "Black"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-03 17:58:48'),
 	(32, 'Gucci Interlocking G Silver Bracelet', 9200.00, 3, 7, 'Iconic Gucci interlocking G silver bracelet', 'products/gucci_interlocking_g_silver_bracelet_silver_01', '[{"price": 9200, "stock": 10, "images": ["gucci_interlocking_g_silver_bracelet_silver_01.webp", "gucci_interlocking_g_silver_bracelet_silver_02.webp", "gucci_interlocking_g_silver_bracelet_silver_03.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20'),
 	(33, 'Montblanc Meisterstück Collection Steel 3 Rings Bracelet', 7800.00, 3, 7, 'Premium Montblanc Meisterstück steel and leather bracelet', 'products/montblanc_meisterstuck_collection_steel_3_rings_bracelet_white_leather_01', '[{"price": 7800, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_white_leather_01.webp"], "material": "Steel with White Leather"}, {"price": 7900, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_red_leather_02.webp"], "material": "Steel with Red Leather"}, {"price": 7850, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_brown_leather_03.webp"], "material": "Steel with Brown Leather"}, {"price": 7950, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_light_blue_leather_04.webp"], "material": "Steel with Light Blue Leather"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20'),
 	(34, 'Tateossian Pop Rigato Double Wrap Leather Bracelet', 4500.00, 3, 7, 'Contemporary double wrap leather bracelet by Tateossian', 'products/tateossian_pop_rigato_double_wrap_leather_bracelet_leather_01', '[{"price": 4400, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_black_leather_02.webp"], "material": "Black Leather"}, {"price": 4450, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_brown_leather_03.webp"], "material": "Brown Leather"}, {"price": 4500, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_blue_leather_04.webp", "tateossian_pop_rigato_double_wrap_leather_bracelet_blue_leather_05.webp"], "material": "Blue Leather"}]', 'in_stock', 0000000008, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20'),
@@ -323,7 +357,7 @@ CREATE TABLE IF NOT EXISTS `product_categories` (
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.product_categories: ~3 rows (approximately)
 INSERT INTO `product_categories` (`id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
@@ -344,7 +378,7 @@ CREATE TABLE IF NOT EXISTS `product_subcategories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_category_subcategory` (`category_id`,`name`),
   CONSTRAINT `product_subcategories_product_categories_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.product_subcategories: ~9 rows (approximately)
 INSERT INTO `product_subcategories` (`id`, `category_id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
