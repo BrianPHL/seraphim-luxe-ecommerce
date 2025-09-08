@@ -1,15 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
+import SettingsContext from './context';
 import { useAuth } from '../Auth';
-
-const SettingsContext = createContext();
-
-export const useSettings = () => {
-    const context = useContext(SettingsContext);
-    if (!context) {
-        throw new Error('useSettings must be used within a SettingsProvider');
-    }
-    return context;
-};
 
 export const SettingsProvider = ({ children }) => {
     const { user } = useAuth();
@@ -351,3 +342,5 @@ export const SettingsProvider = ({ children }) => {
         </SettingsContext.Provider>
     );
 };
+
+export const useSettings = () => useContext(SettingsContext);
