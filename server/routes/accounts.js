@@ -35,6 +35,68 @@ router.get('/count', async (req, res) => {
     }
 });
 
+router.post('/:account_id/address', async (req, res) => {
+    
+    try {
+
+        const { account_id } = req.params;
+        const { full_name, phone_number, province, city, barangay, postal_code, street_address, is_default_billing, is_default_shipping } = req.body;
+
+        const [ result ] = await pool.query(
+            `
+                INSERT INTO account_addresses
+                (account_id, full_name, phone_number, province, city, barangay, postal_code, street_address)
+                VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [ account_id, full_name, phone_number, province, city, barangay, postal_code, street_address ]
+        );
+
+        const newAddressId = result.insertId;
+        const updates = [];
+        const params = [];
+
+        if (is_default_billing === true) {
+            updates.push('default_billing_address = ?');
+            params.push(newAddressId);
+        }
+
+        if (is_default_shipping === true) {
+            updates.push('default_shipping_address = ?');
+            params.push(newAddressId);
+        }
+
+        if (updates.length > 0) {
+            params.push(account_id);
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET ${updates.join(', ')}
+                    WHERE id = ?`
+                ,
+                params
+            );
+        }
+
+        const [ user ] = await pool.query(
+            `
+                SELECT *
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ account_id ]
+        );
+
+        if (user.length === 0)
+            throw new Error('Account does not exist!');
+
+        res.json(user[0]);
+
+    } catch (err) {
+        console.error('Accounts route POST /:account_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 router.put('/:account_id/personal-info', async (req, res) => {
     try {
         const { account_id } = req.params;
@@ -86,41 +148,8 @@ router.put('/:account_id/personal-info', async (req, res) => {
     }
 });
 
-router.put('/:account_id/address', async (req, res) => {
-    try {
-        const { account_id } = req.params;
-        const { address } = req.body;
-        
-        const [result] = await pool.query(
-            `
-                UPDATE accounts 
                 SET address = ?, modified_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            `,
-            [address, account_id]
         );
-        
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Account not found' });
-        }
-
-        const [user] = await pool.query(
-            `
-                SELECT *
-                FROM accounts
-                WHERE id = ?
-            `,
-            [account_id]
-        );
-        
-        res.json(user[0]);
-
-    } catch (err) {
-        console.error('Error updating address:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
 router.put('/:account_id/password', async (req, res) => {
     try {
         const { account_id } = req.params;

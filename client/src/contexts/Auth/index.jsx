@@ -247,36 +247,6 @@ export const AuthProvider = ({ children }) => {
 
     };
 
-    const updateAddress = async (address) => {
-        if (!user) return { error: 'User not logged in' };
-
-        try {
-            setIsInitializing(true);
-
-            const response = await fetch(`/api/accounts/${user.id}/address`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to update address');
-            }
-
-            const updatedUser = { ...data };
-            setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            showToast('Address updated successfully!', 'success');
-        } catch (err) {
-            console.error("Failed to update address:", err);
-            return { error: err.message };
-        } finally {
-            setIsInitializing(false);
-        }
-    };
-
     const updatePassword = async (password) => {
 
         if (!user) return { error: 'User not logged in' };
@@ -287,7 +257,7 @@ export const AuthProvider = ({ children }) => {
             const response = await fetch(`/api/accounts/${user.id}/password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
+                body: JSON.stringify({ address })
             });
 
             const data = await response.json();
@@ -300,6 +270,37 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to update password:", err);
             return { error: err.message };
+        } finally {
+            setIsInitializing(false);
+        }
+    };
+
+    const addAddress = async (addressData) => {
+
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+
+            setIsInitializing(true);
+
+            const response = await fetchWithTimeout(`/api/accounts/${ user.id }/address`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(addressData)
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update address');
+            }
+
+            const updatedUser = { ...data };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        } catch (err) {
+            console.error("AuthContext addNewAddress function error: ", err);
+            return { error: err };
         } finally {
             setIsInitializing(false);
         }
@@ -441,6 +442,7 @@ export const AuthProvider = ({ children }) => {
             updatePersonalInfo,
             updateAvatar,
             removeAvatar,
+            addAddress,
         }}>
             { children }
         </AuthContext.Provider>
