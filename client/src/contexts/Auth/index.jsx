@@ -268,7 +268,7 @@ export const AuthProvider = ({ children }) => {
             const response = await fetch(`/api/accounts/${user.id}/password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address })
+                body: JSON.stringify({ password })
             });
 
             const data = await response.json();
@@ -340,6 +340,39 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setIsInitializing(false);
         }
+
+    };
+
+    const updateAddress = async (addressData) => {
+
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+
+            setIsInitializing(true);
+
+            const response = await fetchWithTimeout(`/api/accounts/${ user.id }/${ addressData.id }/address`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(addressData)
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to modify address');
+            }
+
+            const updatedUser = { ...data };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        } catch (err) {
+            console.error("AuthContext updateAddress function error: ", err);
+            return { error: err };
+        } finally {
+            setIsInitializing(false);
+        }
+
     };
 
     const deleteAddress = async (id) => {
@@ -507,6 +540,7 @@ export const AuthProvider = ({ children }) => {
             addressBook,
             getAddressBook,
             addAddress,
+            updateAddress,
             deleteAddress
         }}>
             { children }

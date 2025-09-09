@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 const Profile = ({}) => {
 
     const navigate = useNavigate();
-    const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addressBook, getAddressBook, addAddress, deleteAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
+    const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addressBook, getAddressBook, addAddress, updateAddress, deleteAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
     const { reservationItems, clearReservations } = useReservation();
     const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
@@ -24,6 +24,7 @@ const Profile = ({}) => {
         first_name: '',
         last_name: '',
         email: '',
+        phone_number: ''
     });
     const [ addressInfo, setAddressInfo ] = useState({
         shipping_address: {
@@ -64,6 +65,19 @@ const Profile = ({}) => {
     });
 
     const [ addNewAddressFormData, setAddNewAddressFormData ] = useState({
+        full_name: '',
+        phone_number: '',
+        province: '',
+        city: '',
+        barangay: '',
+        postal_code: '',
+        street_address: '',
+        is_default_billing: false,
+        is_default_shipping: false,
+    });
+
+    const [ editAddressFormData, setEditAddressFormData ] = useState({
+        id: '',
         full_name: '',
         phone_number: '',
         province: '',
@@ -298,6 +312,17 @@ const Profile = ({}) => {
         }));
 
     };
+
+    const handleEditAddressFormInputChange = (event) => {
+
+        const { name, value, type, checked } = event.target;
+        setEditAddressFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+
+    };
+
     const handleAddNewAddressSubmit = async () => {
         
         try {
@@ -316,6 +341,26 @@ const Profile = ({}) => {
         }
 
     };
+
+    const handleEditAddressSubmit = async () => {
+        
+        try {
+
+            const result = await updateAddress(editAddressFormData);
+
+            await getAddressBook();
+            
+            showToast('Address modified successfully!', 'success');
+            setIsModalOpen(false);
+
+        } catch (err) {
+            console.error("Profile page handleEditAddressSubmit function error: ", err);
+            showToast('Failed to modify the address! An error had occured.', 'error');
+            setIsModalOpen(false);
+        }
+
+    }
+
     const handleAddressRemoval = async () => {
 
         try {
@@ -337,6 +382,21 @@ const Profile = ({}) => {
         setAddNewAddressFormData({
             full_name: user.name,
             phone_number: user.phone_number,
+            province: '',
+            city: '',
+            barangay: '',
+            postal_code: '',
+            street_address: '',
+            is_default_billing: false,
+            is_default_shipping: false,
+        })
+    }
+
+    const resetEditAddressFormData = () => {
+        setEditAddressFormData({
+            id: '',
+            full_name: '',
+            phone_number: '',
             province: '',
             city: '',
             barangay: '',
@@ -994,7 +1054,22 @@ const Profile = ({}) => {
                                                         <Button
                                                             type="icon-outlined"
                                                             icon="fa-solid fa-pen"
-                                                            action={() => handleEditAddress(address)}
+                                                            action={() => {
+                                                                setEditAddressFormData({
+                                                                    id: address.id,
+                                                                    full_name: address.full_name,
+                                                                    phone_number: address.phone_number,
+                                                                    province: address.province,
+                                                                    city: address.city,
+                                                                    barangay: address.barangay,
+                                                                    postal_code: address.postal_code,
+                                                                    street_address: address.street_address,
+                                                                    is_default_billing: address.id === addressBook.defaults?.default_billing_address,
+                                                                    is_default_shipping: address.id === addressBook.defaults?.default_shipping_address,
+                                                                });
+                                                                setModalType('edit-address-modal');
+                                                                setIsModalOpen(true);
+                                                            }}
                                                         />
                                                         <Button
                                                             type="icon-outlined"
@@ -1750,28 +1825,6 @@ const Profile = ({}) => {
                 </Modal>
             )}
 
-            <Modal label='Delete Address Confirmation' isOpen={ isModalOpen && modalType === 'delete-address-confirmation' } onClose={ () => setIsModalOpen(false) }>
-                <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your address</strong>. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
-                <div className={ styles['modal-ctas'] }>
-                    <Button
-                        label='Confirm'
-                        type='secondary'
-                        action={ () => {
-                            setIsModalOpen(false);
-                            handleAddressRemoval();
-                        }}
-                    />
-                    <Button
-                        label='Cancel'
-                        type='primary'
-                        action={ () => {
-                            setModalType('');
-                            setIsModalOpen(false);
-                        }}
-                    />
-                </div>
-            </Modal>
-
             <Modal
                 isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
                 onClose={ () => setIsModalOpen(false) }
@@ -1927,6 +1980,189 @@ const Profile = ({}) => {
                             !addNewAddressFormData.phone_number ||
                             !addNewAddressFormData.postal_code
                         }
+                    />
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={ isModalOpen && modalType === 'edit-address-modal' }
+                onClose={ () => setIsModalOpen(false) }
+                label={ 'Edit address' }
+            >
+
+                <div className={ styles['notice'] }>
+                    <i className='fa-solid fa-triangle-exclamation'></i>
+                    <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
+                </div>
+
+                <div className={ styles['inputs-container'] }>
+
+                    <div className={ styles['input-wrapper-horizontal'] }>
+
+                        <div className={styles['input-wrapper']}>
+                            <label>Full name</label>
+                            <InputField
+                                name="full_name"
+                                hint="Your full name..."
+                                value={ editAddressFormData.full_name }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+
+                        <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
+                            <label>Phone number</label>
+                            <InputField
+                                name="phone_number"
+                                hint="Your phone number..."
+                                value={ editAddressFormData.phone_number }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+
+                    </div>
+
+                    <div className={ styles['input-wrapper-horizontal'] }>
+
+                        <div className={ styles['input-wrapper'] }>
+                            <label>Province</label>
+                            <InputField
+                                name="province"
+                                hint="Your province..."
+                                value={ editAddressFormData.province }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+
+                        <div className={ styles['input-wrapper'] }>
+                            <label>City</label>
+                            <InputField
+                                name="city"
+                                hint="Your city..."
+                                value={ editAddressFormData.city }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+                            
+                        <div className={styles['input-wrapper']}>
+                            <label>Barangay</label>
+                            <InputField
+                                name="barangay"
+                                hint="Your barangay..."
+                                value={ editAddressFormData.barangay }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+
+                    </div>
+
+                    <div className={ styles['input-wrapper-horizontal'] }>
+
+                        <div className={styles['input-wrapper']}>
+                            <label>Street address</label>
+                            <InputField
+                                name="street_address"
+                                hint="Your street address..."
+                                value={ editAddressFormData.street_address }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+
+                        <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
+                            <label>Postal code</label>
+                            <InputField
+                                name="postal_code"
+                                hint=" "
+                                value={ editAddressFormData.postal_code }
+                                onChange={ handleEditAddressFormInputChange }
+                                isSubmittable={ false }
+                                type="text"
+                            />
+                        </div>
+
+                    </div>
+
+                        <label className={ styles['checkbox-container'] }>
+                            <input
+                                type="checkbox"
+                                name="is_default_billing"
+                                checked={ editAddressFormData.is_default_billing }
+                                onChange={ handleEditAddressFormInputChange }
+                                className={ styles['checkbox'] }
+                            />
+                            <span className={ styles['checkmark'] }></span>
+                            Set as default billing address
+                        </label>
+
+                        <label className={ styles['checkbox-container'] }>
+                            <input
+                                type="checkbox"
+                                name="is_default_shipping"
+                                checked={ editAddressFormData.is_default_shipping }
+                                onChange={ handleEditAddressFormInputChange }
+                                className={ styles['checkbox'] }
+                            />
+                            <span className={ styles['checkmark'] }></span>
+                            Set as default shipping address
+                        </label>
+                    
+                </div>
+                
+                <div className={ styles['modal-ctas'] }>
+                    <Button 
+                        type="secondary" 
+                        label="Cancel" 
+                        action={() => {
+                            setIsModalOpen(false);
+                            resetEditAddressFormData();
+                        }} 
+                    />
+                    <Button 
+                        type="primary" 
+                        label={ 'Update address' } 
+                        action={ handleEditAddressSubmit }
+                        disabled={
+                            !editAddressFormData.full_name ||
+                            !editAddressFormData.province ||
+                            !editAddressFormData.city ||
+                            !editAddressFormData.barangay ||
+                            !editAddressFormData.street_address ||
+                            !editAddressFormData.phone_number ||
+                            !editAddressFormData.postal_code
+                        }
+                    />
+                </div>
+            </Modal>
+
+            <Modal label='Delete Address Confirmation' isOpen={ isModalOpen && modalType === 'delete-address-confirmation' } onClose={ () => setIsModalOpen(false) }>
+                <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your address</strong>. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
+                <div className={ styles['modal-ctas'] }>
+                    <Button
+                        label='Confirm'
+                        type='secondary'
+                        action={ () => {
+                            setIsModalOpen(false);
+                            handleAddressRemoval();
+                        }}
+                    />
+                    <Button
+                        label='Cancel'
+                        type='primary'
+                        action={ () => {
+                            setModalType('');
+                            setIsModalOpen(false);
+                        }}
                     />
                 </div>
             </Modal>

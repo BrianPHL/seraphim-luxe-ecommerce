@@ -133,6 +133,86 @@ router.post('/:account_id/address', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+router.put('/:account_id/:address_id/address', async (req, res) => {
+
+    try {
+
+        const { account_id, address_id } = req.params;
+        const { full_name, phone_number, province, city, barangay, postal_code, street_address, is_default_billing, is_default_shipping } = req.body;
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE account_addresses
+                SET account_id = ?, full_name = ?, phone_number = ?, province = ?, city = ?, barangay = ?, postal_code = ?, street_address = ?
+                WHERE id = ?
+            `,
+            [ account_id, full_name, phone_number, province, city, barangay, postal_code, street_address, address_id ]
+        );
+
+
+        if (is_default_billing === true) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_billing_address = ?
+                    WHERE id = ?
+                `,
+                [address_id, account_id]
+            );
+        } else if (is_default_billing === false) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_billing_address = NULL
+                    WHERE id = ? AND default_billing_address = ?
+                `,
+                [account_id, address_id]
+            );
+        }
+
+        if (is_default_shipping === true) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_shipping_address = ?
+                    WHERE id = ?
+                `,
+                [address_id, account_id]
+            );
+        } else if (is_default_shipping === false) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_shipping_address = NULL
+                    WHERE id = ? AND default_shipping_address = ?
+                `,
+                [account_id, address_id]
+            );
+        }
+
+
+        const [ user ] = await pool.query(
+            `
+                SELECT *
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ account_id ]
+        );
+
+        if (user.length === 0)
+            throw new Error('Account does not exist!');
+
+        res.json(user[0]);
+
+    } catch (err) {
+        console.error('Accounts route PUT /:account_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 router.put('/:account_id/personal-info', async (req, res) => {
     try {
         const { account_id } = req.params;
@@ -184,8 +264,6 @@ router.put('/:account_id/personal-info', async (req, res) => {
     }
 });
 
-                SET address = ?, modified_at = CURRENT_TIMESTAMP
-        );
 router.put('/:account_id/password', async (req, res) => {
     try {
         const { account_id } = req.params;
