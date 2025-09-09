@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `account_addresses` (
   PRIMARY KEY (`id`),
   KEY `account_addresses_accounts_id_fkey` (`account_id`),
   CONSTRAINT `account_addresses_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table seraphim_luxe.account_addresses: ~0 rows (approximately)
 
