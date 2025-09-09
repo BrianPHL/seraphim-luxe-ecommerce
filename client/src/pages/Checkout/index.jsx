@@ -101,10 +101,9 @@ const Checkout = () => {
             }
         };
 
-        if (settings) {
-            convertItemPrices();
-        }
-    }, [checkoutItems, settings?.currency, convertPrice, settings]);
+        convertItemPrices();
+
+    }, [settings?.currency, convertPrice]);
 
     const subtotal = convertedItems.reduce((sum, item) => {
         const priceValue = parseFloat(item.displayPrice || item.price);
