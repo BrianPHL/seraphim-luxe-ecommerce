@@ -21,7 +21,6 @@ router.get('/:userId', async (req, res) => {
                 preferred_shipping_address: 'home',
                 preferred_payment_method: 'cash_on_delivery'
             };
-            console.log('User not found, returning defaults:', defaultSettings);
             return res.json(defaultSettings);
         }
         
@@ -41,7 +40,6 @@ router.put('/:userId', async (req, res) => {
         const { currency, preferred_shipping_address, preferred_payment_method } = req.body;
         
         if (!currency || !preferred_shipping_address || !preferred_payment_method) {
-            console.log('❌ Validation failed - missing fields');
             return res.status(400).json({ 
                 error: 'Missing required fields',
                 received: req.body,
@@ -53,7 +51,6 @@ router.put('/:userId', async (req, res) => {
         const [existingUser] = await db.execute(checkQuery, [userId]);
         
         if (existingUser.length === 0) {
-            console.log('❌ User not found:', userId);
             return res.status(404).json({ error: 'User not found' });
         }
         
