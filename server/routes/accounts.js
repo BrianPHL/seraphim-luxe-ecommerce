@@ -35,6 +35,42 @@ router.get('/count', async (req, res) => {
     }
 });
 
+router.get('/:account_id/address', async (req, res) => {
+
+    const { account_id } = req.params;
+
+    try {
+
+        const [ addressRows ] = await pool.query(
+            `
+                SELECT *
+                FROM account_addresses
+                WHERE account_id = ?
+            `,
+            [ account_id ]
+        )
+
+        if (addressRows.length === 0)
+            res.json([]);
+
+        const [ accountRows ] = await pool.query(
+            `
+                SELECT default_billing_address, default_shipping_address
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ account_id ]
+        )
+
+        res.json({ addresses: addressRows, defaults: accountRows[0] || {} });
+
+    } catch (err) {
+        console.error('Accounts route GET /:account_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 router.post('/:account_id/address', async (req, res) => {
     
     try {

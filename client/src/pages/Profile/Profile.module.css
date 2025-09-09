@@ -133,16 +133,6 @@
     }
 }
 
-/* .checkbox {
-    font-weight: 400;
-    align-items: center;
-    font-size: 0.85rem;
-    display: flex;
-    cursor: pointer;
-    color: var(--tg-secondary);
-    gap: 0.5rem;
-} */
-
 .checkbox-container {
     display: flex;
     align-items: center;
@@ -786,6 +776,139 @@
 
 @media (max-width: 768px) {
     .dropdown-container {
+        width: 100%;
+    }
+}
+
+.info-address_book {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-list-address {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.address-item {
+    background-color: var(--bg-secondary);
+    justify-content: space-between;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    padding: 1.5rem;
+    border: 1px solid var(--bg-outline);
+    display: flex;
+}
+
+.address-item-left {
+    flex-direction: column;
+    display: flex;
+    gap: 1rem;
+}
+
+.address-item-right {
+    flex-direction: column;
+    align-items: flex-end;
+    display: flex;
+    gap: 1rem;
+}
+
+.address-main {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.address-name {
+    color: var(--tg-primary);
+    font-size: 1rem;
+}
+
+.address-name strong {
+    font-weight: 600;
+}
+
+.address-phone {
+    color: var(--tg-secondary);
+    font-size: 1rem;
+}
+
+.address-phone span {
+    margin-left: 0.5rem;
+}
+
+.address-details {
+    line-height: 1.5;
+    color: var(--tg-secondary);
+}
+
+.address-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.address-tag {
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-primary);
+}
+
+.address-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.address-delete:hover {
+    background-color: var(--error-background);
+    color: var(--error-foreground);
+}
+
+/* Empty State */
+.address-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--tg-secondary);
+    font-style: italic;
+    border: 1px dashed var(--bg-outline);
+    border-radius: 0.5rem;
+    background-color: var(--bg-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .address-item {
+        padding: 1rem;
+    }
+    
+    .address-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .address-phone {
+        margin-left: 0;
+    }
+    
+    .address-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .address-actions > * {
         width: 100%;
     }
 }

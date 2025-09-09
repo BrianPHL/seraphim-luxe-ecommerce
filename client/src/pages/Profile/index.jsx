@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 const Profile = ({}) => {
 
     const navigate = useNavigate();
-    const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
+    const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addressBook, getAddressBook, addAddress, deleteAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
     const { reservationItems, clearReservations } = useReservation();
     const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
@@ -303,6 +303,8 @@ const Profile = ({}) => {
 
             const result = await addAddress(addNewAddressFormData);
 
+            await getAddressBook();
+            
             showToast('Address added successfully!', 'success');
             setIsModalOpen(false);
 
@@ -931,13 +933,67 @@ const Profile = ({}) => {
                                 />
                             </div>
                             <div className={ styles['info-list'] }>
-                                <div className={ styles['info-list-address'] }>
-                                    <div className={ styles['info-list-address-info'] }>
-                                        
-                                    </div>
-                                    <div className={ styles['info-list-address-ctas'] }>
+                                <div className={styles['info-list-address']}>
+                                    { !addressBook?.addresses || addressBook?.addresses?.length === 0 ? (
+                                        <div className={styles['address-empty']}>No set addresses. You can add one.</div>
+                                    ) : (
+                                        addressBook.addresses.map((address) => (
+                                            <div key={address.id} className={styles['address-item']}>
 
-                                    </div>
+                                                <div className={ styles['address-item-left'] }>
+                                                    <div className={styles['address-main']}>
+                                                        <span className={styles['address-name']}>
+                                                            <strong>{address.full_name}</strong>
+                                                        </span>
+                                                        <span className={styles['address-phone']}>
+                                                            {address.phone_number && (
+                                                                <>
+                                                                    {"|"}
+                                                                    <span>(+63) {address.phone_number}</span>
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <div className={styles['address-details']}>
+                                                        <div>
+                                                            {address.street_address}
+                                                            <br />
+                                                            {address.barangay}, {address.city}, {address.province}, {address.postal_code}
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles['address-tags']}>
+                                                        {addressBook.defaults?.default_billing_address === address.id && (
+                                                          <span className={styles['address-tag']}>Default Billing</span>
+                                                        )}
+                                                        {addressBook.defaults?.default_shipping_address === address.id && (
+                                                          <span className={styles['address-tag']}>Default Shipping</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className={ styles['address-item-right'] }>
+                                                    <div className={styles['address-actions']}>
+                                                        <Button
+                                                            type="icon-outlined"
+                                                            icon="fa-solid fa-pen"
+                                                            action={() => handleEditAddress(address)}
+                                                        />
+                                                        <Button
+                                                            type="icon-outlined"
+                                                            icon="fa-solid fa-trash-can"
+                                                            action={() => {
+                                                                setAddressToDelete(address.id);
+                                                                setModalType('delete-address-confirmation');
+                                                                setIsModalOpen('true');
+                                                            }}
+                                                            externalStyles={styles['address-delete']}
+                                                        />
+                                                    </div>                                                    
+                                                </div>
+
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -1681,6 +1737,12 @@ const Profile = ({}) => {
                 onClose={ () => setIsModalOpen(false) }
                 label={ 'Add new address' }
             >
+
+                <div className={ styles['notice'] }>
+                    <i className='fa-solid fa-triangle-exclamation'></i>
+                    <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
+                </div>
+
                 <div className={ styles['inputs-container'] }>
 
                     <div className={ styles['input-wrapper-horizontal'] }>
