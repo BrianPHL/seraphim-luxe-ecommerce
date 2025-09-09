@@ -9,6 +9,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 const Profile = ({}) => {
 
     const navigate = useNavigate();
+    const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
     const { reservationItems, clearReservations } = useReservation();
     const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
@@ -22,7 +23,6 @@ const Profile = ({}) => {
         first_name: '',
         last_name: '',
         email: '',
-        contact_number: ''
     });
     const [ addressInfo, setAddressInfo ] = useState({
         shipping_address: {
@@ -228,7 +228,7 @@ const Profile = ({}) => {
         const updatedInfo = { ...personalInfo, [ field ]: value };
         setPersonalInfo(updatedInfo);
 
-        const hasChanged = updatedInfo['first_name'] !== (user?.first_name || '') || updatedInfo['last_name'] !== (user?.last_name || '') || updatedInfo['email'] !== (user?.email || '') || updatedInfo['contact_number'] !== (user?.contact_number || '')
+        const hasChanged = updatedInfo['first_name'] !== (user?.first_name || '') || updatedInfo['last_name'] !== (user?.last_name || '') || updatedInfo['email'] !== (user?.email || '') || updatedInfo['phone_number'] !== (user?.phone_number || '')
 
         setIsPersonalInfoChanged(hasChanged);
     };
@@ -315,8 +315,8 @@ const Profile = ({}) => {
     };
     const resetAddNewAddressFormData = () => {
         setAddNewAddressFormData({
-            full_name: '',
-            phone_number: '',
+            full_name: user.name,
+            phone_number: user.phone_number,
             province: '',
             city: '',
             barangay: '',
@@ -413,7 +413,7 @@ const Profile = ({}) => {
           first_name: user.first_name || '',
           last_name: user.last_name || '',
           email: user.email || '',
-          contact_number: user.contact_number || ''
+          phone_number: user.phone_number || ''
         });
         setIsPersonalInfoChanged(false);
     };
@@ -470,8 +470,8 @@ const Profile = ({}) => {
         }
         
         const phoneRegex = /^(\+63|0)?[0-9]{10}$/;
-        if (!phoneRegex.test(personalInfo.contact_number.replace(/\s/g, ''))) {
-            errors.contact_number = 'Please enter a valid Philippine phone number';
+        if (!phoneRegex.test(personalInfo.phone_number.replace(/\s/g, ''))) {
+            errors.phone_number = 'Please enter a valid Philippine phone number';
         }
         
         setValidationErrors(errors);
@@ -537,7 +537,7 @@ const Profile = ({}) => {
                 first_name: user.first_name || '',
                 last_name: user.last_name || '',
                 email: user.email || '',
-                contact_number: user.contact_number || ''
+                phone_number: user.phone_number || ''
             });
             setGeneralAddressInfo({
                 address: user.address || ''
@@ -712,9 +712,9 @@ const Profile = ({}) => {
                                             hint='Your phone number...'
                                             type='text'
                                             isSubmittable={ false }
-                                            value={ personalInfo['contact_number'] }
-                                            onChange={ event => handlePersonalInfoChange('contact_number', event['target']['value'] )}
-                                            error={ validationErrors['contact_number'] }
+                                            value={ personalInfo['phone_number'] }
+                                            onChange={ event => handlePersonalInfoChange('phone_number', event['target']['value'] )}
+                                            error={ validationErrors['phone_number'] }
                                         />
                                     </div>
                                 </div>
