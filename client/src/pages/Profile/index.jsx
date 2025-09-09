@@ -834,52 +834,31 @@ const Profile = ({}) => {
                                         <label htmlFor="currency">Preferred Currency</label>
                                         <div className={ styles['dropdown-container'] }>
                                             <Button
-                                                type='dropdown'
+                                                id='preferred-currency'
+                                                type='secondary'
                                                 label={`${getCurrencyLabel(platformSettings.currency)}`}
-                                                icon='fa-solid fa-chevron-down'
-                                                iconPosition='right'
-                                                action={() => toggleDropdown('currency')}
-                                                externalStyles={styles['dropdown-trigger']}
-                                            />
-                                            <Dropdown
-                                                isOpen={dropdownStates.currency}
-                                                position='left'
-                                                options={[
+                                                dropdownPosition='right'
+                                                options= {[
                                                     {
                                                         label: 'Philippine Peso (₱)',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('currency', 'PHP');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('currency', 'PHP')},
                                                     },
                                                     {
                                                         label: 'US Dollar ($)',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('currency', 'USD');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('currency', 'USD')},
                                                     },
                                                     {
                                                         label: 'Euro (€)',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('currency', 'EUR');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('currency', 'EUR')},
                                                     },
                                                     {
                                                         label: 'Japanese Yen (¥)',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('currency', 'JPY');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('currency', 'JPY')},
                                                     },
                                                     {
                                                         label: 'Canadian Dollar (C$)',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('currency', 'CAD');
-                                                            closeAllDropdowns();
-                                                        }
-                                                    }
+                                                        action: () => { handlePlatformSettingsChange ('currency', 'CAD')},
+                                                    },
                                                 ]}
                                             />
                                         </div>
@@ -888,38 +867,23 @@ const Profile = ({}) => {
                                         <label htmlFor="shipping_address">Preferred Shipping Address</label>
                                         <div className={ styles['dropdown-container'] }>
                                             <Button
-                                                type='dropdown'
+                                                id='preferred-shipping-address'
+                                                type='secondary'
                                                 label={`${getShippingLabel(platformSettings.preferred_shipping_address)}`}
-                                                icon='fa-solid fa-chevron-down'
-                                                iconPosition='right'
-                                                action={() => toggleDropdown('shipping_address')}
-                                                externalStyles={styles['dropdown-trigger']}
-                                            />
-                                            <Dropdown
-                                                isOpen={dropdownStates.shipping_address}
-                                                position='left'
-                                                options={[
+                                                dropdownPosition='right'
+                                                options= {[
                                                     {
                                                         label: 'Home Address',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('preferred_shipping_address', 'home');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('preferred_shipping_address', 'home')},
                                                     },
                                                     {
                                                         label: 'Billing Address',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('preferred_shipping_address', 'billing');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('preferred_shipping_address', 'billing')},
                                                     },
                                                     {
                                                         label: 'Shipping Address',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('preferred_shipping_address', 'shipping');
-                                                            closeAllDropdowns();
-                                                        }
-                                                    }
+                                                        action: () => { handlePlatformSettingsChange ('preferred_shipping_address', 'shipping')},
+                                                    },
                                                 ]}
                                             />
                                         </div>
@@ -930,38 +894,23 @@ const Profile = ({}) => {
                                         <label htmlFor="payment_method">Preferred Payment Method</label>
                                         <div className={ styles['dropdown-container'] }>
                                             <Button
-                                                type='dropdown'
+                                                id='preferred-payment-method'
+                                                type='secondary'
                                                 label={`${getPaymentLabel(platformSettings.preferred_payment_method)}`}
-                                                icon='fa-solid fa-chevron-down'
-                                                iconPosition='right'
-                                                action={() => toggleDropdown('payment_method')}
-                                                externalStyles={styles['dropdown-trigger']}
-                                            />
-                                            <Dropdown
-                                                isOpen={dropdownStates.payment_method}
-                                                position='left'
-                                                options={[
+                                                dropdownPosition='right'
+                                                options= {[
                                                     {
                                                         label: 'Cash on Delivery',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('preferred_payment_method', 'cash_on_delivery');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('preferred_payment_method', 'cash_on_delivery')},
                                                     },
                                                     {
                                                         label: 'Bank Transfer',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('preferred_payment_method', 'bank_transfer');
-                                                            closeAllDropdowns();
-                                                        }
+                                                        action: () => { handlePlatformSettingsChange ('preferred_payment_method', 'bank_transfer')},
                                                     },
                                                     {
                                                         label: 'GCash',
-                                                        action: () => {
-                                                            handlePlatformSettingsChange('preferred_payment_method', 'gcash');
-                                                            closeAllDropdowns();
-                                                        }
-                                                    }
+                                                        action: () => { handlePlatformSettingsChange ('preferred_payment_method', 'gcash')},
+                                                    },
                                                 ]}
                                             />
                                         </div>
