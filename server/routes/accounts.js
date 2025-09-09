@@ -212,6 +212,33 @@ router.put('/:account_id/password', async (req, res) => {
     }
 });
 
+router.delete('/:address_id/address', async (req, res) => {
+
+    try {
+
+        const { address_id } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                DELETE FROM
+                account_addresses
+                WHERE id = ?
+            `,
+            [ address_id ]
+        )
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ error: 'Address not found!' });
+
+        res.json({ message: 'Address successfully deleted!' });
+
+    } catch (err) {
+        console.error('Accounts route DELETE /:address_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 router.delete('/:account_id', async (req, res) => {
     
     const connection = await pool.getConnection();

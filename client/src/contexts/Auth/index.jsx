@@ -342,6 +342,32 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const deleteAddress = async (id) => {
+
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+
+            setIsInitializing(true);
+
+            const response = await fetchWithTimeout(`/api/accounts/${ id }/address`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to delete address');
+            }
+
+        } catch (err) {
+            console.error("AuthContext deleteAddress function error: ", err);
+            return { error: err };
+        } finally {
+            setIsInitializing(false);
+        }
+
+    }
+
     const remove = async (id) => {
         
         if (!user) return { error: 'User not logged in' };
@@ -481,6 +507,7 @@ export const AuthProvider = ({ children }) => {
             addressBook,
             getAddressBook,
             addAddress,
+            deleteAddress
         }}>
             { children }
         </AuthContext.Provider>

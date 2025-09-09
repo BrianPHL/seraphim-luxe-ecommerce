@@ -18,6 +18,7 @@ const Profile = ({}) => {
     const [ avatarFile, setAvatarFile ] = useState(null);
     const [ avatarPreview, setAvatarPreview ] = useState(null);
     const [ modalType, setModalType ] = useState('');
+    const [ addressToDelete, setAddressToDelete ] = useState(null);
     const [ isModalOpen, setIsModalOpen ] = useState(false);
     const [ personalInfo, setPersonalInfo ] = useState({
         first_name: '',
@@ -315,6 +316,23 @@ const Profile = ({}) => {
         }
 
     };
+    const handleAddressRemoval = async () => {
+
+        try {
+
+            await deleteAddress(addressToDelete);
+            await getAddressBook();
+
+            showToast("Successfully deleted the address!", "success");
+
+        } catch (err) {
+
+            console.error("Profile pages handleRemovalAddress function error: ", err);
+            showToast("Failed to delete address. An error had occured.", "error");
+
+        }
+
+    }
     const resetAddNewAddressFormData = () => {
         setAddNewAddressFormData({
             full_name: user.name,
@@ -1731,6 +1749,28 @@ const Profile = ({}) => {
                     </div>
                 </Modal>
             )}
+
+            <Modal label='Delete Address Confirmation' isOpen={ isModalOpen && modalType === 'delete-address-confirmation' } onClose={ () => setIsModalOpen(false) }>
+                <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your address</strong>. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
+                <div className={ styles['modal-ctas'] }>
+                    <Button
+                        label='Confirm'
+                        type='secondary'
+                        action={ () => {
+                            setIsModalOpen(false);
+                            handleAddressRemoval();
+                        }}
+                    />
+                    <Button
+                        label='Cancel'
+                        type='primary'
+                        action={ () => {
+                            setModalType('');
+                            setIsModalOpen(false);
+                        }}
+                    />
+                </div>
+            </Modal>
 
             <Modal
                 isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
