@@ -752,7 +752,7 @@ const Profile = ({}) => {
                                                     },
                                                     {
                                                         label: 'Shipping Address',
-                                                        action: () => { handlePlatformSettingsChange ('preferred_shipping_address', 'billing')},
+                                                        action: () => { handlePlatformSettingsChange ('preferred_shipping_address', 'shipping')},
                                                     },
                                                 ]}
                                             />
