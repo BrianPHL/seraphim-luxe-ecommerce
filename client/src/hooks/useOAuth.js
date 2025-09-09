@@ -98,14 +98,11 @@ const useOAuth = () => {
         },
         sendChangePasswordVerificationLink: async (email) => {
 
-            console.log("Triggered sendChangePasswordVerificationLink: ", email, `${ getBaseURL() }/profile?redirect=yes`);
-
             const result = await authClient.requestPasswordReset({
                 email: email,
                 redirectTo: `${ getBaseURL() }/profile?redirect=yes`
             });
 
-            console.log("changepassword result: ", result);
             return result;
 
         },

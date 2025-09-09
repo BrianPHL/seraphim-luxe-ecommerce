@@ -64,8 +64,6 @@ router.put('/:product_id', async (req, res) => {
         const { product_id } = req.params;
         const { label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold } = req.body;
 
-        console.log(product_id)
-
         const [ result ] = await pool.query(
             `
                 UPDATE products

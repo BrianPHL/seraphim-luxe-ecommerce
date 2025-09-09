@@ -39,7 +39,7 @@ const Categories = () => {
     };
 
     const openModal = (type, item = null, category = null) => {
-        console.log("Type: ", type, "Item: ", item, "Category: ", category)
+        
         setModalType(type);
         setSelectedItem(item);
         

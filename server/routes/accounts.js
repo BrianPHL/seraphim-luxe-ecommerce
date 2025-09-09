@@ -325,8 +325,6 @@ router.delete('/:account_id', async (req, res) => {
         await connection.beginTransaction();
         
         const { account_id } = req.params;
-
-        console.log("ACCOUNT ID: ", account_id);
         
         await connection.query(
             `

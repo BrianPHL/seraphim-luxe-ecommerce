@@ -42,10 +42,6 @@ const Products = () => {
         getCategoryById 
     } = useCategories();
 
-    useEffect(() => {
-        console.log(products);
-    }, []);
-
     const {
         sortedProducts,
         currentSort,
