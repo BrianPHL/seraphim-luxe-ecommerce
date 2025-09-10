@@ -22,10 +22,24 @@ const Store = () => {
         return activeCategories.map(cat => cat.id);
     };
 
-    const filteredProducts = products.filter(product => {
+    // Filter products by category first
+    let filteredProducts = products.filter(product => {
         const jewelryCategoryIds = getJewelryCategoryIds();
         return jewelryCategoryIds.includes(product.category_id);
     });
+
+    // Apply category and subcategory filters
+    if (queryCategoryId) {
+        filteredProducts = filteredProducts.filter(product => 
+            product.category_id === parseInt(queryCategoryId)
+        );
+    }
+    
+    if (querySubcategoryId) {
+        filteredProducts = filteredProducts.filter(product => 
+            product.subcategory_id === parseInt(querySubcategoryId)
+        );
+    }
 
     const {
         sortedProducts,
@@ -116,6 +130,8 @@ const Store = () => {
             <span className={ styles['pagewrap'] }>
                 <ReturnButton />
             </span>
+            
+            {/* Move TableHeader INSIDE the container */}
             <div className={ styles['container'] }>
                 <TableHeader
                     icon='fa-solid fa-boxes-stacked'
@@ -126,12 +142,14 @@ const Store = () => {
                     onSearchChange={ handleSearchChange }
                     onSearchSubmit={ handleSearch }
                 />
+
                 { loading && (
                     <div className={ styles['loading'] }>
                         <i className="fa-solid fa-spinner fa-spin"></i>
                         <p>Loading collections, please wait...</p>
                     </div>
                 )}
+                
                 { paginatedProducts['length'] <= 0 && !loading ? (
                     <div className={ styles['not-found'] }>
                         <i className='fa-solid fa-magnifying-glass'></i>
@@ -149,7 +167,7 @@ const Store = () => {
                         />
                     </div>
                 ) : (
-                    <>
+                    <div className={ styles['products-grid'] }>
                         { paginatedProducts.map(product => (
                             <ProductCard
                                 key={ product['id'] }
@@ -160,9 +178,12 @@ const Store = () => {
                                 label={ product['label'] }
                                 price={ product['price'] }
                                 stock_quantity={ product['stock_quantity'] }
+                                views_count={ product['views_count'] }
+                                created_at={ product['created_at'] }
+                                orders_count={ product['orders_count'] }
                             />
                         ))}
-                    </>
+                    </div>
                 )}
             </div>
 
