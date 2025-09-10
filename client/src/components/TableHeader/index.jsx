@@ -1,4 +1,4 @@
-import { Button } from '@components';
+import { Button, InputField } from '@components';
 import styles from './TableHeader.module.css';
 
 const TableHeader = ({ 
@@ -77,18 +77,16 @@ const TableHeader = ({
             
             <div className={styles['header-right']}>
                 <div className={styles['search-container']}>
-                    <input
-                        type="text"
-                        placeholder={`Search ${label?.toLowerCase()}...`}
-                        value={searchInput}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className={styles['search-input']}
+                    <InputField
+                        value={ searchInput }
+                        hint={ `Search ${ label?.toLowerCase() }...` }
+                        type={ 'text' }
+                        icon={ 'fa-solid fa-magnifying-glass' }
+                        onKeyPress={ () => { handleKeyPress } }
+                        action={ onSearchSubmit }
+                        onChange={ (e) => onSearchChange(e.target.value) }
+                        isSubmittable={ false }
                     />
-                    <i 
-                        className="fa-solid fa-magnifying-glass"
-                        onClick={onSearchSubmit}
-                    ></i>
                 </div>
                 
                 <Button

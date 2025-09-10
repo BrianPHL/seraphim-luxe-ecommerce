@@ -41,18 +41,22 @@ const Store = () => {
         );
     }
 
+    // Apply search filter here instead of in useProductFilter
+    if (querySearch) {
+        filteredProducts = filteredProducts.filter(product => 
+            product.label.toLowerCase().includes(querySearch.toLowerCase())
+        );
+    }
+
     const {
         sortedProducts,
-        categoryProducts,
         currentSort,
-        searchQuery,
         searchInput,
         handleSortChange: onSortChange,
-        handleSearchChange,
         handleSearchSubmit,
         setSearchInput,
         setSearchQuery
-    } = useProductFilter(filteredProducts, 'Collections', querySort, querySearch);
+    } = useProductFilter(filteredProducts, null, querySort, ''); // Pass empty search since we handle it above
     
     const {
         currentPage,
@@ -84,6 +88,11 @@ const Store = () => {
         updateSearchParams({ search: searchInput, page: 1 });
     };
 
+    // Create wrapper function for search change that handles value directly
+    const handleSearchChange = (value) => {
+        setSearchInput(value);
+    };
+
     const handlePageChangeWrapped = (page) => {
         handlePageChange(page);
         updateSearchParams({ page });
@@ -106,23 +115,6 @@ const Store = () => {
         }
         return 'Unknown';
     };
-
-    useEffect(() => {
-        let filtered = sortedProducts;
-        
-        if (queryCategoryId) {
-            filtered = filtered.filter(product => 
-                product.category_id === parseInt(queryCategoryId)
-            );
-        }
-        
-        if (querySubcategoryId) {
-            filtered = filtered.filter(product => 
-                product.subcategory_id === parseInt(querySubcategoryId)
-            );
-        }
-
-    }, [queryCategoryId, querySubcategoryId, sortedProducts]);
     
     return (
         <div className={ styles['wrapper'] }>
@@ -131,7 +123,6 @@ const Store = () => {
                 <ReturnButton />
             </span>
             
-            {/* Move TableHeader INSIDE the container */}
             <div className={ styles['container'] }>
                 <TableHeader
                     icon='fa-solid fa-boxes-stacked'
@@ -190,7 +181,7 @@ const Store = () => {
             <TableFooter
                 currentPage={ currentPage }
                 totalPages={ totalPages }
-                resultsLabel={ `Showing ${ paginatedProducts['length'] } out of ${ categoryProducts['length'] } results` }
+                resultsLabel={ `Showing ${ paginatedProducts['length'] } out of ${ sortedProducts['length'] } results` }
                 sortLabel={ currentSort }
                 onPageChange={ handlePageChangeWrapped }
             />
