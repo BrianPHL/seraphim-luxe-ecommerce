@@ -453,8 +453,7 @@ export const AuthProvider = ({ children }) => {
 
             const updatedUser = { ...user, image_url: data['image_url'] };
             setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            showToast('Avatar updated successfully!', 'success');
+            localStorage.setItem('user', JSON.stringify(updatedUser))
             return data;
 
         } catch (err) {
