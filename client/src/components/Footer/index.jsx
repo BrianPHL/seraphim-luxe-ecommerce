@@ -2,7 +2,6 @@ import { Logo, Button, InputField, Anchor } from '@components';
 import styles from './Footer.module.css';
 
 const Footer = () => {
-
     return (
         <div className={ styles['wrapper'] }>
             <div className={ styles['top'] }>
@@ -41,8 +40,13 @@ const Footer = () => {
                                 isNested={ false }
                             />
                             <Anchor
-                                label="contact@seraphim-luxe.com"
-                                link="#"
+                                label="Contact"
+                                link="/contact"
+                                isNested={ false }
+                            />
+                            <Anchor
+                                label="FAQs"
+                                link="/faqs"
                                 isNested={ false }
                             />
                         </nav>
@@ -57,7 +61,7 @@ const Footer = () => {
                             />
                             <Anchor
                                 label="Privacy Policy"
-                                link="privacy-policy"
+                                link="/privacy-policy"
                                 isNested={ false }
                             />
                         </nav>
@@ -86,12 +90,12 @@ const Footer = () => {
                         <Button
                             type='icon-outlined'
                             icon='fa-brands fa-x-twitter'
-                            action={ () => { window.location.href = "https://www.facebook.com" } }
+                            action={ () => { window.location.href = "https://www.x.com" } }
                         />
                         <Button
                             type='icon-outlined'
                             icon='fa-brands fa-instagram'
-                            action={ () => { window.location.href = "https://www.facebook.com" } }
+                            action={ () => { window.location.href = "https://www.instagram.com" } }
                         />
                     </div>
                 </div>

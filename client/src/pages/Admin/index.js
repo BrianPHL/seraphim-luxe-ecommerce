@@ -6,3 +6,4 @@ export { default as AdminProducts } from './Products';
 export { default as AdminStocks } from './Stocks';
 export { default as AdminOrders } from './Orders';
 export { default as AdminCategories } from './Categories';
+export { default as StaticPages } from './StaticPages';

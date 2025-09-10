@@ -3,22 +3,39 @@ import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-route
 import { Header, Footer, OTPModal } from '@components';
 import { useAuth } from '@contexts';
 import { ProtectedRoute } from '@routes';
-import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, NotFound } from '@pages';
+import { 
+  Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, NotFound,
+  Contact, FAQs, PrivacyPolicy 
+} from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
-import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories } from '@pages/Admin';
+import { 
+  AdminLayout, 
+  AdminSignIn, 
+  AdminSignUp, 
+  AdminDashboard, 
+  AdminOrders, 
+  AdminProducts, 
+  AdminStocks, 
+  AdminCategories,
+  StaticPages
+} from '@pages/Admin';
 
 const PAGE_TITLES = {
 	"/": "Seraphim Luxe | Style Without Boundaries",
 	"/sign-in": "Seraphim Luxe | Sign In",
 	"/sign-up": "Seraphim Luxe | Sign Up",
 	"/about-us": "Seraphim Luxe | About Us",
+	"/contact": "Seraphim Luxe | Contact Us", 
+	"/faqs": "Seraphim Luxe | FAQs",
+	"/privacy-policy": "Seraphim Luxe | Privacy Policy",
 	"/collections": "Seraphim Luxe | Collections",
 	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
 	"/reservations": "Seraphim Luxe | Reservations",
 	"/cart": "Seraphim Luxe | Cart",
 	"/profile": "Seraphim Luxe | Profile",
     "/orders": "Seraphim Luxe | Orders",
+    "/admin/static-pages": "Seraphim Luxe | Content Management", 
 };
 
 const App = () => {
@@ -51,6 +68,30 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <AboutUs />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+                
+                <Route path="/contact" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <Contact />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+                
+                <Route path="/faqs" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <FAQs />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+                
+                <Route path="/privacy-policy" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <PrivacyPolicy />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -138,11 +179,12 @@ const App = () => {
                         <Footer />
                     </ProtectedRoute>
                 }>
-                    <Route path="dashboard" element={ <AdminDashboard /> } />
-                    <Route path="products" element={ <AdminProducts /> } />
-                    <Route path="orders" element={ <AdminOrders /> } />
-                    <Route path="stocks" element={ <AdminStocks /> } />
-                    <Route path="categories" element={ <AdminCategories /> } />
+                   <Route path="dashboard" element={<AdminDashboard />} />
+                   <Route path="orders" element={<AdminOrders />} />
+                   <Route path="products" element={<AdminProducts />} />
+                   <Route path="stocks" element={<AdminStocks />} />
+                   <Route path="categories" element={<AdminCategories />} />
+                   <Route path="static-pages" element={<StaticPages />} />
                 </Route>
 
                 <Route path="*" element={

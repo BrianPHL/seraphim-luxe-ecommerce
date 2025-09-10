@@ -11,3 +11,4 @@ export { CheckoutProvider, useCheckout } from "./Checkout";
 export { OrderProvider, useOrder } from "./Orders";
 export { CategoriesProvider, useCategories } from "./Categories";
 export { useSettings, SettingsProvider } from './Settings';
+export { useCMS, CMSProvider } from './CMS';

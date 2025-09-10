@@ -14,7 +14,8 @@ import {
   OrderProvider,
   CheckoutProvider,
   CategoriesProvider,
-  SettingsProvider
+  SettingsProvider,
+  CMSProvider
 } from '@contexts';
 import App from './App';
 
@@ -25,25 +26,27 @@ createRoot(document.getElementById('root')).render(
         <DropdownProvider>
           <ToastProvider>
             <AuthProvider>
-              <SettingsProvider>
-                <CategoriesProvider>
-                  <ProductsProvider>
-                    <ReservationProvider>
-                      <OrderProvider>
-                        <CartProvider>
-                          <CheckoutProvider>
-                            <InstallmentsProvider>
-                              <StocksProvider>
-                                <App />
-                              </StocksProvider>
-                            </InstallmentsProvider>
-                          </CheckoutProvider>
-                        </CartProvider>
-                      </OrderProvider>
-                    </ReservationProvider>
-                  </ProductsProvider>
-                </CategoriesProvider>
-              </SettingsProvider>
+              <CMSProvider>
+                <SettingsProvider>
+                  <CategoriesProvider>
+                    <ProductsProvider>
+                      <ReservationProvider>
+                        <OrderProvider>
+                          <CartProvider>
+                            <CheckoutProvider>
+                              <InstallmentsProvider>
+                                  <StocksProvider>
+                                    <App />
+                                  </StocksProvider>
+                              </InstallmentsProvider>
+                            </CheckoutProvider>
+                          </CartProvider>
+                        </OrderProvider>
+                      </ReservationProvider>
+                    </ProductsProvider>
+                  </CategoriesProvider>
+                </SettingsProvider>
+              </CMSProvider>
             </AuthProvider>
           </ToastProvider>
         </DropdownProvider>

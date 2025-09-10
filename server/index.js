@@ -14,6 +14,7 @@ import stocksRouter from './routes/stocks.js';
 import ordersRouter from './routes/orders.js';
 import oauthRouter from './routes/oauth.js';
 import categoriesRouter from './routes/categories.js';
+import staticPagesRouter from './routes/static-pages.js';
 import userSettingsRoutes from './routes/user-settings.js';
 
 dotenv.config();
@@ -25,10 +26,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: [
-        'https://seraphim-luxe-ecommerce-production.up.railway.app',
-        'http://localhost:5173'
-    ],
+	origin: process.env.NODE_ENV === 'production' 
+        ? [ 
+            'https://seraphim-luxe-ecommerce-production.up.railway.app',
+            'https://seraphim-luxe-production.up.railway.app'
+        ]
+    	: [ 'http://localhost:5173', 'http://127.0.0.1:5173' ],
   	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   	credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -52,6 +55,7 @@ app.use('/api/stocks', stocksRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/oauth', oauthRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/static-pages', staticPagesRouter);
 app.use('/api/user-settings', userSettingsRoutes);
 
 app.use((err, req, res, next) => {
@@ -91,7 +95,10 @@ const startServer = async () => {
     app.listen(PORT, () => {
         console.log(`🚀 Server running on port: ${PORT}`);
         console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-        console.log(`🗄️  Database URL configured: ${!!process.env.DATABASE_URL}`);
+        console.log(`🗄️  Database URL configured: ${!!process.env.DATABASE_URL}`
+
+        );
+         console.log(`📄 Static Pages API: /api/static-pages`);
     });
 };
 
