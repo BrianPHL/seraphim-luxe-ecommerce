@@ -12,7 +12,6 @@ const SignUp = () => {
     const [ firstName, setFirstName ] = useState('');
     const [ lastName, setLastName ] = useState('');
     const [ email, setEmail ] = useState('');
-    const [ address, setAddress ] = useState('');
     const [ phoneNumber, setPhoneNumber ] = useState('');
     const [ password, setPassword ] = useState('');
     const [ confirmPassword, setConfirmPassword ] = useState('');
@@ -63,7 +62,6 @@ const SignUp = () => {
                 firstName: firstName,
                 lastName: lastName,
                 email: email,
-                address: address,
                 phoneNumber: phoneNumber,
                 password: password,
                 role: 'admin'
@@ -135,18 +133,10 @@ const SignUp = () => {
                             />
                         </div>
                         <div className={ styles['input-wrapper'] }>
-                            <label htmlFor="address">
-                                Address <span style={{ 'color': 'var(--accent-base)' }}>*</span>
                             <label htmlFor="phone_number">
                                 Phone number <span style={{ 'color': 'var(--accent-base)' }}>*</span>
                             </label>
                             <InputField
-                                hint='Your address...'
-                                type='email'
-                                isSubmittable={ false }
-                                onChange={ event => setAddress(event['target']['value']) }
-                            />
-                        </div>
                                 hint='Your phone number...'
                                 type='text'
                                 isSubmittable={ false }
@@ -185,7 +175,7 @@ const SignUp = () => {
                             type='primary'
                             label='Sign up'
                             action={ () => setModalOpen(true) }
-                            disabled={ !firstName || !lastName || !email || !address || !password ||!confirmPassword }
+                            disabled={ !firstName || !lastName || !email || !password ||!confirmPassword }
                         />
                         <p>Already have an account? <Anchor label="Sign in" link="/admin/sign-in" isNested={ false }/></p>
                     </div>
