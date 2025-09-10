@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './StaticPages.module.css';
 import { fetchWithTimeout } from '@utils';
+import { Button } from '@components';
 
 const StaticPages = () => {
   const [activeTab, setActiveTab] = useState('about');
@@ -160,30 +161,30 @@ const StaticPages = () => {
       )}
       
       <div className={styles.pagesTabs}>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'about' ? styles.active : ''}`}
-          onClick={() => handleTabChange('about')}
-        >
-          About Us
-        </button>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'contact' ? styles.active : ''}`}
-          onClick={() => handleTabChange('contact')}
-        >
-          Contact
-        </button>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'faqs' ? styles.active : ''}`}
-          onClick={() => handleTabChange('faqs')}
-        >
-          FAQs
-        </button>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'privacy' ? styles.active : ''}`}
-          onClick={() => handleTabChange('privacy')}
-        >
-          Privacy Policy
-        </button>
+        <Button
+          type='secondary'
+          label='About'
+          externalStyles={`${ styles['tabButton'] } ${ activeTab === 'about' ? styles['active'] : '' }`}
+          action={ () => handleTabChange('about') }
+        />
+        <Button
+          type='secondary'
+          label='Contact us'
+          externalStyles={`${ styles['tabButton'] } ${ activeTab === 'contact' ? styles['active'] : '' }`}
+          action={ () => handleTabChange('contact') }
+        />
+        <Button
+          type='secondary'
+          label='Frequently Asked Questions'
+          externalStyles={`${ styles['tabButton'] } ${ activeTab === 'faqs' ? styles['active'] : '' }`}
+          action={ () => handleTabChange('faqs') }
+        />
+        <Button
+          type='secondary'
+          label='Privacy Policy'
+          externalStyles={`${ styles['tabButton'] } ${ activeTab === 'privacy' ? styles['active'] : '' }`}
+          action={ () => handleTabChange('privacy') }
+        />
       </div>
 
       <div className={styles.editorContainer}>
@@ -220,9 +221,11 @@ const StaticPages = () => {
         </div>
 
         <div className={styles.saveSection}>
-          <button onClick={handleSave} className={styles.saveButton}>
-            Save Changes
-          </button>
+          <Button
+            type='primary'
+            label={ 'Save changes' }
+            action={ () => handleSave() }
+          />
           {isSaved && <span className={styles.savedMessage}>✓ Content saved successfully!</span>}
         </div>
       </div>
