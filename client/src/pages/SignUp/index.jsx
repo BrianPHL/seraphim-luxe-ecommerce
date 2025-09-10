@@ -13,7 +13,7 @@ const SignUp = () => {
     const [ lastName, setLastName ] = useState('');
     const [ email, setEmail ] = useState('');
     const [ address, setAddress ] = useState('');
-    const [ contactNumber, setContactNumber ] = useState('');
+    const [ phoneNumber, setPhoneNumber ] = useState('');
     const [ password, setPassword ] = useState('');
     const [ confirmPassword, setConfirmPassword ] = useState('');
     const [ formError, setFormError ] = useState('');
@@ -64,7 +64,7 @@ const SignUp = () => {
                 lastName: lastName,
                 email: email,
                 address: address,
-                contactNumber: contactNumber,
+                phoneNumber: phoneNumber,
                 password: password,
                 role: 'customer'
             });
@@ -141,6 +141,8 @@ const SignUp = () => {
                         <div className={ styles['input-wrapper'] }>
                             <label htmlFor="address">
                                 Address <span style={{ 'color': 'var(--accent-base)' }}>*</span>
+                            <label htmlFor="phone_number">
+                                Phone number <span style={{ 'color': 'var(--accent-base)' }}>*</span>
                             </label>
                             <InputField
                                 hint='Your address...'
@@ -149,15 +151,10 @@ const SignUp = () => {
                                 onChange={ event => setAddress(event['target']['value']) }
                             />
                         </div>
-                        <div className={ styles['input-wrapper'] }>
-                            <label htmlFor="contact_number">
-                                Contact number <span style={{ 'color': 'var(--accent-base)' }}>*</span>
-                            </label>
-                            <InputField
-                                hint='Your contact number...'
+                                hint='Your phone number...'
                                 type='text'
                                 isSubmittable={ false }
-                                onChange={ event => setContactNumber(event['target']['value']) }
+                                onChange={ event => setPhoneNumber(event['target']['value']) }
                             />
                         </div>
                         <div className={ styles['input-wrapper'] }>
