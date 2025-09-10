@@ -163,3 +163,17 @@
     .wrapper { padding: 14rem 2rem 2rem 2rem; }
 
 }
+
+.errorMessage {
+    background-color: #ffebee;
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 15px 0;
+    color: #d32f2f;
+}
+
+.errorMessage p {
+    margin: 0;
+    font-size: 14px;
+}
