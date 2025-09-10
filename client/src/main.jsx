@@ -31,17 +31,17 @@ createRoot(document.getElementById('root')).render(
                   <ProductsProvider>
                     <ReservationProvider>
                       <OrderProvider>
-                      <WishlistProvider>
-                            <CartProvider>
-                              <CheckoutProvider>
-                                <InstallmentsProvider>
-                                  <StocksProvider>
-                                    <App />
-                                  </StocksProvider>
-                                </InstallmentsProvider>
-                              </CheckoutProvider>
-                            </CartProvider>
-                      </WishlistProvider>
+                        <WishlistProvider>
+                          <CartProvider>
+                            <CheckoutProvider>
+                              <InstallmentsProvider>
+                                <StocksProvider>
+                                  <App />
+                                </StocksProvider>
+                              </InstallmentsProvider>
+                            </CheckoutProvider>
+                          </CartProvider>
+                        </WishlistProvider>
                       </OrderProvider>
                     </ReservationProvider>
                   </ProductsProvider>

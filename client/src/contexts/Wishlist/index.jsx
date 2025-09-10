@@ -2,14 +2,6 @@ import { createContext, useContext, useState, useEffect } from "react";
 import WishlistContext from "./context";
 import { useAuth, useToast } from "@contexts";
 
-export const useWishlist = () => {
-    const context = useContext(WishlistContext);
-    if (!context) {
-        throw new Error('useWishlist must be used within a WishlistProvider');
-    }
-    return context;
-};
-
 export const WishlistProvider = ({ children }) => {
 
     const [ wishlistItems, setWishlistItems ] = useState([]);
@@ -49,7 +41,7 @@ export const WishlistProvider = ({ children }) => {
 
     };
 
-    const addToWishlist = async (product) => {
+    const addToWishlist = async (product_id) => {
 
         if (!user) return;
 
@@ -57,7 +49,7 @@ export const WishlistProvider = ({ children }) => {
             setLoading(true);
 
             // Check if item already exists
-            const exists = wishlistItems.find(item => item['product_id'] === product['product_id']);
+            const exists = wishlistItems.find(item => item['product_id'] === product_id);
             if (exists) {
                 showToast('Item already in wishlist!', 'warning');
                 return;
@@ -68,7 +60,7 @@ export const WishlistProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: user['id'],
-                    productId: product['product_id']
+                    productId: product_id
                 })
             });
 
@@ -221,4 +213,4 @@ export const WishlistProvider = ({ children }) => {
     );
 };
 
-export default WishlistContext;
+export const useWishlist = () => useContext(WishlistContext);
