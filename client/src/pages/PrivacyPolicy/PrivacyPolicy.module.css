@@ -1,0 +1,200 @@
+@import url('../../index.css');
+
+.wrapper {
+    flex-direction: column;
+    display: flex;
+    gap: 2rem;
+    min-height: 100vh;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.banner {
+    background-color: var(--bg-secondary);
+    height: 200px;
+    border-radius: 0.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.header {
+    justify-content: flex-start;
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.header h1 {
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--tg-primary);
+}
+
+.content {
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    padding: 2.5rem;
+    border: 1px solid var(--bg-outline);
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.content h1 {
+    font-weight: 600;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--tg-primary);
+    text-align: center;
+}
+
+.content .effective-date {
+    font-style: italic;
+    margin-bottom: 2rem;
+    color: var(--tg-secondary);
+    text-align: center;
+    display: block;
+}
+
+.content section {
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+.content section h2 {
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--tg-primary);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-base);
+    display: inline-block;
+}
+
+.content section p {
+    color: var(--tg-secondary);
+    line-height: 1.7;
+    text-align: left;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.content .update-notice {
+    background-color: var(--bg-primary);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-top: 2.5rem;
+    border-left: 4px solid var(--accent-base);
+    text-align: center;
+}
+
+.content .update-notice p {
+    margin: 0;
+    color: var(--tg-secondary);
+    font-style: italic;
+}
+
+.errorMessage {
+    background-color: #ffebee;
+    border: 1px solid #f44336;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1.5rem auto;
+    color: #d32f2f;
+    max-width: 900px;
+    text-align: center;
+}
+
+.errorMessage p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--bg-outline);
+    border-top: 4px solid var(--accent-base);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+@media (max-width: 768px) {
+    .wrapper {
+        padding: 1.5rem;
+        gap: 1.5rem;
+    }
+    
+    .banner {
+        height: 150px;
+    }
+    
+    .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .content {
+        padding: 2rem;
+    }
+    
+    .content h1 {
+        font-size: 1.6rem;
+    }
+    
+    .content section h2 {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .wrapper {
+        padding: 1rem;
+    }
+    
+    .content {
+        padding: 1.5rem;
+    }
+    
+    .header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .content h1 {
+        font-size: 1.4rem;
+    }
+    
+    .content section h2 {
+        font-size: 1.2rem;
+    }
+    
+    .content section p {
+        text-align: center;
+    }
+}
