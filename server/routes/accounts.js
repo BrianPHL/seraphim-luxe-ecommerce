@@ -35,10 +35,188 @@ router.get('/count', async (req, res) => {
     }
 });
 
+router.get('/:account_id/address', async (req, res) => {
+
+    const { account_id } = req.params;
+
+    try {
+
+        const [ addressRows ] = await pool.query(
+            `
+                SELECT *
+                FROM account_addresses
+                WHERE account_id = ?
+            `,
+            [ account_id ]
+        )
+
+        if (addressRows.length === 0)
+            res.json([]);
+
+        const [ accountRows ] = await pool.query(
+            `
+                SELECT default_billing_address, default_shipping_address
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ account_id ]
+        )
+
+        res.json({ addresses: addressRows, defaults: accountRows[0] || {} });
+
+    } catch (err) {
+        console.error('Accounts route GET /:account_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
+router.post('/:account_id/address', async (req, res) => {
+    
+    try {
+
+        const { account_id } = req.params;
+        const { full_name, phone_number, province, city, barangay, postal_code, street_address, is_default_billing, is_default_shipping } = req.body;
+
+        const [ result ] = await pool.query(
+            `
+                INSERT INTO account_addresses
+                (account_id, full_name, phone_number, province, city, barangay, postal_code, street_address)
+                VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [ account_id, full_name, phone_number, province, city, barangay, postal_code, street_address ]
+        );
+
+        const newAddressId = result.insertId;
+        const updates = [];
+        const params = [];
+
+        if (is_default_billing === true) {
+            updates.push('default_billing_address = ?');
+            params.push(newAddressId);
+        }
+
+        if (is_default_shipping === true) {
+            updates.push('default_shipping_address = ?');
+            params.push(newAddressId);
+        }
+
+        if (updates.length > 0) {
+            params.push(account_id);
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET ${updates.join(', ')}
+                    WHERE id = ?`
+                ,
+                params
+            );
+        }
+
+        const [ user ] = await pool.query(
+            `
+                SELECT *
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ account_id ]
+        );
+
+        if (user.length === 0)
+            throw new Error('Account does not exist!');
+
+        res.json(user[0]);
+
+    } catch (err) {
+        console.error('Accounts route POST /:account_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/:account_id/:address_id/address', async (req, res) => {
+
+    try {
+
+        const { account_id, address_id } = req.params;
+        const { full_name, phone_number, province, city, barangay, postal_code, street_address, is_default_billing, is_default_shipping } = req.body;
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE account_addresses
+                SET account_id = ?, full_name = ?, phone_number = ?, province = ?, city = ?, barangay = ?, postal_code = ?, street_address = ?
+                WHERE id = ?
+            `,
+            [ account_id, full_name, phone_number, province, city, barangay, postal_code, street_address, address_id ]
+        );
+
+
+        if (is_default_billing === true) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_billing_address = ?
+                    WHERE id = ?
+                `,
+                [address_id, account_id]
+            );
+        } else if (is_default_billing === false) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_billing_address = NULL
+                    WHERE id = ? AND default_billing_address = ?
+                `,
+                [account_id, address_id]
+            );
+        }
+
+        if (is_default_shipping === true) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_shipping_address = ?
+                    WHERE id = ?
+                `,
+                [address_id, account_id]
+            );
+        } else if (is_default_shipping === false) {
+            await pool.query(
+                `
+                    UPDATE accounts
+                    SET default_shipping_address = NULL
+                    WHERE id = ? AND default_shipping_address = ?
+                `,
+                [account_id, address_id]
+            );
+        }
+
+
+        const [ user ] = await pool.query(
+            `
+                SELECT *
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ account_id ]
+        );
+
+        if (user.length === 0)
+            throw new Error('Account does not exist!');
+
+        res.json(user[0]);
+
+    } catch (err) {
+        console.error('Accounts route PUT /:account_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 router.put('/:account_id/personal-info', async (req, res) => {
     try {
         const { account_id } = req.params;
-        const { first_name, last_name, email, contact_number } = req.body;
+        const { first_name, last_name, email, phone_number } = req.body;
         
         if (email) {
             const [ existingEmail ] = await pool.query(
@@ -60,10 +238,10 @@ router.put('/:account_id/personal-info', async (req, res) => {
         const [ result ] = await pool.query(
             `
                 UPDATE accounts 
-                SET first_name = ?, last_name = ?, email = ?, contact_number = ?
+                SET first_name = ?, last_name = ?, email = ?, phone_number = ?
                 WHERE id = ?
             `,
-            [first_name, last_name, email, contact_number, account_id]
+            [first_name, last_name, email, phone_number, account_id]
         );
         
         if (result.affectedRows === 0) {
@@ -82,41 +260,6 @@ router.put('/:account_id/personal-info', async (req, res) => {
         res.json(user[0]);
     } catch (err) {
         console.error('Error updating personal info:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.put('/:account_id/address', async (req, res) => {
-    try {
-        const { account_id } = req.params;
-        const { address } = req.body;
-        
-        const [result] = await pool.query(
-            `
-                UPDATE accounts 
-                SET address = ?, modified_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            `,
-            [address, account_id]
-        );
-        
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Account not found' });
-        }
-
-        const [user] = await pool.query(
-            `
-                SELECT *
-                FROM accounts
-                WHERE id = ?
-            `,
-            [account_id]
-        );
-        
-        res.json(user[0]);
-
-    } catch (err) {
-        console.error('Error updating address:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -147,6 +290,33 @@ router.put('/:account_id/password', async (req, res) => {
     }
 });
 
+router.delete('/:address_id/address', async (req, res) => {
+
+    try {
+
+        const { address_id } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                DELETE FROM
+                account_addresses
+                WHERE id = ?
+            `,
+            [ address_id ]
+        )
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ error: 'Address not found!' });
+
+        res.json({ message: 'Address successfully deleted!' });
+
+    } catch (err) {
+        console.error('Accounts route DELETE /:address_id/address endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 router.delete('/:account_id', async (req, res) => {
     
     const connection = await pool.getConnection();
@@ -155,8 +325,6 @@ router.delete('/:account_id', async (req, res) => {
         await connection.beginTransaction();
         
         const { account_id } = req.params;
-
-        console.log("ACCOUNT ID: ", account_id);
         
         await connection.query(
             `

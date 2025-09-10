@@ -614,11 +614,11 @@ const Orders = () => {
                                 <div className={styles['shipping-item']}>
                                     <i className="fa-solid fa-phone"></i>
                                     <div>
-                                        <span className={styles['shipping-label']}>Contact Number</span>
+                                        <span className={styles['shipping-label']}>Phone Number</span>
                                         <span className={styles['shipping-value']}>
                                             {selectedOrder.shipping_address?.phone || 
-                                             selectedOrder.contact_number || 
-                                             user?.contact_number || 
+                                             selectedOrder.phone_number || 
+                                             user?.phone_number || 
                                              'N/A'}
                                         </span>
                                     </div>

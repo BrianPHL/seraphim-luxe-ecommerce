@@ -8,6 +8,7 @@ import AuthContext from "./context";
 export const AuthProvider = ({ children }) => {
 
     const [ user, setUser ] = useState(null);
+    const [ addressBook, setAddressBook ] = useState(null);
     const [ isInitializing, setIsInitializing ] = useState(true);
     const [ isUpdatingAvatar, setIsUpdatingAvatar ] = useState(false);
     const [ isRemovingAvatar, setIsRemovingAvatar ] = useState(false);
@@ -30,10 +31,12 @@ export const AuthProvider = ({ children }) => {
         const initializeAuthentication = async () => {
 
             try {
+                
                 const session = await getSession();
 
                 if (session?.data?.user)
                     setUser(session.data.user);
+
 
             } catch (err) {
                 console.error("Auth context initializeAuth function error: ", err);
@@ -42,9 +45,17 @@ export const AuthProvider = ({ children }) => {
             }
 
         };
+
         initializeAuthentication();
 
     }, []);
+
+    useEffect(() => {
+
+        if (!user) return;
+            getAddressBook();
+
+    }, [ user ]);
 
     const showOTP = async (type, email, callback) => {
 
@@ -247,36 +258,6 @@ export const AuthProvider = ({ children }) => {
 
     };
 
-    const updateAddress = async (address) => {
-        if (!user) return { error: 'User not logged in' };
-
-        try {
-            setIsInitializing(true);
-
-            const response = await fetch(`/api/accounts/${user.id}/address`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to update address');
-            }
-
-            const updatedUser = { ...data };
-            setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            showToast('Address updated successfully!', 'success');
-        } catch (err) {
-            console.error("Failed to update address:", err);
-            return { error: err.message };
-        } finally {
-            setIsInitializing(false);
-        }
-    };
-
     const updatePassword = async (password) => {
 
         if (!user) return { error: 'User not logged in' };
@@ -304,6 +285,121 @@ export const AuthProvider = ({ children }) => {
             setIsInitializing(false);
         }
     };
+
+    const getAddressBook = async () => {
+    
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+            setIsInitializing(true);
+            const response = await fetchWithTimeout(`/api/accounts/${ user.id }/address`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to get address book');
+            }
+            
+            setAddressBook(data);
+
+        } catch (err) {
+            console.error("AuthContext getAddressBook function error: ", err);
+            return { error: err };
+        } finally {
+            setIsInitializing(false);
+        }
+    };
+
+    const addAddress = async (addressData) => {
+
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+
+            setIsInitializing(true);
+
+            const response = await fetchWithTimeout(`/api/accounts/${ user.id }/address`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(addressData)
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to add address');
+            }
+
+            const updatedUser = { ...data };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        } catch (err) {
+            console.error("AuthContext addNewAddress function error: ", err);
+            return { error: err };
+        } finally {
+            setIsInitializing(false);
+        }
+
+    };
+
+    const updateAddress = async (addressData) => {
+
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+
+            setIsInitializing(true);
+
+            const response = await fetchWithTimeout(`/api/accounts/${ user.id }/${ addressData.id }/address`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(addressData)
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to modify address');
+            }
+
+            const updatedUser = { ...data };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        } catch (err) {
+            console.error("AuthContext updateAddress function error: ", err);
+            return { error: err };
+        } finally {
+            setIsInitializing(false);
+        }
+
+    };
+
+    const deleteAddress = async (id) => {
+
+        if (!user) return { error: 'User not logged in' };
+
+        try {
+
+            setIsInitializing(true);
+
+            const response = await fetchWithTimeout(`/api/accounts/${ id }/address`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to delete address');
+            }
+
+        } catch (err) {
+            console.error("AuthContext deleteAddress function error: ", err);
+            return { error: err };
+        } finally {
+            setIsInitializing(false);
+        }
+
+    }
 
     const remove = async (id) => {
         
@@ -357,8 +453,7 @@ export const AuthProvider = ({ children }) => {
 
             const updatedUser = { ...user, image_url: data['image_url'] };
             setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            showToast('Avatar updated successfully!', 'success');
+            localStorage.setItem('user', JSON.stringify(updatedUser))
             return data;
 
         } catch (err) {
@@ -441,6 +536,11 @@ export const AuthProvider = ({ children }) => {
             updatePersonalInfo,
             updateAvatar,
             removeAvatar,
+            addressBook,
+            getAddressBook,
+            addAddress,
+            updateAddress,
+            deleteAddress
         }}>
             { children }
         </AuthContext.Provider>

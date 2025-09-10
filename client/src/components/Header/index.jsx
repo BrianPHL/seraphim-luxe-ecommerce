@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Logo, Anchor, Button, Accordion, Modal } from '@components';
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from 'react-router';
-import { useTheme, useAuth, useCart } from "@contexts";
+import { useTheme, useAuth, useCart, useWishlist } from "@contexts";
 
 const Header = () => {
 
@@ -14,6 +14,7 @@ const Header = () => {
     const [ drawerOpen, setDrawerOpen ] = useState(false);
     const { user, logout } = useAuth();
     const { cartItems } = useCart();
+    const { wishlistItems } = useWishlist();
     const handleLogout = () => setModalOpen(true);
 
     return (
@@ -44,6 +45,22 @@ const Header = () => {
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         { user ? (
                             <>
+                                <div 
+                                    className={ styles['indicator-wrapper'] }
+                                    onClick={ () => navigate('/wishlist')  }
+                                >
+                                    <Button
+                                        type="icon"
+                                        icon='fa-solid fa-heart'
+                                        action={ () => navigate('/wishlist') }
+                                        externalStyles={ styles['indicator-btn'] }
+                                        />
+                                    { wishlistItems['length'] !== 0 ? (
+                                        <span className={ styles['indicator-badge'] }>
+                                            { wishlistItems['length'] }
+                                        </span>
+                                    ) : null }
+                                </div>
                                 <div 
                                     className={ styles['indicator-wrapper'] }
                                     onClick={ () => navigate('/cart')  }
@@ -83,6 +100,10 @@ const Header = () => {
                                     {
                                         label: 'Orders',
                                         action: () => { navigate('/orders') },
+                                    },
+                                    {
+                                        label: 'Wishlist',
+                                        action: () => { navigate('/wishlist') },
                                     },
                                     {
                                         label: 'Logout',
@@ -140,6 +161,10 @@ const Header = () => {
                                     action: () => { navigate('/orders') },
                                 },
                                 {
+                                    label: 'Wishlist',
+                                    action: () => { navigate('/wishlist') },
+                                },
+                                {
                                     label: 'Logout',
                                     action: handleLogout,
                                 },
@@ -186,6 +211,22 @@ const Header = () => {
                         <div style={{ display: 'flex', gap: '1rem' }}>
                             { user ? (
                                 <>
+                                    <div 
+                                        className={ styles['indicator-wrapper'] }
+                                        onClick={ () => navigate('/wishlist')  }
+                                    >
+                                        <Button
+                                            type="icon"
+                                            action={ () => navigate('/wishlist')  }
+                                            icon='fa-solid fa-heart'
+                                            externalStyles={ styles['indicator-btn'] }
+                                            />
+                                        { wishlistItems['length'] !== 0 ? (
+                                            <span className={ styles['indicator-badge'] }>
+                                                { wishlistItems['length'] }
+                                            </span>
+                                        ) : null }
+                                    </div>
                                     <div 
                                         className={ styles['indicator-wrapper'] }
                                         onClick={ () => navigate('/cart')  }
@@ -236,6 +277,10 @@ const Header = () => {
                                         action: () => { navigate('/orders') },
                                     },
                                     {
+                                        label: 'Wishlist',
+                                        action: () => { navigate('/wishlist') },
+                                    },
+                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
@@ -281,6 +326,22 @@ const Header = () => {
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 { user ? (
                                     <>
+                                        <div 
+                                            className={ styles['indicator-wrapper'] }
+                                            onClick={ () => navigate('/wishlist')  }
+                                        >
+                                            <Button
+                                                type="icon"
+                                                action={ () => navigate('/wishlist')  }
+                                                icon='fa-solid fa-heart'
+                                                externalStyles={ styles['indicator-btn'] }
+                                                />
+                                            { wishlistItems['length'] !== 0 ? (
+                                                <span className={ styles['indicator-badge'] }>
+                                                    { wishlistItems['length'] }
+                                                </span>
+                                            ) : null }
+                                        </div>
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/cart')  }

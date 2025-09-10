@@ -90,7 +90,7 @@ export const auth = betterAuth({
                 required: false,
                 defaultValue: ""
             },
-            contact_number: {
+            phone_number: {
                 type: "string",
                 required: false,
                 defaultValue: ""

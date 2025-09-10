@@ -14,6 +14,7 @@ import {
   OrderProvider,
   CheckoutProvider,
   CategoriesProvider,
+  WishlistProvider,
   SettingsProvider,
   CMSProvider
 } from '@contexts';
@@ -32,16 +33,18 @@ createRoot(document.getElementById('root')).render(
                     <ProductsProvider>
                       <ReservationProvider>
                         <OrderProvider>
+                          <WishlistProvider>
                           <CartProvider>
-                            <CheckoutProvider>
-                              <InstallmentsProvider>
-                                  <StocksProvider>
-                                    <App />
-                                  </StocksProvider>
-                              </InstallmentsProvider>
-                            </CheckoutProvider>
-                          </CartProvider>
-                        </OrderProvider>
+                              <CheckoutProvider>
+                                <InstallmentsProvider>
+                                    <StocksProvider>
+                                      <App />
+                                    </StocksProvider>
+                                </InstallmentsProvider>
+                              </CheckoutProvider>
+                            </CartProvider>
+                          </WishlistProvider>
+                      </OrderProvider>
                       </ReservationProvider>
                     </ProductsProvider>
                   </CategoriesProvider>

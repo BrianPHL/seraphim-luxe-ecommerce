@@ -4,7 +4,7 @@ import { Header, Footer, OTPModal } from '@components';
 import { useAuth } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { 
-  Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, NotFound,
+  Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, Wishlist, NotFound,
   Contact, FAQs, PrivacyPolicy 
 } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
@@ -33,6 +33,7 @@ const PAGE_TITLES = {
 	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
 	"/reservations": "Seraphim Luxe | Reservations",
 	"/cart": "Seraphim Luxe | Cart",
+	"/wishlist": "Seraphim Luxe | Wishlist",
 	"/profile": "Seraphim Luxe | Profile",
     "/orders": "Seraphim Luxe | Orders",
     "/admin/static-pages": "Seraphim Luxe | Content Management", 
@@ -148,6 +149,14 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Cart />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/wishlist" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <Wishlist />
                         <Footer />
                     </ProtectedRoute>
                 } />

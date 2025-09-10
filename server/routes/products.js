@@ -64,8 +64,6 @@ router.put('/:product_id', async (req, res) => {
         const { product_id } = req.params;
         const { label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold } = req.body;
 
-        console.log(product_id)
-
         const [ result ] = await pool.query(
             `
                 UPDATE products
@@ -158,6 +156,26 @@ router.delete('/:product_id', async (req, res) => {
     } catch (err) {
         console.error('Error deleting product:', err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Add to your products API routes
+router.post('/:productId/view', async (req, res) => {
+    try {
+        const { productId } = req.params;
+        
+        const query = `
+            UPDATE products 
+            SET views_count = views_count + 1, 
+                last_viewed = NOW() 
+            WHERE id = ?
+        `;
+        
+        await pool.execute(query, [productId]);
+        res.json({ message: 'Product view tracked' });
+    } catch (error) {
+        console.error('Error tracking product view:', error);
+        res.status(500).json({ error: 'Failed to track product view' });
     }
 });
 

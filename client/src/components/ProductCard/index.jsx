@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import styles from './ProductCard.module.css';
 import { InputField, Button, Modal } from '@components';
-import { useAuth, useCart, useReservation, useToast, useCheckout, useCategories, useSettings } from '@contexts';
+import { useAuth, useCart, useReservation, useToast, useCheckout, useCategories, useSettings, useWishlist } from '@contexts';
 
 const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
     
@@ -21,6 +21,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
     const { addToCart } = useCart();
     const { addToReservations } = useReservation();
     const { setDirectCheckout } = useCheckout();
+    const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const { user } = useAuth();
     const { showToast } = useToast();
     const { getCategoryById, getActiveSubcategories } = useCategories();
@@ -241,8 +242,8 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                     </div>
                     <Button
                         type='icon'
-                        icon='fa-solid fa-square-arrow-up-right'
-                        action={ () => navigate(`/collections/${ id }`) }
+                        icon={ isInWishlist(id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }
+                        action={ () => isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id) }
                     />
                 </div>
                 <div className={ styles['divider'] }></div>
@@ -250,8 +251,6 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                     <Button
                         type='secondary'
                         label='Buy now'
-                        icon='fa-solid fa-credit-card'
-                        iconPosition='left'
                         externalStyles={ styles['checkout'] }
                         disabled={isOutOfStock}
                         action={() => {
@@ -260,6 +259,11 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                                 setModalOpen(true);
                             });
                         }}
+                    />
+                    <Button
+                        type='icon-outlined'
+                        icon='fa-solid fa-square-arrow-up-right'
+                        action={ () => navigate(`/collections/${ id }`) }
                     />
                     <Button
                         type='icon-outlined'

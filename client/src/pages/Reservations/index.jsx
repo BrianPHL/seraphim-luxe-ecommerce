@@ -88,8 +88,8 @@ const Reservations = ({}) => {
                                                         <h4>{ user['first_name'] + ' ' + user['last_name'] }</h4>
                                                     </div>
                                                     <div className={ styles['details-item'] }>
-                                                        <h4>Contact Number</h4>
-                                                        <h4>{ user['contact_number'] }</h4>
+                                                        <h4>Phone Number</h4>
+                                                        <h4>{ user['phone_number'] }</h4>
                                                     </div>
                                                     <div className={ styles['details-item'] }>
                                                         <h4>Email Address</h4>

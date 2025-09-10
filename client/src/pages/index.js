@@ -11,6 +11,7 @@ export { default as Orders } from "./Orders";
 export { default as Contact } from './Contact';
 export { default as FAQs } from './FAQs';
 export { default as PrivacyPolicy } from './PrivacyPolicy';
+export { default as Wishlist } from './Wishlist';
 
 export * from './Collections';
 export * from './PartsAndAccessories';

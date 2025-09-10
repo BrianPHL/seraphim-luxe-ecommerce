@@ -15,6 +15,7 @@ import ordersRouter from './routes/orders.js';
 import oauthRouter from './routes/oauth.js';
 import categoriesRouter from './routes/categories.js';
 import staticPagesRouter from './routes/static-pages.js';
+import wishlistRoutes from './routes/wishlist.js';
 import userSettingsRoutes from './routes/user-settings.js';
 
 dotenv.config();
@@ -56,6 +57,7 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/oauth', oauthRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/static-pages', staticPagesRouter);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
 
 app.use((err, req, res, next) => {

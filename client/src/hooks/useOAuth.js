@@ -77,8 +77,7 @@ const useOAuth = () => {
                 name: `${ data.firstName } ${ data.lastName }`,
                 first_name: data.firstName,
                 last_name: data.lastName,
-                contact_number: data.contactNumber,
-                address: data.address,
+                phone_number: data.phoneNumber,
                 password: data.password,
                 role: data.role
             });
@@ -98,14 +97,11 @@ const useOAuth = () => {
         },
         sendChangePasswordVerificationLink: async (email) => {
 
-            console.log("Triggered sendChangePasswordVerificationLink: ", email, `${ getBaseURL() }/profile?redirect=yes`);
-
             const result = await authClient.requestPasswordReset({
                 email: email,
                 redirectTo: `${ getBaseURL() }/profile?redirect=yes`
             });
 
-            console.log("changepassword result: ", result);
             return result;
 
         },
