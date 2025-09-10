@@ -83,48 +83,6 @@ export const OrderProvider = ({ children }) => {
         }
     };
 
-    const createOrder = async (orderData) => {
-        if (!user) {
-            showToast("You must be logged in to create orders.", "error");
-            return { error: "Not authenticated" };
-        }
-
-        try {
-            setLoading(true);
-
-            const response = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    account_id: user.account_id,
-                    items: orderData.items,
-                    total_amount: orderData.totalAmount,
-                    shipping_address: orderData.shippingAddress,
-                    payment_method: orderData.paymentMethod,
-                    notes: orderData.notes
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to create order!');
-            }
-            
-            await fetchOrders();
-            showToast(`Order created successfully!`, "success");
-            refreshProducts();
-            
-            return { success: true, order_id: data.order_id };
-        } catch (err) {
-            console.error("Failed to create order:", err);
-            showToast(`Failed to create order: ${err.message}`, "error");
-            return { error: err.message };
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const updateOrderStatus = async (order_id, status, notes = '') => {
         if (!user) return;
 
@@ -331,7 +289,6 @@ export const OrderProvider = ({ children }) => {
             orderStats,
             loading,
             fetchRecentOrders,
-            createOrder,
             updateOrderStatus,
             cancelOrder,
             deleteOrder,
