@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import styles from './ProductPage.module.css';
-import { Button, ReturnButton, InputField, Modal } from '@components';
-import { useProducts, useAuth, useCart, useCheckout, useToast, useCategories } from '@contexts';
+import { Button, ReturnButton, InputField, Modal, Counter } from '@components';
+import { useProducts, useAuth, useCart, useCheckout, useToast, useCategories, useSettings } from '@contexts';
 
 const ProductPage = () => {
 
@@ -16,7 +16,7 @@ const ProductPage = () => {
     const [ installmentAmount, setInstallmentAmount ] = useState('');
     const [ installmentPaymentDate, setInstallmentPaymentDate ] = useState('');
     const [ installmentNotes, setInstallmentNotes ] = useState('');
-    const [ formattedPrice, setFormattedPrice ] = useState('');
+    const [ selectedImageIdx, setSelectedImageIdx ] = useState(0);
     
     const { products } = useProducts();
     const { user } = useAuth();
@@ -24,7 +24,63 @@ const ProductPage = () => {
     const { setDirectCheckout } = useCheckout();
     const { showToast } = useToast();
     const { getCategoryById, getActiveSubcategories } = useCategories();
+    const { settings, convertPrice, formatPrice } = useSettings(); 
     const navigate = useNavigate();
+
+    const handleQuantityChange = (newValue) => {
+        setProductQuantity(newValue);
+    };
+
+    const handleMinimumReached = () => {
+        // Keep quantity at 1 for product page (different from cart behavior)
+        setProductQuantity(1);
+    };
+
+    const [ displayPrice, setDisplayPrice] = useState(0);
+
+    const safeFormatPrice = (price, currency = null) => {
+        try {
+            if (formatPrice && typeof formatPrice === 'function') {
+                return formatPrice(price, currency);
+            }
+
+            const numPrice = Number(price);
+            if (isNaN(numPrice)) {
+                return 'Price unavailable';
+            }
+
+            const currentCurrency = currency || settings?.currency || 'PHP';
+            
+            switch (currentCurrency?.toUpperCase()) {
+                case 'USD':
+                    return `$${numPrice.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'EUR':
+                    return `€${numPrice.toLocaleString('en-EU', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'JPY':
+                    return `¥${Math.round(numPrice).toLocaleString('ja-JP')}`;
+                case 'CAD':
+                    return `C$${numPrice.toLocaleString('en-CA', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+                case 'PHP':
+                default:
+                    return `₱${numPrice.toLocaleString('en-PH', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    })}`;
+            }
+        } catch (error) {
+            console.error('Error formatting price:', error);
+            return `₱${Number(price).toFixed(2)}`;
+        }
+    };
 
     const getCategoryDisplayName = (categoryId) => {
         const category = getCategoryById(categoryId);
@@ -38,19 +94,48 @@ const ProductPage = () => {
         return subcategory?.name || 'Unknown';
     };
 
+    const getProductImageUrls = (product) => {
+        if (product?.product_images && Array.isArray(product.product_images) && product.product_images.length > 0) {
+            return product.product_images
+                .sort((a, b) => a.display_order - b.display_order)
+                .map(img => img.image_url);
+        }
+        
+        return product?.image_url ? [product.image_url] : [];
+    };
+
     useEffect(() => {
         if (products && products.length > 0) {
             const foundProduct = products.find(p => p.id === parseInt(product_id));
             if (foundProduct) {
                 setProduct(foundProduct);
-                setFormattedPrice(parseFloat(foundProduct.price).toLocaleString('en-PH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }));
             }
             setLoading(false);
         }
     }, [products, product_id]);
+
+    //Use Effect for Price Conversion
+    useEffect(() => {
+        const updatePrice = async () => {
+            if (!product?.price) return;
+            
+            try {
+                if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                    const converted = await convertPrice(product.price, settings.currency);
+                    setDisplayPrice(converted);
+                } else {
+                    setDisplayPrice(product.price);
+                }
+            } catch (error) {
+                console.error('Error converting price:', error);
+                setDisplayPrice(product.price);
+            }
+        };
+        
+        if (settings && product) {
+            updatePrice();
+        }
+    }, [product?.price, settings?.currency, convertPrice, settings, product]);
 
     const requireAuth = (action) => {
         if (!user) {
@@ -130,6 +215,8 @@ const ProductPage = () => {
         );
     };
 
+    const imageUrls = product ? getProductImageUrls(product) : [];
+
     return (
         <>
             <div className={ styles['wrapper'] }>
@@ -138,46 +225,78 @@ const ProductPage = () => {
                     <h1>Product Details</h1>
                 </div>
                 <div className={ styles['product'] }>
-                    <div className={ styles['product-image'] }>
-                        <img
-                            src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ product['image_url'] }` }
-                            alt={ `${ product['label'] }. Price: ${ product['price'] }` } 
-                        />
+                    <div className={ styles['product-image-gallery'] }>
+                        {/* Vertical Thumbnails on the Left */}
+                        {imageUrls.length > 1 && (
+                            <div className={ styles['product-thumbnails-vertical'] }>
+                                {imageUrls.map((img, idx) => (
+                                    <img
+                                        key={`${img}-${idx}`}
+                                        src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${img}`}
+                                        alt={`Thumbnail ${idx + 1}`}
+                                        className={selectedImageIdx === idx ? styles['active-thumbnail'] : styles['thumbnail']}
+                                        onClick={() => setSelectedImageIdx(idx)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Main Product Image */}
+                        <div className={ styles['main-image-container'] }>
+                            <img
+                                src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ imageUrls[selectedImageIdx] || product['image_url'] }` }
+                                alt={ `${ product['label'] }. Price: ${ product['price'] }` } 
+                                className={ styles ['product-image'] }
+                            />
+                        </div>
                     </div>
+                    
                     <div className={ styles['product-details'] }>
                         <div className={ styles['product-details-header'] }>
                             <h2>{ product['label'] }</h2>
                             <h3 style={{ marginTop: '2rem' }}>
                                 <strong>Category:</strong> { getCategoryDisplayName(product.category_id) } | <strong>Sub-category:</strong> { getSubcategoryDisplayName(product.category_id, product.subcategory_id) }
                             </h3>
-                                <h3 style={{ marginTop: '1rem' }}>
-                                    <strong>Availability:</strong>{' '}
-                                    <span className={
-                                        isOutOfStock 
-                                            ? styles['out-of-stock'] 
-                                            : isLowStock 
-                                                ? styles['low-stock'] 
-                                                : styles['in-stock']
-                                    }>
-                                        {isOutOfStock 
-                                            ? 'Out of stock' 
-                                            : isLowStock 
-                                                ? `Low Stock (${product['stock_quantity']} available)` 
-                                                : `${product['stock_quantity']} available`
-                                        }
-                                    </span>
-                                </h3>
+                            <h3 style={{ marginTop: '1rem' }}>
+                                <strong>Availability:</strong>{' '}
+                                <span className={
+                                    isOutOfStock 
+                                        ? styles['out-of-stock'] 
+                                        : isLowStock 
+                                            ? styles['low-stock'] 
+                                            : styles['in-stock']
+                                }>
+                                    {isOutOfStock 
+                                        ? 'Out of stock' 
+                                        : isLowStock 
+                                            ? `Low Stock (${product['stock_quantity']} available)` 
+                                            : `${product['stock_quantity']} available`
+                                    }
+                                </span>
+                            </h3>
                         </div>
 
                         <div className={ styles['product-details-info'] }>
                             <span>
-                                <h4><strong>Description</strong></h4>
+                                <h4 style={{ color: 'var(--tg-primary)' }}>Description</h4>
                                 <p>{ product['description'] }</p>
                             </span>
                             <span>
-                                <h4><strong>Price</strong></h4>
-                                <h3>₱{ formattedPrice }</h3>
+                                <h4 style={{ color: 'var(--tg-primary)' }}>Price</h4>
+                                <h3 style={{ color: 'var(--tg-primary)' }}>{ safeFormatPrice(displayPrice) }</h3>
                             </span>
+                        </div>
+
+                        {/* Quantity Selector */}
+                        <div className={ styles['quantity-selector'] }>
+                            <h4 style={{ color: 'var(--tg-primary)' }}>Quantity</h4>
+                            <Counter
+                                value={productQuantity}
+                                max={product ? product['stock_quantity'] : 0}
+                                onChange={handleQuantityChange}
+                                onMinimumReached={handleMinimumReached}
+                                disabled={isOutOfStock}
+                            />
                         </div>
 
                         <div className={ styles['product-details-ctas'] }>
@@ -248,10 +367,7 @@ const ProductPage = () => {
                 </div>
 
                 <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                    <h3>Total: ₱{product ? (parseFloat(product['price']) * productQuantity).toLocaleString('en-PH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }) : '0.00'}</h3>
+                    <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
                 </div>
                 <div className={ styles['modal-ctas'] }>
                     <Button 
@@ -301,10 +417,7 @@ const ProductPage = () => {
                 </div>
 
                 <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                    <h3>Total: ₱{product ? (parseFloat(product['price']) * productQuantity).toLocaleString('en-PH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }) : '0.00'}</h3>
+                    <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
                 </div>
 
                 <div className={ styles['modal-ctas'] }>

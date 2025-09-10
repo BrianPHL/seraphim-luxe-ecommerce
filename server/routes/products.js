@@ -23,6 +23,18 @@ router.get('/', async (req, res) => {
             LEFT JOIN product_subcategories ps ON p.subcategory_id = ps.id
             ORDER BY p.created_at DESC
         `);
+
+        for (let product of rows) {
+            const [images] = await pool.query(`
+                SELECT id, image_url, display_order, is_primary 
+                FROM product_images 
+                WHERE product_id = ? 
+                ORDER BY display_order ASC
+            `, [product.id]);
+            product.product_images = images;
+        }
+
+
         res.json(rows);
     
     } catch (err) {
@@ -31,6 +43,24 @@ router.get('/', async (req, res) => {
     
     }
 
+});
+
+router.get('/:id/images', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const [images] = await pool.query(`
+            SELECT id, image_url, display_order, is_primary, created_at
+            FROM product_images 
+            WHERE product_id = ? 
+            ORDER BY display_order ASC, created_at ASC
+        `, [id]);
+        
+        res.json(images);
+    } catch (err) {
+        console.error('Error fetching product images:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.post('/', async (req, res) => {
@@ -54,6 +84,86 @@ router.post('/', async (req, res) => {
     } catch (err) {
         console.error('Error adding product:', err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/:id/images', upload.single('image'), async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        await connection.beginTransaction();
+        
+        const { id } = req.params;
+        const { display_order = 0, is_primary = false } = req.body;
+        
+        // Check if product exists
+        const [productCheck] = await connection.query(
+            'SELECT id FROM products WHERE id = ?',
+            [id]
+        );
+        
+        if (productCheck.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        
+        if (!req.file) {
+            await connection.rollback();
+            return res.status(400).json({ error: 'No image file uploaded' });
+        }
+        
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'products',
+            public_id: `product_${id}_${Date.now()}`
+        });
+        
+        // Clean up temp file
+        fs.unlinkSync(req.file.path);
+        
+        // If this is set as primary, remove primary status from other images
+        if (is_primary) {
+            await connection.query(
+                'UPDATE product_images SET is_primary = FALSE WHERE product_id = ?',
+                [id]
+            );
+        }
+        
+        // Insert new image record
+        const [insertResult] = await connection.query(`
+            INSERT INTO product_images (product_id, image_url, display_order, is_primary)
+            VALUES (?, ?, ?, ?)
+        `, [id, result.public_id, display_order, is_primary]);
+        
+        await connection.commit();
+        
+        res.status(201).json({
+            message: 'Image added successfully',
+            image: {
+                id: insertResult.insertId,
+                product_id: id,
+                image_url: result.public_id,
+                display_order: parseInt(display_order),
+                is_primary: Boolean(is_primary)
+            }
+        });
+        
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error adding product image:', err);
+        
+        // Clean up temp file if it exists
+        if (req.file?.path) {
+            try {
+                fs.unlinkSync(req.file.path);
+            } catch (cleanupError) {
+                console.error('Failed to delete temporary file:', cleanupError);
+            }
+        }
+        
+        res.status(500).json({ error: err.message });
+    } finally {
+        connection.release();
     }
 });
 
@@ -176,6 +286,52 @@ router.post('/:productId/view', async (req, res) => {
     } catch (error) {
         console.error('Error tracking product view:', error);
         res.status(500).json({ error: 'Failed to track product view' });
+    }
+})
+
+router.delete('/:id/images/:imageId', async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        await connection.beginTransaction();
+        
+        const { id, imageId } = req.params;
+        
+        // Get image details before deletion
+        const [imageDetails] = await connection.query(
+            'SELECT image_url FROM product_images WHERE id = ? AND product_id = ?',
+            [imageId, id]
+        );
+        
+        if (imageDetails.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ error: 'Image not found for this product' });
+        }
+        
+        // Delete from Cloudinary
+        try {
+            await cloudinary.uploader.destroy(imageDetails[0].image_url);
+        } catch (cloudinaryError) {
+            console.error('Error deleting image from Cloudinary:', cloudinaryError);
+            // Continue with database deletion even if Cloudinary fails
+        }
+        
+        // Delete from database
+        await connection.query(
+            'DELETE FROM product_images WHERE id = ? AND product_id = ?',
+            [imageId, id]
+        );
+        
+        await connection.commit();
+        
+        res.json({ message: 'Image deleted successfully' });
+        
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error deleting product image:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        connection.release();
     }
 });
 
