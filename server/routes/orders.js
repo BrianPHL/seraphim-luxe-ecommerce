@@ -184,7 +184,9 @@ router.post('/', async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const { account_id, items, total_amount, shipping_address, payment_method, notes } = req.body;
+        const { account_id, items, total_amount, shipping_address_id, billing_address_id, payment_method, notes } = req.body;
+
+        console.log(shipping_address_id, billing_address_id);
 
         const [userResult] = await connection.query(
             'SELECT first_name, last_name, email FROM accounts WHERE id = ?',
@@ -203,12 +205,9 @@ router.post('/', async (req, res) => {
         const [result] = await connection.query(`
             INSERT INTO orders (
                 order_number, account_id, first_name, last_name, email, 
-                total_amount, shipping_address, payment_method, notes, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-            orderNumber, account_id, user.first_name, user.last_name, user.email,
-            total_amount, shipping_address, payment_method, notes, account_id
-        ]);
+                total_amount, shipping_address_id, billing_address_id, payment_method, notes, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [ orderNumber, account_id, user.first_name, user.last_name, user.email, total_amount, shipping_address_id, billing_address_id, payment_method, notes, account_id ]);
 
         const orderId = result.insertId;
 
