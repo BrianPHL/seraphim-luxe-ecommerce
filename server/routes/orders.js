@@ -186,8 +186,6 @@ router.post('/', async (req, res) => {
 
         const { account_id, items, total_amount, shipping_address_id, billing_address_id, payment_method, notes } = req.body;
 
-        console.log(shipping_address_id, billing_address_id);
-
         const [userResult] = await connection.query(
             'SELECT first_name, last_name, email FROM accounts WHERE id = ?',
             [account_id]

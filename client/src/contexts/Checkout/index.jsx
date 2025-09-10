@@ -83,8 +83,8 @@ export const CheckoutProvider = ({ children }) => {
                 discount: discount,
                 total_amount: totalAmount,
                 notes: orderData.notes || '',
-                shipping_address: orderData.shippingAddress || '',
-                billing_address: null,
+                shipping_address_id: orderData.shipping_address_id,
+                billing_address_id: orderData.billing_address_id,
                 items: orderData.items || []
             };
 
