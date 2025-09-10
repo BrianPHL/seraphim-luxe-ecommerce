@@ -50,9 +50,6 @@ router.get('/:account_id/address', async (req, res) => {
             [ account_id ]
         )
 
-        if (addressRows.length === 0)
-            res.json([]);
-
         const [ accountRows ] = await pool.query(
             `
                 SELECT default_billing_address, default_shipping_address
