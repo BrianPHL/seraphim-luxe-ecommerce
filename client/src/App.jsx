@@ -3,7 +3,7 @@ import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-route
 import { Header, Footer, OTPModal } from '@components';
 import { useAuth } from '@contexts';
 import { ProtectedRoute } from '@routes';
-import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, NotFound } from '@pages';
+import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, Wishlist, NotFound } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
 import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories } from '@pages/Admin';
@@ -17,6 +17,7 @@ const PAGE_TITLES = {
 	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
 	"/reservations": "Seraphim Luxe | Reservations",
 	"/cart": "Seraphim Luxe | Cart",
+	"/wishlist": "Seraphim Luxe | Wishlist",
 	"/profile": "Seraphim Luxe | Profile",
     "/orders": "Seraphim Luxe | Orders",
 };
@@ -107,6 +108,14 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Cart />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/wishlist" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <Wishlist />
                         <Footer />
                     </ProtectedRoute>
                 } />

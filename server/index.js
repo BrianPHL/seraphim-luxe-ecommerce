@@ -14,6 +14,7 @@ import stocksRouter from './routes/stocks.js';
 import ordersRouter from './routes/orders.js';
 import oauthRouter from './routes/oauth.js';
 import categoriesRouter from './routes/categories.js';
+import wishlistRoutes from './routes/wishlist.js';
 import userSettingsRoutes from './routes/user-settings.js';
 
 dotenv.config();
@@ -52,6 +53,7 @@ app.use('/api/stocks', stocksRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/oauth', oauthRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
 
 app.use((err, req, res, next) => {
