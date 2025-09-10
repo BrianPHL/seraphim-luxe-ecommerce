@@ -79,7 +79,7 @@ const TableHeader = ({
                 <div className={styles['search-container']}>
                     <input
                         type="text"
-                        placeholder={`Search ${label.toLowerCase()}...`}
+                        placeholder={`Search ${label?.toLowerCase()}...`}
                         value={searchInput}
                         onChange={(e) => onSearchChange(e.target.value)}
                         onKeyPress={handleKeyPress}
