@@ -1,0 +1,244 @@
+@import url('../../index.css');
+
+.wrapper {
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.banner {
+    background: linear-gradient(135deg, #667eea00 0%, #764ba200 100%);
+    height: 250px;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+    left: 25%; 
+}
+
+.header h1 {
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: var(--tg-primary);
+    margin: 0;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (min-width: 992px) {
+    .content {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.contact-info h2 {
+    font-weight: 600;
+    font-size: 1.8rem;
+    color: var(--tg-primary);
+    margin-bottom: 1rem;
+    position: relative;
+    left: 10px; 
+}
+
+.contact-info > p {
+    color: var(--tg-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    position: relative;
+    left: 10px; 
+}
+
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.contact-item {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-base);
+}
+
+.contact-item h3 {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--tg-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.contact-item p {
+    color: var(--tg-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.form-section {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-section h2 {
+    font-weight: 600;
+    font-size: 1.8rem;
+    color: var(--tg-primary);
+    margin-bottom: 1.5rem;
+    position: relative;
+    left: 10px;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--tg-primary);
+    font-size: 1rem;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 1rem;
+    border: 2px solid var(--bg-outline);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    background: var(--bg-primary);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-base);
+    box-shadow: 0 0 0 3px rgba(59, 111, 250, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.submit-btn {
+    background: var(--accent-base);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+    position: relative;
+    left: 20px; 
+}
+
+.submit-btn:hover {
+    background: var(--accent-hover);
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--bg-outline);
+    border-top: 4px solid var(--accent-base);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.errorBanner {
+    background: #ffebee;
+    color: #c62828;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 2rem;
+    border: 1px solid #f44336;
+}
+
+@media (max-width: 768px) {
+    .wrapper {
+        padding: 1rem;
+    }
+    
+    .banner {
+        height: 200px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .contact-info h2 {
+        font-size: 1.5rem;
+    }
+    
+    .form-section {
+        padding: 1.5rem;
+    }
+    
+    
+    .header,
+    .contact-info h2,
+    .contact-info > p,
+    .form-section h2,
+    .submit-btn {
+        left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .contact-item {
+        padding: 1rem;
+    }
+}
