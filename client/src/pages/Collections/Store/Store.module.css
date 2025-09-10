@@ -1,23 +1,14 @@
-
 @import url('../../../index.css');
 
 .wrapper {
     flex-direction: column;
     padding: 12rem 16rem 6rem 16rem;
     display: flex;
-    gap: 4rem;
-    align-items: center;
-    & > h2 {
-        align-self: flex-start;
-        font-weight: 700;
-        font-size: 2rem;
-        color: var(--tg-primary);
-
-    }
+    gap: 2rem;
 }
 
 .banner {
-    /* background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/v1746275497/motorcycles-banner_v55w0m.webp'); */
+    background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/v1746275498/cart-banner_ebmjpr.webp');
     background-position: center;
     background-repeat: no-repeat;
     justify-content: center;
@@ -31,26 +22,21 @@
 }
 
 .pagewrap {
-    flex-direction: column;
-    align-self: flex-start;
     display: flex;
+    align-items: center;
     gap: 1rem;
-    margin-bottom: -3rem;
-    & > button {
-        align-self: flex-start;
-    }
 }
 
 .container {
-    justify-content: center;
-    align-items: stretch;
-    flex-wrap: wrap;
     display: flex;
-    width: 100%;
-    gap: 2rem;
-    & > * {
-        flex: 0 1 18rem;
-    }
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
 }
 
 .results{
@@ -74,20 +60,89 @@
     gap: 1rem;
 }
 
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    gap: 1rem;
+}
+
+.loading > i {
+    font-size: 2rem;
+    color: var(--accent-base);
+}
+
+.loading > p {
+    color: var(--tg-secondary);
+    font-size: 0.9rem;
+}
+
+.not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    gap: 1rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.5rem;
+}
+
+.not-found > i {
+    font-size: 3rem;
+    color: var(--tg-secondary);
+    opacity: 0.5;
+}
+
+.not-found > h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--tg-primary);
+    margin: 0;
+}
+
+.not-found > p {
+    font-size: 0.9rem;
+    color: var(--tg-secondary);
+    text-align: center;
+    margin: 0;
+}
+
+/* Responsive Design */
 @media only screen and (max-width: 1575px) {
-
-    .wrapper { padding: 12rem 8rem 6rem 8rem; }
-
+    .wrapper { 
+        padding: 12rem 8rem 6rem 8rem; 
+    }
 }
 
 @media only screen and (max-width: 1320px) {
-
-    .wrapper { padding: 8rem 4rem 4rem 4rem; }
-
+    .wrapper { 
+        padding: 8rem 4rem 4rem 4rem; 
+    }
 }
 
 @media only screen and (max-width: 1192px) {
+    .wrapper { 
+        padding: 14rem 2rem 2rem 2rem; 
+    }
+}
 
-    .wrapper { padding: 14rem 2rem 2rem 2rem; }
+@media only screen and (max-width: 768px) {
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+}
 
+@media only screen and (max-width: 480px) {
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wrapper {
+        padding: 12rem 1rem 2rem 1rem;
+    }
 }

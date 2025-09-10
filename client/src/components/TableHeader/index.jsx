@@ -1,137 +1,106 @@
-import { Button, InputField } from '@components';
+import { Button } from '@components';
 import styles from './TableHeader.module.css';
 
-const TableHeader = ({ tableName, currentPage, totalPages, resultsLabel, sortLabel, searchValue, onPageChange, onSortChange, onSearchChange, onSearchSubmit }) => {
+const TableHeader = ({ 
+    icon, 
+    label, 
+    currentSort, 
+    searchInput, 
+    onSortChange, 
+    onSearchChange, 
+    onSearchSubmit 
+}) => {
 
-    if (tableName !== 'collections' && tableName !== 'products' && tableName !== 'installments') return null;
-    if (currentPage === undefined || totalPages === undefined || !onPageChange) return null;
-
-    const pageNumbers = [];
-    const startPage = Math.max(1, currentPage - 1);
-    const endPage = Math.min(totalPages, startPage + 2);
-    for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
-
-    const getSortOptions = () => {
-        if (tableName === 'reservations') {
-            return [
-                {
-                    label: 'Sort by: Latest',
-                    action: () => { onSortChange('Sort by: Latest') },
-                },
-                {
-                    label: 'Sort by: Oldest',
-                    action: () => { onSortChange('Sort by: Oldest') },
-                },
-                {
-                    label: 'Sort by: Status (Pending First)',
-                    action: () => { onSortChange('Sort by: Status (Pending First)') },
-                },
-                {
-                    label: 'Sort by: Status (Cancelled First)',
-                    action: () => { onSortChange('Sort by: Status (Cancelled First)') },
-                }
-            ];
-        } else if (tableName === 'installments') {
-            return [
-                {
-                    label: 'Sort by: Latest',
-                    action: () => { onSortChange('Sort by: Latest') },
-                },
-                {
-                    label: 'Sort by: Oldest',
-                    action: () => { onSortChange('Sort by: Oldest') },
-                },
-                {
-                    label: 'Sort by: Amount (High to Low)',
-                    action: () => { onSortChange('Sort by: Amount (High to Low)') },
-                },
-                {
-                    label: 'Sort by: Amount (Low to High)',
-                    action: () => { onSortChange('Sort by: Amount (Low to High)') },
-                }
-            ];
+    const sortOptions = [
+        {
+            label: 'Price (Low to High)',
+            action: () => onSortChange('Sort by: Price (Low to High)')
+        },
+        {
+            label: 'Price (High to Low)',
+            action: () => onSortChange('Sort by: Price (High to Low)')
+        },
+        {
+            label: 'Name (A-Z)',
+            action: () => onSortChange('Sort by: Name (A-Z)')
+        },
+        {
+            label: 'Name (Z-A)',
+            action: () => onSortChange('Sort by: Name (Z-A)')
+        },
+        {
+            label: 'Most Popular',
+            action: () => onSortChange('Sort by: Popularity (Most Popular)')
+        },
+        {
+            label: 'Least Popular',
+            action: () => onSortChange('Sort by: Popularity (Least Popular)')
+        },
+        {
+            label: 'Newest First',
+            action: () => onSortChange('Sort by: Newest First')
+        },
+        {
+            label: 'Oldest First',
+            action: () => onSortChange('Sort by: Oldest First')
         }
+    ];
 
-        return [
-            {
-                label: 'Sort by: Price (Low to High)',
-                action: () => { onSortChange('Sort by: Price (Low to High)') },
-            },
-            {
-                label: 'Sort by: Price (High to Low)',
-                action: () => { onSortChange('Sort by: Price (High to Low)') },
-            },
-            {
-                label: 'Name: A-Z',
-                action: () => { onSortChange('Name: A-Z') },
-            },
-            {
-                label: 'Name: Z-A',
-                action: () => { onSortChange('Name: Z-A') },
-            }
-        ];
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            onSearchSubmit();
+        }
     };
 
-    const getSearchPlaceholder = () => {
-        switch (tableName) {
-            case 'collections':
-                return 'Search for jewelry, accessories, earrings, etc...';
-            case 'products':
-                return 'Search for products...';
-            case 'installments':
-                return 'Search installment requests...';
-            default:
-                return 'Search for parts & accessories...';
-        }
+    const getCurrentSortLabel = () => {
+        // Create a mapping of sort values to labels
+        const sortMapping = {
+            'Sort by: Price (Low to High)': 'Price (Low to High)',
+            'Sort by: Price (High to Low)': 'Price (High to Low)',
+            'Sort by: Name (A-Z)': 'Name (A-Z)',
+            'Sort by: Name (Z-A)': 'Name (Z-A)',
+            'Sort by: Popularity (Most Popular)': 'Most Popular',
+            'Sort by: Popularity (Least Popular)': 'Least Popular',
+            'Sort by: Newest First': 'Newest First',
+            'Sort by: Oldest First': 'Oldest First'
+        };
+
+        return sortMapping[currentSort] || 'Sort by';
     };
 
     return (
-        <div className={ styles['wrapper'] }>
-            <div className={ styles['top'] }>
-                <Button
-                    id='sort-by-dropdown'
-                    label='Sort by'
-                    type='secondary'
-                    options={getSortOptions()}
-                />
-                <InputField
-                    hint={getSearchPlaceholder()}
-                    type='text'
-                    onChange={onSearchChange}
-                    action={onSearchSubmit}
-                    isSubmittable={true}
-                    value={searchValue}
-                />
+        <div className={styles['table-header']}>
+            <div className={styles['header-left']}>
+                <i className={icon}></i>
+                <h2>{label}</h2>
             </div>
-            <div className={ styles['divider'] }></div>
-            <div className={ styles['bottom'] }>
-                <div className={ styles['info'] }>
-                    <h3>{resultsLabel}</h3>
-                    <h3>{sortLabel}</h3>
-                </div>
-                <div className={ styles['pagination'] }>
-                    <Button
-                        type="icon-outlined"
-                        action={ () => onPageChange(currentPage - 1) }
-                        icon="fa-solid fa-angle-left"
-                        disabled={ currentPage === 1 }
+            
+            <div className={styles['header-right']}>
+                <div className={styles['search-container']}>
+                    <input
+                        type="text"
+                        placeholder={`Search ${label.toLowerCase()}...`}
+                        value={searchInput}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className={styles['search-input']}
                     />
-                    { pageNumbers.map(page => (
-                        <Button
-                            key={ page }
-                            type='secondary'
-                            label={ String(page) }
-                            action={ () => onPageChange(page) }
-                            isActive={ currentPage === page }
-                        />
-                    ))}
-                    <Button
-                        type="icon-outlined"
-                        action={ () => onPageChange(currentPage + 1) }
-                        icon="fa-solid fa-angle-right"
-                        disabled={ currentPage === totalPages }
-                    />
+                    <i 
+                        className="fa-solid fa-magnifying-glass"
+                        onClick={onSearchSubmit}
+                    ></i>
                 </div>
+                
+                <Button
+                    id='sort-dropdown'
+                    type='secondary'
+                    label={getCurrentSortLabel()}
+                    icon='fa-solid fa-chevron-down'
+                    iconPosition='right'
+                    dropdownPosition='right'
+                    options={sortOptions}
+                    externalStyles={styles['sort-button']}
+                />
             </div>
         </div>
     );
