@@ -45,7 +45,15 @@ const Wishlist = () => {
 
     const handleAddToCart = async (item) => {
         try {
-            await addToCart(item.product_id, 1);
+            await addToCart({ 
+                product_id: item.product_id,
+                category: item.category, 
+                subcategory: item.subcategory, 
+                image_url: item.image_url, 
+                label: item.label, 
+                price: item.price,
+                quantity: 1
+            });
             showToast(`${item.label} added to cart!`, 'success');
         } catch (error) {
             showToast('Failed to add item to cart.', 'error');
@@ -176,6 +184,7 @@ const Wishlist = () => {
                                                                 minimumFractionDigits: 2,
                                                                 maximumFractionDigits: 2
                                                             })}</h4>
+                                                            <p className={ styles['item-info-stock_qty'] }>{item.stock_quantity || 0} { item.stock_quantity === 1 ? 'item' : 'items' } in stock</p>
                                                         </div>
                                                         <h4><b>Category:</b> {item.category} | <b>Sub-category:</b> {item.subcategory}</h4>
                                                     </div>

@@ -219,6 +219,10 @@
     margin: 0;
 }
 
+.item-info-stock_qty {
+    color: var(--tg-secondary);
+}
+
 .wishlist-item-details-left > h4 {
     font-weight: 400;
     font-size: 0.875rem;

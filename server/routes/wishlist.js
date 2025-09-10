@@ -16,9 +16,14 @@ router.get('/:userId', async (req, res) => {
                 p.price,
                 p.image_url,
                 p.description,
+                p.stock_quantity,
+                pc.name as category,
+                ps.name as subcategory,
                 w.created_at
             FROM wishlist w
             JOIN products p ON w.product_id = p.id
+            LEFT JOIN product_categories pc ON p.category_id = pc.id
+            LEFT JOIN product_subcategories ps ON p.subcategory_id = ps.id
             WHERE w.user_id = ?
             ORDER BY w.created_at DESC
         `;
