@@ -966,12 +966,17 @@ const Profile = ({}) => {
                                                         </div>
                                                     </div>
                                                     <div className={styles['address-tags']}>
-                                                        {addressBook.defaults?.default_billing_address === address.id && (
-                                                          <span className={styles['address-tag']}>Default Billing</span>
-                                                        )}
-                                                        {addressBook.defaults?.default_shipping_address === address.id && (
-                                                          <span className={styles['address-tag']}>Default Shipping</span>
-                                                        )}
+                                                            {(addressBook.defaults?.default_billing_address === address.id ||
+                                                              addressBook.defaults?.default_shipping_address === address.id) && (
+                                                              <div className={styles['address-tags']}>
+                                                                {addressBook.defaults?.default_billing_address === address.id && (
+                                                                  <span className={styles['address-tag']}>Default Billing</span>
+                                                                )}
+                                                                {addressBook.defaults?.default_shipping_address === address.id && (
+                                                                  <span className={styles['address-tag']}>Default Shipping</span>
+                                                                )}
+                                                              </div>
+                                                            )}
                                                     </div>
                                                 </div>
 

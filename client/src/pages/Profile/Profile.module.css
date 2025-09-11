@@ -879,6 +879,10 @@
     gap: 0.5rem;
 }
 
+.address-tags:empty {
+  display: none;
+}
+
 .address-tag {
     background-color: var(--bg-secondary);
     border-radius: 0.5rem;
