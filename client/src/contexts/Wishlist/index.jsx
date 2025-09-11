@@ -81,12 +81,14 @@ export const WishlistProvider = ({ children }) => {
         if (!user) return;
 
         try {
+
+            const parsedProductId = parseInt(product_id);
             
             setLoading(true);
-            setWishlistItems(previous => previous.filter(item => item['product_id'] !== product_id));
-            setSelectedWishlistItems(previous => previous.filter(item => item['product_id'] !== product_id));
+            setWishlistItems(previous => previous.filter(item => item['product_id'] !== parsedProductId));
+            setSelectedWishlistItems(previous => previous.filter(item => item['product_id'] !== parsedProductId));
             
-            await fetch(`/api/wishlist/${ user['id'] }/${ product_id }`, {
+            await fetch(`/api/wishlist/${ user['id'] }/${ parsedProductId }`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -185,7 +187,10 @@ export const WishlistProvider = ({ children }) => {
     };
 
     const isInWishlist = (product_id) => {
-        return wishlistItems.some(item => item['product_id'] === product_id);
+
+        const parsedProductId = parseInt(product_id);
+
+        return wishlistItems.some(item => item['product_id'] === parsedProductId);
     };
 
     useEffect(() => {
