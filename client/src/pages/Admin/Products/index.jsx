@@ -292,7 +292,7 @@ const Products = () => {
                     />
                 </div>
                 
-                <TableHeader
+                {/* <TableHeader
                     tableName="products"
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -303,7 +303,7 @@ const Products = () => {
                     onSortChange={handleSortChange}
                     onSearchChange={handleSearchChange}
                     onSearchSubmit={handleSearch}
-                />
+                /> */}
                 
                 <div className={styles['table']}>
                     <div className={styles['table-wrapper']}>

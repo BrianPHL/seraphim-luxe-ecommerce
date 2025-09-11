@@ -244,7 +244,7 @@ const Stocks = () => {
                 <div className={styles['section']}>
                     <h2>Stock Transaction History</h2>
                     
-                    <TableHeader
+                    {/* <TableHeader
                         tableName="reservations"
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -255,7 +255,7 @@ const Stocks = () => {
                         onSortChange={handleSortChange}
                         onSearchChange={handleSearchChange}
                         onSearchSubmit={handleSearch}
-                    />
+                    /> */}
                     
                     <div className={styles['table']}>
                         <div className={styles['table-wrapper']}>
