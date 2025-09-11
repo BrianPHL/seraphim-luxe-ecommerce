@@ -243,10 +243,9 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                     <Button
                         type='icon'
                         icon={ isInWishlist(id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }
+                        disabled={ !user }
                         action={ () => {
-                            requireAuth(() => {
-                                isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id)
-                            })
+                            isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id)
                         }}
                     />
                 </div>
@@ -256,12 +255,10 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                         type='secondary'
                         label='Buy now'
                         externalStyles={ styles['checkout'] }
-                        disabled={isOutOfStock}
+                        disabled={isOutOfStock || !user }
                         action={() => {
-                            requireAuth(() => {
-                                setModalType('checkout');
-                                setModalOpen(true);
-                            });
+                            setModalType('checkout');
+                            setModalOpen(true);
                         }}
                     />
                     <Button
@@ -273,12 +270,10 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                         type='icon-outlined'
                         icon='fa-solid fa-cart-plus'         
                         externalStyles={ styles['cart'] }
-                        disabled={isOutOfStock}
+                        disabled={ isOutOfStock || !user }
                         action={() => {
-                            requireAuth(() => {
-                                setModalType('cart');
-                                setModalOpen(true);
-                            });
+                            setModalType('cart');
+                            setModalOpen(true);
                         }}
                     />
                 </div>

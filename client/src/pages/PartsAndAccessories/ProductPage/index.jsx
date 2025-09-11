@@ -172,12 +172,11 @@ const ProductPage = () => {
                                 icon='fa-solid fa-calendar-check'
                                 iconPosition='left'
                                 externalStyles={ styles['reserve'] }
+                                disabled={ !user }
                                 action={
                                     () => { 
-                                        requireAuth(() => {
-                                            setModalType('reservation');
-                                            setModalOpen(true);
-                                        })
+                                        setModalType('reservation');
+                                        setModalOpen(true);
                                     } 
                                 }
                             />
@@ -186,12 +185,11 @@ const ProductPage = () => {
                                 icon='fa-solid fa-cart-plus'
                                 iconPosition='left'
                                 label='Add to Cart'
+                                disabled={ !user }
                                 action={
                                     () => { 
-                                        requireAuth(() => {
-                                            setModalType('cart');
-                                            setModalOpen(true);
-                                        })
+                                        setModalType('cart');
+                                        setModalOpen(true);
                                     } 
                                 }
                             />

@@ -294,12 +294,10 @@ const ProductPage = () => {
                                 icon='fa-solid fa-credit-card'
                                 iconPosition='left'
                                 externalStyles={ styles['checkout'] }
-                                disabled={isOutOfStock}
+                                disabled={ isOutOfStock || !user }
                                 action={() => {
-                                    requireAuth(() => {
-                                        setModalType('checkout');
-                                        setModalOpen(true);
-                                    });
+                                    setModalType('checkout');
+                                    setModalOpen(true);
                                 }}
                             />
                             <Button
@@ -308,21 +306,18 @@ const ProductPage = () => {
                                 icon='fa-solid fa-cart-plus'
                                 iconPosition='left'
                                 externalStyles={ styles['cart'] }
-                                disabled={isOutOfStock}
+                                disabled={ isOutOfStock || !user }
                                 action={() => {
-                                    requireAuth(() => {
-                                        setModalType('cart');
-                                        setModalOpen(true);
-                                    });
+                                    setModalType('cart');
+                                    setModalOpen(true);
                                 }}
                             />
                             <Button
                                 type='icon-outlined'
                                 icon={ isInWishlist(product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }
+                                disabled={ !user }
                                 action={ () => {
-                                    requireAuth(() => {
-                                        isInWishlist(product_id) ? removeFromWishlist(product_id) : addToWishlist(product_id);
-                                    });
+                                    isInWishlist(product_id) ? removeFromWishlist(product_id) : addToWishlist(product_id);
                                 }}
                             />
                         </div>
