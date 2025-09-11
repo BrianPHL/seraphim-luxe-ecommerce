@@ -50,3 +50,29 @@ export const createChangePasswordVerificationLinkEmail = (email, url) => {
         </div>
     `;
 }
+
+export const createWelcomeEmail = (email, name = '') => {
+    return `
+        <div style="background: #f6f1ea; font-family: 'Lora', serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(180, 140, 90, 0.08); border: 1px solid #e5d4c0;">
+            <h2 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Welcome to Seraphim Luxe!</h2>
+            <p style="color: #7c5a3a; font-size: 1.1em;">
+                Hi <strong>${name ? name : email}</strong>,
+            </p>
+            <p style="color: #7c5a3a; font-size: 1.05em;">
+                Your account has been successfully created. We're excited to have you join our community!
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="https://seraphim-luxe-ecommerce-production.up.railway.app/profile" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                    Go to My Profile
+                </a>
+            </div>
+            <p style="color: #7c5a3a; text-align: center; font-size: 1em; margin-bottom: 24px;">
+                Explore our latest collections, manage your account, and enjoy exclusive member benefits.
+            </p>
+            <p style="text-align: center; color: #b08d57; font-size: 14px;">
+                If you have any questions, feel free to reply to this email.<br>
+                Thank you for choosing Seraphim Luxe!
+            </p>
+        </div>
+    `;
+};

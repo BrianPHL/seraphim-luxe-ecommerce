@@ -143,6 +143,24 @@ export const auth = betterAuth({
 
         after: createAuthMiddleware(async (ctx) => {
 
+            if (ctx.path === '/sign-up/email') {
+
+                const email = ctx.context?.returned?.user?.email || '';
+                const name = ctx.context?.returned?.user?.name || '';
+
+                if (!email) return;
+                
+                const { _, err } = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: "Welcome | Seraphim Luxe",
+                    html: createWelcomeEmail(email, name)
+                });
+                
+                if (err) console.error(err);
+
+            }
+
             if (ctx.path === '/callback/:id') {
 
                 const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
@@ -205,6 +223,18 @@ export const auth = betterAuth({
                                 last_name: lastName,
                                 role: expectedRole
                             });
+
+                            console.log("SHOULD BE EMAILING 2");
+
+                            const { _, err } = await sendEmail({
+                                from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                                to: user.email,
+                                subject: "Welcome | Seraphim Luxe",
+                                html: createWelcomeEmail(user.email, user.name)
+                            });
+
+                            if (err) console.error(err);
+
                             return;
 
                         } catch(err) {
