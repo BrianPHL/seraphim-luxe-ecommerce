@@ -199,7 +199,7 @@ const Cart = () => {
                     { cartItems.length === 0 ? (
                         <div className={ styles['empty'] }>
                             <h3>Your cart is empty!</h3>
-                            <p>Start browsing for items in <Anchor label="Jewelry" link="/jewelry" isNested={ false }/> or <Anchor label="Accessories" link="/accessories" isNested={ false }/>.</p>
+                                <p>Start browsing for items in <Anchor label="Our Collections" link="/collections" isNested={false}/>.</p>
                         </div>
                     ) : (
                         <>
