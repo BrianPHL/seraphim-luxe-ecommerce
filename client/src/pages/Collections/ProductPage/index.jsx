@@ -23,7 +23,7 @@ const ProductPage = () => {
     const { addToCart } = useCart();
     const { setDirectCheckout } = useCheckout();
     const { showToast } = useToast();
-    const { getCategoryById, getActiveSubcategories } = useCategories();
+    const { getCategoryById, getSubcategoriesByCategory } = useCategories();
     const { settings, convertPrice, formatPrice } = useSettings(); 
     const navigate = useNavigate();
 
@@ -80,18 +80,6 @@ const ProductPage = () => {
             console.error('Error formatting price:', error);
             return `₱${Number(price).toFixed(2)}`;
         }
-    };
-
-    const getCategoryDisplayName = (categoryId) => {
-        const category = getCategoryById(categoryId);
-        return category?.name || 'Unknown';
-    };
-
-    const getSubcategoryDisplayName = (categoryId, subcategoryId) => {
-        if (!categoryId || !subcategoryId) return 'Unknown';
-        const subcategories = getActiveSubcategories(categoryId);
-        const subcategory = subcategories.find(sub => sub.id === subcategoryId);
-        return subcategory?.name || 'Unknown';
     };
 
     const getProductImageUrls = (product) => {
@@ -154,8 +142,8 @@ const ProductPage = () => {
         try {
             await addToCart({ 
                 product_id: product['id'],
-                category: getCategoryDisplayName(product.category_id), 
-                subcategory: getSubcategoryDisplayName(product.category_id, product.subcategory_id), 
+                category: product['category'],
+                subcategory: product['subcategory'],
                 image_url: product['image_url'], 
                 label: product['label'], 
                 price: product['price'],
@@ -178,8 +166,8 @@ const ProductPage = () => {
         try {
             const directItem = {
                 product_id: product['id'],
-                category: getCategoryDisplayName(product.category_id),
-                subcategory: getSubcategoryDisplayName(product.category_id, product.subcategory_id),
+                category: product['category'],
+                subcategory: product['subcategory'],
                 image_url: product['image_url'],
                 label: product['label'],
                 price: product['price'],
@@ -255,7 +243,7 @@ const ProductPage = () => {
                         <div className={ styles['product-details-header'] }>
                             <h2>{ product['label'] }</h2>
                             <h3 style={{ marginTop: '2rem' }}>
-                                <strong>Category:</strong> { getCategoryDisplayName(product.category_id) } | <strong>Sub-category:</strong> { getSubcategoryDisplayName(product.category_id, product.subcategory_id) }
+                                <strong>Category:</strong> { product['category'] } | <strong>Sub-category:</strong> { product['subcategory'] }
                             </h3>
                             <h3 style={{ marginTop: '1rem' }}>
                                 <strong>Availability:</strong>{' '}
