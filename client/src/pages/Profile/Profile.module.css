@@ -474,13 +474,19 @@
     gap: 1rem;
 }
 
+.inputs-wrapper-horizontal {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+}
+
 .input-wrapper-horizontal {
     justify-items: stretch;
     flex-direction: row;
     align-self: stretch;
     display: flex;
     width: 100%;
-    gap: 1rem;
+    gap: 0.5rem;
     & > input { width: 100%; }
     & > label {
         font-weight: 500;
@@ -504,13 +510,19 @@
     }
 }
 
-.input-wrapper, .input-wrapper-vertical {
+.inputs-wrapper-vertical {
+    flex-direction: column;
+    display: flex;
+    gap: 1rem;
+}
+
+.input-wrapper {
     justify-items: stretch;
     flex-direction: column;
     align-self: stretch;
     display: flex;
     width: 100%;
-    gap: 0.5rem;
+    gap: 1rem;
     & > input { width: 100%; }
     & > label {
         font-weight: 500;
@@ -875,6 +887,12 @@
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--bg-outline);
     color: var(--tg-primary);
+}
+
+.inputs-wrapper {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
 }
 
 .address-actions {

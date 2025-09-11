@@ -744,58 +744,60 @@ const Profile = ({}) => {
                         <section className={ styles['info-personal'] }>
                             <h2>Personal Information</h2>
                             <div className={ styles['inputs-container'] }>
-                                <div className={ styles['inputs-wrapper'] }>
-                                    <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="first_name">First name</label>
-                                        <InputField
-                                            hint='Your first name...'
-                                            type='text'
-                                            isSubmittable={ false }
-                                            value={ personalInfo['first_name'] }
-                                            onChange={ event => handlePersonalInfoChange('first_name', event['target']['value'] )}
-                                            error={ validationErrors['first_name'] }
-                                        />
+                                <div className={ styles['inputs-wrapper-vertical'] }>
+                                    <div className={ styles['inputs-wrapper'] }>
+                                        <div className={ styles['input-wrapper'] }>
+                                            <label htmlFor="first_name">First name</label>
+                                            <InputField
+                                                hint='Your first name...'
+                                                type='text'
+                                                isSubmittable={ false }
+                                                value={ personalInfo['first_name'] }
+                                                onChange={ event => handlePersonalInfoChange('first_name', event['target']['value'] )}
+                                                error={ validationErrors['first_name'] }
+                                            />
+                                        </div>
+                                        <div className={ styles['input-wrapper'] }>
+                                            <label htmlFor="last_name">
+                                                Last name
+                                            </label>
+                                            <InputField
+                                                hint='Your last name...'
+                                                type='text'
+                                                isSubmittable={ false }
+                                                value={ personalInfo['last_name'] }
+                                                onChange={ event => handlePersonalInfoChange('last_name', event['target']['value'] )}
+                                                error={ validationErrors['last_name'] }
+                                            />
+                                        </div>
                                     </div>
-                                    <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="last_name">
-                                            Last name
-                                        </label>
-                                        <InputField
-                                            hint='Your last name...'
-                                            type='text'
-                                            isSubmittable={ false }
-                                            value={ personalInfo['last_name'] }
-                                            onChange={ event => handlePersonalInfoChange('last_name', event['target']['value'] )}
-                                            error={ validationErrors['last_name'] }
-                                        />
-                                    </div>
-                                </div>
-                                <div className={ styles['inputs-wrapper'] }>
-                                    <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="email_address">
-                                            Email address
-                                        </label>
-                                        <InputField
-                                            hint='Your email address...'
-                                            type='text'
-                                            isSubmittable={ false }
-                                            value={ personalInfo['email'] }
-                                            onChange={ event => handlePersonalInfoChange('email', event['target']['value'] )}
-                                            error={ validationErrors['email'] }
-                                        />
-                                    </div>
-                                    <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="phone number">
-                                            Phone number
-                                        </label>
-                                        <InputField
-                                            hint='Your phone number...'
-                                            type='text'
-                                            isSubmittable={ false }
-                                            value={ personalInfo['phone_number'] }
-                                            onChange={ event => handlePersonalInfoChange('phone_number', event['target']['value'] )}
-                                            error={ validationErrors['phone_number'] }
-                                        />
+                                    <div className={ styles['inputs-wrapper'] }>
+                                        <div className={ styles['input-wrapper'] }>
+                                            <label htmlFor="email_address">
+                                                Email address
+                                            </label>
+                                            <InputField
+                                                hint='Your email address...'
+                                                type='text'
+                                                isSubmittable={ false }
+                                                value={ personalInfo['email'] }
+                                                onChange={ event => handlePersonalInfoChange('email', event['target']['value'] )}
+                                                error={ validationErrors['email'] }
+                                            />
+                                        </div>
+                                        <div className={ styles['input-wrapper'] }>
+                                            <label htmlFor="phone number">
+                                                Phone number
+                                            </label>
+                                            <InputField
+                                                hint='Your phone number...'
+                                                type='text'
+                                                isSubmittable={ false }
+                                                value={ personalInfo['phone_number'] }
+                                                onChange={ event => handlePersonalInfoChange('phone_number', event['target']['value'] )}
+                                                error={ validationErrors['phone_number'] }
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className={ styles['info-personal-ctas'] }>
