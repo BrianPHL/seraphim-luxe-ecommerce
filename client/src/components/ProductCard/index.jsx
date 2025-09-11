@@ -243,7 +243,11 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                     <Button
                         type='icon'
                         icon={ isInWishlist(id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }
-                        action={ () => isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id) }
+                        action={ () => {
+                            requireAuth(() => {
+                                isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id)
+                            })
+                        }}
                     />
                 </div>
                 <div className={ styles['divider'] }></div>
