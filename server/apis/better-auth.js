@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { createAuthMiddleware } from "better-auth/api";
-import { createOTPEmail, createChangePasswordVerificationLinkEmail } from "../utils/email.js";
+import { createOTPEmail, createChangePasswordVerificationLinkEmail, createWelcomeEmail } from "../utils/email.js";
 import { getBaseURL } from "../utils/urls.js";
 import { Resend } from "resend";
 import pool from "./db.js";

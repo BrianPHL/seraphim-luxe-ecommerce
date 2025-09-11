@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
-import { auth } from './apis/auth.js';
+import { auth } from './apis/better-auth.js';
 import accountsRouter from './routes/accounts.js';
 import productsRouter from './routes/products.js';
 import cartsRouter from './routes/carts.js';
