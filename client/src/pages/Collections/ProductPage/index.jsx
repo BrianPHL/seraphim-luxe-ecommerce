@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import styles from './ProductPage.module.css';
 import { Button, ReturnButton, InputField, Modal, Counter } from '@components';
-import { useProducts, useAuth, useCart, useCheckout, useToast, useCategories, useSettings } from '@contexts';
+import { useProducts, useAuth, useCart, useCheckout, useToast, useCategories, useSettings, useWishlist } from '@contexts';
 
 const ProductPage = () => {
 
@@ -17,7 +17,7 @@ const ProductPage = () => {
     const [ installmentPaymentDate, setInstallmentPaymentDate ] = useState('');
     const [ installmentNotes, setInstallmentNotes ] = useState('');
     const [ selectedImageIdx, setSelectedImageIdx ] = useState(0);
-    
+    const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const { products } = useProducts();
     const { user } = useAuth();
     const { addToCart } = useCart();
@@ -325,6 +325,15 @@ const ProductPage = () => {
                                     requireAuth(() => {
                                         setModalType('cart');
                                         setModalOpen(true);
+                                    });
+                                }}
+                            />
+                            <Button
+                                type='icon-outlined'
+                                icon={ isInWishlist(product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }
+                                action={ () => {
+                                    requireAuth(() => {
+                                        isInWishlist(product_id) ? removeFromWishlist(product_id) : addToWishlist(product_id);
                                     });
                                 }}
                             />
