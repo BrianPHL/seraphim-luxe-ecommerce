@@ -72,7 +72,15 @@ const Wishlist = () => {
 
             for (const item of selectedWishlistItems) {
                 try {
-                    await addToCart(item.product_id, 1);
+                    await addToCart({ 
+                        product_id: item.product_id,
+                        category: item.category, 
+                        subcategory: item.subcategory, 
+                        image_url: item.image_url, 
+                        label: item.label, 
+                        price: item.price,
+                        quantity: 1
+                    });
                     successCount++;
                 } catch (error) {
                     failCount++;
