@@ -3,10 +3,8 @@ import { emailOTP } from "better-auth/plugins";
 import { createAuthMiddleware } from "better-auth/api";
 import { createOTPEmail, createChangePasswordVerificationLinkEmail, createWelcomeEmail } from "../utils/email.js";
 import { getBaseURL } from "../utils/urls.js";
-import { Resend } from "resend";
+import { sendEmail } from "./resend.js";
 import pool from "./db.js";
-
-const resend = new Resend(process.env.RESEND_KEY);
 
 export const auth = betterAuth({
     database: pool,
@@ -26,7 +24,7 @@ export const auth = betterAuth({
         maxPasswordLength: 10000, // TODO: REMOVE ON PRODUCTION
         sendResetPassword: async ({ user, url, token }, request) => {
             const { email } = user;
-            const { _, err } = await resend.emails.send({
+            const { _, err } = await sendEmail({
                 from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                 to: email,
                 subject: "Change Password Confirmation | Seraphim Luxe",
@@ -51,7 +49,7 @@ export const auth = betterAuth({
             expiresIn: 300,
             allowedAttempts: 3,
             async sendVerificationOTP({ email, otp, type }) {
-                const { _, err } = await resend.emails.send({
+                const { _, err } = await sendEmail({
                     from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                     to: email,
                     subject: "Email Verification Code | Seraphim Luxe",
