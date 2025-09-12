@@ -1,6 +1,6 @@
 import styles from './Dashboard.module.css';
 import { Button, Modal, InputField } from '@components';
-import { useProducts, useAuth, useToast, useInstallments, useReservation, useStocks } from '@contexts';
+import { useProducts, useAuth, useToast, useInstallments, useReservation, useStocks, useOrders } from '@contexts';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -21,6 +21,7 @@ const Dashboard = () => {
     const { pendingCount, fetchPendingCount } = useInstallments();
     const { recentReservations, pendingReservationsCount } = useReservation();
     const { lowStockProducts, addStock } = useStocks();
+    const { fetchRecentOrders, recentOrders } = useOrders();
 
     useEffect(() => {
         const loadDashboardData = async () => {
@@ -31,7 +32,8 @@ const Dashboard = () => {
 
                 await Promise.all([
                     fetchUserCount(),
-                    fetchPendingCount()
+                    fetchPendingCount(),
+                    fetchRecentOrders()
                 ]);
 
             } catch (error) {
@@ -66,9 +68,9 @@ const Dashboard = () => {
 
                         <div className={ styles['overview-item'] }>
                             <div className={ styles['overview-item-header'] }>
-                                <h3>Products Total</h3>
+                                <h3>Products</h3>
                                 <Button
-                                    type='icon-outlined'
+                                    type='icon'
                                     icon='fa-solid fa-square-arrow-up-right'
                                     action={ () => navigate('/admin/products') }
                                 />
@@ -77,9 +79,9 @@ const Dashboard = () => {
                         </div>
                         <div className={ styles['overview-item'] }>
                             <div className={ styles['overview-item-header'] }>
-                                <h3>Users Total</h3>
+                                <h3>Accounts</h3>
                                 <Button
-                                    type='icon-outlined'
+                                    type='icon'
                                     icon='fa-solid fa-square-arrow-up-right'
                                     action={ () => navigate('/admin') }
                                 />
@@ -88,31 +90,20 @@ const Dashboard = () => {
                         </div>
                         <div className={ styles['overview-item'] }>
                             <div className={ styles['overview-item-header'] }>
-                                <h3>Active Reservations</h3>
+                                <h3>Orders</h3>
                                 <Button
-                                    type='icon-outlined'
+                                    type='icon'
                                     icon='fa-solid fa-square-arrow-up-right'
-                                    action={ () => navigate('/admin/reservations') }
+                                    action={ () => navigate('/admin/orders') }
                                 />
                             </div>
-                            <h2>{ pendingReservationsCount }</h2>
+                            <h2>{ recentOrders.length || 0 }</h2>
                         </div>
                         <div className={ styles['overview-item'] }>
                             <div className={ styles['overview-item-header'] }>
-                                <h3>Pending Installments</h3>
+                                <h3>Low Stock Alerts</h3>
                                 <Button
-                                    type='icon-outlined'
-                                    icon='fa-solid fa-square-arrow-up-right'
-                                    action={ () => navigate('/admin/installments') }
-                                />
-                            </div>
-                            <h2>{ pendingCount }</h2>
-                        </div>
-                        <div className={ styles['overview-item'] }>
-                            <div className={ styles['overview-item-header'] }>
-                                <h3>Low Stock Count</h3>
-                                <Button
-                                    type='icon-outlined'
+                                    type='icon'
                                     icon='fa-solid fa-square-arrow-up-right'
                                     action={ () => navigate('/admin/stocks') }
                                 />
