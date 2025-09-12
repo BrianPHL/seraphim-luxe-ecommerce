@@ -12,9 +12,19 @@ function generateOrderNumber() {
 router.get('/recent', async (req, res) => {
     try {
         const [rows] = await pool.query(`
-            SELECT o.*, a.first_name, a.last_name, a.email, a.phone_number
+            SELECT 
+                o.*, 
+                a.first_name, 
+                a.last_name, 
+                a.email, 
+                a.phone_number,
+                aa.street_address AS shipping_street,
+                aa.city AS shipping_city,
+                aa.province AS shipping_province,
+                aa.postal_code AS shipping_postal_code
             FROM orders o
             JOIN accounts a ON o.account_id = a.id
+            LEFT JOIN account_addresses aa ON a.default_shipping_address = aa.id
             ORDER BY o.created_at DESC
         `);
         
@@ -31,9 +41,14 @@ router.get('/details/:order_id', async (req, res) => {
             SELECT 
                 o.*,
                 a.phone_number,
-                a.name as customer_name
+                a.name as customer_name,
+                aa.street_address AS shipping_street,
+                aa.city AS shipping_city,
+                aa.province AS shipping_province,
+                aa.postal_code AS shipping_postal_code
             FROM orders o
             JOIN accounts a ON o.account_id = a.id
+            LEFT JOIN account_addresses aa ON a.default_shipping_address = aa.id
             WHERE o.id = ?
         `, [req.params.order_id]);
         

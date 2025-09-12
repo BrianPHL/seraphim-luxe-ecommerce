@@ -31,6 +31,13 @@ const Orders = () => {
         'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'
     ];
 
+    const paymentMethodLabels = {
+        cash_on_delivery: "Cash on Delivery",
+        gcash: "GCash",
+        bank_transfer: "Bank Transfer",
+        credit_card: "Credit Card"
+    };
+
     const sortOptions = [
         'Sort by: Latest',
         'Sort by: Oldest',
@@ -336,7 +343,7 @@ const Orders = () => {
             </head>
             <body>
                 <div class="header">
-                    <h1>MOTOSWIFT</h1>
+                    <h1>SeraphimLuxe</h1>
                     <h2>PACKING SLIP</h2>
                 </div>
                 <div class="order-info">
@@ -559,18 +566,26 @@ const Orders = () => {
                                 </div>
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>Total Amount:</span>
-                                    <span className={styles['detail-value detail-total']}>₱{parseFloat(selectedOrder.total_amount).toLocaleString('en-PH', {
+                                    <span className={styles['detail-value-detail-total']}>₱{parseFloat(selectedOrder.total_amount).toLocaleString('en-PH', {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2
                                     })}</span>
                                 </div>
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>Shipping Address:</span>
-                                    <span className={styles['detail-value']}>{selectedOrder.shipping_address || 'N/A'}</span>
+                                    <span className={styles['detail-value']}>
+                                        {selectedOrder.shipping_street
+                                            ? `${selectedOrder.shipping_street}, ${selectedOrder.shipping_city}, ${selectedOrder.shipping_province}, ${selectedOrder.shipping_postal_code}`
+                                            : 'N/A'}
+                                    </span>
                                 </div>
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>Payment Method:</span>
-                                    <span className={styles['detail-value']}>{selectedOrder.payment_method || 'N/A'}</span>
+                                    <span className={styles['detail-value']}>
+                                        {selectedOrder.payment_method
+                                            ? paymentMethodLabels[selectedOrder.payment_method] || selectedOrder.payment_method
+                                            : 'N/A'}
+                                    </span>
                                 </div>
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>Notes:</span>
@@ -584,8 +599,6 @@ const Orders = () => {
                                 )}
                             </div>
                         </div>
-                        
-                        <div className={styles['divider']}></div>
                         
                         <div className={styles['order-items-section']}>
                             <h3>Order Items</h3>
@@ -618,7 +631,7 @@ const Orders = () => {
                                                     </div>
                                                     <div className={styles['item-subtotal']}>
                                                         <span className={styles['info-label']}>Subtotal:</span>
-                                                        <span className={styles['info-value info-total']}>₱{(parseFloat(item.price) * item.quantity).toLocaleString('en-PH', {
+                                                        <span className={styles['info-value-info-total']}>₱{(parseFloat(item.price) * item.quantity).toLocaleString('en-PH', {
                                                             minimumFractionDigits: 2,
                                                             maximumFractionDigits: 2
                                                         })}</span>
@@ -637,22 +650,23 @@ const Orders = () => {
                         </div>
                         
                         <div className={styles['modal-ctas']}>
-                            <Button
-                                type="secondary"
-                                label="Close"
-                                action={() => setIsModalOpen(false)}
-                            />
-                            <Button
-                                type="secondary"
-                                label="Print Invoice"
-                                action={() => handlePrintInvoice(selectedOrder)}
-                            />
-                            <Button
-                                type="secondary"
-                                label="Print Packing Slip"
-                                action={() => handlePrintPackingSlip(selectedOrder)}
-                            />
-                            
+                                <div className={styles['button-group-horizontal']}>
+                                    <Button
+                                        type="secondary"
+                                        label="Close"
+                                        action={() => setIsModalOpen(false)}
+                                    />
+                                    <Button
+                                        type="secondary"
+                                        label="Print Invoice"
+                                        action={() => handlePrintInvoice(selectedOrder)}
+                                    />
+                                    <Button
+                                        type="secondary"
+                                        label="Print Packing Slip"
+                                        action={() => handlePrintPackingSlip(selectedOrder)}
+                                    />
+                                </div>
                             {/* Add Refund Button for delivered/cancelled orders */}
                             {(selectedOrder.status === 'delivered' || selectedOrder.status === 'cancelled') && (
                                 <Button
@@ -753,6 +767,7 @@ const Orders = () => {
                                     value={refundAmount}
                                     onChange={(e) => setRefundAmount(e.target.value)}
                                     placeholder="0.00"
+                                    className={styles['refund-input']}
                                 />
                             </div>
                             <div className={styles['input-wrapper']}>
