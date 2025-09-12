@@ -36,7 +36,12 @@ const PAGE_TITLES = {
 	"/wishlist": "Seraphim Luxe | Wishlist",
 	"/profile": "Seraphim Luxe | Profile",
     "/orders": "Seraphim Luxe | Orders",
-    "/admin/static-pages": "Seraphim Luxe | Content Management", 
+    "/admin/dashboard": "Seraphim Luxe | Admin Dashboard",
+    "/admin/orders": "Seraphim Luxe | Order Management",
+    "/admin/products": "Seraphim Luxe | Product Management",
+    "/admin/stocks": "Seraphim Luxe | Stock Management",
+    "/admin/categories": "Seraphim Luxe | Category Management",
+    "/admin/static-pages": "Seraphim Luxe | Content Management System",
 };
 
 const App = () => {
