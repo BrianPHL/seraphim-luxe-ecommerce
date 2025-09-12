@@ -5,14 +5,11 @@ import styles from './AdminLayout.module.css';
 const AdminLayout = () => {
 
     const HEADER_TITLES = {
-	    "/": "Seraphim Luxe | Style Without Boundaries",
-        "/admin": "Seraphim Luxe | Admin Landing Page",
-        "/admin/dashboard": "Seraphim Luxe | Admin Dashboard",
-        "/admin/products": "Seraphim Luxe | Admin Products",
-        "/admin/stocks": "Seraphim Luxe | Admin Stocks",
-        "/admin/orders": "Seraphim Luxe | Admin Orders",
-        "/admin/categories": "Seraphim Luxe | Admin Categories",
-        "/admin/static-pages": "Seraphim Luxe | Static Pages Management"
+        "/admin/dashboard": "Seraphim Luxe | Dashboard",
+        "/admin/products": "Seraphim Luxe | Product Management",
+        "/admin/stocks": "Seraphim Luxe | Stock Management",
+        "/admin/orders": "Seraphim Luxe | Order Management",
+        "/admin/categories": "Seraphim Luxe | Category Management",
         "/admin/cms": "Seraphim Luxe | Content Management System"
     };
     const location = useLocation();
