@@ -15,18 +15,28 @@ const Footer = () => {
                                 isNested={ false }
                             />
                             <Anchor
-                                label="Motorcycles"
-                                link="/motorcycles"
-                                isNested={ false }
-                            />
-                            <Anchor
-                                label="Parts & Accessories"
-                                link="/parts-and-accessories"
+                                label="Our Collections"
+                                link="/collections"
                                 isNested={ false }
                             />
                             <Anchor
                                 label="My Account"
-                                link="/my-account"
+                                link="/profile"
+                                isNested={ false }
+                            />
+                            <Anchor
+                                label="My Cart"
+                                link="/cart"
+                                isNested={ false }
+                            />
+                            <Anchor
+                                label="My Wishlist"
+                                link="/wishlist"
+                                isNested={ false }
+                            />
+                            <Anchor
+                                label="My Orders"
+                                link="/cart"
                                 isNested={ false }
                             />
                         </nav>
@@ -104,7 +114,7 @@ const Footer = () => {
             <div className={ styles['bottom'] }>
                 <div className={ styles['bottom-left'] }>
                     <h5>© 2025 Seraphim Luxe. All rights reserved.</h5>
-                    <h5>Designed in <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.figma.com" } }>Figma</span>, built with <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.react.dev" } }>React.js</span>, running on <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.railway.com" } }>Railway</span>.</h5>
+                    <h5>Designed in <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.figma.com" } }>Figma</span>, built with <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.react.dev" } }>React</span>. Hosted on <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.railway.com" } }>Railway</span>, secured by <span className={ styles['link'] } onClick={ () => { window.location.href = "https://www.better-auth.com" } }>Better Auth</span>, payments by <span className={ styles['link'] } onClick={ () => { window.location.href = "https://stripe.com/" } }>Stripe</span>, & content by <span className={ styles['link'] } onClick={ () => { window.location.href = "https://cloudinary.com/" } }>Cloudinary</span>.</h5>
                 </div>
                 <div className={ styles['bottom-right'] }>
                     <Logo />  
