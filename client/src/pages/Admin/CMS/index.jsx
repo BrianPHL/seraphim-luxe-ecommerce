@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import styles from './StaticPages.module.css';
+import styles from './CMS.module.css';
 import { fetchWithTimeout } from '@utils';
 import { Button } from '@components';
 
-const StaticPages = () => {
-  const [activeTab, setActiveTab] = useState('about');
-  const [pages, setPages] = useState({});
-  const [content, setContent] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const CMS = () => {
+  const [ activeTab, setActiveTab ] = useState('about');
+  const [ pages, setPages ] = useState({});
+  const [ content, setContent ] = useState('');
+  const [ isSaved, setIsSaved ] = useState(false);
+  const [ loading, setLoading ] = useState(true);
+  const [ error, setError ] = useState(null);
 
   const defaultContent = {
     about: "Driven by Style, Fueled by Expression\n\n" +
@@ -233,4 +233,4 @@ const StaticPages = () => {
   );
 };
 
-export default StaticPages;
+export default CMS;

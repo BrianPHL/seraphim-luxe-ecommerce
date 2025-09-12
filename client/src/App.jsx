@@ -9,17 +9,7 @@ import {
 } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
-import { 
-  AdminLayout, 
-  AdminSignIn, 
-  AdminSignUp, 
-  AdminDashboard, 
-  AdminOrders, 
-  AdminProducts, 
-  AdminStocks, 
-  AdminCategories,
-  StaticPages
-} from '@pages/Admin';
+import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS } from '@pages/Admin';
 
 const PAGE_TITLES = {
 	"/": "Seraphim Luxe | Style Without Boundaries",
@@ -41,7 +31,7 @@ const PAGE_TITLES = {
     "/admin/products": "Seraphim Luxe | Product Management",
     "/admin/stocks": "Seraphim Luxe | Stock Management",
     "/admin/categories": "Seraphim Luxe | Category Management",
-    "/admin/static-pages": "Seraphim Luxe | Content Management System",
+    "/admin/cms": "Seraphim Luxe | Content Management System",
 };
 
 const App = () => {
@@ -198,7 +188,7 @@ const App = () => {
                    <Route path="products" element={<AdminProducts />} />
                    <Route path="stocks" element={<AdminStocks />} />
                    <Route path="categories" element={<AdminCategories />} />
-                   <Route path="static-pages" element={<StaticPages />} />
+                   <Route path="cms" element={<AdminCMS />} />
                 </Route>
 
                 <Route path="*" element={
