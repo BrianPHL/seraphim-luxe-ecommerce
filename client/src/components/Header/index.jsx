@@ -22,69 +22,87 @@ const Header = () => {
             <div className={ styles['desktop-header'] }>
                 <Logo />
                 <div className={ styles['right'] }>
-                    <div className={ styles['nav'] }>
-                        <Anchor
-                            label="Home"
-                            link="/"
-                            isNested={ false }
-                            isActive={ pathname === '/' }
-                        />
-                        <Anchor
-                            label="About us"
-                            link="/about-us"
-                            isNested={ false }
-                            isActive={ pathname === '/about-us' }
-                        />
-                        <Anchor
-                            label="Our Collections"
-                            link="/collections"
-                            isNested={ false }
-                            isActive={ pathname === '/collections' }
-                        />
-                    </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        { user ? (
-                            <>
-                                <div 
-                                    className={ styles['indicator-wrapper'] }
-                                    onClick={ () => navigate('/wishlist')  }
-                                >
-                                    <Button
-                                        type="icon"
-                                        icon='fa-solid fa-heart'
-                                        action={ () => navigate('/wishlist') }
-                                        externalStyles={ styles['indicator-btn'] }
-                                        />
-                                    { wishlistItems['length'] !== 0 ? (
-                                        <span className={ styles['indicator-badge'] }>
-                                            { wishlistItems['length'] }
-                                        </span>
-                                    ) : null }
-                                </div>
-                                <div 
-                                    className={ styles['indicator-wrapper'] }
-                                    onClick={ () => navigate('/cart')  }
-                                >
-                                    <Button
-                                        type="icon"
-                                        icon='fa-solid fa-cart-shopping'
-                                        action={ () => navigate('cart') }
-                                        externalStyles={ styles['indicator-btn'] }
-                                        />
-                                    { cartItems['length'] !== 0 ? (
-                                        <span className={ styles['indicator-badge'] }>
-                                            { cartItems['length'] }
-                                        </span>
-                                    ) : null }
-                                </div>
-                            </>
-                        ) : null }
+                    <>
+                    { !user || user.role === 'customer' ? (
+                        <>
+                            <div className={ styles['nav'] }>
+                                <Anchor
+                                    label="Home"
+                                    link="/"
+                                    isNested={ false }
+                                    isActive={ pathname === '/' }
+                                />
+                                <Anchor
+                                    label="About us"
+                                    link="/about-us"
+                                    isNested={ false }
+                                    isActive={ pathname === '/about-us' }
+                                />
+                                <Anchor
+                                    label="Our Collections"
+                                    link="/collections"
+                                    isNested={ false }
+                                    isActive={ pathname === '/collections' }
+                                />
+                                <Anchor
+                                    label="FAQs"
+                                    link="/faqs"
+                                    isNested={ false }
+                                    isActive={ pathname === '/faqs' }
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                { user ? (
+                                    <>
+                                        <div 
+                                            className={ styles['indicator-wrapper'] }
+                                            onClick={ () => navigate('/wishlist')  }
+                                        >
+                                            <Button
+                                                type="icon"
+                                                icon='fa-solid fa-heart'
+                                                action={ () => navigate('/wishlist') }
+                                                externalStyles={ styles['indicator-btn'] }
+                                                />
+                                            { wishlistItems['length'] !== 0 ? (
+                                                <span className={ styles['indicator-badge'] }>
+                                                    { wishlistItems['length'] }
+                                                </span>
+                                            ) : null }
+                                        </div>
+                                        <div 
+                                            className={ styles['indicator-wrapper'] }
+                                            onClick={ () => navigate('/cart')  }
+                                        >
+                                            <Button
+                                                type="icon"
+                                                icon='fa-solid fa-cart-shopping'
+                                                action={ () => navigate('cart') }
+                                                externalStyles={ styles['indicator-btn'] }
+                                                />
+                                            { cartItems['length'] !== 0 ? (
+                                                <span className={ styles['indicator-badge'] }>
+                                                    { cartItems['length'] }
+                                                </span>
+                                            ) : null }
+                                        </div>
+                                    </>
+                                ) : null }
+                                <Button
+                                    type="icon"
+                                    action={ () => toggleTheme()  }
+                                    icon={ theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun' }
+                                />
+                            </div>
+                        </>
+                    ) : user.role === 'admin' && (
                         <Button
                             type="icon"
                             action={ () => toggleTheme()  }
                             icon={ theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun' }
                         />
-                    </div>
+                    )}
+
                     { user ? (
                         user['role'] === 'customer' ? (
                             <Button
@@ -119,10 +137,6 @@ const Header = () => {
                                 dropdownPosition='right'
                                 options={[
                                     {
-                                        label: 'Profile',
-                                        action: () => { navigate('/profile') },
-                                    },
-                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
@@ -137,6 +151,7 @@ const Header = () => {
                             isActive={ pathname === '/sign-in' }
                         />
                     )}
+                    </>
                 </div>
             </div>
             <div className={ styles['mobile-header'] }>
@@ -178,10 +193,6 @@ const Header = () => {
                             dropdownPosition='right'
                             options={[
                                 {
-                                    label: 'Profile',
-                                    action: () => { navigate('/profile') },
-                                },
-                                {
                                     label: 'Logout',
                                     action: handleLogout,
                                 },
@@ -209,7 +220,7 @@ const Header = () => {
                     </div>
                     <div className={ styles['right'] }>
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            { user ? (
+                            { user && user.role === 'customer' ? (
                                 <>
                                     <div 
                                         className={ styles['indicator-wrapper'] }
@@ -294,10 +305,6 @@ const Header = () => {
                                 dropdownPosition='right'
                                 options={[
                                     {
-                                        label: 'Profile',
-                                        action: () => { navigate('/profile') },
-                                    },
-                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
@@ -324,7 +331,7 @@ const Header = () => {
                         </div>
                         <div className={ styles['right'] }>
                             <div style={{ display: 'flex', gap: '1rem' }}>
-                                { user ? (
+                                { user && user.role === 'customer' ? (
                                     <>
                                         <div 
                                             className={ styles['indicator-wrapper'] }
@@ -370,33 +377,105 @@ const Header = () => {
                     </div>
                 </div>
                 <nav className={ styles['mobile-nav'] }>
-                    <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
-                        <Anchor
-                            label="Home"
-                            link="/"
-                            isNested={ true }
-                            isActive={ pathname === '/' }
-                            externalStyles={ styles['mobile-nav-anchor'] }
-                        />
-                    </span>
-                    <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
-                        <Anchor
-                            label="About us"
-                            link="/about-us"
-                            isNested={ true }
-                            isActive={ pathname === '/about-us' }
-                            externalStyles={ styles['mobile-nav-anchor'] }
-                        />
-                    </span>
-                    <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
-                        <Anchor
-                            label="Our Collections"
-                            link="/collections"
-                            isNested={ true }
-                            isActive={ pathname === '/collections' }
-                            externalStyles={ styles['mobile-nav-anchor'] }
-                        />
-                    </span>
+                    {
+                        !user || user.role === 'customer' ? (
+                            <>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Home"
+                                        link="/"
+                                        isNested={ true }
+                                        isActive={ pathname === '/' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="About us"
+                                        link="/about-us"
+                                        isNested={ true }
+                                        isActive={ pathname === '/about-us' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Our Collections"
+                                        link="/collections"
+                                        isNested={ true }
+                                        isActive={ pathname === '/collections' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Frequently Asked Questions"
+                                        link="/faqs"
+                                        isNested={ true }
+                                        isActive={ pathname === '/faqs' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                            </>
+                        ) : user && user.role === 'admin' && (
+                            <>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Dashboard"
+                                        link="/admin/dashboard"
+                                        isNested={ true }
+                                        isActive={ pathname === '/admin/dashboard' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Order Management"
+                                        link="/admin/orders"
+                                        isNested={ true }
+                                        isActive={ pathname === '/admin/orders' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Product Management"
+                                        link="/admin/products"
+                                        isNested={ true }
+                                        isActive={ pathname === '/admin/products' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Stock Management"
+                                        link="/admin/stocks"
+                                        isNested={ true }
+                                        isActive={ pathname === '/admin/stocks' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Category Management"
+                                        link="/admin/categories"
+                                        isNested={ true }
+                                        isActive={ pathname === '/admin/categories' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Content Management System"
+                                        link="/admin/cms"
+                                        isNested={ true }
+                                        isActive={ pathname === '/admin/cms' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                            </>
+                        )
+                    }
                 </nav>
                 <div className={ styles['mobile-cta'] }>
                     { user ? (
@@ -417,14 +496,6 @@ const Header = () => {
                                         <h3>{ user['first_name'] + ' ' + user['last_name'] } </h3>
                                         <h4>{ user['role'] }</h4>
                                     </span>
-                                    <Button
-                                        type='icon'
-                                        icon='fa-solid fa-square-arrow-up-right'
-                                        action= { () => {
-                                            navigate('/profile')
-                                            setDrawerOpen(false)
-                                        }}
-                                    />
                                 </span>
                             </div>
                             <Button
