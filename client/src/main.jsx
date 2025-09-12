@@ -11,7 +11,7 @@ import {
   ProductsProvider,
   InstallmentsProvider,
   StocksProvider,
-  OrderProvider,
+  OrdersProvider,
   CheckoutProvider,
   CategoriesProvider,
   WishlistProvider,
@@ -32,19 +32,19 @@ createRoot(document.getElementById('root')).render(
                   <CategoriesProvider>
                     <ProductsProvider>
                       <ReservationProvider>
-                        <OrderProvider>
+                        <OrdersProvider>
                           <WishlistProvider>
-                          <CartProvider>
+                            <CartProvider>
                               <CheckoutProvider>
                                 <InstallmentsProvider>
-                                    <StocksProvider>
-                                      <App />
-                                    </StocksProvider>
+                                  <StocksProvider>
+                                    <App />
+                                  </StocksProvider>
                                 </InstallmentsProvider>
                               </CheckoutProvider>
                             </CartProvider>
                           </WishlistProvider>
-                      </OrderProvider>
+                        </OrdersProvider>
                       </ReservationProvider>
                     </ProductsProvider>
                   </CategoriesProvider>

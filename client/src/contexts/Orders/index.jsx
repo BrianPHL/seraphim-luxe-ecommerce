@@ -1,8 +1,8 @@
 import { useContext, useState, useRef, useEffect } from "react";
 import { useAuth, useToast, useProducts } from '@contexts';
-import OrderContext from "./context";
+import OrdersContext from "./context";
 
-export const OrderProvider = ({ children }) => {
+export const OrdersProvider = ({ children }) => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
     const [recentOrders, setRecentOrders] = useState([]);
@@ -282,7 +282,7 @@ export const OrderProvider = ({ children }) => {
     }, [user]);
 
     return (
-        <OrderContext.Provider value={{ 
+        <OrdersContext.Provider value={{ 
             orders,
             recentOrders,
             pendingOrdersCount,
@@ -299,8 +299,8 @@ export const OrderProvider = ({ children }) => {
             refreshOrders: fetchOrders
         }}>
             { children }
-        </OrderContext.Provider>
+        </OrdersContext.Provider>
     );
 };
 
-export const useOrder = () => useContext(OrderContext);
+export const useOrders = () => useContext(OrdersContext);

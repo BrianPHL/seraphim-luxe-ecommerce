@@ -8,7 +8,7 @@ export { ProductsProvider, useProducts } from "./Products";
 export { InstallmentsProvider, useInstallments } from "./Installments";
 export { StocksProvider, useStocks } from "./Stocks";
 export { CheckoutProvider, useCheckout } from "./Checkout";
-export { OrderProvider, useOrder } from "./Orders";
+export { OrdersProvider, useOrders } from "./Orders";
 export { CategoriesProvider, useCategories } from "./Categories";
 export { useWishlist, WishlistProvider } from './Wishlist';
 export { useSettings, SettingsProvider } from './Settings';

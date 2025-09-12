@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Orders.module.css';
 import { Button, Modal, TableHeader, TableFooter, InputField } from '@components';
-import { useOrder, useToast, useAuth } from '@contexts';
+import { useOrders, useToast, useAuth } from '@contexts';
 
 const Orders = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -24,7 +24,7 @@ const Orders = () => {
     const ITEMS_PER_PAGE = 10;
 
     const { user } = useAuth();
-    const { recentOrders, fetchRecentOrders, updateOrderStatus, processRefund, getOrderItems, loading } = useOrder();
+    const { recentOrders, fetchRecentOrders, updateOrderStatus, processRefund, getOrderItems, loading } = useOrders();
     const { showToast } = useToast();
 
     const orderStatuses = [
