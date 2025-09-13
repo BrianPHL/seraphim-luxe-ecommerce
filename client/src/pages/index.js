@@ -8,7 +8,7 @@ export { default as Reservations } from "./Reservations";
 export { default as Profile } from "./Profile";
 export { default as NotFound } from "./NotFound";
 export { default as Orders } from "./Orders";
-export { default as Contact } from './Contact';
+export { default as ContactUs } from './ContactUs';
 export { default as FAQs } from './FAQs';
 export { default as PrivacyPolicy } from './PrivacyPolicy';
 export { default as Wishlist } from './Wishlist';

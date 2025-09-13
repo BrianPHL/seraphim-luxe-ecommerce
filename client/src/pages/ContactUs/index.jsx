@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useCMS } from '@contexts';
 import { ReturnButton } from '@components';
-import styles from './Contact.module.css';
+import styles from './ContactUs.module.css';
 
-const Contact = () => {
+const ContactUs = () => {
     const { fetchSpecificPage, loading: cmsLoading } = useCMS();
     const [contactContent, setContactContent] = useState('');
     const [error, setError] = useState(null);
@@ -247,4 +247,4 @@ const Contact = () => {
     );
 };
 
-export default Contact;
+export default ContactUs;

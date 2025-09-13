@@ -50,8 +50,8 @@ const Footer = () => {
                                 isNested={ false }
                             />
                             <Anchor
-                                label="Contact"
-                                link="/contact"
+                                label="Contact us"
+                                link="/contact-us"
                                 isNested={ false }
                             />
                             <Anchor
