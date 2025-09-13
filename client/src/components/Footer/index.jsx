@@ -55,7 +55,7 @@ const Footer = () => {
                                 isNested={ false }
                             />
                             <Anchor
-                                label="FAQs"
+                                label="Frequently Asked Questions"
                                 link="/faqs"
                                 isNested={ false }
                             />
@@ -65,7 +65,7 @@ const Footer = () => {
                         <h3>Legal</h3>
                         <nav>
                             <Anchor
-                                label="Terms & Conditions"
+                                label="Terms and Conditions"
                                 link="/terms-and-conditions"
                                 isNested={ false }
                             />

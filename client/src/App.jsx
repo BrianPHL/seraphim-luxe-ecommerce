@@ -14,7 +14,7 @@ const PAGE_TITLES = {
 	"/sign-up": "Seraphim Luxe | Sign Up",
 	"/about-us": "Seraphim Luxe | About Us",
 	"/contact": "Seraphim Luxe | Contact Us", 
-	"/faqs": "Seraphim Luxe | FAQs",
+	"/faqs": "Seraphim Luxe | Frequently Asked Questions",
 	"/privacy-policy": "Seraphim Luxe | Privacy Policy",
 	"/collections": "Seraphim Luxe | Collections",
 	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
