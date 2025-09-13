@@ -177,7 +177,6 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <AdminLayout />
-                        <Footer />
                     </ProtectedRoute>
                 }>
                    <Route path="dashboard" element={<AdminDashboard />} />
