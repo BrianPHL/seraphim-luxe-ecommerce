@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button, ProductCard, TableHeader, TableFooter, ReturnButton } from '@components';
 import { useProducts } from '@contexts';
-import { useProductFilter, usePagination } from '@hooks';
+import { useDataFilter, usePagination } from '@hooks';
 import styles from './Store.module.css';
 
 const Store = () => {
@@ -23,7 +23,7 @@ const Store = () => {
         handleSearchSubmit,
         setSearchInput,
         setSearchQuery
-    } = useProductFilter(products, 'Parts-and-Accessories', querySort, querySearch);
+    } = useDataFilter(products, 'Parts-and-Accessories', querySort, querySearch);
     const {
         currentPage,
         totalPages,

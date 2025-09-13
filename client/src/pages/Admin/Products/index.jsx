@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import styles from './Products.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
 import { useProducts, useToast, useStocks, useCategories } from '@contexts';
-import { useProductFilter, usePagination } from '@hooks';
+import { useDataFilter, usePagination } from '@hooks';
 
 const Products = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -52,7 +52,7 @@ const Products = () => {
         handleSearchSubmit,
         setSearchInput,
         setSearchQuery
-    } = useProductFilter(products, null, querySort, querySearch);
+    } = useDataFilter(products, null, querySort, querySearch);
 
     const {
         currentPage,

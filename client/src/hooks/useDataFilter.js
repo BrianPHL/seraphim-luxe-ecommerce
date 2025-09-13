@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 
-const useProductFilter = (allProducts, categoryFilter, initialSort, initialSearch) => {
+const useDataFilter = (allProducts, categoryFilter, initialSort, initialSearch) => {
 	const [currentSort, setCurrentSort] = useState(initialSort || 'Sort by: Price (Low to High)');
 	const [searchQuery, setSearchQuery] = useState(initialSearch || '');
 	const [searchInput, setSearchInput] = useState(initialSearch || '');
@@ -78,4 +78,4 @@ const useProductFilter = (allProducts, categoryFilter, initialSort, initialSearc
 	return { sortedProducts, categoryProducts, currentSort, searchQuery, searchInput, handleSortChange, handleSearchChange, handleSearchSubmit, setSearchInput, setSearchQuery };
 };
 
-export default useProductFilter;
+export default useDataFilter;
