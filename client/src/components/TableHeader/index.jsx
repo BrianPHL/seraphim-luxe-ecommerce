@@ -15,7 +15,8 @@ const TableHeader = ({
     resultsLabel,
     sortLabel,
     onPageChange,
-    withPagination = false
+    withPagination = false,
+    sortOptions = []
 }) => {
 
     const [ localSearchValue, setLocalSearchValue ] = useState(searchInput || '');
@@ -31,7 +32,6 @@ const TableHeader = ({
             }
             setLoading(false);
         }, 500);
-
 
         return () => clearTimeout(timeoutId);
     }, [localSearchValue]);
@@ -49,7 +49,7 @@ const TableHeader = ({
     const endPage = Math.min(totalPages, startPage + 2);
     for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
 
-    const sortOptions = [
+    const defaultSortOptions = [
         {
             label: 'Price (Low to High)',
             action: () => onSortChange('Sort by: Price (Low to High)')
@@ -84,6 +84,13 @@ const TableHeader = ({
         }
     ];
 
+    const sortOptionsToUse = sortOptions.length > 0 
+        ? sortOptions.map(option => ({
+            label: option.label,
+            action: () => onSortChange(option.value)
+        }))
+        : defaultSortOptions;
+
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
             onSearchSubmit();
@@ -91,6 +98,11 @@ const TableHeader = ({
     };
 
     const getCurrentSortLabel = () => {
+        if (sortOptions.length > 0) {
+            const currentOption = sortOptions.find(option => option.value === currentSort);
+            return currentOption ? currentOption.label : 'Sort by';
+        }
+
         const sortMapping = {
             'Sort by: Price (Low to High)': 'Price (Low to High)',
             'Sort by: Price (High to Low)': 'Price (High to Low)',
@@ -120,7 +132,7 @@ const TableHeader = ({
                 </div>
                 <InputField
                     value={ localSearchValue }
-                    hint={ `Search ${ label?.toLowerCase() }...` }
+                    hint={ `Search here...` }
                     type={ 'text' }
                     onKeyPress={ () => { handleKeyPress } }
                     onChange={ (e) => handleSearchInputChange(e.target.value) }
@@ -133,7 +145,7 @@ const TableHeader = ({
                     icon='fa-solid fa-chevron-down'
                     iconPosition='right'
                     dropdownPosition='right'
-                    options={sortOptions}
+                    options={sortOptionsToUse}
                     externalStyles={styles['sort-button']}
                 />
             </div>
@@ -143,29 +155,31 @@ const TableHeader = ({
                     <h3>{ resultsLabel }</h3>
                     <h3>{ sortLabel }</h3>
                 </div>
-                <div className={ styles['pagination'] }>
-                    <Button
-                        type="icon-outlined"
-                        action={ () => onPageChange(currentPage - 1) }
-                        icon="fa-solid fa-angle-left"
-                        disabled={ currentPage === 1 }
-                    />
-                    { pageNumbers.map(page => (
+                {withPagination && (
+                    <div className={ styles['pagination'] }>
                         <Button
-                            key={ page }
-                            type='secondary'
-                            label={ String(page) }
-                            action={ () => onPageChange(page) }
-                            isActive={ currentPage === page }
+                            type="icon-outlined"
+                            action={ () => onPageChange(currentPage - 1) }
+                            icon="fa-solid fa-angle-left"
+                            disabled={ currentPage === 1 }
                         />
-                    ))}
-                    <Button
-                        type="icon-outlined"
-                        action={ () => onPageChange(currentPage + 1) }
-                        icon="fa-solid fa-angle-right"
-                        disabled={ currentPage === totalPages }
-                    />
-                </div>
+                        { pageNumbers.map(page => (
+                            <Button
+                                key={ page }
+                                type='secondary'
+                                label={ String(page) }
+                                action={ () => onPageChange(page) }
+                                isActive={ currentPage === page }
+                            />
+                        ))}
+                        <Button
+                            type="icon-outlined"
+                            action={ () => onPageChange(currentPage + 1) }
+                            icon="fa-solid fa-angle-right"
+                            disabled={ currentPage === totalPages }
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );
