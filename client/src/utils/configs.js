@@ -128,6 +128,72 @@ export const PRODUCT_FILTER_CONFIG = {
     ]
 };
 
+export const LOW_STOCK_FILTER_CONFIG = {
+    searchFields: ['label', 'category'],
+    sortOptions: [
+        {
+            label: 'Most Critical First',
+            value: 'Sort by: Most Critical First',
+            sortFunction: (a, b) => {
+                const aCritical = (a.stock_threshold - a.stock_quantity);
+                const bCritical = (b.stock_threshold - b.stock_quantity);
+                return bCritical - aCritical;
+            }
+        },
+        {
+            label: 'Name (A-Z)',
+            value: 'Sort by: Name (A-Z)',
+            field: 'label',
+            type: 'string',
+            direction: 'asc'
+        },
+        {
+            label: 'Name (Z-A)',
+            value: 'Sort by: Name (Z-A)',
+            field: 'label',
+            type: 'string',
+            direction: 'desc'
+        },
+        {
+            label: 'Stock Quantity (Low to High)',
+            value: 'Sort by: Stock (Low to High)',
+            field: 'stock_quantity',
+            type: 'number',
+            direction: 'asc'
+        },
+        {
+            label: 'Stock Quantity (High to Low)',
+            value: 'Sort by: Stock (High to Low)',
+            field: 'stock_quantity',
+            type: 'number',
+            direction: 'desc'
+        },
+        {
+            label: 'Recently Modified',
+            value: 'Sort by: Recently Modified',
+            field: 'modified_at',
+            type: 'date',
+            direction: 'desc'
+        }
+    ],
+    filterOptions: [
+        {
+            key: 'out_of_stock',
+            label: 'Out of Stock Only',
+            type: 'custom',
+            filterFunction: (item, value) => {
+                return value ? (item.stock_quantity <= 0) : true;
+            }
+        },
+        {
+            key: 'category',
+            label: 'Category',
+            type: 'multiselect',
+            field: 'category'
+        }
+    ]
+};
+
 export const ORDER_FILTER_CONFIG = {
     searchFields: ['order_number', 'first_name', 'last_name', 'email', 'tracking_number'],
     sortOptions: [
