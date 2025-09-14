@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button, InputField } from '@components';
 import styles from './TableHeader.module.css';
 
-const TableHeader = ({ 
+const TableHeader = ({
+    id = "sort-dropdown",
     icon, 
     label, 
     currentSort, 
@@ -139,7 +140,7 @@ const TableHeader = ({
                     isSubmittable={ false }
                 />
                 <Button
-                    id='sort-dropdown'
+                    id={ id }
                     type='secondary'
                     label={getCurrentSortLabel()}
                     icon='fa-solid fa-chevron-down'
