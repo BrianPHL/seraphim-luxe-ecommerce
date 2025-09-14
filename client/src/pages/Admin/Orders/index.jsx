@@ -60,6 +60,13 @@ const Orders = () => {
             handlePageChange(queryPage);
         }
     }, [queryPage]);
+    
+    const paymentMethodLabels = {
+        cash_on_delivery: "Cash on Delivery",
+        paypal: "Paypal",
+        bank_transfer: "Bank Transfer",
+        credit_card: "Credit Card"
+    };
 
     useEffect(() => {
         const loadOrders = async () => {
@@ -174,9 +181,15 @@ const Orders = () => {
         }
     };
 
-    const handlePrintInvoice = (order) => {
+    const handlePrintInvoice = async (order) => {
+        let orderWithItems = order;
+        if (!order.items || order.items.length === 0) {
+            // Fetch items if not present
+            const items = await getOrderItems(order.id);
+            orderWithItems = { ...order, items: items || [] };
+        }
         const printWindow = window.open('', '_blank');
-        const invoiceHTML = generateInvoiceHTML(order);
+        const invoiceHTML = generateInvoiceHTML(orderWithItems);
         printWindow.document.write(invoiceHTML);
         printWindow.document.close();
         printWindow.print();
@@ -327,12 +340,6 @@ const Orders = () => {
     const orderStatuses = [
         'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'
     ];
-    const paymentMethodLabels = {
-        cash_on_delivery: "Cash on Delivery",
-        gcash: "GCash",
-        bank_transfer: "Bank Transfer",
-        credit_card: "Credit Card"
-    };
 
     if (loading) {
         return (

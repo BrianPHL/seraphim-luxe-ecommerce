@@ -60,6 +60,12 @@ const AdminLayout = () => {
                         isNested={ true }
                         isActive={ pathname === '/admin/cms' }
                     />
+                    <Anchor
+                        label="Settings and Configurations"
+                        link="/admin/settings"
+                        isNested={ true }
+                        isActive={ pathname === '/admin/settings' }
+                    />
                 </div>
                 <div className={ styles['admin-container'] }>
                     <Outlet />

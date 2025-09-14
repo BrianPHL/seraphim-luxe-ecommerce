@@ -17,6 +17,7 @@ import categoriesRouter from './routes/categories.js';
 import staticPagesRouter from './routes/static-pages.js';
 import wishlistRoutes from './routes/wishlist.js';
 import userSettingsRoutes from './routes/user-settings.js';
+import settingsRouter from './routes/settings.js';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use('/api/categories', categoriesRouter);
 app.use('/api/static-pages', staticPagesRouter);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
+app.use('/api/admin', settingsRouter);
 
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);

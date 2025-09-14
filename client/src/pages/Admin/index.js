@@ -7,3 +7,4 @@ export { default as AdminStocks } from './Stocks';
 export { default as AdminOrders } from './Orders';
 export { default as AdminCategories } from './Categories';
 export { default as AdminCMS } from './CMS';
+export { default as AdminSettings } from './Settings';
