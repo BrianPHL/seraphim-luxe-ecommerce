@@ -1,81 +1,103 @@
 import { useState, useEffect, useMemo } from 'react';
 
-const useDataFilter = (allProducts, categoryFilter, initialSort, initialSearch) => {
-	const [currentSort, setCurrentSort] = useState(initialSort || 'Sort by: Price (Low to High)');
-	const [searchQuery, setSearchQuery] = useState(initialSearch || '');
-	const [searchInput, setSearchInput] = useState(initialSearch || '');
-	
-	useEffect(() => {
-		setCurrentSort(initialSort || 'Sort by: Price (Low to High)');
-	}, [initialSort]);
+const useDataFilter = (data = [], filterConfig = {}) => {
+    const [searchValue, setSearchValue] = useState('');
+    const [sortValue, setSortValue] = useState('');
+    
+    const {
+        searchFields = [],
+        sortOptions = [],
+        filterOptions = []
+    } = filterConfig;
 
-	useEffect(() => {
-		setSearchQuery(initialSearch || '');
-		setSearchInput(initialSearch || '');
-	}, [initialSearch]);  
+    useEffect(() => {
+        if (sortOptions.length > 0 && !sortValue) {
+            setSortValue(sortOptions[0].value);
+        }
+    }, [sortOptions, sortValue]);
 
-	const categoryProducts = useMemo(() => {
-		if (categoryFilter === 'Motorcycles') {
-			return allProducts.filter(product => product.category === 'Motorcycles');
-		} else {
-			return allProducts.filter(product => product.category !== 'Motorcycles');
-		}
-	}, [allProducts, categoryFilter]);
+    const filteredData = useMemo(() => {
+        if (!searchValue.trim() || searchFields.length === 0) {
+            return data;
+        }
 
-	const filteredProducts = useMemo(() => {
-		return categoryProducts.filter(product => 
-			product.label.toLowerCase().includes(searchQuery.toLowerCase())
-		);
-	}, [categoryProducts, searchQuery]);
+        const searchTerm = searchValue.toLowerCase().trim();
+        
+        return data.filter(item => {
+            return searchFields.some(field => {
+                const fieldValue = item[field];
+                if (fieldValue === null || fieldValue === undefined) return false;
+                return String(fieldValue).toLowerCase().includes(searchTerm);
+            });
+        });
+    }, [data, searchValue, searchFields]);
 
-	const sortedProducts = useMemo(() => {
-		switch (currentSort) {
-			case 'Sort by: Price (Low to High)':
-				return [...filteredProducts].sort((a, b) =>
-					Number(a.price.replace(/[^\d]/g, '')) - Number(b.price.replace(/[^\d]/g, ''))
-				);
-			case 'Sort by: Price (High to Low)':
-				return [...filteredProducts].sort((a, b) =>
-					Number(b.price.replace(/[^\d]/g, '')) - Number(a.price.replace(/[^\d]/g, ''))
-				);
-			case 'Name: A-Z':
-				return [...filteredProducts].sort((a, b) => a.label.localeCompare(b.label));
-			case 'Name: Z-A':
-				return [...filteredProducts].sort((a, b) => b.label.localeCompare(a.label));
-			case 'Sort by: Popularity (Most Popular)':
-				return [...filteredProducts].sort((a, b) => {
-					const aPopularity = (a.views_count || 0) + (a.orders_count || 0) * 3; // Weight orders more than views
-					const bPopularity = (b.views_count || 0) + (b.orders_count || 0) * 3;
-					return bPopularity - aPopularity;
-				});
-			case 'Sort by: Popularity (Least Popular)':
-				return [...filteredProducts].sort((a, b) => {
-					const aPopularity = (a.views_count || 0) + (a.orders_count || 0) * 3;
-					const bPopularity = (b.views_count || 0) + (b.orders_count || 0) * 3;
-					return aPopularity - bPopularity;
-				});
-			case 'Sort by: Newest First':
-				return [...filteredProducts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-			case 'Sort by: Oldest First':
-				return [...filteredProducts].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-			default:
-				return filteredProducts;
-		}
-	}, [ filteredProducts, currentSort] );
+    const sortedData = useMemo(() => {
+        if (!sortValue) return filteredData;
 
-	const handleSortChange = (sort) => {
-		setCurrentSort(sort);
-	};
+        const sortOption = sortOptions.find(option => option.value === sortValue);
+        if (!sortOption) return filteredData;
 
-	const handleSearchChange = (event) => {
-		setSearchInput(event.target.value);
-	};
+        const sortedArray = [...filteredData];
 
-	const handleSearchSubmit = () => {
-		setSearchQuery(searchInput);
-	};
+        if (sortOption.sortFunction) {
+            return sortedArray.sort(sortOption.sortFunction);
+        }
 
-	return { sortedProducts, categoryProducts, currentSort, searchQuery, searchInput, handleSortChange, handleSearchChange, handleSearchSubmit, setSearchInput, setSearchQuery };
+        if (sortOption.field) {
+            const { field, type, direction } = sortOption;
+            
+            return sortedArray.sort((a, b) => {
+                let aValue = a[field];
+                let bValue = b[field];
+
+                if (aValue === null || aValue === undefined) aValue = '';
+                if (bValue === null || bValue === undefined) bValue = '';
+
+                let comparison = 0;
+
+                switch (type) {
+                    case 'string':
+                        comparison = String(aValue).localeCompare(String(bValue));
+                        break;
+                    case 'number':
+                        comparison = Number(aValue) - Number(bValue);
+                        break;
+                    case 'date':
+                        comparison = new Date(aValue) - new Date(bValue);
+                        break;
+                    default:
+                        comparison = String(aValue).localeCompare(String(bValue));
+                }
+
+                return direction === 'desc' ? -comparison : comparison;
+            });
+        }
+
+        return filteredData;
+    }, [filteredData, sortValue, sortOptions]);
+
+    const handleSearchChange = (value) => {
+        setSearchValue(value || '');
+    };
+
+    const handleSortChange = (value) => {
+        setSortValue(value || '');
+    };
+
+    const totalItems = data.length;
+    const filteredItems = sortedData.length;
+
+    return {
+        data: sortedData,
+        searchValue,
+        sortValue,
+        handleSearchChange,
+        handleSortChange,
+        sortOptions,
+        totalItems,
+        filteredItems
+    };
 };
 
 export default useDataFilter;
