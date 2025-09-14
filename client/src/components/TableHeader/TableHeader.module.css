@@ -50,6 +50,28 @@
     width: 100%;
 }
 
+.status {
+    place-content: center;
+    border-radius: 0.25rem;
+    display: grid;
+    border: 1px solid var(--bg-outline);
+    height: 3rem;
+    width: 4rem;
+    & > i {
+        color: var(--accent-base);
+    }
+    & > .spinner {
+        animation: spin 1s linear infinite;
+    }
+}
+
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 @media only screen and (max-width: 768px) {
     .table-header {
         flex-direction: column;

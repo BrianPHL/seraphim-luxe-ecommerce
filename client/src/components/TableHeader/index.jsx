@@ -18,14 +18,20 @@ const TableHeader = ({
     withPagination = false
 }) => {
 
-    const [localSearchValue, setLocalSearchValue] = useState(searchInput || '');
+    const [ localSearchValue, setLocalSearchValue ] = useState(searchInput || '');
+    const [ loading, setLoading ] = useState(false);
 
     useEffect(() => {
+        
+        setLoading(true);
+
         const timeoutId = setTimeout(() => {
             if (localSearchValue !== searchInput) {
                 onSearchChange(localSearchValue);
             }
+            setLoading(false);
         }, 500);
+
 
         return () => clearTimeout(timeoutId);
     }, [localSearchValue]);
@@ -103,14 +109,23 @@ const TableHeader = ({
         <div className={styles['table-header']}>
             
             <div className={styles['container-top']}>
-                    <InputField
-                        value={ localSearchValue }
-                        hint={ `Search ${ label?.toLowerCase() }...` }
-                        type={ 'text' }
-                        onKeyPress={ () => { handleKeyPress } }
-                        onChange={ (e) => handleSearchInputChange(e.target.value) }
-                        isSubmittable={ false }
-                    />
+                <div className={ styles['status'] }>
+                    {
+                        (loading) ? (
+                            <i className={ `fa-solid fa-spinner ${ styles['spinner'] }` }></i>
+                        ) : (
+                            <i className={ 'fa-solid fa-magnifying-glass' }></i>
+                        )
+                    }
+                </div>
+                <InputField
+                    value={ localSearchValue }
+                    hint={ `Search ${ label?.toLowerCase() }...` }
+                    type={ 'text' }
+                    onKeyPress={ () => { handleKeyPress } }
+                    onChange={ (e) => handleSearchInputChange(e.target.value) }
+                    isSubmittable={ false }
+                />
                 <Button
                     id='sort-dropdown'
                     type='secondary'
