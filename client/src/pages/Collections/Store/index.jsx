@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { Button, ProductCard, TableHeader, TableFooter, ReturnButton } from '@components';
 import { useProducts, useCategories } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
+import { COLLECTIONS_FILTER_CONFIG } from '@utils';
 import styles from './Store.module.css';
 
 const Store = () => {
@@ -22,13 +23,11 @@ const Store = () => {
         return activeCategories.map(cat => cat.id);
     };
 
-    // Filter products by category first
     let filteredProducts = products.filter(product => {
         const jewelryCategoryIds = getJewelryCategoryIds();
         return jewelryCategoryIds.includes(product.category_id);
     });
 
-    // Apply category and subcategory filters
     if (queryCategoryId) {
         filteredProducts = filteredProducts.filter(product => 
             product.category_id === parseInt(queryCategoryId)
@@ -41,22 +40,16 @@ const Store = () => {
         );
     }
 
-    // Apply search filter here instead of in useProductFilter
-    if (querySearch) {
-        filteredProducts = filteredProducts.filter(product => 
-            product.label.toLowerCase().includes(querySearch.toLowerCase())
-        );
-    }
-
     const {
-        sortedProducts,
-        currentSort,
-        searchInput,
+        data: sortedData,
+        searchValue,
+        sortValue,
+        handleSearchChange,
         handleSortChange: onSortChange,
-        handleSearchSubmit,
-        setSearchInput,
-        setSearchQuery
-    } = useDataFilter(filteredProducts, null, querySort, '');
+        sortOptions,
+        totalItems,
+        filteredItems
+    } = useDataFilter(filteredProducts, COLLECTIONS_FILTER_CONFIG);
     
     const {
         currentPage,
@@ -64,7 +57,19 @@ const Store = () => {
         currentItems: paginatedProducts,
         handlePageChange,
         resetPagination
-    } = usePagination(sortedProducts, ITEMS_PER_PAGE, queryPage);
+    } = usePagination(sortedData, ITEMS_PER_PAGE, queryPage);
+    
+    useEffect(() => {
+        if (querySearch !== searchValue) {
+            handleSearchChange(querySearch);
+        }
+    }, [querySearch]);
+
+    useEffect(() => {
+        if (querySort !== sortValue) {
+            onSortChange(querySort);
+        }
+    }, [querySort]);
     
     const updateSearchParams = ({ page, sort, search, category_id, subcategory_id }) => {
         const params = new URLSearchParams(searchParams);
@@ -83,14 +88,9 @@ const Store = () => {
         updateSearchParams({ sort, page: 1 });
     };
 
-    const handleSearch = () => {
-        handleSearchSubmit();
-        updateSearchParams({ search: searchInput, page: 1 });
-    };
-
-    // Create wrapper function for search change that handles value directly
-    const handleSearchChange = (value) => {
-        setSearchInput(value);
+    const handleSearchChangeWrapped = (value) => {
+        handleSearchChange(value);
+        updateSearchParams({ search: value, page: 1 });
     };
 
     const handlePageChangeWrapped = (page) => {
@@ -127,11 +127,17 @@ const Store = () => {
                 <TableHeader
                     icon='fa-solid fa-boxes-stacked'
                     label='Collections'
-                    currentSort={ currentSort }
-                    searchInput={ searchInput }
+                    currentSort={ sortValue }
+                    searchInput={ searchValue }
                     onSortChange={ handleSortChange }
-                    onSearchChange={ handleSearchChange }
-                    onSearchSubmit={ handleSearch }
+                    onSearchChange={ handleSearchChangeWrapped }
+                    onSearchSubmit={ () => {} }
+                    currentPage={ currentPage }
+                    totalPages={ totalPages }
+                    resultsLabel={ `Showing ${ paginatedProducts.length } out of ${ sortedData.length } results` }
+                    sortLabel={ sortValue }
+                    onPageChange={ handlePageChangeWrapped }
+                    withPagination={ true }
                 />
 
                 { loading && (
@@ -141,7 +147,7 @@ const Store = () => {
                     </div>
                 )}
                 
-                { paginatedProducts['length'] <= 0 && !loading ? (
+                { paginatedProducts.length <= 0 && !loading ? (
                     <div className={ styles['not-found'] }>
                         <i className='fa-solid fa-magnifying-glass'></i>
                         <h3>No Collections Found</h3>
@@ -150,8 +156,7 @@ const Store = () => {
                             type='secondary'
                             label='Clear Search'
                             action={() => {
-                                setSearchInput('');
-                                setSearchQuery('');
+                                handleSearchChange('');
                                 resetPagination();
                                 updateSearchParams({ search: '', page: 1 });
                             }}
@@ -161,17 +166,17 @@ const Store = () => {
                     <div className={ styles['products-grid'] }>
                         { paginatedProducts.map(product => (
                             <ProductCard
-                                key={ product['id'] }
-                                id={ product['id'] }
-                                category={ getCategoryDisplayName(product['category_id']) }
-                                subcategory={ getSubcategoryDisplayName(product['subcategory_id']) }
-                                image_url={ product['image_url'] }
-                                label={ product['label'] }
-                                price={ product['price'] }
-                                stock_quantity={ product['stock_quantity'] }
-                                views_count={ product['views_count'] }
-                                created_at={ product['created_at'] }
-                                orders_count={ product['orders_count'] }
+                                key={ product.id }
+                                id={ product.id }
+                                category={ getCategoryDisplayName(product.category_id) }
+                                subcategory={ getSubcategoryDisplayName(product.subcategory_id) }
+                                image_url={ product.image_url }
+                                label={ product.label }
+                                price={ product.price }
+                                stock_quantity={ product.stock_quantity }
+                                views_count={ product.views_count }
+                                created_at={ product.created_at }
+                                orders_count={ product.orders_count }
                             />
                         ))}
                     </div>
@@ -181,8 +186,8 @@ const Store = () => {
             <TableFooter
                 currentPage={ currentPage }
                 totalPages={ totalPages }
-                resultsLabel={ `Showing ${ paginatedProducts['length'] } out of ${ sortedProducts['length'] } results` }
-                sortLabel={ currentSort }
+                resultsLabel={ `Showing ${ paginatedProducts.length } out of ${ sortedData.length } results` }
+                sortLabel={ sortValue }
                 onPageChange={ handlePageChangeWrapped }
             />
         </div>

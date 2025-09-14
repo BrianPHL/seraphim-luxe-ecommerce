@@ -24,7 +24,6 @@ const ContactUs = () => {
                 setError(null);
                 
                 const pageData = await fetchSpecificPage('contact');
-                console.log('API Response:', pageData);
                 
                 if (!isMounted) return;
                 
