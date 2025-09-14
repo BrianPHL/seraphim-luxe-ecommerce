@@ -1,22 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Stocks.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
 import { useStocks, useProducts, useAuth, useToast } from '@contexts';
+import { useDataFilter, usePagination } from '@hooks';
+import { LOW_STOCK_FILTER_CONFIG, STOCKS_FILTER_CONFIG } from '@utils';
+
+const ITEMS_PER_PAGE = 10;
 
 const Stocks = () => {
-    
     const [searchParams, setSearchParams] = useSearchParams();
-    const queryPage = parseInt(searchParams.get('page') || '1', 10);
-    const querySort = searchParams.get('sort') || 'Sort by: Latest';
-    const querySearch = searchParams.get('search') || '';
-    const ITEMS_PER_PAGE = 10;
+    
+    // URL params for Low Stock Products table
+    const queryLowStockPage = parseInt(searchParams.get('lowStockPage') || '1', 10);
+    const queryLowStockSort = searchParams.get('lowStockSort') || 'Sort by: Most Critical First';
+    const queryLowStockSearch = searchParams.get('lowStockSearch') || '';
+    
+    // URL params for Stock History table
+    const queryHistoryPage = parseInt(searchParams.get('historyPage') || '1', 10);
+    const queryHistorySort = searchParams.get('historySort') || 'Sort by: Latest';
+    const queryHistorySearch = searchParams.get('historySearch') || '';
 
-    const [currentPage, setCurrentPage] = useState(queryPage);
-    const [totalPages, setTotalPages] = useState(1);
-    const [filteredHistory, setFilteredHistory] = useState([]);
-    const [paginatedHistory, setPaginatedHistory] = useState([]);
-    const [searchInput, setSearchInput] = useState(querySearch);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [quantityToAdd, setQuantityToAdd] = useState(1);
@@ -28,83 +32,150 @@ const Stocks = () => {
     const { user } = useAuth();
     const { showToast } = useToast();
 
+    // Low Stock Products filtering and pagination
+    const {
+        data: filteredLowStockProducts,
+        searchValue: lowStockSearchValue,
+        sortValue: lowStockSortValue,
+        handleSearchChange: handleLowStockSearchChange,
+        handleSortChange: handleLowStockSortChange,
+        sortOptions: lowStockSortOptions,
+    } = useDataFilter(lowStockProducts || [], LOW_STOCK_FILTER_CONFIG);
+
+    const {
+        currentPage: lowStockCurrentPage,
+        totalPages: lowStockTotalPages,
+        currentItems: paginatedLowStockProducts,
+        handlePageChange: handleLowStockPageChange,
+        resetPagination: resetLowStockPagination,
+    } = usePagination(filteredLowStockProducts, ITEMS_PER_PAGE, queryLowStockPage);
+
+    // Stock History filtering and pagination
+    const {
+        data: filteredStockHistory,
+        searchValue: historySearchValue,
+        sortValue: historySortValue,
+        handleSearchChange: handleHistorySearchChange,
+        handleSortChange: handleHistorySortChange,
+        sortOptions: historySortOptions,
+    } = useDataFilter(stockHistory || [], STOCKS_FILTER_CONFIG);
+
+    const {
+        currentPage: historyCurrentPage,
+        totalPages: historyTotalPages,
+        currentItems: paginatedStockHistory,
+        handlePageChange: handleHistoryPageChange,
+        resetPagination: resetHistoryPagination,
+    } = usePagination(filteredStockHistory, ITEMS_PER_PAGE, queryHistoryPage);
+
+    // Initialize Low Stock Products state from URL params
     useEffect(() => {
-        if (!stockHistory) return;
-        
-        let result = [...stockHistory];
-
-        if (querySearch) {
-            const searchLower = querySearch.toLowerCase();
-            result = result.filter(item => 
-                item.product_name?.toLowerCase().includes(searchLower) ||
-                item.category?.toLowerCase().includes(searchLower) ||
-                item.first_name?.toLowerCase().includes(searchLower) ||
-                item.last_name?.toLowerCase().includes(searchLower) ||
-                item.notes?.toLowerCase().includes(searchLower)
-            );
+        if (lowStockSearchValue !== queryLowStockSearch) {
+            handleLowStockSearchChange(queryLowStockSearch);
         }
-
-        switch(querySort) {
-            case 'Sort by: Latest':
-                result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                break;
-            case 'Sort by: Oldest':
-                result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                break;
-            case 'Sort by: Quantity (High to Low)':
-                result.sort((a, b) => b.quantity_change - a.quantity_change);
-                break;
-            case 'Sort by: Quantity (Low to High)':
-                result.sort((a, b) => a.quantity_change - b.quantity_change);
-                break;
-            default:
-                break;
-        }
-        
-        setFilteredHistory(result);
-        setTotalPages(Math.max(1, Math.ceil(result.length / ITEMS_PER_PAGE)));
-        
-    }, [stockHistory, querySearch, querySort]);
+    }, [queryLowStockSearch]);
 
     useEffect(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        setPaginatedHistory(filteredHistory.slice(startIndex, endIndex));
-    }, [filteredHistory, currentPage]);
+        if (lowStockSortValue !== queryLowStockSort) {
+            handleLowStockSortChange(queryLowStockSort);
+        }
+    }, [queryLowStockSort]);
 
-    const updateSearchParams = ({ page, sort, search }) => {
+    useEffect(() => {
+        if (lowStockCurrentPage !== queryLowStockPage) {
+            handleLowStockPageChange(queryLowStockPage);
+        }
+    }, [queryLowStockPage]);
+
+    // Initialize Stock History state from URL params
+    useEffect(() => {
+        if (historySearchValue !== queryHistorySearch) {
+            handleHistorySearchChange(queryHistorySearch);
+        }
+    }, [queryHistorySearch]);
+
+    useEffect(() => {
+        if (historySortValue !== queryHistorySort) {
+            handleHistorySortChange(queryHistorySort);
+        }
+    }, [queryHistorySort]);
+
+    useEffect(() => {
+        if (historyCurrentPage !== queryHistoryPage) {
+            handleHistoryPageChange(queryHistoryPage);
+        }
+    }, [queryHistoryPage]);
+
+    const updateSearchParams = ({ lowStockPage, lowStockSort, lowStockSearch, historyPage, historySort, historySearch }) => {
         const params = new URLSearchParams(searchParams);
-
-        if (page !== undefined) params.set('page', page);
-        if (sort !== undefined) params.set('sort', sort);
-        if (search !== undefined) params.set('search', search);
-
+        
+        if (lowStockPage !== undefined) params.set('lowStockPage', lowStockPage);
+        if (lowStockSort !== undefined) params.set('lowStockSort', lowStockSort);
+        if (lowStockSearch !== undefined) params.set('lowStockSearch', lowStockSearch);
+        
+        if (historyPage !== undefined) params.set('historyPage', historyPage);
+        if (historySort !== undefined) params.set('historySort', historySort);
+        if (historySearch !== undefined) params.set('historySearch', historySearch);
+        
         setSearchParams(params);
     };
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-        updateSearchParams({ page });
+    // Low Stock Products handlers
+    const handleLowStockSearchChangeWrapped = (value) => {
+        handleLowStockSearchChange(value);
+        resetLowStockPagination();
+        updateSearchParams({ lowStockSearch: value, lowStockPage: 1 });
     };
 
-    const handleSearchChange = (e) => {
-        setSearchInput(e.target.value);
+    const handleLowStockSortChangeWrapped = (sort) => {
+        handleLowStockSortChange(sort);
+        resetLowStockPagination();
+        updateSearchParams({ lowStockSort: sort, lowStockPage: 1 });
     };
 
-    const handleSearch = () => {
-        setCurrentPage(1);
-        updateSearchParams({ search: searchInput, page: 1 });
+    const handleLowStockPageChangeWrapped = (page) => {
+        handleLowStockPageChange(page);
+        updateSearchParams({ lowStockPage: page });
     };
 
-    const handleSortChange = (sort) => {
-        setCurrentPage(1);
-        updateSearchParams({ sort, page: 1 });
+    const handleLowStockSearch = () => {
+        resetLowStockPagination();
+        updateSearchParams({ lowStockSearch: lowStockSearchValue, lowStockPage: 1 });
     };
 
-    const handleClearSearch = () => {
-        setSearchInput('');
-        setCurrentPage(1);
-        updateSearchParams({ search: '', page: 1 });
+    const handleLowStockClearSearch = () => {
+        handleLowStockSearchChange('');
+        resetLowStockPagination();
+        updateSearchParams({ lowStockSearch: '', lowStockPage: 1 });
+    };
+
+    // Stock History handlers
+    const handleHistorySearchChangeWrapped = (value) => {
+        handleHistorySearchChange(value);
+        resetHistoryPagination();
+        updateSearchParams({ historySearch: value, historyPage: 1 });
+    };
+
+    const handleHistorySortChangeWrapped = (sort) => {
+        handleHistorySortChange(sort);
+        resetHistoryPagination();
+        updateSearchParams({ historySort: sort, historyPage: 1 });
+    };
+
+    const handleHistoryPageChangeWrapped = (page) => {
+        handleHistoryPageChange(page);
+        updateSearchParams({ historyPage: page });
+    };
+
+    const handleHistorySearch = () => {
+        resetHistoryPagination();
+        updateSearchParams({ historySearch: historySearchValue, historyPage: 1 });
+    };
+
+    const handleHistoryClearSearch = () => {
+        handleHistorySearchChange('');
+        resetHistoryPagination();
+        updateSearchParams({ historySearch: '', historyPage: 1 });
     };
 
     const handleOpenAddStockModal = (product = null) => {
@@ -119,7 +190,7 @@ const Stocks = () => {
         if (!selectedProduct) return;
 
         const success = await addStock(
-            selectedProduct.product_id,
+            selectedProduct.id || selectedProduct.product_id,
             quantityToAdd,
             newThreshold,
             notes
@@ -164,170 +235,215 @@ const Stocks = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Low Stock Products Section */}
             <div className={styles['section']}>
-
-                <div className={styles['section']}>
-                    
-                    <div className={ styles['section-header'] }>
-                        <h2>Low Stock Products</h2>
-                        <Button
-                            type="primary"
-                            icon="fa-solid fa-plus"
-                            iconPosition="left"
-                            label="Add Stock"
-                            action={() => setIsModalOpen(true)}
-                        />
-                    </div>
-                    <div className={ styles['table'] }>
-                        <div className={ styles['table-wrapper'] }>
-                            <div className={` ${ styles['table-header'] } ${ styles['stock-alerts'] } `}>
-                                <h3></h3>
-                                <h3>product_id</h3>
-                                <h3>label</h3>
-                                <h3>category</h3>
-                                <h3>stock_quantity</h3>
-                                <h3>stock_threshold</h3>
-                                <h3>modified_at</h3>
-                                <h3>actions</h3>
-                            </div>
-                                {lowStockProducts.length > 0 ? (
-                                    lowStockProducts.map(product => (
-                                        <div key={ product.product_id } className={`${ styles['table-rows'] } ${ styles['stock-alerts'] }`}>
-                                            <div className={styles['table-cell']}>
-                                                {product.image_url ? (
-                                                    <img 
-                                                        src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`}
-                                                        alt={product.label}
-                                                    />
-                                                ) : '—'}
-                                            </div>
-                                            <div className={styles['table-cell']}>{product.id}</div>
-                                            <div className={styles['table-cell']}>{product.label}</div>
-                                            <div className={styles['table-cell']}>{product.category}</div>
-                                            <div className={styles['table-cell']}>
-                                                <span className={
-                                                    product.stock_quantity <= 0 
-                                                        ? styles['stock-out'] 
-                                                        : product.stock_quantity <= product.stock_threshold 
-                                                            ? styles['stock-low'] 
-                                                            : styles['stock-ok']
-                                                }>
-                                                    {product.stock_quantity}
-                                                </span>
-                                            </div>
-                                            <div className={styles['table-cell']}>{product.stock_threshold}</div>
-                                            <div className={styles['table-cell']}>
-                                                {product.modified_at }
-                                            </div>
-                                            <div className={styles['table-cell']}>
-                                                <Button
-                                                    type="icon"
-                                                    icon="fa-solid fa-square-plus"
-                                                    action={() => handleOpenAddStockModal(product)}
-                                                />
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className={styles['empty-table']}>
-                                        <p>No low stock products!</p>
-                                    </div>
-                                )}
-                        </div>
-
-                    </div>
-                </div>
-
-                <div className={styles['divider']}></div>
-                
-                {/* Stock History Section */}
-                <div className={styles['section']}>
-                    <h2>Stock Transaction History</h2>
-                    
-                    {/* <TableHeader
-                        tableName="reservations"
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        resultsLabel={`Showing ${paginatedHistory.length} out of ${filteredHistory.length} stock transactions`}
-                        sortLabel={querySort}
-                        searchValue={searchInput}
-                        onPageChange={handlePageChange}
-                        onSortChange={handleSortChange}
-                        onSearchChange={handleSearchChange}
-                        onSearchSubmit={handleSearch}
-                    /> */}
-                    
-                    <div className={styles['table']}>
-                        <div className={styles['table-wrapper']}>
-                            <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                                <h3>product</h3>
-                                <h3>type</h3>
-                                <h3>quantity change</h3>
-                                <h3>previous / new qty</h3>
-                                <h3>notes</h3>
-                                <h3>admin</h3>
-                                <h3>date</h3>
-                            </div>
-                            
-                            {isLoading ? (
-                                <div className={styles['empty-table']}>
-                                    <i className="fa-solid fa-spinner fa-spin"></i>
-                                </div>
-                            ) : paginatedHistory.length > 0 ? (
-                                paginatedHistory.map(transaction => (
-                                    <div 
-                                        key={transaction.stock_history_id} 
-                                        className={styles['table-rows']} 
-                                        style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
-                                    >
-                                        <div className={styles['table-cell']}>{transaction.product_name}</div>
-                                        <div className={styles['table-cell']}>
-                                            <span className={styles[`type-${transaction.stock_history_type}`]}>
-                                                {transaction.stock_history_type}
-                                            </span>
-                                        </div>
-                                        <div className={styles['table-cell']}>
-                                            {transaction.quantity_change > 0 ? '+' : ''}{transaction.quantity_change}
-                                        </div>
-                                        <div className={styles['table-cell']}>
-                                            {transaction.previous_quantity} → {transaction.new_quantity}
-                                        </div>
-                                        <div className={styles['table-cell']}>{transaction.notes || '—'}</div>
-                                        <div className={styles['table-cell']}>
-                                            {transaction.first_name} {transaction.last_name}
-                                        </div>
-                                        <div className={styles['table-cell']}>
-                                            {new Date(transaction.created_at).toLocaleDateString()}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className={styles['empty-table']}>
-                                    {querySearch ? (
-                                        <div className={styles['empty']}>
-                                            <h3>No stock transactions found matching "{querySearch}"</h3>
-                                            <Button 
-                                                type="secondary" 
-                                                label="Clear Search" 
-                                                action={handleClearSearch}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <p>No stock transactions found</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <TableFooter
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        resultsLabel={`Showing ${paginatedHistory.length} out of ${filteredHistory.length} stock transactions`}
-                        sortLabel={querySort}
-                        onPageChange={handlePageChange}
+                <div className={styles['section-header']}>
+                    <h2>Low Stock Products</h2>
+                    <Button
+                        type="primary"
+                        icon="fa-solid fa-plus"
+                        iconPosition="left"
+                        label="Add Stock"
+                        action={() => handleOpenAddStockModal()}
                     />
                 </div>
+
+                <TableHeader
+                    currentSort={lowStockSortValue}
+                    searchInput={lowStockSearchValue}
+                    onSortChange={handleLowStockSortChangeWrapped}
+                    onSearchChange={handleLowStockSearchChangeWrapped}
+                    onSearch={handleLowStockSearch}
+                    sortOptions={lowStockSortOptions}
+                    withPagination={true}
+                    currentPage={lowStockCurrentPage}
+                    totalPages={lowStockTotalPages}
+                    resultsLabel={`Showing ${paginatedLowStockProducts.length} out of ${filteredLowStockProducts.length} results`}
+                    sortLabel={lowStockSortValue}
+                    onPageChange={handleLowStockPageChangeWrapped}
+                />
+
+                <div className={styles['table']}>
+                    <div className={styles['table-wrapper']}>
+                        <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
+                            <h3></h3>
+                            <h3>Product ID</h3>
+                            <h3>Label</h3>
+                            <h3>Category</h3>
+                            <h3>Stock Quantity</h3>
+                            <h3>Stock Threshold</h3>
+                            <h3>Modified At</h3>
+                            <h3>Actions</h3>
+                        </div>
+                        
+                        {isLoading ? (
+                            <div className={styles['empty-table']}>
+                                <i className="fa-solid fa-spinner fa-spin"></i>
+                            </div>
+                        ) : paginatedLowStockProducts.length > 0 ? (
+                            paginatedLowStockProducts.map(product => (
+                                <div 
+                                    key={product.id || product.product_id} 
+                                    className={styles['table-rows']} 
+                                    style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}
+                                >
+                                    <div className={styles['table-cell']}>
+                                        {product.image_url ? (
+                                            <img 
+                                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`}
+                                                alt={product.label}
+                                            />
+                                        ) : '—'}
+                                    </div>
+                                    <div className={styles['table-cell']}>{product.id || product.product_id}</div>
+                                    <div className={styles['table-cell']}>{product.label}</div>
+                                    <div className={styles['table-cell']}>{product.category}</div>
+                                    <div className={styles['table-cell']}>
+                                        <span className={
+                                            product.stock_quantity <= 0 
+                                                ? styles['stock-out'] 
+                                                : product.stock_quantity <= product.stock_threshold 
+                                                    ? styles['stock-low'] 
+                                                    : styles['stock-ok']
+                                        }>
+                                            {product.stock_quantity}
+                                        </span>
+                                    </div>
+                                    <div className={styles['table-cell']}>{product.stock_threshold}</div>
+                                    <div className={styles['table-cell']}>
+                                        {new Date(product.modified_at).toLocaleDateString()}
+                                    </div>
+                                    <div className={styles['table-cell']}>
+                                        <Button
+                                            type="icon"
+                                            icon="fa-solid fa-square-plus"
+                                            action={() => handleOpenAddStockModal(product)}
+                                        />
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className={styles['empty-table']}>
+                                {lowStockSearchValue ? (
+                                    <div className={styles['empty']}>
+                                        <h3>No low stock products found matching "{lowStockSearchValue}"</h3>
+                                        <Button 
+                                            type="secondary" 
+                                            label="Clear Search" 
+                                            action={handleLowStockClearSearch}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>No low stock products!</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <TableFooter
+                    currentPage={lowStockCurrentPage}
+                    totalPages={lowStockTotalPages}
+                    resultsLabel={`Showing ${paginatedLowStockProducts.length} out of ${filteredLowStockProducts.length} results`}
+                    sortLabel={lowStockSortValue}
+                    onPageChange={handleLowStockPageChangeWrapped}
+                />
+            </div>
+
+            <div className={styles['divider']}></div>
+            
+            {/* Stock Transaction History Section */}
+            <div className={styles['section']}>
+                <div className={styles['section-header']}>
+                    <h2>Stock Transaction History</h2>
+                </div>
+                
+                <TableHeader
+                    currentSort={historySortValue}
+                    searchInput={historySearchValue}
+                    onSortChange={handleHistorySortChangeWrapped}
+                    onSearchChange={handleHistorySearchChangeWrapped}
+                    onSearch={handleHistorySearch}
+                    sortOptions={historySortOptions}
+                    withPagination={true}
+                    currentPage={historyCurrentPage}
+                    totalPages={historyTotalPages}
+                    resultsLabel={`Showing ${paginatedStockHistory.length} out of ${filteredStockHistory.length} results`}
+                    sortLabel={historySortValue}
+                    onPageChange={handleHistoryPageChangeWrapped}
+                />
+                
+                <div className={styles['table']}>
+                    <div className={styles['table-wrapper']}>
+                        <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                            <h3>Product</h3>
+                            <h3>Type</h3>
+                            <h3>Quantity Change</h3>
+                            <h3>Previous / New Qty</h3>
+                            <h3>Notes</h3>
+                            <h3>Admin</h3>
+                            <h3>Date</h3>
+                        </div>
+                        
+                        {isLoading ? (
+                            <div className={styles['empty-table']}>
+                                <i className="fa-solid fa-spinner fa-spin"></i>
+                            </div>
+                        ) : paginatedStockHistory.length > 0 ? (
+                            paginatedStockHistory.map(transaction => (
+                                <div 
+                                    key={transaction.stock_history_id} 
+                                    className={styles['table-rows']} 
+                                    style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
+                                >
+                                    <div className={styles['table-cell']}>{transaction.product_name}</div>
+                                    <div className={styles['table-cell']}>
+                                        <span className={styles[`type-${transaction.stock_history_type}`]}>
+                                            {transaction.stock_history_type}
+                                        </span>
+                                    </div>
+                                    <div className={styles['table-cell']}>
+                                        {transaction.quantity_change > 0 ? '+' : ''}{transaction.quantity_change}
+                                    </div>
+                                    <div className={styles['table-cell']}>
+                                        {transaction.previous_quantity} → {transaction.new_quantity}
+                                    </div>
+                                    <div className={styles['table-cell']}>{transaction.notes || '—'}</div>
+                                    <div className={styles['table-cell']}>
+                                        {transaction.first_name} {transaction.last_name}
+                                    </div>
+                                    <div className={styles['table-cell']}>
+                                        {new Date(transaction.created_at).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className={styles['empty-table']}>
+                                {historySearchValue ? (
+                                    <div className={styles['empty']}>
+                                        <h3>No stock transactions found matching "{historySearchValue}"</h3>
+                                        <Button 
+                                            type="secondary" 
+                                            label="Clear Search" 
+                                            action={handleHistoryClearSearch}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>No stock transactions found</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <TableFooter
+                    currentPage={historyCurrentPage}
+                    totalPages={historyTotalPages}
+                    resultsLabel={`Showing ${paginatedStockHistory.length} out of ${filteredStockHistory.length} results`}
+                    sortLabel={historySortValue}
+                    onPageChange={handleHistoryPageChangeWrapped}
+                />
             </div>
 
             <Modal
@@ -347,68 +463,68 @@ const Stocks = () => {
                     <div className={styles['input-wrapper']}>
                         <label>Select Product</label>
                         <select 
-                            value={selectedProduct?.product_id || ''} 
+                            value={selectedProduct?.id || selectedProduct?.product_id || ''} 
                             onChange={(e) => {
-                                const product = products.find(p => p.product_id.toString() === e.target.value);
+                                const product = products.find(p => (p.id || p.product_id).toString() === e.target.value);
                                 setSelectedProduct(product);
-                                setNewThreshold(product?.stock_threshold || '');
                             }}
                         >
-                            <option value="">-- Select a Product --</option>
-                            {products.map(p => (
-                                <option key={p.product_id} value={p.product_id}>
-                                    {p.label} ({p.category})
+                            <option value="">Choose a product...</option>
+                            {products?.map(product => (
+                                <option key={product.id || product.product_id} value={product.id || product.product_id}>
+                                    {product.label}
                                 </option>
                             ))}
                         </select>
                     </div>
                 )}
-                
+
                 <div className={styles['inputs-container']}>
                     <div className={styles['input-wrapper']}>
-                        <label>Quantity to Add</label>
+                        <label>Quantity to Add/Remove</label>
                         <InputField
                             type="number"
-                            hint="The quantity to add..." 
-                            min="1"
+                            name="quantityToAdd"
+                            hint="Use negative values to remove stock"
                             value={quantityToAdd}
-                            onChange={(e) => setQuantityToAdd(parseInt(e.target.value) || 1)}
+                            onChange={(name, value) => setQuantityToAdd(parseInt(value) || 0)}
                             isSubmittable={false}
                         />
                     </div>
+                    
                     <div className={styles['input-wrapper']}>
-                        <label>Update Stock Threshold (Optional)</label>
-                        <InputField 
-                            hint="The product's stock threshold..."
+                        <label>New Stock Threshold (Optional)</label>
+                        <InputField
                             type="number"
-                            min="0"
-                            placeholder="Keep current threshold"
+                            name="newThreshold"
+                            hint="Leave empty to keep current threshold"
                             value={newThreshold}
-                            onChange={(e) => setNewThreshold(e.target.value)}
+                            onChange={(name, value) => setNewThreshold(value)}
                             isSubmittable={false}
                         />
                     </div>
+
                     <div className={styles['input-wrapper']}>
-                        <label>Notes (Optional)</label>
+                        <label>Notes</label>
                         <textarea
-                            placeholder="Reason for stock addition..."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Add notes about this stock change..."
                         />
                     </div>
                 </div>
-                
+
                 <div className={styles['modal-ctas']}>
-                    <Button 
-                        type="secondary" 
-                        label="Cancel" 
-                        action={() => setIsModalOpen(false)} 
+                    <Button
+                        type="secondary"
+                        label="Cancel"
+                        action={() => setIsModalOpen(false)}
                     />
-                    <Button 
-                        type="primary" 
-                        label="Add Stock" 
-                        action={handleAddStock} 
-                        disabled={!selectedProduct || quantityToAdd < 1}
+                    <Button
+                        type="primary"
+                        label="Update Stock"
+                        action={handleAddStock}
+                        disabled={!selectedProduct}
                     />
                 </div>
             </Modal>
