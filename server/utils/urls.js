@@ -1,4 +1,4 @@
-export const getBaseURL = () => {
+export const getBaseURL = (environment) => {
     if (typeof window !== 'undefined') {
         return window.location.origin;
     }
@@ -7,5 +7,7 @@ export const getBaseURL = () => {
 
     return isEnvironmentInProduction
         ? 'https://seraphim-luxe-ecommerce-production.up.railway.app'
-        : 'http://localhost:3000';
+        : environment === 'client'
+            ? 'http://localhost:5173'
+            : 'http://localhost:3000'
 };

@@ -37,7 +37,7 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            redirectURI: `${ getBaseURL() }/api/auth/callback/google`,
+            redirectURI: `${ getBaseURL('server') }/api/auth/callback/google`,
             prompt: "select_account",
             disableImplicitSignUp: false
         },
@@ -183,8 +183,8 @@ export const auth = betterAuth({
 
                             if (user.is_suspended) {
                                 (user.role === 'admin')
-                                ? ctx.redirect('http://localhost:5173/admin/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED')
-                                : ctx.redirect('http://localhost:5173/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED')
+                                ? ctx.redirect(`${ getBaseURL('client') }/admin/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`)
+                                : ctx.redirect(`${ getBaseURL('client') }/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`)
                                 await ctx?.context?.internalAdapter?.deleteSessions(user.id);
                             }
 
@@ -193,8 +193,8 @@ export const auth = betterAuth({
                             
                             await ctx?.context?.internalAdapter?.deleteSessions(user.id);
                             const redirectURL = isAdminPlatform 
-                                ? `http://localhost:5173/admin/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
-                                : `http://localhost:5173/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
+                                ? `${ getBaseURL('client') }/admin/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
+                                : `${ getBaseURL('client') }/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
                             ctx.redirect(redirectURL);
                             return;
 
