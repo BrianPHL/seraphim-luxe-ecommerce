@@ -121,6 +121,40 @@ const Profile = ({}) => {
     const queryToken = searchParams.get('token') || null;
     const errorToken = searchParams.get('error') || null;
 
+    const [availableCurrencies, setAvailableCurrencies] = useState({});
+    const [enabledPaymentMethods, setEnabledPaymentMethods] = useState({});
+    const [customPaymentMethods, setCustomPaymentMethods] = useState([]);
+
+    useEffect(() => {
+        fetchAvailableCurrencies();
+    }, [settings]);
+
+    const fetchAvailableCurrencies = async () => {
+        try {
+            const response = await fetch('/api/admin/settings', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableCurrencies(data.availableCurrencies || {});
+                setEnabledPaymentMethods(data.paymentMethods || {});
+                setCustomPaymentMethods(data.customPaymentMethods || []);
+            }
+        } catch (error) {
+            console.error('Error fetching available currencies:', error);
+        }
+    };
+
+    const currencyLabels = {
+        PHP: 'Philippine Peso (₱)',
+        USD: 'US Dollar ($)',
+        EUR: 'Euro (€)',
+        JPY: 'Japanese Yen (¥)',
+        CAD: 'Canadian Dollar (C$)'
+    };
+
     const getCurrencyLabel = (currency) => {
         const labels = {
             'PHP': 'Philippine Peso (₱)',
@@ -145,8 +179,15 @@ const Profile = ({}) => {
         const labels = {
             'cash_on_delivery': 'Cash on Delivery',
             'bank_transfer': 'Bank Transfer',
-            'gcash': 'GCash'
+            'paypal': 'Paypal',
+            'credit_card': 'Credit Card'
         };
+        
+        const customMethod = customPaymentMethods.find(pm => pm.key === method);
+        if (customMethod) {
+            return customMethod.label;
+        }
+        
         return labels[method] || 'Select Payment Method';
     };
 
@@ -668,7 +709,6 @@ const Profile = ({}) => {
     return(
         <>
             <div className={ styles['wrapper'] }>
-
                 <div className={ styles['header'] }>
                     <ReturnButton />
                     <h1>My Profile</h1>
@@ -840,28 +880,14 @@ const Profile = ({}) => {
                                                 type='secondary'
                                                 label={`${getCurrencyLabel(platformSettings.currency)}`}
                                                 dropdownPosition='right'
-                                                options= {[
-                                                    {
-                                                        label: 'Philippine Peso (₱)',
-                                                        action: () => { handlePlatformSettingsChange ('currency', 'PHP')},
-                                                    },
-                                                    {
-                                                        label: 'US Dollar ($)',
-                                                        action: () => { handlePlatformSettingsChange ('currency', 'USD')},
-                                                    },
-                                                    {
-                                                        label: 'Euro (€)',
-                                                        action: () => { handlePlatformSettingsChange ('currency', 'EUR')},
-                                                    },
-                                                    {
-                                                        label: 'Japanese Yen (¥)',
-                                                        action: () => { handlePlatformSettingsChange ('currency', 'JPY')},
-                                                    },
-                                                    {
-                                                        label: 'Canadian Dollar (C$)',
-                                                        action: () => { handlePlatformSettingsChange ('currency', 'CAD')},
-                                                    },
-                                                ]}
+                                                options={
+                                                    Object.entries(availableCurrencies)
+                                                        .filter(([currency, enabled]) => enabled)
+                                                        .map(([currency]) => ({
+                                                            label: currencyLabels[currency],
+                                                            action: () => handlePlatformSettingsChange('currency', currency)
+                                                        }))
+                                                }
                                             />
                                         </div>
                                     </div>
@@ -875,19 +901,30 @@ const Profile = ({}) => {
                                                 type='secondary'
                                                 label={`${getPaymentLabel(platformSettings.preferred_payment_method)}`}
                                                 dropdownPosition='right'
-                                                options= {[
-                                                    {
+                                                options={[
+                                                    ...(enabledPaymentMethods.cash_on_delivery ? [{
                                                         label: 'Cash on Delivery',
-                                                        action: () => { handlePlatformSettingsChange ('preferred_payment_method', 'cash_on_delivery')},
-                                                    },
-                                                    {
+                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'cash_on_delivery')
+                                                    }] : []),
+                                                    ...(enabledPaymentMethods.bank_transfer ? [{
                                                         label: 'Bank Transfer',
-                                                        action: () => { handlePlatformSettingsChange ('preferred_payment_method', 'bank_transfer')},
-                                                    },
-                                                    {
-                                                        label: 'GCash',
-                                                        action: () => { handlePlatformSettingsChange ('preferred_payment_method', 'gcash')},
-                                                    },
+                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'bank_transfer')
+                                                    }] : []),
+                                                    ...(enabledPaymentMethods.paypal ? [{
+                                                        label: 'Paypal',
+                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'paypal')
+                                                    }] : []),
+                                                    ...(enabledPaymentMethods.credit_card ? [{
+                                                        label: 'Credit Card',
+                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'credit_card')
+                                                    }] : []),
+                                                    // Add custom payment methods
+                                                    ...customPaymentMethods
+                                                        .filter(method => method.enabled)
+                                                        .map(method => ({
+                                                            label: method.label,
+                                                            action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
+                                                        }))
                                                 ]}
                                             />
                                         </div>

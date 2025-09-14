@@ -37,6 +37,28 @@ const Checkout = () => {
     
     const checkoutItems = directCheckoutItem ? [directCheckoutItem] : selectedCartItems;
 
+    const [enabledPaymentMethods, setEnabledPaymentMethods] = useState({});
+
+    useEffect(() => {
+        fetchEnabledPaymentMethods();
+    }, []);
+
+    const fetchEnabledPaymentMethods = async () => {
+        try {
+            const response = await fetch('/api/admin/settings', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setEnabledPaymentMethods(data.paymentMethods || {});
+            }
+        } catch (error) {
+            console.error('Error fetching payment methods:', error);
+        }
+    };
+
     const safeFormatPrice = (price, currency = null) => {
         try {
             if (formatPrice && typeof formatPrice === 'function') {
@@ -286,8 +308,6 @@ const Checkout = () => {
             
             <div className={styles['container']}>
                 <div className={styles['checkout-main']}>
-                    
-                    {/* Shipping Address Section */}
                     <div className={styles['checkout-section']}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Shipping Address</h2>
@@ -341,7 +361,6 @@ const Checkout = () => {
                         )}
                     </div>
                     
-                    {/* Billing Address Section */}
                     <div className={styles['checkout-section']}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Billing Address</h2>
@@ -395,7 +414,6 @@ const Checkout = () => {
                         )}
                     </div>
 
-                    {/* Order Items Section */}
                     <div className={styles['checkout-section']}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Order Items ({checkoutItems.length})</h2>
@@ -439,33 +457,69 @@ const Checkout = () => {
                             <h2>Payment Method</h2>
                         </div>
                         <div className={styles['payment-methods']}>
-                            <label className={styles['payment-option']}>
-                                <input
-                                    type="radio"
-                                    name="payment"
-                                    value="cash_on_delivery"
-                                    checked={paymentMethod === 'cash_on_delivery'}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                />
-                                <div className={styles['payment-content']}>
-                                    <div className={styles['payment-title']}>Cash on Delivery</div>
-                                    <div className={styles['payment-description']}>Pay when you receive your order</div>
-                                </div>
-                            </label>
+                            {enabledPaymentMethods.cash_on_delivery && (
+                                <label className={styles['payment-option']}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="cash_on_delivery"
+                                        checked={paymentMethod === 'cash_on_delivery'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div className={styles['payment-content']}>
+                                        <div className={styles['payment-title']}>Cash on Delivery</div>
+                                        <div className={styles['payment-description']}>Pay when you receive your order</div>
+                                    </div>
+                                </label>
+                            )}
                             
-                            <label className={styles['payment-option']}>
-                                <input
-                                    type="radio"
-                                    name="payment"
-                                    value="bank_transfer"
-                                    checked={paymentMethod === 'bank_transfer'}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                />
-                                <div className={styles['payment-content']}>
-                                    <div className={styles['payment-title']}>Bank Transfer</div>
-                                    <div className={styles['payment-description']}>Direct bank account transfer</div>
-                                </div>
-                            </label>
+                            {enabledPaymentMethods.bank_transfer && (
+                                <label className={styles['payment-option']}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="bank_transfer"
+                                        checked={paymentMethod === 'bank_transfer'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div className={styles['payment-content']}>
+                                        <div className={styles['payment-title']}>Bank Transfer</div>
+                                        <div className={styles['payment-description']}>Direct bank account transfer</div>
+                                    </div>
+                                </label>
+                            )}
+                            
+                            {enabledPaymentMethods.paypal && (
+                                <label className={styles['payment-option']}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="paypal"
+                                        checked={paymentMethod === 'paypal'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div className={styles['payment-content']}>
+                                        <div className={styles['payment-title']}>Paypal</div>
+                                        <div className={styles['payment-description']}>Mobile payment through Paypal</div>
+                                    </div>
+                                </label>
+                            )}
+
+                            {enabledPaymentMethods.credit_card && (
+                                <label className={styles['payment-option']}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="credit_card"
+                                        checked={paymentMethod === 'credit_card'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div className={styles['payment-content']}>
+                                        <div className={styles['payment-title']}>Credit Card</div>
+                                        <div className={styles['payment-description']}>Pay using credit or debit card</div>
+                                    </div>
+                                </label>
+                            )}
                         </div>
                     </div>
 
