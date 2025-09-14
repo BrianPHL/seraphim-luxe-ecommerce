@@ -178,18 +178,27 @@ export const ORDER_FILTER_CONFIG = {
             }
         },
         {
-            label: 'Amount (Low to High)',
-            value: 'Sort by: Amount (Low to High)',
+            label: 'Total Amount (High to Low)',
+            value: 'Sort by: Total Amount (High to Low)',
+            field: 'total_amount',
+            type: 'number',
+            direction: 'desc'
+        },
+        {
+            label: 'Total Amount (Low to High)',
+            value: 'Sort by: Total Amount (Low to High)',
             field: 'total_amount',
             type: 'number',
             direction: 'asc'
         },
         {
-            label: 'Amount (High to Low)',
-            value: 'Sort by: Amount (High to Low)',
-            field: 'total_amount',
-            type: 'number',
-            direction: 'desc'
+            label: 'Status (Pending First)',
+            value: 'Sort by: Status (Pending First)',
+            sortFunction: (a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return 0;
+            }
         },
         {
             label: 'Recently Shipped',
