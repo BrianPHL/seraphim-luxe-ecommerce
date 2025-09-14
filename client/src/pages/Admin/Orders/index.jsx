@@ -1,50 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Orders.module.css';
-import { Button, Modal, TableHeader, TableFooter, InputField } from '@components';
+import { Button, Modal, TableHeader, TableFooter } from '@components';
 import { useOrders, useToast, useAuth } from '@contexts';
+import { useDataFilter, usePagination } from '@hooks';
+import { ORDER_FILTER_CONFIG } from '@utils';
+
+const ITEMS_PER_PAGE = 10;
 
 const Orders = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const queryPage = parseInt(searchParams.get('page') || '1', 10);
     const querySort = searchParams.get('sort') || 'Sort by: Latest';
     const querySearch = searchParams.get('search') || '';
-    
-    const [currentPage, setCurrentPage] = useState(queryPage);
-    const [totalPages, setTotalPages] = useState(1);
-    const [filteredOrders, setFilteredOrders] = useState([]);
-    const [paginatedOrders, setPaginatedOrders] = useState([]);
-    const [searchInput, setSearchInput] = useState(querySearch);
+
+    const { user } = useAuth();
+    const { recentOrders, fetchRecentOrders, processRefund, getOrderItems, loading } = useOrders();
+    const { showToast } = useToast();
+
+    const {
+        data: filteredOrders,
+        searchValue,
+        sortValue,
+        handleSearchChange,
+        handleSortChange,
+        sortOptions,
+    } = useDataFilter(recentOrders || [], ORDER_FILTER_CONFIG);
+
+    const {
+        currentPage,
+        totalPages,
+        currentItems: paginatedOrders,
+        handlePageChange,
+        resetPagination,
+    } = usePagination(filteredOrders, ITEMS_PER_PAGE, queryPage);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [statusUpdateNotes, setStatusUpdateNotes] = useState('');
     const [refundAmount, setRefundAmount] = useState('');
     const [refundReason, setRefundReason] = useState('');
-    const ITEMS_PER_PAGE = 10;
 
-    const { user } = useAuth();
-    const { recentOrders, fetchRecentOrders, updateOrderStatus, processRefund, getOrderItems, loading } = useOrders();
-    const { showToast } = useToast();
+    useEffect(() => {
+        if (searchValue !== querySearch) handleSearchChange(querySearch);
+    }, [querySearch, handleSearchChange]);
 
-    const orderStatuses = [
-        'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'
-    ];
+    useEffect(() => {
+        if (sortValue !== querySort) handleSortChange(querySort);
+    }, [querySort, handleSortChange]);
 
-    const paymentMethodLabels = {
-        cash_on_delivery: "Cash on Delivery",
-        gcash: "GCash",
-        bank_transfer: "Bank Transfer",
-        credit_card: "Credit Card"
-    };
-
-    const sortOptions = [
-        'Sort by: Latest',
-        'Sort by: Oldest',
-        'Sort by: Total Amount (High to Low)',
-        'Sort by: Total Amount (Low to High)',
-        'Sort by: Status (Pending First)'
-    ];
+    useEffect(() => {
+        if (currentPage !== queryPage) handlePageChange(queryPage);
+    }, [queryPage, currentPage, handlePageChange]);
 
     useEffect(() => {
         const loadOrders = async () => {
@@ -53,99 +61,60 @@ const Orders = () => {
                     await fetchRecentOrders();
                 }
             } catch (error) {
-                console.error('Error loading orders:', error);
                 showToast("Failed to load orders", "error");
             }
         };
-        
         loadOrders();
     }, [user]);
 
-    useEffect(() => {
-        if (!recentOrders) return;
-        
-        let result = [...recentOrders];
-
-        if (querySearch) {
-            const searchLower = querySearch.toLowerCase();
-            result = result.filter(order => 
-                order.first_name?.toLowerCase().includes(searchLower) ||
-                order.last_name?.toLowerCase().includes(searchLower) ||
-                order.email?.toLowerCase().includes(searchLower) ||
-                order.order_id?.toString().includes(searchLower) ||
-                order.status?.toLowerCase().includes(searchLower) ||
-                order.order_number?.toLowerCase().includes(searchLower)
-            );
-        }
-
-        switch(querySort) {
-            case 'Sort by: Latest':
-                result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                break;
-            case 'Sort by: Oldest':
-                result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                break;
-            case 'Sort by: Total Amount (High to Low)':
-                result.sort((a, b) => parseFloat(b.total_amount) - parseFloat(a.total_amount));
-                break;
-            case 'Sort by: Total Amount (Low to High)':
-                result.sort((a, b) => parseFloat(a.total_amount) - parseFloat(b.total_amount));
-                break;
-            case 'Sort by: Status (Pending First)':
-                result.sort((a, b) => {
-                    if (a.status === 'pending' && b.status !== 'pending') return -1;
-                    if (a.status !== 'pending' && b.status === 'pending') return 1;
-                    return 0;
-                });
-                break;
-            default:
-                break;
-        }
-        
-        setFilteredOrders(result);
-        setTotalPages(Math.max(1, Math.ceil(result.length / ITEMS_PER_PAGE)));
-        
-    }, [recentOrders, querySearch, querySort]);
-
-    useEffect(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        setPaginatedOrders(filteredOrders.slice(startIndex, endIndex));
-    }, [filteredOrders, currentPage]);
-
     const updateSearchParams = ({ page, sort, search }) => {
         const params = new URLSearchParams(searchParams);
-
         if (page !== undefined) params.set('page', page);
         if (sort !== undefined) params.set('sort', sort);
         if (search !== undefined) params.set('search', search);
-
         setSearchParams(params);
     };
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-        updateSearchParams({ page });
+    useEffect(() => {
+        if (searchValue !== querySearch) {
+            updateSearchParams({ search: searchValue, page: 1 });
+        }
+        // eslint-disable-next-line
+    }, [searchValue]);
+
+    useEffect(() => {
+        if (sortValue !== querySort) {
+            updateSearchParams({ sort: sortValue, page: 1 });
+        }
+    }, [sortValue]);
+
+    useEffect(() => {
+        if (currentPage !== queryPage) {
+            updateSearchParams({ page: currentPage });
+        }
+    }, [currentPage]);
+
+    const handleSearchChangeWrapped = (value) => {
+        handleSearchChange(value);
+        resetPagination();
     };
 
-    const handleSearchChange = (e) => {
-        setSearchInput(e.target.value);
+    const handleSortChangeWrapped = (sort) => {
+        handleSortChange(sort);
+        resetPagination();
+    };
+
+    const handlePageChangeWrapped = (page) => {
+        handlePageChange(page);
     };
 
     const handleSearch = () => {
-        setCurrentPage(1);
-        updateSearchParams({ search: searchInput, page: 1 });
-    };
-
-    const handleSortChange = (sort) => {
-        setCurrentPage(1);
-        updateSearchParams({ sort, page: 1 });
+        resetPagination();
     };
 
     const handleClearSearch = () => {
-        setSearchInput('');
-        setCurrentPage(1);
-        updateSearchParams({ search: '', page: 1 });
+        handleSearchChange('');
+        resetPagination();
     };
 
     const handleViewOrder = async (order) => {
@@ -163,7 +132,6 @@ const Orders = () => {
                 items: items || []
             }));
         } catch (error) {
-            console.error("Error fetching order items:", error);
             showToast(`Could not load order items: ${error.message}`, "error");
             setSelectedOrder(prev => ({
                 ...prev,
@@ -175,7 +143,6 @@ const Orders = () => {
     const handleUpdateStatus = (order, newStatus) => {
         setSelectedOrder(order);
         setStatusUpdateNotes('');
-        
         if (newStatus === 'refunded') {
             setRefundAmount(order.total_amount.toString());
             setRefundReason('');
@@ -189,22 +156,18 @@ const Orders = () => {
 
     const handleConfirmStatusUpdate = async (newStatus) => {
         if (!selectedOrder) return;
-        
         try {
             const response = await fetch(`/api/orders/${selectedOrder.id}/status`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     status: newStatus,
                     notes: statusUpdateNotes,
                     admin_id: user.account_id
                 }),
             });
-            
             if (response.ok) {
-                await fetchRecentOrders(); 
+                await fetchRecentOrders();
                 setIsModalOpen(false);
                 setStatusUpdateNotes('');
                 showToast(`Order status updated to ${newStatus} successfully!`, 'success');
@@ -213,7 +176,6 @@ const Orders = () => {
                 showToast(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
             }
         } catch (error) {
-            console.error('Error updating status:', error);
             showToast('Network error occurred while updating status', 'error');
         }
     };
@@ -248,131 +210,134 @@ const Orders = () => {
             showToast('Please fill in all refund details', 'error');
             return;
         }
-        
         try {
             const refundData = {
                 amount: parseFloat(refundAmount),
                 reason: refundReason,
                 notes: statusUpdateNotes
             };
-            
             const success = await processRefund(selectedOrder.id, refundData);
             if (success) {
-                await fetchRecentOrders(); 
+                await fetchRecentOrders();
                 setIsModalOpen(false);
                 setRefundAmount('');
                 setRefundReason('');
                 setStatusUpdateNotes('');
             }
         } catch (error) {
-            console.error('Error processing refund:', error);
             showToast('Failed to process refund', 'error');
         }
     };
 
-    const generateInvoiceHTML = (order) => {
-        return `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Invoice - Order #${order.order_number}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    .header { text-align: center; margin-bottom: 30px; }
-                    .order-info { margin-bottom: 20px; }
-                    .table { width: 100%; border-collapse: collapse; }
-                    .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    .table th { background-color: #f2f2f2; }
-                    .total { font-weight: bold; text-align: right; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>SeraphimLuxe</h1>
-                    <h2>INVOICE</h2>
-                </div>
-                <div class="order-info">
-                    <p><strong>Order Number:</strong> ${order.order_number || order.order_id}</p>
-                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
-                    <p><strong>Customer:</strong> ${order.last_name} ${order.first_name}</p>
-                    <p><strong>Email:</strong> ${order.email}</p>
-                    <p><strong>Status:</strong> ${order.status}</p>
-                </div>
-                <table class="table">
-                    <thead>
+    const generateInvoiceHTML = (order) => `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Invoice - Order #${order.order_number}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .order-info { margin-bottom: 20px; }
+                .table { width: 100%; border-collapse: collapse; }
+                .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                .table th { background-color: #f2f2f2; }
+                .total { font-weight: bold; text-align: right; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>SeraphimLuxe</h1>
+                <h2>INVOICE</h2>
+            </div>
+            <div class="order-info">
+                <p><strong>Order Number:</strong> ${order.order_number || order.order_id}</p>
+                <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+                <p><strong>Customer:</strong> ${order.last_name} ${order.first_name}</p>
+                <p><strong>Email:</strong> ${order.email}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${order.items ? order.items.map(item => `
                         <tr>
-                            <th>Item</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Total</th>
+                            <td>${item.label}</td>
+                            <td>${item.quantity}</td>
+                            <td>₱${parseFloat(item.price).toFixed(2)}</td>
+                            <td>₱${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${order.items ? order.items.map(item => `
-                            <tr>
-                                <td>${item.label}</td>
-                                <td>${item.quantity}</td>
-                                <td>₱${parseFloat(item.price).toFixed(2)}</td>
-                                <td>₱${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
-                            </tr>
-                        `).join('') : '<tr><td colspan="4">No items found</td></tr>'}
-                    </tbody>
-                </table>
-                <div class="total">
-                    <p><strong>Total Amount: ₱${parseFloat(order.total_amount).toFixed(2)}</strong></p>
-                </div>
-            </body>
-            </html>
-        `;
-    };
+                    `).join('') : '<tr><td colspan="4">No items found</td></tr>'}
+                </tbody>
+            </table>
+            <div class="total">
+                <p><strong>Total Amount: ₱${parseFloat(order.total_amount).toFixed(2)}</strong></p>
+            </div>
+        </body>
+        </html>
+    `;
 
-    const generatePackingSlipHTML = (order) => {
-        return `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Packing Slip - Order #${order.order_number}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    .header { text-align: center; margin-bottom: 30px; }
-                    .order-info { margin-bottom: 20px; }
-                    .table { width: 100%; border-collapse: collapse; }
-                    .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    .table th { background-color: #f2f2f2; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>SeraphimLuxe</h1>
-                    <h2>PACKING SLIP</h2>
-                </div>
-                <div class="order-info">
-                    <p><strong>Order Number:</strong> ${order.order_number || order.order_id}</p>
-                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
-                    <p><strong>Ship To:</strong> ${order.first_name} ${order.last_name}</p>
-                    <p><strong>Address:</strong> ${order.shipping_address || 'N/A'}</p>
-                </div>
-                <table class="table">
-                    <thead>
+    const generatePackingSlipHTML = (order) => `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Packing Slip - Order #${order.order_number}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .order-info { margin-bottom: 20px; }
+                .table { width: 100%; border-collapse: collapse; }
+                .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                .table th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>SeraphimLuxe</h1>
+                <h2>PACKING SLIP</h2>
+            </div>
+            <div class="order-info">
+                <p><strong>Order Number:</strong> ${order.order_number || order.order_id}</p>
+                <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+                <p><strong>Ship To:</strong> ${order.first_name} ${order.last_name}</p>
+                <p><strong>Address:</strong> ${order.shipping_address || 'N/A'}</p>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${order.items ? order.items.map(item => `
                         <tr>
-                            <th>Item</th>
-                            <th>Quantity</th>
-                            <th>Notes</th>
+                            <td>${item.label}</td>
+                            <td>${item.quantity}</td>
+                            <td></td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${order.items ? order.items.map(item => `
-                            <tr>
-                                <td>${item.label}</td>
-                                <td>${item.quantity}</td>
-                                <td></td>
-                            </tr>
-                        `).join('') : '<tr><td colspan="3">No items found</td></tr>'}
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
+                    `).join('') : '<tr><td colspan="3">No items found</td></tr>'}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+
+    const orderStatuses = [
+        'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'
+    ];
+    const paymentMethodLabels = {
+        cash_on_delivery: "Cash on Delivery",
+        gcash: "GCash",
+        bank_transfer: "Bank Transfer",
+        credit_card: "Credit Card"
     };
 
     if (loading) {
@@ -419,26 +384,27 @@ const Orders = () => {
                     </div>
                 </div>
             </div>
-            
+
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Orders</h2>
                 </div>
-                
-                {/* <TableHeader
-                    tableName="orders"
+
+                <TableHeader
+                    currentSort={sortValue}
+                    searchInput={searchValue}
+                    onSortChange={handleSortChangeWrapped}
+                    onSearchChange={handleSearchChangeWrapped}
+                    onSearch={handleSearch}
+                    sortOptions={sortOptions}
+                    withPagination={true}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    resultsLabel={`Showing ${paginatedOrders.length} out of ${filteredOrders.length} orders`}
-                    sortLabel={querySort}
-                    searchValue={searchInput}
-                    sortOptions={sortOptions}
-                    onPageChange={handlePageChange}
-                    onSortChange={handleSortChange}
-                    onSearchChange={handleSearchChange}
-                    onSearchSubmit={handleSearch}
-                /> */}
-                
+                    resultsLabel={ `Showing ${ filteredOrders.length } out of ${ filteredOrders.length } results` }
+                    sortLabel={ sortValue }
+                    onPageChange={handlePageChangeWrapped}
+                />
+
                 <div className={styles['table']}>
                     <div className={styles['table-wrapper']}>
                         <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
@@ -451,16 +417,15 @@ const Orders = () => {
                             <h3>Modified At</h3>
                             <h3>Actions</h3>
                         </div>
-                        
                         {!recentOrders ? (
                             <div className={styles['empty-table']}>
                                 <i className="fa-solid fa-spinner fa-spin"></i>
                             </div>
                         ) : paginatedOrders.length > 0 ? (
                             paginatedOrders.map(order => (
-                                <div 
-                                    key={order.order_id} 
-                                    className={styles['table-rows']} 
+                                <div
+                                    key={order.order_id}
+                                    className={styles['table-rows']}
                                     style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}
                                 >
                                     <div className={styles['table-cell']}>
@@ -510,12 +475,12 @@ const Orders = () => {
                             ))
                         ) : (
                             <div className={styles['empty-table']}>
-                                {querySearch ? (
+                                {searchValue ? (
                                     <div className={styles['empty']}>
-                                        <h3>No orders found matching "{querySearch}"</h3>
-                                        <Button 
-                                            type="secondary" 
-                                            label="Clear Search" 
+                                        <h3>No orders found matching "{searchValue}"</h3>
+                                        <Button
+                                            type="secondary"
+                                            label="Clear Search"
                                             action={handleClearSearch}
                                         />
                                     </div>
@@ -526,13 +491,13 @@ const Orders = () => {
                         )}
                     </div>
                 </div>
-                
+
                 <TableFooter
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    resultsLabel={`Showing ${paginatedOrders.length} out of ${filteredOrders.length} orders`}
-                    sortLabel={querySort}
-                    onPageChange={handlePageChange}
+                    currentPage={ currentPage }
+                    totalPages={ totalPages }
+                    resultsLabel={ `Showing ${ filteredOrders.length } out of ${ filteredOrders.length } results` }
+                    sortLabel={ sortValue }
+                    onPageChange={ handlePageChangeWrapped }
                 />
             </div>
 
@@ -599,7 +564,6 @@ const Orders = () => {
                                 )}
                             </div>
                         </div>
-                        
                         <div className={styles['order-items-section']}>
                             <h3>Order Items</h3>
                             {selectedOrder.items && selectedOrder.items.length > 0 ? (
@@ -607,7 +571,7 @@ const Orders = () => {
                                     {selectedOrder.items.map((item, index) => (
                                         <div key={index} className={styles['order-item-card']}>
                                             <div className={styles['item-image']}>
-                                                <img 
+                                                <img
                                                     src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${item.image_url}`}
                                                     alt={item.label}
                                                     onError={(e) => {
@@ -648,26 +612,24 @@ const Orders = () => {
                                 </div>
                             )}
                         </div>
-                        
                         <div className={styles['modal-ctas']}>
-                                <div className={styles['button-group-horizontal']}>
-                                    <Button
-                                        type="secondary"
-                                        label="Close"
-                                        action={() => setIsModalOpen(false)}
-                                    />
-                                    <Button
-                                        type="secondary"
-                                        label="Print Invoice"
-                                        action={() => handlePrintInvoice(selectedOrder)}
-                                    />
-                                    <Button
-                                        type="secondary"
-                                        label="Print Packing Slip"
-                                        action={() => handlePrintPackingSlip(selectedOrder)}
-                                    />
-                                </div>
-                            {/* Add Refund Button for delivered/cancelled orders */}
+                            <div className={styles['button-group-horizontal']}>
+                                <Button
+                                    type="secondary"
+                                    label="Close"
+                                    action={() => setIsModalOpen(false)}
+                                />
+                                <Button
+                                    type="secondary"
+                                    label="Print Invoice"
+                                    action={() => handlePrintInvoice(selectedOrder)}
+                                />
+                                <Button
+                                    type="secondary"
+                                    label="Print Packing Slip"
+                                    action={() => handlePrintPackingSlip(selectedOrder)}
+                                />
+                            </div>
                             {(selectedOrder.status === 'delivered' || selectedOrder.status === 'cancelled') && (
                                 <Button
                                     type="primary"
@@ -679,8 +641,6 @@ const Orders = () => {
                                     externalStyles={styles['modal-warn']}
                                 />
                             )}
-                            
-                            {/* Status Update Buttons */}
                             {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'refunded' && (
                                 <div className={styles['status-buttons']}>
                                     {orderStatuses
@@ -703,7 +663,6 @@ const Orders = () => {
                 )}
             </Modal>
 
-
             {orderStatuses.map(status => (
                 <Modal
                     key={status}
@@ -718,7 +677,6 @@ const Orders = () => {
                                 <strong>Order #{selectedOrder.order_number || selectedOrder.order_id}</strong> status to{' '}
                                 <strong>{status}</strong>?
                             </p>
-                            
                             <div className={styles['inputs-container']}>
                                 <div className={styles['input-wrapper']}>
                                     <label>Add Notes (Optional)</label>
@@ -729,7 +687,6 @@ const Orders = () => {
                                     />
                                 </div>
                             </div>
-                            
                             <div className={styles['modal-ctas']}>
                                 <Button
                                     type="secondary"
@@ -757,7 +714,6 @@ const Orders = () => {
                         <p className={styles['modal-info']}>
                             Process refund for <strong>Order #{selectedOrder.order_number || selectedOrder.order_id}</strong>
                         </p>
-                        
                         <div className={styles['inputs-container']}>
                             <div className={styles['input-wrapper']}>
                                 <label>Refund Amount</label>
@@ -793,7 +749,6 @@ const Orders = () => {
                                 />
                             </div>
                         </div>
-                        
                         <div className={styles['modal-ctas']}>
                             <Button
                                 type="secondary"
