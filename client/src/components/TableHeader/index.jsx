@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from 'react';
 import { Button, InputField } from '@components';
 import styles from './TableHeader.module.css';
 
@@ -8,8 +9,39 @@ const TableHeader = ({
     searchInput, 
     onSortChange, 
     onSearchChange, 
-    onSearchSubmit 
+    onSearchSubmit,
+    currentPage,
+    totalPages,
+    resultsLabel,
+    sortLabel,
+    onPageChange,
+    withPagination = false
 }) => {
+
+    const [localSearchValue, setLocalSearchValue] = useState(searchInput || '');
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (localSearchValue !== searchInput) {
+                onSearchChange(localSearchValue);
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [localSearchValue]);
+
+    useEffect(() => {
+        setLocalSearchValue(searchInput || '');
+    }, [searchInput]);
+
+    const handleSearchInputChange = useCallback((value) => {
+        setLocalSearchValue(value);
+    }, []);
+
+    const pageNumbers = [];
+    const startPage = Math.max(1, currentPage - 1);
+    const endPage = Math.min(totalPages, startPage + 2);
+    for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
 
     const sortOptions = [
         {
@@ -53,7 +85,6 @@ const TableHeader = ({
     };
 
     const getCurrentSortLabel = () => {
-        // Create a mapping of sort values to labels
         const sortMapping = {
             'Sort by: Price (Low to High)': 'Price (Low to High)',
             'Sort by: Price (High to Low)': 'Price (High to Low)',
@@ -70,25 +101,16 @@ const TableHeader = ({
 
     return (
         <div className={styles['table-header']}>
-            <div className={styles['header-left']}>
-                <i className={icon}></i>
-                <h2>{label}</h2>
-            </div>
             
-            <div className={styles['header-right']}>
-                <div className={styles['search-container']}>
+            <div className={styles['container-top']}>
                     <InputField
-                        value={ searchInput }
+                        value={ localSearchValue }
                         hint={ `Search ${ label?.toLowerCase() }...` }
                         type={ 'text' }
-                        icon={ 'fa-solid fa-magnifying-glass' }
                         onKeyPress={ () => { handleKeyPress } }
-                        action={ onSearchSubmit }
-                        onChange={ (e) => onSearchChange(e.target.value) }
+                        onChange={ (e) => handleSearchInputChange(e.target.value) }
                         isSubmittable={ false }
                     />
-                </div>
-                
                 <Button
                     id='sort-dropdown'
                     type='secondary'
@@ -99,6 +121,36 @@ const TableHeader = ({
                     options={sortOptions}
                     externalStyles={styles['sort-button']}
                 />
+            </div>
+            <div className={ styles['divider-horizontal'] }></div>
+            <div className={ styles['container-bottom'] }>
+                <div className={ styles['info'] }>
+                    <h3>{ resultsLabel }</h3>
+                    <h3>{ sortLabel }</h3>
+                </div>
+                <div className={ styles['pagination'] }>
+                    <Button
+                        type="icon-outlined"
+                        action={ () => onPageChange(currentPage - 1) }
+                        icon="fa-solid fa-angle-left"
+                        disabled={ currentPage === 1 }
+                    />
+                    { pageNumbers.map(page => (
+                        <Button
+                            key={ page }
+                            type='secondary'
+                            label={ String(page) }
+                            action={ () => onPageChange(page) }
+                            isActive={ currentPage === page }
+                        />
+                    ))}
+                    <Button
+                        type="icon-outlined"
+                        action={ () => onPageChange(currentPage + 1) }
+                        icon="fa-solid fa-angle-right"
+                        disabled={ currentPage === totalPages }
+                    />
+                </div>
             </div>
         </div>
     );

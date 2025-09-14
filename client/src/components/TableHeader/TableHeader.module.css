@@ -2,106 +2,54 @@
 
 /* TableHeader Styles */
 .table-header {
+    flex-direction: column;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    align-self: stretch;
     background-color: var(--bg-secondary);
     border: 1px solid var(--bg-outline);
     border-radius: 0.5rem;
     padding: 0.75rem 1rem;
+    gap: 1rem;
 }
 
-.header-left {
+.container-top {
     display: flex;
-    align-items: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+.container-bottom {
+    justify-content: space-between;
+    display: flex;
+    width: 100%;
+}
+
+.info {
+    flex-direction: column;
+    align-items: flex-start;
+    display: flex;
     gap: 0.5rem;
+    & > h3 {
+        font-weight: 400;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+        &:last-child { font-size: 0.75rem; }
+    }
 }
 
-.header-left > i {
-    font-size: 1rem;
-    color: var(--accent-base);
-}
-
-.header-left > h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--tg-primary);
-    margin: 0;
-}
-
-.header-right {
-    display: flex;
+.pagination {
     align-items: center;
-    gap: 0.75rem;
-}
-
-.search-container {
-    position: relative;
     display: flex;
-    align-items: center;
+    gap: 1rem;
 }
 
-.search-input {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--bg-outline);
-    border-radius: 0.25rem;
-    padding: 0.4rem 2rem 0.4rem 0.75rem;
-    font-size: 0.8rem;
-    color: var(--tg-primary);
-    width: 14rem;
-    transition: border-color 0.2s ease;
+.divider-horizontal {
+    background-color: var(--bg-outline);
+    height: 1px;
+    width: 100%;
 }
 
-.search-input:focus {
-    outline: none;
-    border-color: var(--accent-base);
-}
-
-.search-input::placeholder {
-    color: var(--tg-secondary);
-}
-
-.search-container > i {
-    position: absolute;
-    right: 0.5rem;
-    color: var(--tg-secondary);
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.search-container > i:hover {
-    color: var(--accent-base);
-}
-
-.sort-button {
-    background: transparent !important;
-    border: none !important;
-    padding: 0.4rem 0.6rem !important;
-    font-size: 0.8rem !important;
-    font-weight: 500 !important;
-    color: var(--tg-primary) !important;
-    cursor: pointer;
-    min-width: 10rem !important;
-    justify-content: space-between !important;
-    transition: color 0.2s ease !important;
-}
-
-.sort-button:hover {
-    color: var(--accent-base) !important;
-    background: transparent !important;
-    border: none !important;
-}
-
-.sort-button:focus {
-    outline: none !important;
-    background: transparent !important;
-    border: none !important;
-}
-
-/* Remove all dropdown styles since you're using Button component */
-
-/* Responsive Design */
 @media only screen and (max-width: 768px) {
     .table-header {
         flex-direction: column;
