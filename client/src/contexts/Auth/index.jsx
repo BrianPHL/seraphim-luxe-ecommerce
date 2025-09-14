@@ -542,6 +542,33 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const suspendAccount = async (accountId, isSuspended) => {
+
+        
+        if (!user || user.role !== 'admin') return { error: 'Unauthorized' };
+
+        try {
+            const response = await fetch(`/api/accounts/${ accountId }/suspend`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ is_suspended: isSuspended }),
+            });
+
+            if (!response.ok)
+                throw new Error('Failed to suspend account');
+
+            showToast(`Account ${ isSuspended ? 'suspended' : 're-activated' } successfully!`, 'success');
+            fetchUsers();
+            return { success: true };
+        } catch (error) {
+            console.error('Error suspending account:', error);
+            showToast('Failed to suspend account', 'error');
+            return { error: error.message };
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -568,6 +595,7 @@ export const AuthProvider = ({ children }) => {
             addAddress,
             updateAddress,
             deleteAddress
+            suspendAccount,
         }}>
             { children }
         </AuthContext.Provider>

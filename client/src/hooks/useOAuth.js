@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { emailOTPClient } from "better-auth/client/plugins";
-import { getBaseURL } from "@utils";
+import { getBaseURL, fetchWithTimeout } from "@utils";
 
 const authClient = createAuthClient({
     baseURL: `${ getBaseURL() }/api/auth`,
@@ -40,9 +40,8 @@ const useOAuth = () => {
                 });
                 const passwordCheckResponseData = await passwordCheckResponse.json();
 
-                if (!passwordCheckResponse.ok) {
+                if (!passwordCheckResponse.ok)
                     throw new Error(passwordCheckResponseData.error);
-                }
 
                 if (!passwordCheckResponseData.doesPasswordExist)
                     throw new Error("ACCOUNT_DOES_NOT_HAVE_A_PASSWORD");
@@ -53,8 +52,20 @@ const useOAuth = () => {
                 });
                 const typeCheckResponseData = await typeCheckResponse.json();
 
+                if (!typeCheckResponse.ok)
+                    throw new Error(typeCheckResponseData.error);
+
                 if (!typeCheckResponseData.doesRoleMatchType)
                     throw new Error(`TYPE_DOES_NOT_MATCH_ROLE_${ type.toUpperCase() }`);
+
+                const suspendStatusCheckResponse = await fetchWithTimeout(`/api/oauth/check-suspension-status/${ email }`)
+                const suspendStatusCheckResponseData = await suspendStatusCheckResponse.json();
+
+                if (!suspendStatusCheckResponse.ok)
+                    throw new Error(suspendStatusCheckResponseData.error);
+
+                if (suspendStatusCheckResponseData.isAccountSuspended)
+                    throw new Error('ACCOUNT_CURRENTLY_SUSPENDED');
 
                 const result = await authClient.signIn.email({
                     email: email,

@@ -76,4 +76,33 @@ router.get("/check-role-matches/:type/:email", async (req, res) => {
 
 });
 
+router.get('/check-suspension-status/:email/', async (req, res) => {
+
+    const { email } = req.params;
+
+    try {
+
+        const [ accountRows ] = await pool.query(
+            `
+                SELECT is_suspended
+                FROM accounts
+                WHERE email = ?
+            `,
+            [ email ]
+        )
+
+        if (accountRows.length <= 0)
+            throw new Error('Account does not exist!');
+
+        const isAccountSuspended = Boolean(accountRows[0]?.is_suspended);
+
+        res.status(200).json({ isAccountSuspended });
+
+    } catch (err) {
+        console.error("Accounts route GET /check-suspension-status/:email/ endpoint error: ", err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 export default router;

@@ -97,6 +97,11 @@ export const auth = betterAuth({
                 type: "string",
                 required: false,
                 defaultValue: "customer"
+            },
+            is_suspended: {
+                type: "boolean",
+                required: false,
+                defaultValue: 1
             }
         }
     },
@@ -176,6 +181,13 @@ export const auth = betterAuth({
                                                 
                         try {
 
+                            if (user.is_suspended) {
+                                (user.role === 'admin')
+                                ? ctx.redirect('http://localhost:5173/admin/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED')
+                                : ctx.redirect('http://localhost:5173/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED')
+                                await ctx?.context?.internalAdapter?.deleteSessions(user.id);
+                            }
+
                             if (expectedRole === user.role)
                                 return;
                             
@@ -223,8 +235,6 @@ export const auth = betterAuth({
                                 last_name: lastName,
                                 role: expectedRole
                             });
-
-                            console.log("SHOULD BE EMAILING 2");
 
                             const { _, err } = await sendEmail({
                                 from: 'Seraphim Luxe <noreply@seraphimluxe.store>',

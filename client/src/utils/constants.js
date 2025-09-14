@@ -25,6 +25,7 @@ export const ERROR_MESSAGES = {
     'INVALID_TOKEN': 'Something went wrong which invalidated your token. "Click Set/Change account password" first then try again.',
     'TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER': 'Please sign into the appropriate platforms. You can\'t sign in as an admin here.',
     'TYPE_DOES_NOT_MATCH_ROLE_ADMIN': 'Please sign into the appropriate platforms. You can\'t sign in as a customer here.',
+    'ACCOUNT_CURRENTLY_SUSPENDED': 'Your account had been suspended by an administrator. Please try again later or send us a message at support@seraphimluxe.store.',
 
     // Better Auth Session Error Codes
     'SESSION_NOT_FOUND': 'Your session has expired. Please sign in again.',

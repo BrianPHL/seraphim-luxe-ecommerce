@@ -287,6 +287,37 @@ router.put('/:account_id/password', async (req, res) => {
     }
 });
 
+router.put('/:account_id/suspend', async (req, res) => {
+    
+    try {
+
+        const { account_id } = req.params;
+        const { is_suspended } = req.body;
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE accounts 
+                SET is_suspended = ?
+                WHERE id = ?
+            `,
+            [ is_suspended, account_id ]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Account not found' });
+        }
+        
+        res.json({ message: 'Account suspension updated successfully' });
+
+    } catch (err) {
+
+        console.error("Accounts route PUT /:account_id/suspend endpoint error: ", err);
+        res.status(500).json({ error: err.message });
+
+    }
+
+});
+
 router.delete('/:address_id/address', async (req, res) => {
 
     try {
