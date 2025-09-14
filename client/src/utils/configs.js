@@ -551,7 +551,7 @@ export const COLLECTIONS_FILTER_CONFIG = {
     ]
 };
 
-export const ACCOUNTS_FILTER_CONFIG = {
+export const CUSTOMER_FILTER_CONFIG = {
     searchFields: ['first_name', 'last_name', 'email', 'phone'],
     sortOptions: [
         {
@@ -603,11 +603,71 @@ export const ACCOUNTS_FILTER_CONFIG = {
     ],
     filterOptions: [
         {
-            key: 'role',
-            label: 'Role',
-            type: 'multiselect',
-            field: 'role'
+            key: 'email_verified',
+            label: 'Email Verified',
+            type: 'boolean',
+            field: 'email_verified'
         },
+        {
+            key: 'registration_date',
+            label: 'Registration Date',
+            type: 'date_range',
+            field: 'created_at'
+        }
+    ]
+};
+
+export const ADMIN_FILTER_CONFIG = {
+    searchFields: ['first_name', 'last_name', 'email', 'phone'],
+    sortOptions: [
+        {
+            label: 'Name (A-Z)',
+            value: 'Sort by: Name (A-Z)',
+            sortFunction: (a, b) => {
+                const aName = `${a.first_name || ''} ${a.last_name || ''}`.toLowerCase().trim();
+                const bName = `${b.first_name || ''} ${b.last_name || ''}`.toLowerCase().trim();
+                return aName.localeCompare(bName);
+            }
+        },
+        {
+            label: 'Name (Z-A)',
+            value: 'Sort by: Name (Z-A)',
+            sortFunction: (a, b) => {
+                const aName = `${a.first_name || ''} ${a.last_name || ''}`.toLowerCase().trim();
+                const bName = `${b.first_name || ''} ${b.last_name || ''}`.toLowerCase().trim();
+                return bName.localeCompare(aName);
+            }
+        },
+        {
+            label: 'Email (A-Z)',
+            value: 'Sort by: Email (A-Z)',
+            field: 'email',
+            type: 'string',
+            direction: 'asc'
+        },
+        {
+            label: 'Email (Z-A)',
+            value: 'Sort by: Email (Z-A)',
+            field: 'email',
+            type: 'string',
+            direction: 'desc'
+        },
+        {
+            label: 'Newest First',
+            value: 'Sort by: Newest First',
+            field: 'created_at',
+            type: 'date',
+            direction: 'desc'
+        },
+        {
+            label: 'Oldest First',
+            value: 'Sort by: Oldest First',
+            field: 'created_at',
+            type: 'date',
+            direction: 'asc'
+        }
+    ],
+    filterOptions: [
         {
             key: 'email_verified',
             label: 'Email Verified',
@@ -622,3 +682,4 @@ export const ACCOUNTS_FILTER_CONFIG = {
         }
     ]
 };
+

@@ -8,6 +8,7 @@ import AuthContext from "./context";
 export const AuthProvider = ({ children }) => {
 
     const [ user, setUser ] = useState(null);
+    const [ userList, setUserList ] = useState([]);
     const [ addressBook, setAddressBook ] = useState(null);
     const [ isInitializing, setIsInitializing ] = useState(true);
     const [ isUpdatingAvatar, setIsUpdatingAvatar ] = useState(false);
@@ -497,6 +498,30 @@ export const AuthProvider = ({ children }) => {
 
     };
 
+    const fetchUsers = async () => {
+
+        if (!user && user.role !== 'admin') return;
+
+        try {
+            
+            const response = await fetchWithTimeout('/api/accounts/', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+
+            if (!response.ok)
+                throw new Error(data.error || 'Failed to fetch all users');
+
+            setUserList(data);
+
+        } catch (err) {
+            console.error("AuthContext fetchUsers function error: ", err);
+            return { error: err };
+        }
+
+    }
+
     const fetchUserCount = async () => {
 
         if (!user) return;
@@ -520,6 +545,8 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             user,
+            userList,
+            fetchUsers,
             userCount,
             fetchUserCount,
             isLoading: isInitializing,
