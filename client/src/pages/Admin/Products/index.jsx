@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Products.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
 import { useProducts, useToast, useStocks, useCategories } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
+import { PRODUCT_FILTER_CONFIG } from '@utils';
+
+const ITEMS_PER_PAGE = 10;
 
 const Products = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const queryPage = parseInt(searchParams.get('page') || '1', 10);
-    const querySort = searchParams.get('sort') || 'Sort by: Price (Low to High)';
+    const querySort = searchParams.get('sort') || 'Sort by: Name (A-Z)';
     const querySearch = searchParams.get('search') || '';
-    const ITEMS_PER_PAGE = 10;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('');
@@ -43,33 +45,76 @@ const Products = () => {
     } = useCategories();
 
     const {
-        sortedProducts,
-        currentSort,
-        searchQuery,
-        searchInput,
-        handleSortChange: onSortChange,
+        data: filteredProducts,
+        searchValue,
+        sortValue,
         handleSearchChange,
-        handleSearchSubmit,
-        setSearchInput,
-        setSearchQuery
-    } = useDataFilter(products, null, querySort, querySearch);
+        handleSortChange,
+        sortOptions,
+    } = useDataFilter(products || [], PRODUCT_FILTER_CONFIG);
 
     const {
         currentPage,
         totalPages,
         currentItems: paginatedProducts,
         handlePageChange,
-        resetPagination
-    } = usePagination(sortedProducts, ITEMS_PER_PAGE, queryPage);
+        resetPagination,
+    } = usePagination(filteredProducts, ITEMS_PER_PAGE, queryPage);
+
+    // Initialize state from URL params ONLY - no bidirectional sync
+    useEffect(() => {
+        if (searchValue !== querySearch) {
+            handleSearchChange(querySearch);
+        }
+    }, [querySearch]);
+
+    useEffect(() => {
+        if (sortValue !== querySort) {
+            handleSortChange(querySort);
+        }
+    }, [querySort]);
+
+    useEffect(() => {
+        if (currentPage !== queryPage) {
+            handlePageChange(queryPage);
+        }
+    }, [queryPage]);
 
     const updateSearchParams = ({ page, sort, search }) => {
         const params = new URLSearchParams(searchParams);
-
         if (page !== undefined) params.set('page', page);
         if (sort !== undefined) params.set('sort', sort);
         if (search !== undefined) params.set('search', search);
-
         setSearchParams(params);
+    };
+
+    // These handlers manage BOTH state and URL updates in one place
+    const handleSearchChangeWrapped = (value) => {
+        handleSearchChange(value);
+        resetPagination();
+        updateSearchParams({ search: value, page: 1 });
+    };
+
+    const handleSortChangeWrapped = (sort) => {
+        handleSortChange(sort);
+        resetPagination();
+        updateSearchParams({ sort, page: 1 });
+    };
+
+    const handlePageChangeWrapped = (page) => {
+        handlePageChange(page);
+        updateSearchParams({ page });
+    };
+
+    const handleSearch = () => {
+        resetPagination();
+        updateSearchParams({ search: searchValue, page: 1 });
+    };
+
+    const handleClearSearch = () => {
+        handleSearchChange('');
+        resetPagination();
+        updateSearchParams({ search: '', page: 1 });
     };
 
     const handleOpenDeleteModal = (product) => {
@@ -90,76 +135,6 @@ const Products = () => {
         setProductToDelete(null);
     };
 
-    const handleSortChange = (sort) => {
-        onSortChange(sort);
-        updateSearchParams({ sort, page: 1 });
-    };
-
-    const handleSearch = () => {
-        handleSearchSubmit();
-        updateSearchParams({ search: searchInput, page: 1 });
-    };
-
-    const handlePageChangeWrapped = (page) => {
-        handlePageChange(page);
-        updateSearchParams({ page });
-    };
-
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        
-        if (!file) return;
-
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-        if (!validTypes.includes(file.type)) {
-            showToast('Please select a valid image file (JPEG, PNG, GIF, or WEBP)', 'error');
-            return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('Image file must be smaller than 5MB', 'error');
-            return;
-        }
-
-        setImageFile(file);
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result);
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const uploadImage = async () => {
-        if (!imageFile) return null;
-
-        try {
-            setIsUploadingImage(true);
-            const formData = new FormData();
-            formData.append('image', imageFile);
-
-            const response = await fetch('/api/products/upload-image', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to upload image');
-            }
-
-            return data.image_url;
-        } catch (error) {
-            console.error('Error uploading image:', error);
-            showToast(`Failed to upload image: ${error.message}`, 'error');
-            return null;
-        } finally {
-            setIsUploadingImage(false);
-        }
-    };
-
     const handleOpenAddModal = () => {
         setFormData({
             label: '',
@@ -167,8 +142,8 @@ const Products = () => {
             category_id: '',
             subcategory_id: '',
             description: '',
-            stock_quantity: '0',
-            stock_threshold: '5',
+            stock_quantity: '',
+            stock_threshold: '',
             image_url: ''
         });
         setImageFile(null);
@@ -180,80 +155,137 @@ const Products = () => {
     const handleOpenEditModal = (product) => {
         setSelectedProduct(product);
         setFormData({
-            label: product.label,
-            price: product.price,
+            label: product.label || '',
+            price: product.price || '',
             category_id: product.category_id || '',
             subcategory_id: product.subcategory_id || '',
             description: product.description || '',
-            stock_quantity: product.stock_quantity,
-            stock_threshold: product.stock_threshold,
-            image_url: product.image_url
+            stock_quantity: product.stock_quantity || '',
+            stock_threshold: product.stock_threshold || '',
+            image_url: product.image_url || ''
         });
         setImageFile(null);
         setImagePreview(null);
+        if (product.image_url) {
+            setImagePreview(`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`);
+        }
         setModalType('edit');
         setIsModalOpen(true);
-
-        if (product.category_id) {
-            fetchSubcategories(product.category_id);
-        }
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleCategoryChange = async (e) => {
-        const categoryId = e.target.value;
-        setFormData(prev => ({ 
-            ...prev, 
-            category_id: categoryId,
-            subcategory_id: ''
+    const handleInputChange = (name, value) => {
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
         }));
-        
-        if (categoryId) {
-            await fetchSubcategories(categoryId);
+
+        if (name === 'category_id' && value) {
+            fetchSubcategories(value);
+            setFormData(prev => ({
+                ...prev,
+                subcategory_id: ''
+            }));
         }
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const uploadImage = async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/api/products/upload-image', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        return data.image_url;
     };
 
     const handleSubmit = async () => {
         try {
-            let updatedFormData = { ...formData };
+            setIsUploadingImage(true);
+            
+            let imageUrl = formData.image_url;
             
             if (imageFile) {
-                const imageUrl = await uploadImage();
-                if (imageUrl) {
-                    updatedFormData.image_url = imageUrl;
-                }
+                imageUrl = await uploadImage(imageFile);
             }
-            
+
+            const productData = {
+                ...formData,
+                image_url: imageUrl,
+                price: parseFloat(formData.price),
+                stock_quantity: parseInt(formData.stock_quantity),
+                stock_threshold: parseInt(formData.stock_threshold)
+            };
+
             if (modalType === 'add') {
-                await addProduct(updatedFormData);
-            } else if (modalType === 'edit' && selectedProduct) {
-                await updateProduct({
-                    ...updatedFormData,
-                    product_id: selectedProduct.id
-                });
+                await addProduct(productData);
+            } else {
+                await updateProduct(selectedProduct.id, productData);
             }
+
             setIsModalOpen(false);
+            setFormData({
+                label: '',
+                price: '',
+                category_id: '',
+                subcategory_id: '',
+                description: '',
+                stock_quantity: '',
+                stock_threshold: '',
+                image_url: ''
+            });
             setImageFile(null);
             setImagePreview(null);
         } catch (error) {
-            showToast(`Error: ${error.message}`, 'error');
+            showToast(`Failed to ${modalType} product: ${error.message}`, 'error');
+        } finally {
+            setIsUploadingImage(false);
         }
     };
 
     const getCategoryDisplay = (product) => {
-        const category = getCategoryById(product.category_id);
-        const subcategories = getActiveSubcategories(product.category_id);
-        const subcategory = subcategories.find(sub => sub.id === product.subcategory_id);
+        const activeCategories = getActiveCategories();
+        const activeSubcategories = getActiveSubcategories();
+        
+        const category = activeCategories.find(cat => cat.id === product.category_id);
+        const subcategory = activeSubcategories.find(sub => sub.id === product.subcategory_id);
         
         const categoryName = category?.name || product.category || 'N/A';
         const subcategoryName = subcategory?.name || product.subcategory || 'N/A';
         
         return `${categoryName} / ${subcategoryName}`;
     };
+
+    if (loading) {
+        return (
+            <div className={styles['wrapper']}>
+                <div className={styles['section']}>
+                    <div className={styles['empty-table']}>
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                        <p>Loading products...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles['wrapper']}>
@@ -280,6 +312,7 @@ const Products = () => {
                     </div>
                 </div>
             </div>
+
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Products</h2>
@@ -292,33 +325,35 @@ const Products = () => {
                     />
                 </div>
                 
-                {/* <TableHeader
-                    tableName="products"
+                <TableHeader
+                    currentSort={sortValue}
+                    searchInput={searchValue}
+                    onSortChange={handleSortChangeWrapped}
+                    onSearchChange={handleSearchChangeWrapped}
+                    onSearch={handleSearch}
+                    sortOptions={sortOptions}
+                    withPagination={true}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    resultsLabel={`Showing ${paginatedProducts.length} out of ${sortedProducts.length} products`}
-                    sortLabel={currentSort}
-                    searchValue={searchInput}
+                    resultsLabel={`Showing ${paginatedProducts.length} out of ${filteredProducts.length} results`}
+                    sortLabel={sortValue}
                     onPageChange={handlePageChangeWrapped}
-                    onSortChange={handleSortChange}
-                    onSearchChange={handleSearchChange}
-                    onSearchSubmit={handleSearch}
-                /> */}
+                />
                 
                 <div className={styles['table']}>
                     <div className={styles['table-wrapper']}>
                         <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
                             <h3></h3>
-                            <h3>product_id</h3>
-                            <h3>label</h3>
-                            <h3>category/subcategory</h3>
-                            <h3>price</h3>
-                            <h3>stock</h3>
-                            <h3>modifed_at</h3>
-                            <h3>actions</h3>
+                            <h3>Product ID</h3>
+                            <h3>Label</h3>
+                            <h3>Category/Subcategory</h3>
+                            <h3>Price</h3>
+                            <h3>Stock</h3>
+                            <h3>Modified At</h3>
+                            <h3>Actions</h3>
                         </div>
                         
-                        {loading ? (
+                        {!products ? (
                             <div className={styles['empty-table']}>
                                 <i className="fa-solid fa-spinner fa-spin"></i>
                             </div>
@@ -379,18 +414,13 @@ const Products = () => {
                             ))
                         ) : (
                             <div className={styles['empty-table']}>
-                                {searchQuery ? (
+                                {searchValue ? (
                                     <div className={styles['empty']}>
-                                        <h3>No products found matching "{searchQuery}"</h3>
+                                        <h3>No products found matching "{searchValue}"</h3>
                                         <Button 
                                             type="secondary" 
                                             label="Clear Search" 
-                                            action={() => {
-                                                setSearchInput('');
-                                                setSearchQuery('');
-                                                resetPagination();
-                                                updateSearchParams({ search: '', page: 1 });
-                                            }}
+                                            action={handleClearSearch}
                                         />
                                     </div>
                                 ) : (
@@ -400,12 +430,12 @@ const Products = () => {
                         )}
                     </div>
                 </div>
-                
+
                 <TableFooter
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    resultsLabel={`Showing ${paginatedProducts.length} out of ${sortedProducts.length} products`}
-                    sortLabel={currentSort}
+                    resultsLabel={`Showing ${paginatedProducts.length} out of ${filteredProducts.length} results`}
+                    sortLabel={sortValue}
                     onPageChange={handlePageChangeWrapped}
                 />
             </div>
@@ -438,15 +468,14 @@ const Products = () => {
                             isSubmittable={false}
                         />
                     </div>
-                    
+
                     <div className={styles['input-wrapper']}>
                         <label>Category</label>
-                        <select 
-                            name="category_id" 
+                        <select
                             value={formData.category_id}
-                            onChange={handleCategoryChange}
+                            onChange={(e) => handleInputChange('category_id', e.target.value)}
                         >
-                            <option value="">Select category</option>
+                            <option value="">Select Category</option>
                             {getActiveCategories().map(category => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
@@ -454,132 +483,114 @@ const Products = () => {
                             ))}
                         </select>
                     </div>
-                    
+
                     <div className={styles['input-wrapper']}>
-                        <label>Sub-category</label>
-                        <select 
-                            name="subcategory_id" 
+                        <label>Subcategory</label>
+                        <select
                             value={formData.subcategory_id}
-                            onChange={handleInputChange}
+                            onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
                             disabled={!formData.category_id}
                         >
-                            <option value="">Select subcategory</option>
-                            {formData.category_id && getActiveSubcategories(formData.category_id).map(subcategory => (
-                                <option key={subcategory.id} value={subcategory.id}>
-                                    {subcategory.name}
-                                </option>
-                            ))}
+                            <option value="">Select Subcategory</option>
+                            {getActiveSubcategories()
+                                .filter(sub => sub.category_id === parseInt(formData.category_id))
+                                .map(subcategory => (
+                                    <option key={subcategory.id} value={subcategory.id}>
+                                        {subcategory.name}
+                                    </option>
+                                ))}
                         </select>
                     </div>
-                    
+
                     <div className={styles['input-wrapper']}>
                         <label>Description</label>
                         <textarea
-                            name="description"
                             value={formData.description}
-                            onChange={handleInputChange}
-                            placeholder="Enter description"
+                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            placeholder="Product description..."
                         />
                     </div>
-                    
+
                     <div className={styles['input-wrapper']}>
                         <label>Stock Quantity</label>
                         <InputField
                             type="number"
                             name="stock_quantity"
-                            hint="Product stock quantity..."
+                            hint="Current stock quantity..."
                             value={formData.stock_quantity}
                             onChange={handleInputChange}
                             isSubmittable={false}
                         />
                     </div>
-                    
+
                     <div className={styles['input-wrapper']}>
                         <label>Stock Threshold</label>
                         <InputField
                             type="number"
                             name="stock_threshold"
-                            hint="Product stock threshold..."
+                            hint="Low stock warning threshold..."
                             value={formData.stock_threshold}
                             onChange={handleInputChange}
                             isSubmittable={false}
                         />
                     </div>
-                    
+
                     <div className={styles['input-wrapper']}>
                         <label>Product Image</label>
-                        {(imagePreview || formData.image_url) && (
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                        />
+                        {imagePreview && (
                             <div className={styles['image-preview']}>
-                                {isUploadingImage ? (
-                                    <div style={{ display: 'grid', placeContent: 'center', height: '200px' }}>
-                                        <i style={{ color: 'var(--accent-base)' }} className="fa-solid fa-spinner fa-spin"></i>
-                                    </div>
-                                ) : (
-                                    <img 
-                                        src={imagePreview || 
-                                            (formData.image_url ? 
-                                                `https://res.cloudinary.com/dfvy7i4uc/image/upload/${formData.image_url}` : 
-                                                '')} 
-                                        alt="Product preview" 
-                                        style={{ maxHeight: '200px', maxWidth: '100%', objectFit: 'contain' }}
-                                    />
-                                )}
+                                <img src={imagePreview} alt="Preview" />
                             </div>
                         )}
-                        
-                        <InputField
-                            type="file"
-                            accept="image/jpeg,image/png,image/gif,image/webp"
-                            onChange={handleFileChange}
-                            hint="Select product image..."
-                            isSubmittable={false}
-                        />
-                        <p className={styles['upload-hint']}>
-                            Recommended: Square image (1:1). Max size: 5MB. Formats: JPEG, PNG, GIF, WEBP
-                        </p>
                     </div>
                 </div>
-                
+
                 <div className={styles['modal-ctas']}>
-                    <Button 
-                        type="secondary" 
-                        label="Cancel" 
-                        action={() => {
-                            setIsModalOpen(false);
-                            setImageFile(null);
-                            setImagePreview(null);
-                        }} 
+                    <Button
+                        type="secondary"
+                        label="Cancel"
+                        action={() => setIsModalOpen(false)}
                     />
-                    <Button 
-                        type="primary" 
-                        label={modalType === 'add' ? 'Add Product' : 'Save Changes'} 
+                    <Button
+                        type="primary"
+                        label={isUploadingImage ? 'Uploading...' : (modalType === 'add' ? 'Add Product' : 'Update Product')}
                         action={handleSubmit}
                         disabled={isUploadingImage}
                     />
                 </div>
             </Modal>
 
-            <Modal 
-                label='Product Deletion Confirmation' 
-                isOpen={deleteModalOpen} 
+            <Modal
+                isOpen={deleteModalOpen}
                 onClose={handleCancelDelete}
+                label="Delete Product"
             >
-                <p className={styles['modal-info']}>
-                    Are you sure you want to delete <strong>{productToDelete?.label}</strong>? This action is irreversible!
-                </p>
-                <div className={styles['modal-ctas']}>
-                    <Button
-                        label='Cancel'
-                        type='secondary'
-                        action={handleCancelDelete}
-                    />
-                    <Button
-                        label='Confirm'
-                        type='primary'
-                        action={handleConfirmDelete}
-                        externalStyles={styles['modal-warn']}
-                    />
-                </div>
+                {productToDelete && (
+                    <>
+                        <p className={styles['modal-info']}>
+                            Are you sure you want to delete <strong>{productToDelete.label}</strong>?
+                            This action cannot be undone.
+                        </p>
+                        <div className={styles['modal-ctas']}>
+                            <Button
+                                type="secondary"
+                                label="Cancel"
+                                action={handleCancelDelete}
+                            />
+                            <Button
+                                type="primary"
+                                label="Delete"
+                                action={handleConfirmDelete}
+                                externalStyles={styles['modal-warn']}
+                            />
+                        </div>
+                    </>
+                )}
             </Modal>
         </div>
     );
