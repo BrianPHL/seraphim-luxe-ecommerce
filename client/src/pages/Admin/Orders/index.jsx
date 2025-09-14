@@ -42,17 +42,24 @@ const Orders = () => {
     const [refundAmount, setRefundAmount] = useState('');
     const [refundReason, setRefundReason] = useState('');
 
+    // Initialize state from URL params ONLY - no bidirectional sync
     useEffect(() => {
-        if (searchValue !== querySearch) handleSearchChange(querySearch);
-    }, [querySearch, handleSearchChange]);
+        if (searchValue !== querySearch) {
+            handleSearchChange(querySearch);
+        }
+    }, [querySearch]);
 
     useEffect(() => {
-        if (sortValue !== querySort) handleSortChange(querySort);
-    }, [querySort, handleSortChange]);
+        if (sortValue !== querySort) {
+            handleSortChange(querySort);
+        }
+    }, [querySort]);
 
     useEffect(() => {
-        if (currentPage !== queryPage) handlePageChange(queryPage);
-    }, [queryPage, currentPage, handlePageChange]);
+        if (currentPage !== queryPage) {
+            handlePageChange(queryPage);
+        }
+    }, [queryPage]);
 
     useEffect(() => {
         const loadOrders = async () => {
@@ -75,46 +82,33 @@ const Orders = () => {
         setSearchParams(params);
     };
 
-    useEffect(() => {
-        if (searchValue !== querySearch) {
-            updateSearchParams({ search: searchValue, page: 1 });
-        }
-        // eslint-disable-next-line
-    }, [searchValue]);
-
-    useEffect(() => {
-        if (sortValue !== querySort) {
-            updateSearchParams({ sort: sortValue, page: 1 });
-        }
-    }, [sortValue]);
-
-    useEffect(() => {
-        if (currentPage !== queryPage) {
-            updateSearchParams({ page: currentPage });
-        }
-    }, [currentPage]);
-
+    // These handlers manage BOTH state and URL updates in one place
     const handleSearchChangeWrapped = (value) => {
         handleSearchChange(value);
         resetPagination();
+        updateSearchParams({ search: value, page: 1 });
     };
 
     const handleSortChangeWrapped = (sort) => {
         handleSortChange(sort);
         resetPagination();
+        updateSearchParams({ sort, page: 1 });
     };
 
     const handlePageChangeWrapped = (page) => {
         handlePageChange(page);
+        updateSearchParams({ page });
     };
 
     const handleSearch = () => {
         resetPagination();
+        updateSearchParams({ search: searchValue, page: 1 });
     };
 
     const handleClearSearch = () => {
         handleSearchChange('');
         resetPagination();
+        updateSearchParams({ search: '', page: 1 });
     };
 
     const handleViewOrder = async (order) => {
@@ -400,8 +394,8 @@ const Orders = () => {
                     withPagination={true}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    resultsLabel={ `Showing ${ filteredOrders.length } out of ${ filteredOrders.length } results` }
-                    sortLabel={ sortValue }
+                    resultsLabel={`Showing ${paginatedOrders.length} out of ${filteredOrders.length} results`}
+                    sortLabel={sortValue}
                     onPageChange={handlePageChangeWrapped}
                 />
 
@@ -493,11 +487,11 @@ const Orders = () => {
                 </div>
 
                 <TableFooter
-                    currentPage={ currentPage }
-                    totalPages={ totalPages }
-                    resultsLabel={ `Showing ${ filteredOrders.length } out of ${ filteredOrders.length } results` }
-                    sortLabel={ sortValue }
-                    onPageChange={ handlePageChangeWrapped }
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    resultsLabel={`Showing ${paginatedOrders.length} out of ${filteredOrders.length} results`}
+                    sortLabel={sortValue}
+                    onPageChange={handlePageChangeWrapped}
                 />
             </div>
 
