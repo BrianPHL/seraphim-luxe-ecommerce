@@ -198,10 +198,10 @@ const Accounts = () => {
         setSelectedAccount(account);
         if (account) {
             setAccountDetails({
-                firstName: account.firstName || '',
-                lastName: account.lastName || '',
+                firstName: account.first_name || '',
+                lastName: account.last_name || '',
                 email: account.email || '',
-                phoneNumber: account.phoneNumber || '',
+                phoneNumber: account.phone_number || '',
                 role: account.role || 'customer',
                 password: ''
             });
@@ -296,9 +296,9 @@ const Accounts = () => {
                             <h3>Account Information</h3>
                             <span>
                                 <p><strong>Account ID:</strong> {selectedAccount.id}</p>
-                                <p><strong>Full Name:</strong> {selectedAccount.firstName} {selectedAccount.lastName}</p>
+                                <p><strong>Full Name:</strong> {selectedAccount.first_name} {selectedAccount.last_name}</p>
                                 <p><strong>Email:</strong> {selectedAccount.email}</p>
-                                <p><strong>Phone:</strong> {selectedAccount.phoneNumber || 'Not provided'}</p>
+                                <p><strong>Phone:</strong> {selectedAccount.phone_number || 'Not provided'}</p>
                                 <p><strong>Role:</strong> {selectedAccount.role}</p>
                                 <p><strong>Email Verified:</strong> {selectedAccount.email_verified ? 'Yes' : 'No'}</p>
                                 <p><strong>Registration Date:</strong> {formatDate(selectedAccount.created_at)}</p>
@@ -481,10 +481,10 @@ const Accounts = () => {
         <div key={account.id} className={styles['table-row']}>
             <div className={styles['table-cell']}>{account.id}</div>
             <div className={styles['table-cell']}>
-                {account.firstName} {account.lastName}
+                {account.first_name} {account.last_name}
             </div>
             <div className={styles['table-cell']}>{account.email}</div>
-            <div className={styles['table-cell']}>{account.phoneNumber || 'N/A'}</div>
+            <div className={styles['table-cell']}>{account.phone_number || 'N/A'}</div>
             <div className={styles['table-cell']}>
                 <span className={`${styles['status']} ${styles[account.email_verified ? 'verified' : 'unverified']}`}>
                     {account.email_verified ? 'Verified' : 'Unverified'}
