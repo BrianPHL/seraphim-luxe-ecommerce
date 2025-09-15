@@ -493,13 +493,13 @@ const Accounts = () => {
                         type="icon"
                         icon="fa-solid fa-eye"
                         action={() => openModal(isAdmin ? 'view-admin' : 'view-customer', account)}
-                        title="View Details"
+                        title="View account details"
                     />
                     <Button
                         type="icon"
                         icon="fa-solid fa-edit"
                         action={() => openModal(isAdmin ? 'edit-admin' : 'edit-customer', account)}
-                        title="Edit Details"
+                        title="Edit account details"
                     />
                     {
                         userList.filter(user => user.id === account.id)[0].is_suspended === 0 ? (
@@ -508,14 +508,19 @@ const Accounts = () => {
                                 icon="fa-solid fa-ban"
                                 action={() => handleSuspendAccount(account.id, true) }
                                 externalStyles={styles['modal-warn']}
+                                title="Suspend account"
+                                disabled={ userList.filter(user => user.id === account.id) }
                             />
                         ) : (
                             <Button
                                 type="icon"
                                 icon="fa-solid fa-circle-check"
                                 action={() => handleSuspendAccount(account.id, false) }
+                                title="Re-activate account"
+                                disabled={ userList.filter(user => user.id === account.id) }
                             />
                         )
+
                     }
                     {isAdmin && (
                         <Button
@@ -628,6 +633,7 @@ const Accounts = () => {
                         type="primary"
                         label="Add Admin Account"
                         icon="fa-solid fa-plus"
+                        iconPosition="left"
                         action={() => openModal('add-admin')}
                     />
                 </div>
