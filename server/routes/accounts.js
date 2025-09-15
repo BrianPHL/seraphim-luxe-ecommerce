@@ -214,7 +214,8 @@ router.put('/:account_id/personal-info', async (req, res) => {
     try {
         const { account_id } = req.params;
         const { first_name, last_name, email, phone_number } = req.body;
-        
+        const name = `${ first_name } ${ last_name }`;
+
         if (email) {
             const [ existingEmail ] = await pool.query(
                 `
@@ -235,10 +236,10 @@ router.put('/:account_id/personal-info', async (req, res) => {
         const [ result ] = await pool.query(
             `
                 UPDATE accounts 
-                SET first_name = ?, last_name = ?, email = ?, phone_number = ?
+                SET name = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?
                 WHERE id = ?
             `,
-            [first_name, last_name, email, phone_number, account_id]
+            [name, first_name, last_name, email, phone_number, account_id]
         );
         
         if (result.affectedRows === 0) {
