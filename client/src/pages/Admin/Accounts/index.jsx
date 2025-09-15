@@ -16,7 +16,7 @@ const Accounts = () => {
     const queryAdminPage = parseInt(searchParams.get('adminPage') || '1', 10);
     const queryAdminSort = searchParams.get('adminSort') || 'Sort by: Name (A-Z)';
     const queryAdminSearch = searchParams.get('adminSearch') || '';
-    const { user, userList, fetchUsers, suspendAccount, editAccount, addAdminAccount } = useAuth();
+    const { user, userList, fetchUsers, suspendAccount, editAccount, addAdminAccount, remove } = useAuth();
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
@@ -88,6 +88,14 @@ const Accounts = () => {
     const handleAddAdmin = async () => {
         await addAdminAccount(accountDetails);
         closeModal();
+    };
+
+    const handleDeleteAdmin = async () => {
+        if (selectedAccount) {
+            await remove(selectedAccount.id);
+            await fetchUsers();
+            closeModal();
+        }
     };
 
     useEffect(() => {
@@ -234,6 +242,37 @@ const Accounts = () => {
         const isViewMode = modalType === 'view-customer' || modalType === 'view-admin';
         const isEditMode = modalType === 'edit-customer' || modalType === 'edit-admin';
         const isAddMode = modalType === 'add-admin';
+        const isDeleteMode = modalType === 'delete-admin-confirmation';
+
+        if (isDeleteMode) {
+            return (
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={closeModal}
+                    label="Delete Admin Account Confirmation"
+                >
+                    <div className={styles['modal-infos']}>
+                        <p className={styles['modal-info']}>
+                            You are about to <strong>permanently delete the admin account for {selectedAccount?.first_name} {selectedAccount?.last_name}</strong>. 
+                            This action cannot be reversed. Are you absolutely sure you want to proceed?
+                        </p>
+                    </div>
+                    <div className={styles['modal-ctas']}>
+                        <Button
+                            label='Confirm'
+                            type='secondary'
+                            action={handleDeleteAdmin}
+                            externalStyles={styles['modal-warn']}
+                        />
+                        <Button
+                            label='Cancel'
+                            type='primary'
+                            action={closeModal}
+                        />
+                    </div>
+                </Modal>
+            );
+        }
 
         return (
             <Modal
@@ -384,6 +423,14 @@ const Accounts = () => {
                                     />
                                 )
                             }
+                            {modalType === 'view-admin' && (
+                                <Button
+                                    type="secondary"
+                                    label="Delete Account"
+                                    action={() => setModalType('delete-admin-confirmation')}
+                                    externalStyles={styles['modal-warn']}
+                                />
+                            )}
                             <Button
                                 type="primary"
                                 label="Close"
@@ -473,9 +520,11 @@ const Accounts = () => {
                     {isAdmin && (
                         <Button
                             type="icon"
-                            icon="fa-solid fa-plus"
-                            action={() => openModal('add-admin')}
-                            title="Add Admin"
+                            icon="fa-solid fa-trash-can"
+                            action={() => openModal('delete-admin-confirmation', account)}
+                            title="Delete admin account"
+                            externalStyles={styles['modal-warn']}
+                            disabled={ userList.filter(user => user.id === account.id) }
                         />
                     )}
                 </div>
@@ -491,7 +540,7 @@ const Accounts = () => {
                 <h2>Overview</h2>
 
                 <div className={ styles['overview'] }>
-                    
+
                     <div className={ styles['overview-item'] }>
                         <div className={ styles['overview-item-header'] }>
                             <h3>Accounts</h3>
@@ -518,12 +567,12 @@ const Accounts = () => {
             </div>
 
             <div className={ styles['divider-horizontal'] }></div>
-            
+
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Customers</h2>
                 </div>
-                
+
                 <TableHeader
                     id='customers-table'
                     searchPlaceholder="Search customers..."
@@ -582,7 +631,7 @@ const Accounts = () => {
                         action={() => openModal('add-admin')}
                     />
                 </div>
-                
+                        
                 <TableHeader
                     id='admins-table'
                     searchPlaceholder="Search admins..."
