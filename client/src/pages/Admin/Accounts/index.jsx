@@ -88,7 +88,15 @@ const Accounts = () => {
     };
 
     const handleAddAdmin = async () => {
-            const result = await signUp(accountDetails);
+
+            const result = await signUp({
+                email: accountDetails.email,
+                firstName: accountDetails.first_name,
+                lastName: accountDetails.last_name,
+                phoneNumber: accountDetails.phone_number,
+                password: accountDetails.password,
+                role: accountDetails.role
+            });
             
             if (result.error)
                 showToast(getErrorMessage(result.error.code), 'error');
