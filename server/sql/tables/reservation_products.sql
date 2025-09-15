@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS `reservation_products` (
   `quantity` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`,`product_id`) USING BTREE,
   KEY `reservations_products_product_id_fkey` (`product_id`),
-  CONSTRAINT `reservations_products_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
   CONSTRAINT `reservations_products_reservation_id_fkey` FOREIGN KEY (`id`) REFERENCES `reservations` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

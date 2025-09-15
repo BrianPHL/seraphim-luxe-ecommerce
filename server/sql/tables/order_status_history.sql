@@ -18,9 +18,9 @@
 CREATE TABLE IF NOT EXISTS `order_status_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
-  `old_status` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `new_status` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `notes` text COLLATE utf8mb4_general_ci,
+  `old_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `new_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `changed_by` int DEFAULT NULL,
   `changed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
