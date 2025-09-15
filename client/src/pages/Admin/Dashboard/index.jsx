@@ -118,6 +118,13 @@ const Dashboard = () => {
                 <div className={ styles['section'] }>
                     <div className={ styles['section-header'] }>
                         <h2>Stock Alerts</h2>
+                        <Button
+                            type='primary'
+                            label='Manage low stock alerts'
+                            icon='fa-solid fa-arrow-right'
+                            iconPosition='right'
+                            action={ () => navigate('/admin/stocks') }
+                        />
                     </div>
                     <div className={ styles['table'] }>
                         <div className={ styles['table-wrapper'] }>
@@ -129,7 +136,6 @@ const Dashboard = () => {
                                 <h3>stock_quantity</h3>
                                 <h3>stock_threshold</h3>
                                 <h3>modified_at</h3>
-                                <h3>actions</h3>
                             </div>
                                 {lowStockProducts.length > 0 ? (
                                     lowStockProducts.map(product => (
@@ -159,13 +165,6 @@ const Dashboard = () => {
                                             <div className={styles['table-cell']}>{product.stock_threshold}</div>
                                             <div className={styles['table-cell']}>
                                                 {product.modified_at }
-                                            </div>
-                                            <div className={styles['table-cell']}>
-                                                <Button
-                                                    type="icon"
-                                                    icon="fa-solid fa-square-plus"
-                                                    action={() => handleOpenAddStockModal(product)}
-                                                />
                                             </div>
                                         </div>
                                     ))
