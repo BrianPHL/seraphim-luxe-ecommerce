@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { performOperationWithTimeout, fetchWithTimeout, apiRequest, extractAccountData, TIMEOUTS } from '@utils';
+import { performOperationWithTimeout, fetchWithTimeout, apiRequest, extractAccountData, TIMEOUTS, getBaseURL } from '@utils';
 import { useOAuth } from "@hooks";
 import { useToast } from "@contexts";
 import AuthContext from "./context";
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
         loading: false,
         onSuccess: null
     });
-    const { signOut, getSession, signInThruEmail, signUpThruEmail, sendVerificationOTP } = useOAuth();
+    const { signOut, getSession, signInThruEmail, signUpThruEmail, sendVerificationOTP, revokeSession } = useOAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
 
@@ -34,10 +34,25 @@ export const AuthProvider = ({ children }) => {
             try {
                 
                 const session = await getSession();
+                const sessionData = session?.data?.session;
+                const sessionUser = session?.data?.user;
 
-                if (session?.data?.user)
-                    setUser(session.data.user);
+                if (!sessionUser)
+                    return;
 
+                if (sessionUser.is_suspended) {
+                 
+                    revokeSession(sessionData?.token);
+                    
+                    (sessionUser.role === 'admin')
+                    ? window.location.href = `${ getBaseURL() }/admin/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`
+                    : window.location.href = (`${ getBaseURL() }/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`)
+                    
+                    return;
+
+                }
+
+                setUser(session.data.user);
 
             } catch (err) {
                 console.error("Auth context initializeAuth function error: ", err);

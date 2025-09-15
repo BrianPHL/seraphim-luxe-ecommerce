@@ -147,7 +147,15 @@ const useOAuth = () => {
             
         },
         signOut: () => authClient.signOut(),
-        getSession: () => authClient.getSession()
+        getSession: () => authClient.getSession(),
+        revokeSession: async (token) => {
+
+            const result = await authClient.revokeSession({
+                token: token
+            });
+
+            return result;
+        }
     };
 
 };
