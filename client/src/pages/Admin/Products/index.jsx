@@ -180,8 +180,8 @@ const Products = () => {
             category_id: product.category_id || '',
             subcategory_id: product.subcategory_id || '',
             description: product.description || '',
-            stock_quantity: product.stock_quantity || '',
-            stock_threshold: product.stock_threshold || '',
+            stock_quantity: product.stock_quantity !== undefined ? product.stock_quantity : '',
+            stock_threshold: product.stock_threshold !== undefined ? product.stock_threshold : '',
             image_url: product.image_url || ''
         });
         setImageFile(null);
@@ -198,18 +198,21 @@ const Products = () => {
         setIsModalOpen(true);
     };
 
-    const handleInputChange = (name, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
-        if (name === 'category_id' && value) {
-            fetchSubcategories(value);
-            setFormData(prev => ({
-                ...prev,
-                subcategory_id: ''
-            }));
+    const handleCategoryChange = async (e) => {
+        const categoryId = e.target.value;
+        setFormData(prev => ({ 
+            ...prev, 
+            category_id: categoryId,
+            subcategory_id: ''
+        }));
+        
+        if (categoryId) {
+            await fetchSubcategories(categoryId);
         }
     };
 
@@ -293,6 +296,7 @@ const Products = () => {
         const category = activeCategories.find(cat => cat.id === product.category_id);
         const categoryName = category?.name || product.category || 'N/A';
         
+        // Fix: Pass the category_id to getActiveSubcategories
         const activeSubcategories = getActiveSubcategories(product.category_id);
         const subcategory = activeSubcategories.find(sub => sub.id === product.subcategory_id);
         const subcategoryName = subcategory?.name || product.subcategory || 'N/A';
@@ -521,11 +525,12 @@ const Products = () => {
 
                     <div className={styles['input-wrapper']}>
                         <label>Category</label>
-                        <select
+                        <select 
+                            name="category_id" 
                             value={formData.category_id}
-                            onChange={(e) => handleInputChange('category_id', e.target.value)}
+                            onChange={handleCategoryChange}
                         >
-                            <option value="">Select Category</option>
+                            <option value="">Select category</option>
                             {getActiveCategories().map(category => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
@@ -533,29 +538,30 @@ const Products = () => {
                             ))}
                         </select>
                     </div>
-
+                    
                     <div className={styles['input-wrapper']}>
-                        <label>Subcategory</label>
-                        <select
+                        <label>Sub-category</label>
+                        <select 
+                            name="subcategory_id" 
                             value={formData.subcategory_id}
-                            onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+                            onChange={handleInputChange}
                             disabled={!formData.category_id}
                         >
-                            <option value="">Select Subcategory</option>
-                            {formData.category_id && getActiveSubcategories(parseInt(formData.category_id))
-                                .map(subcategory => (
-                                    <option key={subcategory.id} value={subcategory.id}>
-                                        {subcategory.name}
-                                    </option>
-                                ))}
+                            <option value="">Select subcategory</option>
+                            {formData.category_id && getActiveSubcategories(formData.category_id).map(subcategory => (
+                                <option key={subcategory.id} value={subcategory.id}>
+                                    {subcategory.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
                     <div className={styles['input-wrapper']}>
                         <label>Description</label>
                         <textarea
+                            name='description'
                             value={formData.description}
-                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            onChange={ handleInputChange }
                             placeholder="Product description..."
                         />
                     </div>
@@ -566,7 +572,7 @@ const Products = () => {
                             type="number"
                             name="stock_quantity"
                             hint="Current stock quantity..."
-                            value={formData.stock_quantity}
+                            value={ formData.stock_quantity }
                             onChange={handleInputChange}
                             isSubmittable={false}
                         />

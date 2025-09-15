@@ -99,12 +99,12 @@ export const ProductsProvider = ({ children }) => {
         }
     };
 
-    const updateProduct = async (productData) => {
+    const updateProduct = async (productId, productData) => {
         
         try {
             setLoading(true);
             
-            const response = await fetch(`/api/products/${ productData['product_id'] }`, {
+            const response = await fetch(`/api/products/${ productId }`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -119,7 +119,7 @@ export const ProductsProvider = ({ children }) => {
 
             await fetchProducts(true);
 
-            showToast(`Product updated successfully! Product Id: ${ data['product_id'] }`, 'success')
+            showToast(`Product updated successfully! Product Id: ${ productId }`, 'success')
 
 
         } catch (err) {
