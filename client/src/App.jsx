@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-router';
 import { Header, Footer, OTPModal } from '@components';
-import { useAuth } from '@contexts';
+import { useAuth, useTheme } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
@@ -35,7 +35,21 @@ const PAGE_TITLES = {
 const App = () => {
 
     const { user, otpModalData, handleOTPSuccess, hideOTP, loading } = useAuth();
-    const location = useLocation();	
+    const { theme } = useTheme();
+    const location = useLocation();
+
+    useEffect(() => {
+        const faviconPath = theme === 'dark' 
+            ? '/favicon-dark.ico' 
+            : '/favicon-light.ico';
+        
+        const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = faviconPath;
+        document.getElementsByTagName('head')[0].appendChild(link);
+        
+    }, [ theme ]);
     
     useEffect(() => {
       document.title = PAGE_TITLES[location.pathname] || PAGE_TITLES["/"];
