@@ -208,7 +208,6 @@ const App = () => {
                     <ProtectedRoute requiresAdmin={true}>
                         <Header />
                             <Profile />
-                        <Footer />
                     </ProtectedRoute>
                 } />
 
