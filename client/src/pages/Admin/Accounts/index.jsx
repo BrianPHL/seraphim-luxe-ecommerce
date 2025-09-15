@@ -4,7 +4,7 @@ import styles from './Accounts.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
 import { useAuth, useToast } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
-import { CUSTOMER_FILTER_CONFIG, ADMIN_FILTER_CONFIG } from '@utils';
+import { CUSTOMER_FILTER_CONFIG, ADMIN_FILTER_CONFIG, getErrorMessage } from '@utils';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -16,7 +16,7 @@ const Accounts = () => {
     const queryAdminPage = parseInt(searchParams.get('adminPage') || '1', 10);
     const queryAdminSort = searchParams.get('adminSort') || 'Sort by: Name (A-Z)';
     const queryAdminSearch = searchParams.get('adminSearch') || '';
-    const { user, userList, fetchUsers, suspendAccount, editAccount, addAdminAccount, remove } = useAuth();
+    const { user, userList, fetchUsers, suspendAccount, editAccount, signUp, remove } = useAuth();
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
@@ -24,10 +24,10 @@ const Accounts = () => {
     const [modalType, setModalType] = useState('');
     const [selectedAccount, setSelectedAccount] = useState(null);
     const [accountDetails, setAccountDetails] = useState({
-        first_name: '',
-        last_name: '',
+        firstName: '',
+        lastName: '',
         email: '',
-        phone: '',
+        phoneNumber: '',
         role: 'customer',
         password: ''
     });
@@ -86,8 +86,12 @@ const Accounts = () => {
     };
 
     const handleAddAdmin = async () => {
-        await addAdminAccount(accountDetails);
-        closeModal();
+            const result = await signUp(accountDetails);
+            
+            if (result.error)
+                showToast(getErrorMessage(result.error.code), 'error');
+            
+            closeModal();
     };
 
     const handleDeleteAdmin = async () => {
@@ -194,19 +198,19 @@ const Accounts = () => {
         setSelectedAccount(account);
         if (account) {
             setAccountDetails({
-                first_name: account.first_name || '',
-                last_name: account.last_name || '',
+                firstName: account.firstName || '',
+                lastName: account.lastName || '',
                 email: account.email || '',
-                phone: account.phone || '',
+                phoneNumber: account.phoneNumber || '',
                 role: account.role || 'customer',
                 password: ''
             });
         } else {
             setAccountDetails({
-                first_name: '',
-                last_name: '',
+                firstName: '',
+                lastName: '',
                 email: '',
-                phone: '',
+                phoneNumber: '',
                 role: 'admin',
                 password: ''
             });
@@ -219,10 +223,10 @@ const Accounts = () => {
         setModalType('');
         setSelectedAccount(null);
         setAccountDetails({
-            first_name: '',
-            last_name: '',
+            firstName: '',
+            lastName: '',
             email: '',
-            phone: '',
+            phoneNumber: '',
             role: 'customer',
             password: ''
         });
@@ -253,7 +257,7 @@ const Accounts = () => {
                 >
                     <div className={styles['modal-infos']}>
                         <p className={styles['modal-info']}>
-                            You are about to <strong>permanently delete the admin account for {selectedAccount?.first_name} {selectedAccount?.last_name}</strong>. 
+                            You are about to <strong>permanently delete the admin account for {selectedAccount?.firstName} {selectedAccount?.lastName}</strong>. 
                             This action cannot be reversed. Are you absolutely sure you want to proceed?
                         </p>
                     </div>
@@ -292,9 +296,9 @@ const Accounts = () => {
                             <h3>Account Information</h3>
                             <span>
                                 <p><strong>Account ID:</strong> {selectedAccount.id}</p>
-                                <p><strong>Full Name:</strong> {selectedAccount.first_name} {selectedAccount.last_name}</p>
+                                <p><strong>Full Name:</strong> {selectedAccount.firstName} {selectedAccount.lastName}</p>
                                 <p><strong>Email:</strong> {selectedAccount.email}</p>
-                                <p><strong>Phone:</strong> {selectedAccount.phone || 'Not provided'}</p>
+                                <p><strong>Phone:</strong> {selectedAccount.phoneNumber || 'Not provided'}</p>
                                 <p><strong>Role:</strong> {selectedAccount.role}</p>
                                 <p><strong>Email Verified:</strong> {selectedAccount.email_verified ? 'Yes' : 'No'}</p>
                                 <p><strong>Registration Date:</strong> {formatDate(selectedAccount.created_at)}</p>
@@ -313,12 +317,12 @@ const Accounts = () => {
                             <div className={styles['input-wrapper']}>
                                 <label>First Name</label>
                                 <InputField
-                                    name="first_name"
+                                    name="firstName"
                                     hint="Enter first name..."
-                                    value={accountDetails.first_name}
+                                    value={accountDetails.firstName}
                                     onChange={(e) => setAccountDetails({
                                         ...accountDetails,
-                                        first_name: e.target.value
+                                        firstName: e.target.value
                                     })}
                                     isSubmittable={false}
                                 />
@@ -327,12 +331,12 @@ const Accounts = () => {
                             <div className={styles['input-wrapper']}>
                                 <label>Last Name</label>
                                 <InputField
-                                    name="last_name"
+                                    name="lastName"
                                     hint="Enter last name..."
-                                    value={accountDetails.last_name}
+                                    value={accountDetails.lastName}
                                     onChange={(e) => setAccountDetails({
                                         ...accountDetails,
-                                        last_name: e.target.value
+                                        lastName: e.target.value
                                     })}
                                     isSubmittable={false}
                                 />
@@ -357,12 +361,12 @@ const Accounts = () => {
                                 <label>Phone Number (Optional)</label>
                                 <InputField
                                     type="tel"
-                                    name="phone"
+                                    name="phoneNumber"
                                     hint="Enter phone number..."
-                                    value={accountDetails.phone}
+                                    value={accountDetails.phoneNumber}
                                     onChange={(e) => setAccountDetails({
                                         ...accountDetails,
-                                        phone: e.target.value
+                                        phoneNumber: e.target.value
                                     })}
                                     isSubmittable={false}
                                 />
@@ -449,7 +453,7 @@ const Accounts = () => {
                                 type="primary"
                                 label="Save Changes"
                                 action={handleEditAccount}
-                                disabled={!accountDetails.first_name || !accountDetails.last_name || !accountDetails.email}
+                                disabled={!accountDetails.firstName || !accountDetails.lastName || !accountDetails.email}
                             />
                         </>
                     )}
@@ -464,7 +468,7 @@ const Accounts = () => {
                                 type="primary"
                                 label="Create Admin"
                                 action={handleAddAdmin}
-                                disabled={!accountDetails.first_name || !accountDetails.last_name || !accountDetails.email || !accountDetails.password}
+                                disabled={!accountDetails.firstName || !accountDetails.lastName || !accountDetails.email || !accountDetails.password}
                             />
                         </>
                     )}
@@ -477,10 +481,10 @@ const Accounts = () => {
         <div key={account.id} className={styles['table-row']}>
             <div className={styles['table-cell']}>{account.id}</div>
             <div className={styles['table-cell']}>
-                {account.first_name} {account.last_name}
+                {account.firstName} {account.lastName}
             </div>
             <div className={styles['table-cell']}>{account.email}</div>
-            <div className={styles['table-cell']}>{account.phone || 'N/A'}</div>
+            <div className={styles['table-cell']}>{account.phoneNumber || 'N/A'}</div>
             <div className={styles['table-cell']}>
                 <span className={`${styles['status']} ${styles[account.email_verified ? 'verified' : 'unverified']}`}>
                     {account.email_verified ? 'Verified' : 'Unverified'}
@@ -509,7 +513,7 @@ const Accounts = () => {
                                 action={() => handleSuspendAccount(account.id, true) }
                                 externalStyles={styles['modal-warn']}
                                 title="Suspend account"
-                                disabled={ userList.filter(user => user.id === account.id) }
+                                disabled={ user.email === account.email }
                             />
                         ) : (
                             <Button
@@ -517,7 +521,7 @@ const Accounts = () => {
                                 icon="fa-solid fa-circle-check"
                                 action={() => handleSuspendAccount(account.id, false) }
                                 title="Re-activate account"
-                                disabled={ userList.filter(user => user.id === account.id) }
+                                disabled={ user.email === account.email }
                             />
                         )
 
@@ -529,7 +533,7 @@ const Accounts = () => {
                             action={() => openModal('delete-admin-confirmation', account)}
                             title="Delete admin account"
                             externalStyles={styles['modal-warn']}
-                            disabled={ userList.filter(user => user.id === account.id) }
+                            disabled={ user.email === account.email }
                         />
                     )}
                 </div>
