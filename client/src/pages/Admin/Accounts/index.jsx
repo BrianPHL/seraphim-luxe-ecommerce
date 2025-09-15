@@ -16,7 +16,7 @@ const Accounts = () => {
     const queryAdminPage = parseInt(searchParams.get('adminPage') || '1', 10);
     const queryAdminSort = searchParams.get('adminSort') || 'Sort by: Name (A-Z)';
     const queryAdminSearch = searchParams.get('adminSearch') || '';
-    const { user, userList, fetchUsers, suspendAccount, editAccount, signUp, remove } = useAuth();
+    const { user, userList, fetchUsers, suspendAccount, editAccount, signUp, remove, updatePersonalInfo } = useAuth();
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
@@ -24,10 +24,11 @@ const Accounts = () => {
     const [modalType, setModalType] = useState('');
     const [selectedAccount, setSelectedAccount] = useState(null);
     const [accountDetails, setAccountDetails] = useState({
-        firstName: '',
-        lastName: '',
+        id: '',
+        first_name: '',
+        last_name: '',
         email: '',
-        phoneNumber: '',
+        phone_number: '',
         role: 'customer',
         password: ''
     });
@@ -75,13 +76,14 @@ const Accounts = () => {
     } = usePagination(filteredAdmins, ITEMS_PER_PAGE, queryAdminPage);
 
     const handleSuspendAccount = async (accountId, isSuspended) => {
-        console.log(accountId, isSuspended);
+        await fetchUsers();
         await suspendAccount(accountId, isSuspended);
         closeModal();
     };
 
     const handleEditAccount = async () => {
-        await editAccount(selectedAccount.id, accountDetails);
+        await updatePersonalInfo(accountDetails);
+        await fetchUsers();
         closeModal();
     };
 
@@ -198,19 +200,21 @@ const Accounts = () => {
         setSelectedAccount(account);
         if (account) {
             setAccountDetails({
-                firstName: account.first_name || '',
-                lastName: account.last_name || '',
+                id: Number(account.id) || '',
+                first_name: account.first_name || '',
+                last_name: account.last_name || '',
                 email: account.email || '',
-                phoneNumber: account.phone_number || '',
+                phone_number: account.phone_number || '',
                 role: account.role || 'customer',
                 password: ''
             });
         } else {
             setAccountDetails({
-                firstName: '',
-                lastName: '',
+                id: '',
+                first_name: '',
+                last_name: '',
                 email: '',
-                phoneNumber: '',
+                phone_number: '',
                 role: 'admin',
                 password: ''
             });
@@ -223,10 +227,11 @@ const Accounts = () => {
         setModalType('');
         setSelectedAccount(null);
         setAccountDetails({
-            firstName: '',
-            lastName: '',
+            id: '',
+            first_name: '',
+            last_name: '',
             email: '',
-            phoneNumber: '',
+            phone_number: '',
             role: 'customer',
             password: ''
         });
@@ -257,7 +262,7 @@ const Accounts = () => {
                 >
                     <div className={styles['modal-infos']}>
                         <p className={styles['modal-info']}>
-                            You are about to <strong>permanently delete the admin account for {selectedAccount?.firstName} {selectedAccount?.lastName}</strong>. 
+                            You are about to <strong>permanently delete the admin account for {selectedAccount?.first_name} {selectedAccount?.last_name}</strong>. 
                             This action cannot be reversed. Are you absolutely sure you want to proceed?
                         </p>
                     </div>
@@ -314,15 +319,16 @@ const Accounts = () => {
 
                     {(isEditMode || isAddMode) && (
                         <>
+
                             <div className={styles['input-wrapper']}>
                                 <label>First Name</label>
                                 <InputField
-                                    name="firstName"
+                                    name="first_name"
                                     hint="Enter first name..."
-                                    value={accountDetails.firstName}
+                                    value={accountDetails.first_name}
                                     onChange={(e) => setAccountDetails({
                                         ...accountDetails,
-                                        firstName: e.target.value
+                                        first_name: e.target.value
                                     })}
                                     isSubmittable={false}
                                 />
@@ -331,12 +337,12 @@ const Accounts = () => {
                             <div className={styles['input-wrapper']}>
                                 <label>Last Name</label>
                                 <InputField
-                                    name="lastName"
+                                    name="last_name"
                                     hint="Enter last name..."
-                                    value={accountDetails.lastName}
+                                    value={accountDetails.last_name}
                                     onChange={(e) => setAccountDetails({
                                         ...accountDetails,
-                                        lastName: e.target.value
+                                        last_name: e.target.value
                                     })}
                                     isSubmittable={false}
                                 />
@@ -361,12 +367,12 @@ const Accounts = () => {
                                 <label>Phone Number (Optional)</label>
                                 <InputField
                                     type="tel"
-                                    name="phoneNumber"
+                                    name="phone_number"
                                     hint="Enter phone number..."
-                                    value={accountDetails.phoneNumber}
+                                    value={accountDetails.phone_number}
                                     onChange={(e) => setAccountDetails({
                                         ...accountDetails,
-                                        phoneNumber: e.target.value
+                                        phone_number: e.target.value
                                     })}
                                     isSubmittable={false}
                                 />
@@ -453,7 +459,7 @@ const Accounts = () => {
                                 type="primary"
                                 label="Save Changes"
                                 action={handleEditAccount}
-                                disabled={!accountDetails.firstName || !accountDetails.lastName || !accountDetails.email}
+                                disabled={!accountDetails.first_name || !accountDetails.last_name || !accountDetails.email}
                             />
                         </>
                     )}
@@ -468,7 +474,7 @@ const Accounts = () => {
                                 type="primary"
                                 label="Create Admin"
                                 action={handleAddAdmin}
-                                disabled={!accountDetails.firstName || !accountDetails.lastName || !accountDetails.email || !accountDetails.password}
+                                disabled={!accountDetails.first_name || !accountDetails.last_name || !accountDetails.email || !accountDetails.password}
                             />
                         </>
                     )}

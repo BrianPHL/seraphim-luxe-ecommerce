@@ -240,7 +240,7 @@ export const AuthProvider = ({ children }) => {
         
         try {
         
-            const data = await apiRequest(`/api/accounts/${user.id}/personal-info`, {
+            const data = await apiRequest(`/api/accounts/${ !personalInfo.id ? user.id : personalInfo.id }/personal-info`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(personalInfo)
@@ -594,7 +594,7 @@ export const AuthProvider = ({ children }) => {
             getAddressBook,
             addAddress,
             updateAddress,
-            deleteAddress
+            deleteAddress,
             suspendAccount,
         }}>
             { children }
