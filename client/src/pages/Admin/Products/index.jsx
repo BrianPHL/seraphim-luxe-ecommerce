@@ -41,6 +41,7 @@ const Products = () => {
         getActiveCategories, 
         getActiveSubcategories, 
         fetchSubcategories, 
+        fetchCategories,
         getCategoryById 
     } = useCategories();
 
@@ -61,7 +62,22 @@ const Products = () => {
         resetPagination,
     } = usePagination(filteredProducts, ITEMS_PER_PAGE, queryPage);
 
-    // Initialize state from URL params ONLY - no bidirectional sync
+    const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                await fetchCategories();
+                setCategoriesLoaded(true);
+            } catch (error) {
+                console.error('Failed to load categories:', error);
+                showToast('Failed to load categories', 'error');
+            }
+        };
+
+        loadCategories();
+    }, []);
+
     useEffect(() => {
         if (searchValue !== querySearch) {
             handleSearchChange(querySearch);
@@ -88,7 +104,6 @@ const Products = () => {
         setSearchParams(params);
     };
 
-    // These handlers manage BOTH state and URL updates in one place
     const handleSearchChangeWrapped = (value) => {
         handleSearchChange(value);
         resetPagination();
@@ -174,6 +189,11 @@ const Products = () => {
         if (product.image_url) {
             setImagePreview(`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}`);
         }
+        
+        if (product.category_id) {
+            fetchSubcategories(product.category_id);
+        }
+        
         setModalType('edit');
         setIsModalOpen(true);
     };
@@ -269,12 +289,12 @@ const Products = () => {
 
     const getCategoryDisplay = (product) => {
         const activeCategories = getActiveCategories();
-        const activeSubcategories = getActiveSubcategories();
         
         const category = activeCategories.find(cat => cat.id === product.category_id);
-        const subcategory = activeSubcategories.find(sub => sub.id === product.subcategory_id);
-        
         const categoryName = category?.name || product.category || 'N/A';
+        
+        const activeSubcategories = getActiveSubcategories(product.category_id);
+        const subcategory = activeSubcategories.find(sub => sub.id === product.subcategory_id);
         const subcategoryName = subcategory?.name || product.subcategory || 'N/A';
         
         return `${categoryName} / ${subcategoryName}`;
@@ -401,7 +421,6 @@ const Products = () => {
                                             )
                                         }
                                         </div>
-
                                     </div>
                                     <div className={styles['table-cell']}>{product.id}</div>
                                     <div className={styles['table-cell']}>{product.label}</div>
@@ -523,8 +542,7 @@ const Products = () => {
                             disabled={!formData.category_id}
                         >
                             <option value="">Select Subcategory</option>
-                            {getActiveSubcategories()
-                                .filter(sub => sub.category_id === parseInt(formData.category_id))
+                            {formData.category_id && getActiveSubcategories(parseInt(formData.category_id))
                                 .map(subcategory => (
                                     <option key={subcategory.id} value={subcategory.id}>
                                         {subcategory.name}
