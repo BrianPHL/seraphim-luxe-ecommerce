@@ -198,6 +198,37 @@ router.put('/:product_id', async (req, res) => {
 
 });
 
+router.put('/:product_id/feature/:is_featured', async (req, res) => {
+
+    try {
+
+        const { product_id, is_featured } = req.params;
+        const parsedIsFeatured = is_featured === 'true' ? 1 : 0;
+
+        const [ affectedRows ] = await pool.query(
+            `
+                UPDATE products
+                SET is_featured = ?
+                WHERE id = ?
+            `,
+            [ parsedIsFeatured, product_id ]
+        );
+
+        if (affectedRows.affectedRows === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        };
+
+        res.status(200).json({ message: 'Product successfully updated!' });
+
+    } catch (err) {
+
+        console.error('Products route PUT /:product_id/feature/:is_featured endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+
+    }
+
+});
+
 router.post('/upload-image', upload.single('image'), async (req, res) => {
 
     try {

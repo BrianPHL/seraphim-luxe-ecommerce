@@ -243,3 +243,12 @@
     height: 1px;
     width: 100%;
 }
+
+.featured-button {
+    transition: 0.2s ease all;
+    font-size: 1rem;
+    &:hover {
+        cursor: pointer;
+        color: var(--accent-base);
+    }
+}

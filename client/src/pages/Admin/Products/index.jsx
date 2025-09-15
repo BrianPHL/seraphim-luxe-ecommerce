@@ -33,7 +33,7 @@ const Products = () => {
         image_url: ''
     });
 
-    const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts();
+    const { products, refreshProducts, loading, addProduct, updateProduct, deleteProduct, featureProduct } = useProducts();
     const { lowStockProducts } = useStocks();
     const { showToast } = useToast();
     const { 
@@ -122,17 +122,22 @@ const Products = () => {
         setDeleteModalOpen(true);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (productToDelete) {
-            deleteProduct(productToDelete.id);
+            await deleteProduct(productToDelete.id);
             setDeleteModalOpen(false);
             setProductToDelete(null);
         }
+        await refreshProducts();
     };
 
     const handleCancelDelete = () => {
         setDeleteModalOpen(false);
         setProductToDelete(null);
+    };
+
+    const handleFeatureProduct = async (productId, isFeatured) => {
+        await featureProduct(productId, isFeatured);
     };
 
     const handleOpenAddModal = () => {
@@ -257,6 +262,7 @@ const Products = () => {
         } catch (error) {
             showToast(`Failed to ${modalType} product: ${error.message}`, 'error');
         } finally {
+            await refreshProducts();
             setIsUploadingImage(false);
         }
     };
@@ -342,7 +348,8 @@ const Products = () => {
                 
                 <div className={styles['table']}>
                     <div className={styles['table-wrapper']}>
-                        <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
+                        <div className={styles['table-header']} style={{ gridTemplateColumns: 'repeat(9, 1fr)' }}>
+                            <h3></h3>
                             <h3></h3>
                             <h3>Product ID</h3>
                             <h3>Label</h3>
@@ -362,7 +369,7 @@ const Products = () => {
                                 <div 
                                     key={product.id} 
                                     className={styles['table-rows']} 
-                                    style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}
+                                    style={{ gridTemplateColumns: 'repeat(9, 1fr)' }}
                                 >
                                     <div className={styles['table-cell']}>
                                         {product.image_url ? (
@@ -371,6 +378,30 @@ const Products = () => {
                                                 alt={product.label}
                                             />
                                         ) : '—'}
+                                    </div>
+                                    <div className={styles['table-cell']} style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <div className={styles['table-cell']}>
+                                        {
+                                            !product.is_featured ? (
+                                                <Button
+                                                    type="icon"
+                                                    icon="fa-regular fa-star"
+                                                    action={() => handleFeatureProduct(product.id, true) }
+                                                    externalStyles={styles['featured-button']}
+                                                    title="Feature product"
+                                                />
+                                            ) : (
+                                                <Button
+                                                    type="icon"
+                                                    icon="fa-solid fa-star"
+                                                    action={() => handleFeatureProduct(product.id, false) }
+                                                    externalStyles={styles['featured-button']}
+                                                    title="Un-feature product"
+                                                />
+                                            )
+                                        }
+                                        </div>
+
                                     </div>
                                     <div className={styles['table-cell']}>{product.id}</div>
                                     <div className={styles['table-cell']}>{product.label}</div>

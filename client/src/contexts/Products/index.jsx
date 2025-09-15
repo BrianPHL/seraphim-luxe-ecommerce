@@ -131,6 +131,37 @@ export const ProductsProvider = ({ children }) => {
 
     };
 
+    const featureProduct = async (productId, isFeatured) => {
+        
+        try {
+            setLoading(true);
+            
+            const response = await fetch(`/api/products/${ productId }/feature/${ isFeatured }`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(`Failed to ${ isFeatured ? 'feature' : 'un-feature' } product!`);
+            }
+
+            await fetchProducts(true);
+
+            showToast(`Product ${ isFeatured ? 'featured' : 'un-featured' } successfully! Product Id: ${ productId }`, 'success')
+
+
+        } catch (err) {
+            console.error('Error updating product:', err);
+            showToast(`Failed to update product: ${err.message}`, 'error');
+        } finally {
+            setLoading(false);
+        }
+
+    };
+
     useEffect(() => {
         fetchProducts(true);
     }, [ fetchProducts ]);
@@ -155,7 +186,8 @@ export const ProductsProvider = ({ children }) => {
                 refreshProducts: () => fetchProducts(true),
                 deleteProduct,
                 updateProduct,
-                addProduct
+                addProduct,
+                featureProduct
             }}
         >
             { children }
