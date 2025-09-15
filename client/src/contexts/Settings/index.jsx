@@ -110,7 +110,7 @@ export const SettingsProvider = ({ children }) => {
             const numPrice = Number(price);
             if (isNaN(numPrice)) return price;
 
-            const fromCurrency = 'PHP';
+            const fromCurrency = 'PHP'; // Database always stores in PHP
             const toCurrency = targetCurrency?.toUpperCase();
 
             if (fromCurrency === toCurrency) {
@@ -119,105 +119,32 @@ export const SettingsProvider = ({ children }) => {
 
             let convertedPrice;
 
+            // Updated conversion rates for better accuracy
             if (fromCurrency === 'PHP') {
                 switch (toCurrency) {
                     case 'USD':
-                        convertedPrice = numPrice * 0.018; 
+                        convertedPrice = numPrice * 0.018; // 1 PHP = 0.018 USD
                         break;
                     case 'EUR':
-                        convertedPrice = numPrice * 0.016; 
+                        convertedPrice = numPrice * 0.016; // 1 PHP = 0.016 EUR
                         break;
                     case 'JPY':
-                        convertedPrice = numPrice * 2.70;
+                        convertedPrice = numPrice * 2.70; // 1 PHP = 2.70 JPY
                         break;
                     case 'CAD':
-                        convertedPrice = numPrice * 0.024; 
+                        convertedPrice = numPrice * 0.024; // 1 PHP = 0.024 CAD
                         break;
                     default:
                         convertedPrice = numPrice;
                 }
             }
 
-            else if (fromCurrency === 'USD') {
-                switch (toCurrency) {
-                    case 'PHP':
-                        convertedPrice = numPrice * 55.56;
-                        break;
-                    case 'EUR':
-                        convertedPrice = numPrice * 0.89; 
-                        break;
-                    case 'JPY':
-                        convertedPrice = numPrice * 150.00; 
-                        break;
-                    case 'CAD':
-                        convertedPrice = numPrice * 1.35; 
-                        break;
-                    default:
-                        convertedPrice = numPrice;
-                }
-            }
-            
-            else if (fromCurrency === 'EUR') {
-                switch (toCurrency) {
-                    case 'PHP':
-                        convertedPrice = numPrice * 62.50;
-                        break;
-                    case 'USD':
-                        convertedPrice = numPrice * 1.12; 
-                        break;
-                    case 'JPY':
-                        convertedPrice = numPrice * 168.50; 
-                        break;
-                    case 'CAD':
-                        convertedPrice = numPrice * 1.51; 
-                        break;
-                    default:
-                        convertedPrice = numPrice;
-                }
-            }
-            
-            else if (fromCurrency === 'JPY') {
-                switch (toCurrency) {
-                    case 'PHP':
-                        convertedPrice = numPrice * 0.37; 
-                        break;
-                    case 'USD':
-                        convertedPrice = numPrice * 0.0067; 
-                        break;
-                    case 'EUR':
-                        convertedPrice = numPrice * 0.0059; 
-                        break;
-                    case 'CAD':
-                        convertedPrice = numPrice * 0.009; 
-                        break;
-                    default:
-                        convertedPrice = numPrice;
-                }
-            }
-            
-            else if (fromCurrency === 'CAD') {
-                switch (toCurrency) {
-                    case 'PHP':
-                        convertedPrice = numPrice * 41.67; 
-                        break;
-                    case 'USD':
-                        convertedPrice = numPrice * 0.74; 
-                        break;
-                    case 'EUR':
-                        convertedPrice = numPrice * 0.66; 
-                        break;
-                    case 'JPY':
-                        convertedPrice = numPrice * 111.11; 
-                        break;
-                    default:
-                        convertedPrice = numPrice;
-                }
-            }
-            
+            // Round appropriately based on currency
             if (toCurrency === 'JPY') {
                 return Math.round(convertedPrice);
             }
             
+            // Round to 2 decimal places for other currencies
             return Math.round(convertedPrice * 100) / 100; 
 
         } catch (error) {

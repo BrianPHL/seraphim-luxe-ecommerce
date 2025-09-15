@@ -76,7 +76,7 @@ export const CheckoutProvider = ({ children }) => {
                 account_id: parseInt(user.id),
                 order_number: orderNumber,
                 status: 'pending',
-                payment_method: orderData.paymentMethod || 'cash',
+                payment_method: orderData.paymentMethod || orderData.payment_method || 'cash_on_delivery',
                 subtotal: subtotal,
                 shipping_fee: shippingFee,
                 tax: tax,

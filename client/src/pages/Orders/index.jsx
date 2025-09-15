@@ -60,6 +60,50 @@ const Orders = () => {
         }
     };
 
+    const detectOrderCurrency = (order) => {
+        const amount = parseFloat(order.total_amount);
+    
+        if (order.currency && order.currency !== 'PHP') {
+            return order.currency;
+        }
+        
+        if (order.display_currency && order.display_currency !== 'PHP') {
+            return order.display_currency;
+        }
+        
+        if (amount > 0 && amount < 100) {
+            const hasLowItemPrices = order.items?.some(item => {
+                const itemPrice = parseFloat(item.price || item.unit_price || 0);
+                return itemPrice > 0 && itemPrice < 5; 
+            });
+            
+            if (hasLowItemPrices) {
+                return 'USD';
+            }
+        }
+        
+        return 'PHP'; 
+    };
+
+    const convertToBasePHP = (amount, detectedCurrency) => {
+        const numAmount = Number(amount);
+        if (isNaN(numAmount)) return amount;
+
+        switch (detectedCurrency?.toUpperCase()) {
+            case 'USD':
+                return numAmount * 55.56; 
+            case 'EUR':
+                return numAmount * 62.50;
+            case 'JPY':
+                return numAmount * 0.37; 
+            case 'CAD':
+                return numAmount * 41.67;
+            case 'PHP':
+            default:
+                return numAmount;
+        }
+    };
+
     const calculateReservedArrivalTime = (orderDate, productType) => {
         const orderDateTime = new Date(orderDate);
         const now = new Date();
@@ -107,27 +151,35 @@ const Orders = () => {
             try {
                 const ordersWithConvertedPrices = await Promise.all(
                     orders.map(async (order) => {
-                        let convertedTotalAmount = order.total_amount;
+                        const detectedCurrency = detectOrderCurrency(order);
                         
-                        if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                        const phpTotalAmount = convertToBasePHP(order.total_amount, detectedCurrency);
+                        
+                        let convertedTotalAmount = phpTotalAmount;
+                        const displayCurrency = settings?.currency || 'PHP';
+                        
+                        if (displayCurrency !== 'PHP' && convertPrice) {
                             try {
-                                convertedTotalAmount = await convertPrice(order.total_amount, settings.currency);
+                                convertedTotalAmount = await convertPrice(phpTotalAmount, displayCurrency);
                             } catch (error) {
                                 console.error('Error converting total amount for order:', order.order_number, error);
-                                convertedTotalAmount = order.total_amount;
+                                convertedTotalAmount = phpTotalAmount;
                             }
                         }
 
                         const convertedItems = await Promise.all(
                             (order.items || []).map(async (item) => {
-                                let convertedPrice = item.price || item.unit_price;
+                                const itemPrice = item.price || item.unit_price;
                                 
-                                if (settings?.currency && settings.currency !== 'PHP' && convertPrice && convertedPrice) {
+                                const phpItemPrice = convertToBasePHP(itemPrice, detectedCurrency);
+                                
+                                let convertedPrice = phpItemPrice;
+                                if (displayCurrency !== 'PHP' && convertPrice && phpItemPrice) {
                                     try {
-                                        convertedPrice = await convertPrice(convertedPrice, settings.currency);
+                                        convertedPrice = await convertPrice(phpItemPrice, displayCurrency);
                                     } catch (error) {
                                         console.error('Error converting item price:', item.label, error);
-                                        convertedPrice = item.price || item.unit_price;
+                                        convertedPrice = phpItemPrice;
                                     }
                                 }
                                 
@@ -141,7 +193,9 @@ const Orders = () => {
                         return {
                             ...order,
                             displayTotalAmount: convertedTotalAmount,
-                            items: convertedItems
+                            items: convertedItems,
+                            detectedCurrency, 
+                            phpTotalAmount
                         };
                     })
                 );
