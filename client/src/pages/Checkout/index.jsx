@@ -251,6 +251,45 @@ const Checkout = () => {
         }
     };
 
+    const convertDisplayPricesToPHP = async (items) => {
+        const displayCurrency = settings?.currency || 'PHP';
+        
+        if (displayCurrency === 'PHP') {
+            return items; 
+        }
+
+        return await Promise.all(
+            items.map(async (item) => {
+                let phpPrice = item.price; 
+                
+                if (item.displayPrice && convertPrice) {
+                    switch (displayCurrency?.toUpperCase()) {
+                        case 'USD':
+                            phpPrice = item.displayPrice / 0.018;
+                            break;
+                        case 'EUR':
+                            phpPrice = item.displayPrice / 0.016; 
+                            break;
+                        case 'JPY':
+                            phpPrice = item.displayPrice / 2.70;
+                            break;
+                        case 'CAD':
+                            phpPrice = item.displayPrice / 0.024; 
+                            break;
+                        default:
+                            phpPrice = item.price;
+                    }
+                }
+                
+                return {
+                    ...item,
+                    price: phpPrice,
+                    displayPrice: item.displayPrice 
+                };
+            })
+        );
+    };
+
     const handlePlaceOrder = async () => {
         
         if (!user || checkoutItems.length === 0 || !selectedShippingAddress) {
@@ -260,21 +299,30 @@ const Checkout = () => {
 
         setIsPlacingOrder(true);
 
+        const itemsInPHP = await convertDisplayPricesToPHP(convertedItems);
+        
+        const totalInPHP = itemsInPHP.reduce((sum, item) => {
+            return sum + (parseFloat(item.price) * item.quantity);
+        }, 0);
+
         try {
 
             const orderData = {
-                items: checkoutItems.map(item => ({
+                items: itemsInPHP.map(item => ({
                     product_id: parseInt(item.product_id),
                     quantity: parseInt(item.quantity),
                     price: parseFloat(item.price),
                     total: parseFloat(item.price) * parseInt(item.quantity)
                 })),
-                paymentMethod,
+                payment_method: paymentMethod,
                 subtotal: parseFloat(subtotal.toFixed(2)),
                 shippingFee: parseFloat(shippingFee.toFixed(2)),
                 tax: parseFloat(tax.toFixed(2)),
                 discount: parseFloat(discount.toFixed(2)),
-                totalAmount: parseFloat(total.toFixed(2)),
+                totalAmount: totalInPHP,
+                total_Amount: totalInPHP,
+                currency: 'PHP',
+                display_currency: settings?.currency || 'PHP',
                 notes: notes.trim(),
                 shipping_address_id: selectedShippingAddress.id,
                 billing_address_id: selectedBillingAddress.id
