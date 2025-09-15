@@ -1,16 +1,27 @@
 @import url('../../index.css');
 
 .logo {
+    align-items: center;
     display: flex;
+    gap: 0.5rem;
     &:hover {
         cursor: pointer;
     }
 }
 
-.logo-left {
+.logo-image {
+    width: 2.5rem;
+}
+
+.logo-text {
+    align-items: center;
+    display: flex;
+}
+
+.logo-text-left {
     color: var(--tg-primary);
 }
 
-.logo-right {
+.logo-text-right {
     color: var(--accent-base);
 }
