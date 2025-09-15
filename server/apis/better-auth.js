@@ -101,7 +101,7 @@ export const auth = betterAuth({
             is_suspended: {
                 type: "boolean",
                 required: false,
-                defaultValue: 1
+                defaultValue: 0
             }
         }
     },
