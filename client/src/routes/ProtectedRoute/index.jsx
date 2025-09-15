@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
             return;
         }
 
-        if (user && user.role === 'admin' && !isAdminRoute) {
+        if (user && user.role === 'admin' && !isAdminRoute && location.pathname !== '/profile') {
             navigate('/admin/dashboard');
             return;
         }
