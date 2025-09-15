@@ -41,6 +41,11 @@ const Orders = () => {
     const [statusUpdateNotes, setStatusUpdateNotes] = useState('');
     const [refundAmount, setRefundAmount] = useState('');
     const [refundReason, setRefundReason] = useState('');
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    const [dateRange, setDateRange] = useState({
+        startDate: '',
+        endDate: ''
+    })
 
     // Initialize state from URL params ONLY - no bidirectional sync
     useEffect(() => {
@@ -184,7 +189,6 @@ const Orders = () => {
     const handlePrintInvoice = async (order) => {
         let orderWithItems = order;
         if (!order.items || order.items.length === 0) {
-            // Fetch items if not present
             const items = await getOrderItems(order.id);
             orderWithItems = { ...order, items: items || [] };
         }
@@ -341,6 +345,333 @@ const Orders = () => {
         'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'
     ];
 
+    const getOrdersInDateRange = (startDate, endDate) => {
+        if (!startDate && !endDate) return recentOrders || [];
+        
+        return (recentOrders || []).filter(order => {
+            const orderDate = new Date(order.created_at);
+            const start = startDate ? new Date(startDate) : new Date('1900-01-01');
+            const end = endDate ? new Date(endDate) : new Date();
+            
+            end.setHours(23, 59, 59, 999);
+            
+            return orderDate >= start && orderDate <= end;
+        });
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'N/A';
+            
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-PH', options);
+        } catch (error) {
+            console.error('Date formatting error:', error);
+            return 'N/A';
+        }
+    };
+
+    const handlePrintInvoicesRange = async (startDate, endDate) => {
+        const ordersInRange = getOrdersInDateRange(startDate, endDate);
+        
+        if (ordersInRange.length === 0) {
+            showToast('No orders found in the selected date range.', 'info');
+            return;
+        }
+
+        const dateRangeText = startDate && endDate 
+            ? `${formatDate(startDate)} to ${formatDate(endDate)}`
+            : startDate 
+            ? `From ${formatDate(startDate)}`
+            : endDate 
+            ? `Until ${formatDate(endDate)}`
+            : 'All Orders';
+
+        const ordersWithItems = await Promise.all(
+            ordersInRange.map(async (order) => {
+                if (!order.items || order.items.length === 0) {
+                    try {
+                        const items = await getOrderItems(order.id);
+                        return { ...order, items: items || [] };
+                    } catch (error) {
+                        console.error('Failed to load items for order:', order.id);
+                        return { ...order, items: [] };
+                    }
+                }
+                return order;
+            })
+        );
+
+        const combinedHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Admin Order Invoices - ${dateRangeText}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 20px; 
+                        color: #333;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #8B4513;
+                        padding-bottom: 20px;
+                    }
+                    .header h1 {
+                        color: #8B4513;
+                        margin: 0;
+                        font-size: 2.5em;
+                    }
+                    .header h2 {
+                        color: #666;
+                        margin: 10px 0;
+                        font-weight: normal;
+                    }
+                    .date-range {
+                        background: #f5f5f5;
+                        padding: 10px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-radius: 5px;
+                    }
+                    .invoice { 
+                        page-break-after: always; 
+                        margin-bottom: 40px;
+                        border: 1px solid #ddd;
+                        padding: 20px;
+                        border-radius: 8px;
+                    }
+                    .invoice:last-child {
+                        page-break-after: auto;
+                    }
+                    .invoice-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 20px;
+                        border-bottom: 1px solid #eee;
+                        padding-bottom: 15px;
+                    }
+                    .order-info {
+                        flex: 1;
+                    }
+                    .order-info h3 {
+                        margin: 0;
+                        color: #8B4513;
+                        font-size: 1.2em;
+                    }
+                    .status-badge {
+                        background: #e8f5e8;
+                        color: #2e7d32;
+                        padding: 5px 10px;
+                        border-radius: 15px;
+                        font-size: 0.8em;
+                        font-weight: bold;
+                    }
+                    .customer-info {
+                        background: #f9f9f9;
+                        padding: 15px;
+                        border-radius: 5px;
+                        margin-bottom: 20px;
+                    }
+                    .customer-info h4 {
+                        margin: 0 0 10px 0;
+                        color: #555;
+                    }
+                    .table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin: 20px 0;
+                    }
+                    .table th, .table td { 
+                        border: 1px solid #ddd; 
+                        padding: 12px 8px; 
+                        text-align: left; 
+                    }
+                    .table th { 
+                        background-color: #8B4513; 
+                        color: white;
+                        font-weight: bold;
+                    }
+                    .table tr:nth-child(even) {
+                        background-color: #f9f9f9;
+                    }
+                    .total-section { 
+                        text-align: right; 
+                        margin-top: 20px;
+                        border-top: 2px solid #8B4513;
+                        padding-top: 15px;
+                    }
+                    .total-amount {
+                        font-size: 1.2em;
+                        font-weight: bold;
+                        color: #8B4513;
+                    }
+                    .summary {
+                        background: #f0f8f0;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin: 30px 0;
+                    }
+                    .summary h3 {
+                        margin: 0 0 15px 0;
+                        color: #2e7d32;
+                    }
+                    .summary-grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 15px;
+                    }
+                    .summary-item {
+                        text-align: center;
+                        padding: 10px;
+                        background: white;
+                        border-radius: 5px;
+                    }
+                    .summary-item .value {
+                        font-size: 1.5em;
+                        font-weight: bold;
+                        color: #8B4513;
+                    }
+                    .summary-item .label {
+                        font-size: 0.9em;
+                        color: #666;
+                        margin-top: 5px;
+                    }
+                    @media print {
+                        body { margin: 0; }
+                        .invoice { border: none; box-shadow: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>SeraphimLuxe</h1>
+                    <h2>Admin Order Invoices Report</h2>
+                </div>
+                
+                <div class="date-range">
+                    <strong>Date Range: ${dateRangeText}</strong>
+                </div>
+
+                <div class="summary" style="page-break-after: always;">
+                    <h3>Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="value">${ordersWithItems.length}</div>
+                            <div class="label">Total Orders</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₱${ordersWithItems.reduce((sum, order) => 
+                                sum + parseFloat(order.total_amount || 0), 0
+                            ).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}</div>
+                            <div class="label">Total Revenue</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">${ordersWithItems.reduce((sum, order) => 
+                                sum + (order.items?.length || 0), 0
+                            )}</div>
+                            <div class="label">Total Items</div>
+                        </div>
+                    </div>
+                </div>
+                ${ordersWithItems.map(order => `
+                    <div class="invoice">
+                        <div class="invoice-header">
+                            <div class="order-info">
+                                <h3>Order #${order.order_number || order.order_id}</h3>
+                                <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <div class="status-badge">${order.status}</div>
+                        </div>
+                        
+                        <div class="customer-info">
+                            <h4>Customer Information</h4>
+                            <p><strong>Name:</strong> ${order.first_name} ${order.last_name}</p>
+                            <p><strong>Email:</strong> ${order.email}</p>
+                            <p><strong>Payment Method:</strong> ${paymentMethodLabels[order.payment_method] || order.payment_method || 'N/A'}</p>
+                            <p><strong>Shipping Address:</strong> ${
+                                order.shipping_street
+                                    ? `${order.shipping_street}, ${order.shipping_city}, ${order.shipping_province}, ${order.shipping_postal_code}`
+                                    : 'N/A'
+                            }</p>
+                        </div>
+                        
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${order.items && order.items.length > 0 ? order.items.map(item => `
+                                    <tr>
+                                        <td>${item.label || 'Unknown Item'}</td>
+                                        <td>${item.quantity || 1}</td>
+                                        <td>₱${parseFloat(item.price || 0).toLocaleString('en-PH', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}</td>
+                                        <td>₱${(parseFloat(item.price || 0) * (item.quantity || 1)).toLocaleString('en-PH', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4">No items found</td></tr>'}
+                            </tbody>
+                        </table>
+                        
+                        <div class="total-section">
+                            <p><strong>Subtotal:</strong> ₱${parseFloat(order.total_amount || 0).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}</p>
+                            <p><strong>Shipping:</strong> Free</p>
+                            <div class="total-amount">
+                                <strong>Total: ₱${parseFloat(order.total_amount || 0).toLocaleString('en-PH', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}</strong>
+                            </div>
+                        </div>
+                        
+                        ${order.notes ? `
+                            <div style="margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                                <strong>Order Notes:</strong> ${order.notes}
+                            </div>
+                        ` : ''}
+                        
+                        ${order.admin_notes ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                                <strong>Admin Notes:</strong> ${order.admin_notes}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </body>
+            </html>
+        `;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(combinedHTML);
+        printWindow.document.close();
+        printWindow.print();
+        
+        showToast(`Generated invoice report for ${ordersWithItems.length} orders`, 'success');
+        setShowPrintModal(false);
+    };
+
     if (loading) {
         return (
             <div className={styles['wrapper']}>
@@ -389,6 +720,14 @@ const Orders = () => {
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Orders</h2>
+                    <Button
+                        type="primary"
+                        label="Print Invoice Report"
+                        icon="fa-solid fa-print"
+                        iconPosition="left"
+                        action={() => setShowPrintModal(true)}
+                        externalStyles={styles['print-button']}
+                    />
                 </div>
 
                 <TableHeader
@@ -501,6 +840,120 @@ const Orders = () => {
                     onPageChange={handlePageChangeWrapped}
                 />
             </div>
+
+            {/* Print Date Range Modal */}
+            <Modal
+                label="Print Invoice Report"
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                size="medium"
+            >
+                <div className={styles['print-modal-content']}>
+                    <p>Select a date range to print invoices for orders:</p>
+                    
+                    <div className={styles['date-inputs']}>
+                        <div className={styles['date-input-group']}>
+                            <label htmlFor="startDate">Start Date:</label>
+                            <input
+                                type="date"
+                                id="startDate"
+                                value={dateRange.startDate}
+                                onChange={(e) => setDateRange(prev => ({
+                                    ...prev,
+                                    startDate: e.target.value
+                                }))}
+                                className={styles['date-input']}
+                            />
+                        </div>
+                        
+                        <div className={styles['date-input-group']}>
+                            <label htmlFor="endDate">End Date:</label>
+                            <input
+                                type="date"
+                                id="endDate"
+                                value={dateRange.endDate}
+                                onChange={(e) => setDateRange(prev => ({
+                                    ...prev,
+                                    endDate: e.target.value
+                                }))}
+                                className={styles['date-input']}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className={styles['quick-actions']}>
+                        <Button
+                            type="secondary"
+                            label="Today"
+                            action={() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                setDateRange({ startDate: today, endDate: today });
+                            }}
+                        />
+                        <Button
+                            type="secondary"
+                            label="This Week"
+                            action={() => {
+                                const today = new Date();
+                                const startOfWeek = new Date(today);
+                                startOfWeek.setDate(today.getDate() - today.getDay());
+                                setDateRange({
+                                    startDate: startOfWeek.toISOString().split('T')[0],
+                                    endDate: today.toISOString().split('T')[0]
+                                });
+                            }}
+                        />
+                        <Button
+                            type="secondary"
+                            label="This Month"
+                            action={() => {
+                            const today = new Date();
+                            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                            setDateRange({
+                                startDate: startOfMonth.toISOString().split('T')[0],
+                                endDate: endOfMonth.toISOString().split('T')[0]
+                            });
+                        }}
+                        />
+                        <Button
+                            type="secondary"
+                            label="All Orders"
+                            action={() => {
+                                setDateRange({ startDate: '', endDate: '' });
+                            }}
+                        />
+                    </div>
+                    
+                    <div className={styles['preview-info']}>
+                        {dateRange.startDate || dateRange.endDate ? (
+                            <p>
+                                <strong>Orders to print:</strong> {getOrdersInDateRange(dateRange.startDate, dateRange.endDate).length}
+                            </p>
+                        ) : (
+                            <p>
+                                <strong>Total orders:</strong> {recentOrders?.length || 0}
+                            </p>
+                        )}
+                    </div>
+                    
+                    <div className={styles['modal-ctas']}>
+                        <Button
+                            label="Cancel"
+                            type="secondary"
+                            action={() => setShowPrintModal(false)}
+                        />
+                        <Button
+                            label="Generate Report"
+                            type="primary"
+                            icon="fa-solid fa-print"
+                            iconPosition="left"
+                            action={() => handlePrintInvoicesRange(dateRange.startDate, dateRange.endDate)}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
 
             <Modal
                 label="Order Details"
