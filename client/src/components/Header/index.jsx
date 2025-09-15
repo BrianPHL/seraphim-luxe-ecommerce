@@ -137,6 +137,10 @@ const Header = () => {
                                 dropdownPosition='right'
                                 options={[
                                     {
+                                        label: 'Profile',
+                                        action: () => { navigate('/admin/profile') },
+                                    },
+                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
@@ -192,6 +196,10 @@ const Header = () => {
                             label={` ${ user['first_name'] } (${ user['role'] }) `}
                             dropdownPosition='right'
                             options={[
+                                {
+                                    label: 'Admin Profile',
+                                    action: () => { navigate('/admin/profile') },
+                                    },
                                 {
                                     label: 'Logout',
                                     action: handleLogout,

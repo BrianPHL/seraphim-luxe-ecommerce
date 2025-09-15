@@ -704,6 +704,8 @@ const Profile = ({}) => {
 
     }, [ user, settings ]);
 
+    const isAdmin = user?.role === 'admin';
+
     if (loading || !user) return null;
 
     return(
@@ -711,7 +713,7 @@ const Profile = ({}) => {
             <div className={ styles['wrapper'] }>
                 <div className={ styles['header'] }>
                     <ReturnButton />
-                    <h1>My Profile</h1>
+                    <h1>{isAdmin ? 'Admin Profile' : 'My Profile'}</h1>
                 </div>
 
                 <div className={ styles['container'] }>
@@ -868,198 +870,209 @@ const Profile = ({}) => {
                             </div>
                         </section>
                         <div className={ styles['divider-horizontal'] }></div>
-                        <section className={ styles['user-settings'] }>
-                            <h2>Settings</h2>
-                            <div className={ styles['inputs-container'] }>
-                                <div className={ styles['inputs-wrapper'] }>
-                                    <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="currency">Preferred Currency</label>
-                                        <div className={ styles['dropdown-container'] }>
-                                            <Button
-                                                id='preferred-currency'
-                                                type='secondary'
-                                                label={`${getCurrencyLabel(platformSettings.currency)}`}
-                                                dropdownPosition='right'
-                                                options={
-                                                    Object.entries(availableCurrencies)
-                                                        .filter(([currency, enabled]) => enabled)
-                                                        .map(([currency]) => ({
-                                                            label: currencyLabels[currency],
-                                                            action: () => handlePlatformSettingsChange('currency', currency)
-                                                        }))
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={ styles['inputs-wrapper'] }>
-                                    <div className={ styles['input-wrapper'] }>
-                                        <label htmlFor="payment_method">Preferred Payment Method</label>
-                                        <div className={ styles['dropdown-container'] }>
-                                            <Button
-                                                id='preferred-payment-method'
-                                                type='secondary'
-                                                label={`${getPaymentLabel(platformSettings.preferred_payment_method)}`}
-                                                dropdownPosition='right'
-                                                options={[
-                                                    ...(enabledPaymentMethods.cash_on_delivery ? [{
-                                                        label: 'Cash on Delivery',
-                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'cash_on_delivery')
-                                                    }] : []),
-                                                    ...(enabledPaymentMethods.bank_transfer ? [{
-                                                        label: 'Bank Transfer',
-                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'bank_transfer')
-                                                    }] : []),
-                                                    ...(enabledPaymentMethods.paypal ? [{
-                                                        label: 'Paypal',
-                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'paypal')
-                                                    }] : []),
-                                                    ...(enabledPaymentMethods.credit_card ? [{
-                                                        label: 'Credit Card',
-                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', 'credit_card')
-                                                    }] : []),
-                                                    // Add custom payment methods
-                                                    ...customPaymentMethods
-                                                        .filter(method => method.enabled)
-                                                        .map(method => ({
-                                                            label: method.label,
-                                                            action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
-                                                        }))
-                                                ]}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={ styles['info-platform-ctas'] }>
-                                    <Button
-                                        type='primary'
-                                        icon='fa-solid fa-circle-check'
-                                        iconPosition='left'
-                                        label='Update settings'
-                                        action={ () => {
-                                            setModalType('update-platform-settings-confirmation');
-                                            setIsModalOpen(true);
-                                        }}
-                                        disabled={ !isPlatformSettingsChanged || settingsLoading }
-                                    />
-                                    <Button
-                                        type='secondary'
-                                        icon='fa-solid fa-rotate-left'
-                                        iconPosition='left'
-                                        label='Reset'
-                                        action={ () => {
-                                            setModalType('reset-platform-settings-confirmation');
-                                            setIsModalOpen(true);
-                                        }}
-                                        externalStyles={ styles['action-warn'] }
-                                        disabled={ !isPlatformSettingsChanged || settingsLoading }
-                                    />
-                                </div>
-                            </div>
-                        </section>
-                        <div className={ styles['divider-horizontal'] }></div>
-                        <section className={ styles['info-address_book'] }>
-                            <div className={ styles['info-header'] }>
-                                <h2>Address Book</h2>
-                                <Button
-                                    type="primary"
-                                    icon="fa-solid fa-plus"
-                                    iconPosition="left"
-                                    label="Add new address"
-                                    action={ () => {
-                                        resetAddNewAddressFormData();
-                                        setModalType('add-new-address-modal');
-                                        setIsModalOpen(true);
-                                    }}
-                                />
-                            </div>
-                            <div className={ styles['info-list'] }>
-                                <div className={styles['info-list-address']}>
-                                    { !addressBook?.addresses || addressBook?.addresses?.length === 0 ? (
-                                        <div className={styles['address-empty']}>No set addresses. You can add one.</div>
-                                    ) : (
-                                        addressBook.addresses.map((address) => (
-                                            <div key={address.id} className={styles['address-item']}>
 
-                                                <div className={ styles['address-item-left'] }>
-                                                    <div className={styles['address-main']}>
-                                                        <span className={styles['address-name']}>
-                                                            <strong>{address.full_name}</strong>
-                                                        </span>
-                                                        <span className={styles['address-phone']}>
-                                                            {address.phone_number && (
-                                                                <>
-                                                                    {"|"}
-                                                                    <span>(+63) {address.phone_number}</span>
-                                                                </>
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                    <div className={styles['address-details']}>
-                                                        <div>
-                                                            {address.street_address}
-                                                            <br />
-                                                            {address.barangay}, {address.city}, {address.province}, {address.postal_code}
-                                                        </div>
-                                                    </div>
-                                                    <div className={styles['address-tags']}>
-                                                            {(addressBook.defaults?.default_billing_address === address.id ||
-                                                              addressBook.defaults?.default_shipping_address === address.id) && (
-                                                              <div className={styles['address-tags']}>
-                                                                {addressBook.defaults?.default_billing_address === address.id && (
-                                                                  <span className={styles['address-tag']}>Default Billing</span>
-                                                                )}
-                                                                {addressBook.defaults?.default_shipping_address === address.id && (
-                                                                  <span className={styles['address-tag']}>Default Shipping</span>
-                                                                )}
-                                                              </div>
-                                                            )}
-                                                    </div>
+                        {/* hide for admin */}
+                        {!isAdmin && (
+                            <>
+                                <section className={ styles['user-settings'] }>
+                                    <h2>Settings</h2>
+                                    <div className={ styles['inputs-container'] }>
+                                        <div className={ styles['inputs-wrapper'] }>
+                                            <div className={ styles['input-wrapper'] }>
+                                                <label htmlFor="currency">Preferred Currency</label>
+                                                <div className={ styles['dropdown-container'] }>
+                                                    <Button
+                                                        id='preferred-currency'
+                                                        type='secondary'
+                                                        label={`${getCurrencyLabel(platformSettings.currency)}`}
+                                                        dropdownPosition='right'
+                                                        options={
+                                                            Object.entries(availableCurrencies)
+                                                                .filter(([currency, enabled]) => enabled)
+                                                                .map(([currency]) => ({
+                                                                    label: currencyLabels[currency],
+                                                                    action: () => handlePlatformSettingsChange('currency', currency)
+                                                                }))
+                                                        }
+                                                    />
                                                 </div>
-
-                                                <div className={ styles['address-item-right'] }>
-                                                    <div className={styles['address-actions']}>
-                                                        <Button
-                                                            type="icon-outlined"
-                                                            icon="fa-solid fa-pen"
-                                                            action={() => {
-                                                                setEditAddressFormData({
-                                                                    id: address.id,
-                                                                    full_name: address.full_name,
-                                                                    phone_number: address.phone_number,
-                                                                    province: address.province,
-                                                                    city: address.city,
-                                                                    barangay: address.barangay,
-                                                                    postal_code: address.postal_code,
-                                                                    street_address: address.street_address,
-                                                                    is_default_billing: address.id === addressBook.defaults?.default_billing_address,
-                                                                    is_default_shipping: address.id === addressBook.defaults?.default_shipping_address,
-                                                                });
-                                                                setModalType('edit-address-modal');
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                        />
-                                                        <Button
-                                                            type="icon-outlined"
-                                                            icon="fa-solid fa-trash-can"
-                                                            action={() => {
-                                                                setAddressToDelete(address.id);
-                                                                setModalType('delete-address-confirmation');
-                                                                setIsModalOpen('true');
-                                                            }}
-                                                            externalStyles={styles['address-delete']}
-                                                        />
-                                                    </div>                                                    
-                                                </div>
-
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </section>
+                                        </div>
+                                        <div className={ styles['inputs-wrapper'] }>
+                                            <div className={ styles['input-wrapper'] }>
+                                                <label htmlFor="payment_method">Preferred Payment Method</label>
+                                                <div className={ styles['dropdown-container'] }>
+                                                    <Button
+                                                        id='preferred-payment-method'
+                                                        type='secondary'
+                                                        label={`${getPaymentLabel(platformSettings.preferred_payment_method)}`}
+                                                        dropdownPosition='right'
+                                                        options={[
+                                                            ...(enabledPaymentMethods.cash_on_delivery ? [{
+                                                                label: 'Cash on Delivery',
+                                                                action: () => handlePlatformSettingsChange('preferred_payment_method', 'cash_on_delivery')
+                                                            }] : []),
+                                                            ...(enabledPaymentMethods.bank_transfer ? [{
+                                                                label: 'Bank Transfer',
+                                                                action: () => handlePlatformSettingsChange('preferred_payment_method', 'bank_transfer')
+                                                            }] : []),
+                                                            ...(enabledPaymentMethods.paypal ? [{
+                                                                label: 'Paypal',
+                                                                action: () => handlePlatformSettingsChange('preferred_payment_method', 'paypal')
+                                                            }] : []),
+                                                            ...(enabledPaymentMethods.credit_card ? [{
+                                                                label: 'Credit Card',
+                                                                action: () => handlePlatformSettingsChange('preferred_payment_method', 'credit_card')
+                                                            }] : []),
+                                                            // Add custom payment methods
+                                                            ...customPaymentMethods
+                                                                .filter(method => method.enabled)
+                                                                .map(method => ({
+                                                                    label: method.label,
+                                                                    action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
+                                                                }))
+                                                        ]}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={ styles['info-platform-ctas'] }>
+                                            <Button
+                                                type='primary'
+                                                icon='fa-solid fa-circle-check'
+                                                iconPosition='left'
+                                                label='Update settings'
+                                                action={ () => {
+                                                    setModalType('update-platform-settings-confirmation');
+                                                    setIsModalOpen(true);
+                                                }}
+                                                disabled={ !isPlatformSettingsChanged || settingsLoading }
+                                            />
+                                            <Button
+                                                type='secondary'
+                                                icon='fa-solid fa-rotate-left'
+                                                iconPosition='left'
+                                                label='Reset'
+                                                action={ () => {
+                                                    setModalType('reset-platform-settings-confirmation');
+                                                    setIsModalOpen(true);
+                                                }}
+                                                externalStyles={ styles['action-warn'] }
+                                                disabled={ !isPlatformSettingsChanged || settingsLoading }
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className={ styles['divider-horizontal'] }></div>
+                                </section>
+                            </>
+                        )}
+                        {/* hide for admin */}
+                        {!isAdmin && (
+                            <>
+                                <section className={ styles['info-address_book'] }>
+                                    <div className={ styles['info-header'] }>
+                                        <h2>Address Book</h2>
+                                        <Button
+                                            type="primary"
+                                            icon="fa-solid fa-plus"
+                                            iconPosition="left"
+                                            label="Add new address"
+                                            action={ () => {
+                                                resetAddNewAddressFormData();
+                                                setModalType('add-new-address-modal');
+                                                setIsModalOpen(true);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className={ styles['info-list'] }>
+                                        <div className={styles['info-list-address']}>
+                                            { !addressBook?.addresses || addressBook?.addresses?.length === 0 ? (
+                                                <div className={styles['address-empty']}>No set addresses. You can add one.</div>
+                                            ) : (
+                                                addressBook.addresses.map((address) => (
+                                                    <div key={address.id} className={styles['address-item']}>
 
-                        <div className={ styles['divider-horizontal'] }></div>
+                                                        <div className={ styles['address-item-left'] }>
+                                                            <div className={styles['address-main']}>
+                                                                <span className={styles['address-name']}>
+                                                                    <strong>{address.full_name}</strong>
+                                                                </span>
+                                                                <span className={styles['address-phone']}>
+                                                                    {address.phone_number && (
+                                                                        <>
+                                                                            {"|"}
+                                                                            <span>(+63) {address.phone_number}</span>
+                                                                        </>
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            <div className={styles['address-details']}>
+                                                                <div>
+                                                                    {address.street_address}
+                                                                    <br />
+                                                                    {address.barangay}, {address.city}, {address.province}, {address.postal_code}
+                                                                </div>
+                                                            </div>
+                                                            <div className={styles['address-tags']}>
+                                                                    {(addressBook.defaults?.default_billing_address === address.id ||
+                                                                    addressBook.defaults?.default_shipping_address === address.id) && (
+                                                                    <div className={styles['address-tags']}>
+                                                                        {addressBook.defaults?.default_billing_address === address.id && (
+                                                                        <span className={styles['address-tag']}>Default Billing</span>
+                                                                        )}
+                                                                        {addressBook.defaults?.default_shipping_address === address.id && (
+                                                                        <span className={styles['address-tag']}>Default Shipping</span>
+                                                                        )}
+                                                                    </div>
+                                                                    )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={ styles['address-item-right'] }>
+                                                            <div className={styles['address-actions']}>
+                                                                <Button
+                                                                    type="icon-outlined"
+                                                                    icon="fa-solid fa-pen"
+                                                                    action={() => {
+                                                                        setEditAddressFormData({
+                                                                            id: address.id,
+                                                                            full_name: address.full_name,
+                                                                            phone_number: address.phone_number,
+                                                                            province: address.province,
+                                                                            city: address.city,
+                                                                            barangay: address.barangay,
+                                                                            postal_code: address.postal_code,
+                                                                            street_address: address.street_address,
+                                                                            is_default_billing: address.id === addressBook.defaults?.default_billing_address,
+                                                                            is_default_shipping: address.id === addressBook.defaults?.default_shipping_address,
+                                                                        });
+                                                                        setModalType('edit-address-modal');
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                                <Button
+                                                                    type="icon-outlined"
+                                                                    icon="fa-solid fa-trash-can"
+                                                                    action={() => {
+                                                                        setAddressToDelete(address.id);
+                                                                        setModalType('delete-address-confirmation');
+                                                                        setIsModalOpen('true');
+                                                                    }}
+                                                                    externalStyles={styles['address-delete']}
+                                                                />
+                                                            </div>                                                    
+                                                        </div>
+
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <div className={ styles['divider-horizontal'] }></div>
+                            </>
+                        )}
                         <section className={ styles['info-settings'] }>
                             <h2>Account Settings</h2>
                             <div className={ styles['inputs-container'] }>
@@ -1166,20 +1179,25 @@ const Profile = ({}) => {
                         <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-danger'] }>
                             <h2>Danger Zone</h2>
-                            <div className={ styles['info-danger-action'] }>
-                                <p>This will permanently remove all past reservation records from your account. This action cannot be undone and your reservation history will be erased.</p>
-                                <Button
-                                    type='secondary'
-                                    label='Clear my reservation history'
-                                    icon='fa-solid fa-trash-can'
-                                    iconPosition='left'
-                                    action={ () => {
-                                        setModalType('clear-reservation-confirmation');
-                                        setIsModalOpen(true);
-                                    }}
-                                    externalStyles={ styles['action-warn'] }
-                                />
-                            </div>
+                            {/* hide for admin */}
+                            {!isAdmin && (
+                                <>
+                                    <div className={ styles['info-danger-action'] }>
+                                        <p>This will permanently remove all past reservation records from your account. This action cannot be undone and your reservation history will be erased.</p>
+                                        <Button
+                                            type='secondary'
+                                            label='Clear my reservation history'
+                                            icon='fa-solid fa-trash-can'
+                                            iconPosition='left'
+                                            action={ () => {
+                                                setModalType('clear-reservation-confirmation');
+                                                setIsModalOpen(true);
+                                            }}
+                                            externalStyles={ styles['action-warn'] }
+                                        />
+                                    </div>
+                                </>
+                            )}
                             <div className={ styles['info-danger-action'] }>
                                 <p>This will permanently delete your account and all associated data. You will lose access to your profile, reservation history, and saved payment methods. This action cannot be reversed.</p>
                                 <Button
@@ -1938,6 +1956,402 @@ const Profile = ({}) => {
                     />
                 </div>
             </Modal>
+            {!isAdmin && modalType === 'clear-reservation-confirmation' && (
+                <Modal label='Clear Reservation History Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>Are you sure you want to permanently delete all cancelled reservations from your history. This action cannot be undone.</p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='primary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                clearReservations();
+                            }}
+                            externalStyles={ styles['modal-warn'] }
+                        />
+                        <Button
+                            label='Cancel'
+                            type='secondary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                            }}
+                        />
+                    </div>
+                </Modal>
+            )}
+            {modalType === 'delete-account-confirmation' && (
+                <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
+                    <p className={ styles['modal-info'] }>
+                        You are about to <strong>permanently delete your account</strong>. 
+                        {isAdmin 
+                            ? " This will remove all your data including profile information and admin privileges."
+                            : " This will remove all your data including profile information, reservation history, and saved preferences."
+                        } This action cannot be reversed. Are you absolutely sure you want to proceed?
+                    </p>
+                    <div className={ styles['modal-ctas'] }>
+                        <Button
+                            label='Confirm'
+                            type='secondary'
+                            action={ () => {
+                                setIsModalOpen(false);
+                                remove(user?.id);
+                            }}
+                        />
+                        <Button
+                            label='Cancel'
+                            type='primary'
+                            action={ () => {
+                                setModalType('');
+                                setIsModalOpen(false);
+                            }}
+                        />
+                    </div>
+                </Modal>
+            )}
+            {!isAdmin && (
+                <>
+                    <Modal
+                        isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
+                        onClose={ () => setIsModalOpen(false) }
+                        label={ 'Add new address' }
+                    >
+                        <div className={ styles['notice'] }>
+                            <i className='fa-solid fa-triangle-exclamation'></i>
+                            <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
+                        </div>
+
+                        <div className={ styles['inputs-container'] }>
+
+                            <div className={ styles['input-wrapper-horizontal'] }>
+
+                                <div className={styles['input-wrapper']}>
+                                    <label>Full name</label>
+                                    <InputField
+                                        name="full_name"
+                                        hint="Your full name..."
+                                        value={ addNewAddressFormData.full_name }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                                <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
+                                    <label>Phone number</label>
+                                    <InputField
+                                        name="phone_number"
+                                        hint="Your phone number..."
+                                        value={ addNewAddressFormData.phone_number }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                            </div>
+
+                            <div className={ styles['input-wrapper-horizontal'] }>
+
+                                <div className={ styles['input-wrapper'] }>
+                                    <label>Province</label>
+                                    <InputField
+                                        name="province"
+                                        hint="Your province..."
+                                        value={ addNewAddressFormData.province }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                                <div className={ styles['input-wrapper'] }>
+                                    <label>City</label>
+                                    <InputField
+                                        name="city"
+                                        hint="Your city..."
+                                        value={ addNewAddressFormData.city }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+                                    
+                                <div className={styles['input-wrapper']}>
+                                    <label>Barangay</label>
+                                    <InputField
+                                        name="barangay"
+                                        hint="Your barangay..."
+                                        value={ addNewAddressFormData.barangay }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                            </div>
+
+                            <div className={ styles['input-wrapper-horizontal'] }>
+
+                                <div className={styles['input-wrapper']}>
+                                    <label>Street address</label>
+                                    <InputField
+                                        name="street_address"
+                                        hint="Your street address..."
+                                        value={ addNewAddressFormData.street_address }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                                <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
+                                    <label>Postal code</label>
+                                    <InputField
+                                        name="postal_code"
+                                        hint=" "
+                                        value={ addNewAddressFormData.postal_code }
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                            </div>
+
+                                <label className={ styles['checkbox-container'] }>
+                                    <input
+                                        type="checkbox"
+                                        name="is_default_billing"
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        className={ styles['checkbox'] }
+                                    />
+                                    <span className={ styles['checkmark'] }></span>
+                                    Set as default billing address
+                                </label>
+
+                                <label className={ styles['checkbox-container'] }>
+                                    <input
+                                        type="checkbox"
+                                        name="is_default_shipping"
+                                        onChange={ handleAddNewAddressFormInputChange }
+                                        className={ styles['checkbox'] }
+                                    />
+                                    <span className={ styles['checkmark'] }></span>
+                                    Set as default shipping address
+                                </label>
+                            
+                        </div>
+                        
+                        <div className={ styles['modal-ctas'] }>
+                            <Button 
+                                type="secondary" 
+                                label="Cancel" 
+                                action={() => {
+                                    setIsModalOpen(false);
+                                    resetAddNewAddressFormData();
+                                }} 
+                            />
+                            <Button 
+                                type="primary" 
+                                label={ 'Add new address' } 
+                                action={ handleAddNewAddressSubmit }
+                                disabled={
+                                    !addNewAddressFormData.full_name ||
+                                    !addNewAddressFormData.province ||
+                                    !addNewAddressFormData.city ||
+                                    !addNewAddressFormData.barangay ||
+                                    !addNewAddressFormData.street_address ||
+                                    !addNewAddressFormData.phone_number ||
+                                    !addNewAddressFormData.postal_code
+                                }
+                            />
+                        </div>
+                    </Modal>
+
+                    <Modal
+                        isOpen={ isModalOpen && modalType === 'edit-address-modal' }
+                        onClose={ () => setIsModalOpen(false) }
+                        label={ 'Edit address' }
+                    >
+                        <div className={ styles['notice'] }>
+                            <i className='fa-solid fa-triangle-exclamation'></i>
+                            <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
+                        </div>
+
+                        <div className={ styles['inputs-container'] }>
+
+                            <div className={ styles['input-wrapper-horizontal'] }>
+
+                                <div className={styles['input-wrapper']}>
+                                    <label>Full name</label>
+                                    <InputField
+                                        name="full_name"
+                                        hint="Your full name..."
+                                        value={ editAddressFormData.full_name }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                                <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
+                                    <label>Phone number</label>
+                                    <InputField
+                                        name="phone_number"
+                                        hint="Your phone number..."
+                                        value={ editAddressFormData.phone_number }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                            </div>
+
+                            <div className={ styles['input-wrapper-horizontal'] }>
+
+                                <div className={ styles['input-wrapper'] }>
+                                    <label>Province</label>
+                                    <InputField
+                                        name="province"
+                                        hint="Your province..."
+                                        value={ editAddressFormData.province }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                                <div className={ styles['input-wrapper'] }>
+                                    <label>City</label>
+                                    <InputField
+                                        name="city"
+                                        hint="Your city..."
+                                        value={ editAddressFormData.city }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+                                    
+                                <div className={styles['input-wrapper']}>
+                                    <label>Barangay</label>
+                                    <InputField
+                                        name="barangay"
+                                        hint="Your barangay..."
+                                        value={ editAddressFormData.barangay }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                            </div>
+
+                            <div className={ styles['input-wrapper-horizontal'] }>
+
+                                <div className={styles['input-wrapper']}>
+                                    <label>Street address</label>
+                                    <InputField
+                                        name="street_address"
+                                        hint="Your street address..."
+                                        value={ editAddressFormData.street_address }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                                <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
+                                    <label>Postal code</label>
+                                    <InputField
+                                        name="postal_code"
+                                        hint=" "
+                                        value={ editAddressFormData.postal_code }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        isSubmittable={ false }
+                                        type="text"
+                                    />
+                                </div>
+
+                            </div>
+
+                                <label className={ styles['checkbox-container'] }>
+                                    <input
+                                        type="checkbox"
+                                        name="is_default_billing"
+                                        checked={ editAddressFormData.is_default_billing }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        className={ styles['checkbox'] }
+                                    />
+                                    <span className={ styles['checkmark'] }></span>
+                                    Set as default billing address
+                                </label>
+
+                                <label className={ styles['checkbox-container'] }>
+                                    <input
+                                        type="checkbox"
+                                        name="is_default_shipping"
+                                        checked={ editAddressFormData.is_default_shipping }
+                                        onChange={ handleEditAddressFormInputChange }
+                                        className={ styles['checkbox'] }
+                                    />
+                                    <span className={ styles['checkmark'] }></span>
+                                    Set as default shipping address
+                                </label>
+                            
+                        </div>
+                        
+                        <div className={ styles['modal-ctas'] }>
+                            <Button 
+                                type="secondary" 
+                                label="Cancel" 
+                                action={() => {
+                                    setIsModalOpen(false);
+                                    resetEditAddressFormData();
+                                }} 
+                            />
+                            <Button 
+                                type="primary" 
+                                label={ 'Update address' } 
+                                action={ handleEditAddressSubmit }
+                                disabled={
+                                    !editAddressFormData.full_name ||
+                                    !editAddressFormData.province ||
+                                    !editAddressFormData.city ||
+                                    !editAddressFormData.barangay ||
+                                    !editAddressFormData.street_address ||
+                                    !editAddressFormData.phone_number ||
+                                    !editAddressFormData.postal_code
+                                }
+                            />
+                        </div>
+                    </Modal>
+
+                    <Modal label='Delete Address Confirmation' isOpen={ isModalOpen && modalType === 'delete-address-confirmation' } onClose={ () => setIsModalOpen(false) }>
+                        <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your address</strong>. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
+                        <div className={ styles['modal-ctas'] }>
+                            <Button
+                                label='Confirm'
+                                type='secondary'
+                                action={ () => {
+                                    setIsModalOpen(false);
+                                    handleAddressRemoval();
+                                }}
+                            />
+                            <Button
+                                label='Cancel'
+                                type='primary'
+                                action={ () => {
+                                    setModalType('');
+                                    setIsModalOpen(false);
+                                }}
+                            />
+                        </div>
+                    </Modal>
+                </>
+            )}
 
         </>
     );

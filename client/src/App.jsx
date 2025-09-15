@@ -188,6 +188,14 @@ const App = () => {
                    <Route path="settings" element={<AdminSettings />} />
                 </Route>
 
+                <Route path="/admin/profile" element={
+                    <ProtectedRoute requiresAdmin={true}>
+                        <Header />
+                            <Profile />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+
                 <Route path="*" element={
                     <ProtectedRoute>
                         <NotFound />
