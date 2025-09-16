@@ -414,7 +414,7 @@ router.post('/:account_id/avatar', upload.single('avatar'), async (req, res) => 
         if (!req.file) return res.status(400).json({ error: 'No file uploaded!' });
 
         const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'avatars',
+            folder: 'Avatars',
             public_id: `avatar_${ account_id }_${ Date.now() }`
         });
 
