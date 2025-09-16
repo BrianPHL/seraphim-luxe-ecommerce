@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button, ProductCard, TableHeader, TableFooter, ReturnButton } from '@components';
 import { useProducts, useCategories } from '@contexts';
@@ -20,54 +20,99 @@ const Store = () => {
     const queryPriceMin = searchParams.get('price_min') || '';
     const queryPriceMax = searchParams.get('price_max') || '';
     const queryColors = searchParams.get('colors')?.split(',') || [];
+    const queryJewelryTypes = searchParams.get('jewelry_types')?.split(',').filter(Boolean) || [];
     const ITEMS_PER_PAGE = 10;
     
-    const getJewelryCategoryIds = () => {
-        const activeCategories = getActiveCategories();
-        return activeCategories.map(cat => cat.id);
+    const getCategoryDisplayName = (categoryId) => {
+        const category = getCategoryById(categoryId);
+        return category?.name || 'Unknown';
     };
 
-    // Initial filtering by jewelry categories
-    let filteredProducts = products.filter(product => {
-        const jewelryCategoryIds = getJewelryCategoryIds();
-        return jewelryCategoryIds.includes(product.category_id);
-    });
+    const getSubcategoryDisplayName = (subcategoryId) => {
+        const activeCategories = getActiveCategories();
+        
+        for (const category of activeCategories) {
+            const subcategories = getActiveSubcategories(category.id);
+            const subcategory = subcategories.find(sub => sub.id === parseInt(subcategoryId));
+            if (subcategory) {
+                return subcategory.name;
+            }
+        }
+        return 'Unknown';
+    };
 
-    // Apply additional filters from URL parameters
-    if (queryCategoryId) {
-        filteredProducts = filteredProducts.filter(product => 
-            product.category_id === parseInt(queryCategoryId)
-        );
-    }
-    
-    if (querySubcategoryId) {
-        filteredProducts = filteredProducts.filter(product => 
-            product.subcategory_id === parseInt(querySubcategoryId)
-        );
-    }
-    
-    // Price range filtering
-    if (queryPriceMin) {
-        filteredProducts = filteredProducts.filter(product => 
-            product.price >= parseFloat(queryPriceMin)
-        );
-    }
-    
-    if (queryPriceMax) {
-        filteredProducts = filteredProducts.filter(product => 
-            product.price <= parseFloat(queryPriceMax)
-        );
-    }
-    
-    // Color filtering
-    if (queryColors.length > 0) {
-        filteredProducts = filteredProducts.filter(product => 
-            queryColors.some(color => 
-                product.attributes?.colors?.includes(color) || 
-                product.color === color
-            )
-        );
-    }
+    // Filter products based on URL parameters
+    const filteredProducts = useMemo(() => {
+        if (!products || products.length === 0) return [];
+        
+        let filtered = [...products];
+
+        if (queryCategoryId) {
+            filtered = filtered.filter(product => 
+                product.category_id === parseInt(queryCategoryId)
+            );
+        }
+        
+        // Support multiple subcategory IDs for cross-category filtering
+        if (querySubcategoryId) {
+            const subcategoryIds = querySubcategoryId.split(',').map(id => parseInt(id));
+            filtered = filtered.filter(product => 
+                subcategoryIds.includes(product.subcategory_id)
+            );
+        }
+        
+        if (queryPriceMin) {
+            filtered = filtered.filter(product => 
+                product.price >= parseFloat(queryPriceMin)
+            );
+        }
+        
+        if (queryPriceMax) {
+            filtered = filtered.filter(product => 
+                product.price <= parseFloat(queryPriceMax)
+            );
+        }
+        
+        if (queryColors.length > 0) {
+            filtered = filtered.filter(product => 
+                queryColors.some(color => 
+                    product.attributes?.colors?.includes(color) || 
+                    product.color === color
+                )
+            );
+        }
+
+        // Only apply jewelry type filtering if no specific subcategory is selected
+        if (queryJewelryTypes.length > 0 && !querySubcategoryId) {
+            filtered = filtered.filter(product => {
+                const productSubcategoryName = getSubcategoryDisplayName(product.subcategory_id);
+                
+                if (!productSubcategoryName || productSubcategoryName === 'Unknown') {
+                    return false;
+                }
+                
+                return queryJewelryTypes.some(typeId => {
+                    const typeName = typeId.replace(/-/g, ' ');
+                    const subcategoryLower = productSubcategoryName.toLowerCase();
+                    const typeNameLower = typeName.toLowerCase();   
+                    
+                    return subcategoryLower === typeNameLower || 
+                           subcategoryLower.includes(typeNameLower) ||
+                           typeNameLower.includes(subcategoryLower);
+                });
+            });
+        }
+
+        return filtered;
+    }, [
+        products, 
+        queryCategoryId, 
+        querySubcategoryId, 
+        queryPriceMin, 
+        queryPriceMax, 
+        queryColors, 
+        queryJewelryTypes
+    ]);
 
     const {
         data: sortedData,
@@ -92,15 +137,15 @@ const Store = () => {
         if (querySearch !== searchValue) {
             handleSearchChange(querySearch);
         }
-    }, [querySearch]);
+    }, [querySearch, searchValue, handleSearchChange]);
 
     useEffect(() => {
         if (querySort !== sortValue) {
             onSortChange(querySort);
         }
-    }, [querySort]);
+    }, [querySort, sortValue, onSortChange]);
     
-    const updateSearchParams = ({ page, sort, search, category_id, subcategory_id, price_min, price_max, colors }) => {
+    const updateSearchParams = ({ page, sort, search, category_id, subcategory_id, price_min, price_max, colors, jewelry_types }) => {
         const params = new URLSearchParams(searchParams);
 
         if (page !== undefined) params.set('page', page);
@@ -111,6 +156,7 @@ const Store = () => {
         if (price_min !== undefined) params.set('price_min', price_min);
         if (price_max !== undefined) params.set('price_max', price_max);
         if (colors !== undefined) params.set('colors', colors);
+        if (jewelry_types !== undefined) params.set('jewelry_types', jewelry_types);
 
         setSearchParams(params);
     };
@@ -129,29 +175,10 @@ const Store = () => {
         handlePageChange(page);
         updateSearchParams({ page });
     };
-
-    const getCategoryDisplayName = (categoryId) => {
-        const category = getCategoryById(categoryId);
-        return category?.name || 'Unknown';
-    };
-
-    const getSubcategoryDisplayName = (subcategoryId) => {
-        const activeCategories = getActiveCategories();
-        
-        for (const category of activeCategories) {
-            const subcategories = getActiveSubcategories(category.id);
-            const subcategory = subcategories.find(sub => sub.id === subcategoryId);
-            if (subcategory) {
-                return subcategory.name;
-            }
-        }
-        return 'Unknown';
-    };
     
     const handleClearFilters = () => {
         handleSearchChange('');
         resetPagination();
-        // Clear all filter parameters but keep sort
         const params = new URLSearchParams();
         params.set('page', '1');
         params.set('sort', querySort);

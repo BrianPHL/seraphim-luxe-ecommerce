@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@components';
 import { useCategories } from '@contexts';
@@ -14,6 +14,8 @@ const FilterSidebar = () => {
     const [selectedAttributes, setSelectedAttributes] = useState({
         colors: searchParams.get('colors')?.split(',').filter(Boolean) || []
     });
+    const [availableSubcategories, setAvailableSubcategories] = useState([]);
+    const [localCategories, setLocalCategories] = useState([]);
     
     const categories = getActiveCategories();
     const selectedCategoryId = searchParams.get('category_id') ? 
@@ -22,13 +24,65 @@ const FilterSidebar = () => {
     const subcategories = selectedCategoryId ? 
         getActiveSubcategories(selectedCategoryId) : [];
     
-    // Available attributes with metadata - only Silver and Gold
     const availableColors = [
         { id: 'Gold', label: 'Gold' },
         { id: 'Silver', label: 'Silver' }
     ];
+
+    const refreshData = useCallback(async () => {
+        try {
+            const catResponse = await fetch('/api/categories', {
+                headers: { 'Cache-Control': 'no-cache' }
+            });
+            
+            if (catResponse.ok) {
+                const freshCategories = await catResponse.json();
+                setLocalCategories(freshCategories);
+                
+                const subcategoryPromises = freshCategories.map(category =>
+                    fetch(`/api/categories/${category.id}/subcategories`, {
+                        headers: { 'Cache-Control': 'no-cache' }
+                    })
+                    .then(response => response.ok ? response.json() : [])
+                    .catch(error => {
+                        console.error(`Error fetching subcategories for category ${category.id}:`, error);
+                        return [];
+                    })
+                );
+
+                const subcategoryResults = await Promise.all(subcategoryPromises);
+                const allSubcategories = subcategoryResults.flat();
+                const activeSubcategories = allSubcategories.filter(sub => sub.is_active);
+                setAvailableSubcategories(activeSubcategories);
+            }
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+        }
+    }, []);
     
-    // Sync state with URL params when they change
+    useEffect(() => {
+        if (categories.length > 0 && localCategories.length === 0) {
+            setLocalCategories(categories);
+            refreshData();
+        }
+    }, [categories, localCategories.length, refreshData]);
+
+    useEffect(() => {
+        const handleRefresh = async () => {
+            if (!document.hidden) {
+                await refreshData();
+            }
+        };
+
+        window.addEventListener('focus', handleRefresh);
+        const interval = setInterval(handleRefresh, 120000);
+
+        return () => {
+            window.removeEventListener('focus', handleRefresh);
+            clearInterval(interval);
+        };
+    }, [refreshData]);
+
     useEffect(() => {
         setPriceRange({
             min: searchParams.get('price_min') || '',
@@ -53,9 +107,7 @@ const FilterSidebar = () => {
             params.set('colors', selectedAttributes.colors.join(','));
         else params.delete('colors');
         
-        // Reset to page 1 when filters change
         params.set('page', '1');
-        
         setSearchParams(params);
     };
     
@@ -75,24 +127,58 @@ const FilterSidebar = () => {
     
     const handleCategoryChange = (categoryId) => {
         const params = new URLSearchParams(searchParams);
+        
         if (categoryId) {
             params.set('category_id', categoryId);
-            params.delete('subcategory_id'); // Reset subcategory when category changes
+            
+            // Maintain only subcategories valid for the selected category
+            const currentSubcategories = searchParams.get('subcategory_id')?.split(',').filter(Boolean) || [];
+            if (currentSubcategories.length > 0) {
+                const validSubcategories = getActiveSubcategories(categoryId);
+                const validSubcategoryIds = validSubcategories.map(sub => sub.id.toString());
+                
+                const validSelections = currentSubcategories.filter(id => 
+                    validSubcategoryIds.includes(id)
+                );
+                
+                if (validSelections.length > 0) {
+                    params.set('subcategory_id', validSelections.join(','));
+                } else {
+                    params.delete('subcategory_id');
+                }
+            }
         } else {
             params.delete('category_id');
-            params.delete('subcategory_id');
         }
+        
         params.set('page', '1');
         setSearchParams(params);
     };
     
-    const handleSubcategoryChange = (subcategoryId) => {
+    const handleSubcategoryChange = (subcategoryItem) => {
         const params = new URLSearchParams(searchParams);
-        if (subcategoryId) {
-            params.set('subcategory_id', subcategoryId);
+        const currentSubcategories = searchParams.get('subcategory_id')?.split(',').filter(Boolean) || [];
+        const subcategoryIds = subcategoryItem.allIds || [subcategoryItem.id];
+        
+        const currentIdsSet = new Set(currentSubcategories);
+        const anySelected = subcategoryIds.some(id => currentIdsSet.has(id.toString()));
+        
+        if (anySelected) {
+            // Remove all IDs in this group
+            const updatedSubcategories = currentSubcategories.filter(id => 
+                !subcategoryIds.includes(parseInt(id))
+            );
+            
+            if (updatedSubcategories.length > 0) {
+                params.set('subcategory_id', updatedSubcategories.join(','));
+            } else {
+                params.delete('subcategory_id');
+            }
         } else {
-            params.delete('subcategory_id');
+            // Add all IDs in this group
+            params.set('subcategory_id', [...currentSubcategories, ...subcategoryIds.map(id => id.toString())].join(','));
         }
+        
         params.set('page', '1');
         setSearchParams(params);
     };
@@ -115,17 +201,66 @@ const FilterSidebar = () => {
         });
     };
 
-    // Count active filters
+    // Group subcategories by name to show unique entries
+    const getSubcategoriesToDisplay = () => {
+        if (selectedCategoryId && subcategories.length > 0) {
+            return subcategories;
+        } else {
+            const subcategoryNameMap = {};
+            
+            availableSubcategories
+                .filter(sub => sub.is_active !== false)
+                .forEach(sub => {
+                    if (!subcategoryNameMap[sub.name]) {
+                        subcategoryNameMap[sub.name] = {
+                            id: sub.name, 
+                            name: sub.name,
+                            allIds: [sub.id],
+                            category_id: sub.category_id
+                        };
+                    } else {
+                        subcategoryNameMap[sub.name].allIds.push(sub.id);
+                    }
+                });
+                
+            return Object.values(subcategoryNameMap);
+        }
+    };
+    
+    const subcategoriesToDisplay = getSubcategoriesToDisplay();
+    
+    // Count active filters by unique subcategory names, not IDs
     const getActiveFilterCount = () => {
         let count = 0;
+    
         if (searchParams.get('category_id')) count++;
-        if (searchParams.get('subcategory_id')) count++;
+        
+        const selectedSubcategoryIds = searchParams.get('subcategory_id')?.split(',').filter(Boolean) || [];
+        if (selectedSubcategoryIds.length > 0) {
+            const selectedNames = new Set();
+            
+            for (const id of selectedSubcategoryIds) {
+                const parsedId = parseInt(id);
+                const subcategory = subcategoriesToDisplay.find(sub => 
+                    sub.allIds ? sub.allIds.includes(parsedId) : sub.id === parsedId
+                );
+                
+                if (subcategory) {
+                    selectedNames.add(subcategory.name);
+                }
+            }
+            
+            count += selectedNames.size;
+        }
+        
         if (searchParams.get('price_min') || searchParams.get('price_max')) count++;
         count += selectedAttributes.colors.length;
+        
         return count;
     };
     
     const activeFilterCount = getActiveFilterCount();
+    const displayCategories = categories;
     
     return (
         <div className={styles['filter-sidebar']}>
@@ -147,7 +282,7 @@ const FilterSidebar = () => {
                     >
                         All Categories
                     </div>
-                    {categories.map(category => (
+                    {displayCategories.map(category => (
                         <div 
                             key={category.id}
                             className={`${styles['category-item']} ${selectedCategoryId === category.id ? styles['active'] : ''}`}
@@ -159,28 +294,31 @@ const FilterSidebar = () => {
                 </div>
             </div>
             
-            {selectedCategoryId && subcategories.length > 0 && (
-                <div className={styles['filter-section']}>
-                    <h3>Subcategories</h3>
-                    <div className={styles['subcategory-list']}>
-                        <div 
-                            className={`${styles['subcategory-item']} ${!searchParams.get('subcategory_id') ? styles['active'] : ''}`}
-                            onClick={() => handleSubcategoryChange(null)}
-                        >
-                            All Subcategories
-                        </div>
-                        {subcategories.map(subcategory => (
+            <div className={styles['filter-section']}>
+                <h3>Subcategories</h3>
+                <div className={styles['attribute-list']}>
+                    {subcategoriesToDisplay.map(subcategory => {
+                        const selectedSubcategoryIds = searchParams.get('subcategory_id')?.split(',').filter(Boolean) || [];
+                        
+                        const isSelected = subcategory.allIds ? 
+                            subcategory.allIds.some(id => selectedSubcategoryIds.includes(id.toString())) :
+                            selectedSubcategoryIds.includes(subcategory.id.toString());
+                        
+                        return (
                             <div 
                                 key={subcategory.id}
-                                className={`${styles['subcategory-item']} ${parseInt(searchParams.get('subcategory_id')) === subcategory.id ? styles['active'] : ''}`}
-                                onClick={() => handleSubcategoryChange(subcategory.id)}
+                                className={`${styles['attribute-item']} ${isSelected ? styles['selected'] : ''}`}
+                                onClick={() => handleSubcategoryChange(subcategory)}
                             >
+                                <span className={styles['checkbox']}>
+                                    {isSelected && <i className="fa-solid fa-check"></i>}
+                                </span>
                                 {subcategory.name}
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
-            )}
+            </div>
             
             <div className={styles['filter-section']}>
                 <h3>Price Range</h3>

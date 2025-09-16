@@ -130,6 +130,25 @@
     margin-top: 1.25rem;
 }
 
+/* Add this loading style */
+.loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    color: var(--tg-secondary);
+    font-size: 0.875rem;
+}
+
+.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
     .filter-sidebar {
         width: 100%;
