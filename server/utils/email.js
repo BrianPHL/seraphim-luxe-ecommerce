@@ -62,7 +62,7 @@ export const createWelcomeEmail = (email, name = '') => {
                 Your account has been successfully created. We're excited to have you join our community!
             </p>
             <div style="text-align: center; margin: 32px 0;">
-                <a href="https://seraphim-luxe-ecommerce-production.up.railway.app/profile" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                <a href="https://seraphimluxe.store/profile" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
                     Go to My Profile
                 </a>
             </div>

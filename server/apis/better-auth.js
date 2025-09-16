@@ -60,7 +60,7 @@ export const auth = betterAuth({
         })
     ],
     trustedOrigins: [
-      'https://seraphim-luxe-ecommerce-production.up.railway.app',
+      'https://seraphimluxe.store',
       'http://localhost:5173',
       'http://localhost:3000'
     ],

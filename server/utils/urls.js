@@ -6,7 +6,7 @@ export const getBaseURL = (environment) => {
     const isEnvironmentInProduction = process.env.NODE_ENV === 'production';
 
     return isEnvironmentInProduction
-        ? 'https://seraphim-luxe-ecommerce-production.up.railway.app'
+        ? 'https://seraphimluxe.store'
         : environment === 'client'
             ? 'http://localhost:5173'
             : 'http://localhost:3000'

@@ -7,6 +7,6 @@ export const getBaseURL = () => {
     const isEnvironmentInProduction = process.env.NODE_ENV === 'production';
 
     return isEnvironmentInProduction
-        ? 'https://seraphim-luxe-ecommerce-production.up.railway.app'
+        ? 'https://seraphimluxe.store'
         : 'http://localhost:5173';
 };
