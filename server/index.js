@@ -122,15 +122,7 @@ const startServer = async () => {
         console.error('Database connection required for production. Exiting...');
         process.exit(1);
     }
-    
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on port: ${PORT}`);
-        console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-        console.log(`🗄️  Database URL configured: ${!!process.env.DATABASE_URL}`
 
-        );
-         console.log(`📄 Static Pages API: /api/static-pages`);
-    });
 };
 
 startServer();
