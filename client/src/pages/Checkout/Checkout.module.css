@@ -677,6 +677,224 @@
     display: none; /* This will be replaced by the new checkbox styling */
 }
 
+.paypal-loading-state {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.paypal-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.paypal-error-state {
+    background: #fff2f2;
+    border: 1px solid #ffdddd;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.paypal-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.paypal-error i {
+    font-size: 2rem;
+    color: #dc3545;
+}
+
+.paypal-error p {
+    color: #721c24;
+    margin: 0;
+    font-weight: 500;
+}
+
+.paypal-processing {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+.paypal-payment-section {
+    position: relative;
+    margin-top: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0070ba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.paypal-loader p,
+.paypal-processing p {
+    margin: 0;
+    color: #666;
+    font-weight: 500;
+}
+
+/* PayPal Error Styles */
+.paypal-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 1rem;
+    background-color: var(--error-background, #fef2f2);
+    border: 1px solid var(--error-foreground);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.paypal-error-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.paypal-error-content i {
+    font-size: 1.5rem;
+    color: var(--error-foreground);
+}
+
+.paypal-error-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--error-foreground);
+    font-weight: 500;
+}
+
+/* PayPal Buttons Container */
+.paypal-buttons-container {
+    position: relative;
+    margin-top: 1rem;
+}
+
+/* PayPal Processing Overlay */
+.paypal-processing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.5rem;
+    z-index: 10;
+}
+
+.paypal-processing-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.paypal-processing-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--tg-primary);
+    font-weight: 600;
+}
+
+/* PayPal Message Styles */
+.paypal-message {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    border: 1px solid var(--bg-outline);
+}
+
+.paypal-message p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--tg-secondary);
+}
+
+/* Success message styling */
+.paypal-message.success {
+    background-color: var(--success-background, #f0fdf4);
+    border-color: var(--success-foreground, #16a34a);
+}
+
+.paypal-message.success p {
+    color: var(--success-foreground, #16a34a);
+}
+
+.paypal-payment-section {
+    width: 100%;
+    margin-top: 1rem;
+    min-height: 80px; /* Prevent layout shift */
+}
+
+.paypal-buttons-container {
+    position: relative;
+    min-height: 60px;
+}
+
+.paypal-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 1rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.5rem;
+    min-height: 60px;
+}
+
+.paypal-processing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.5rem;
+    z-index: 10;
+}
+
+
 /* Responsive design for address display */
 @media (max-width: 768px) {
     .address-main {

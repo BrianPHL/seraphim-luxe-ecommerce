@@ -9,6 +9,7 @@ export const SettingsProvider = ({ children }) => {
         preferred_shipping_address: 'home',
         preferred_payment_method: 'cash_on_delivery'
     });
+    const [ enabledPaymentMethods, setEnabledPaymentMethods ] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const updateSettings = async (newSettings) => {
@@ -110,7 +111,7 @@ export const SettingsProvider = ({ children }) => {
             const numPrice = Number(price);
             if (isNaN(numPrice)) return price;
 
-            const fromCurrency = 'PHP'; // Database always stores in PHP
+            const fromCurrency = 'PHP';
             const toCurrency = targetCurrency?.toUpperCase();
 
             if (fromCurrency === toCurrency) {
@@ -248,6 +249,22 @@ export const SettingsProvider = ({ children }) => {
         }
     };
 
+    const fetchEnabledPaymentMethods = async () => {
+        try {
+            const response = await fetch('/api/admin/settings', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setEnabledPaymentMethods(data.paymentMethods || {});
+            }
+        } catch (error) {
+            console.error('Error fetching payment methods:', error);
+        }
+    };
+
     useEffect(() => {
         fetchSettings();
         fetchExchangeRates();
@@ -260,7 +277,9 @@ export const SettingsProvider = ({ children }) => {
         fetchSettings,
         convertPrice,
         formatPrice,
-        exchangeRates
+        exchangeRates,
+        fetchEnabledPaymentMethods,
+        enabledPaymentMethods
     };
 
     return (

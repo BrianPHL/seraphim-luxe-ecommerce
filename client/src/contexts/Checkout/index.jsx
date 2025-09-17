@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import CheckoutContext from "./context";
-import { useAuth, useToast, useCart } from "@contexts";
+import { useAuth, useToast, useCart, useSettings } from "@contexts";
+import { fetchWithTimeout } from "@utils";
 
 export const CheckoutProvider = ({ children }) => {
     const [orders, setOrders] = useState([]);
@@ -12,7 +13,11 @@ export const CheckoutProvider = ({ children }) => {
         notes: ''
     });
     const [loading, setLoading] = useState(false);
+    const [paypalClientId, setPaypalClientId] = useState('');
+    const [paypalCurrency, setPaypalCurrency] = useState('');
+    const [paypalMessage, setPaypalMessage] = useState('');
     
+    const { settings } = useSettings();
     const { user } = useAuth();
     const { showToast } = useToast();
     const { clearSelectedCartItems } = useCart();
@@ -36,7 +41,7 @@ export const CheckoutProvider = ({ children }) => {
 
         try {
             setLoading(true);
-            const response = await fetch(`/api/orders/${ user.id }`, {
+            const response = await fetch(`/api/orders/${user.id}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -85,7 +90,8 @@ export const CheckoutProvider = ({ children }) => {
                 notes: orderData.notes || '',
                 shipping_address_id: orderData.shipping_address_id,
                 billing_address_id: orderData.billing_address_id,
-                items: orderData.items || []
+                items: orderData.items || [],
+                paypal_transaction_id: orderData.paypal_transaction_id || null
             };
 
             const response = await fetch('/api/orders', {
@@ -159,6 +165,119 @@ export const CheckoutProvider = ({ children }) => {
         }
     };
 
+    const fetchPaypalClientId = async () => {
+        try {
+            const currentCurrency = settings?.currency || 'PHP';
+            const response = await fetch(`/api/paypal/get-client-id?currency=${currentCurrency}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to fetch PayPal Client ID');
+            }
+
+            const data = await response.json();
+            setPaypalClientId(data.clientId);
+            setPaypalCurrency(data.currency);
+            return data.clientId;
+
+        } catch (err) {
+            console.error("Checkout context fetchPaypalClientId function error: ", err);
+            showToast("Failed to load PayPal configuration", "error");
+            return null;
+        }
+    };
+
+    const createPayPalOrder = async () => {
+        try {
+            setPaypalLoading(true);
+
+            const totalAmountInDisplayCurrency = convertedItems.reduce((sum, item) => {
+                const priceValue = parseFloat(item.displayPrice || item.price);
+                return sum + (priceValue * parseInt(item.quantity));
+            }, 0);
+
+            const userCurrency = settings?.currency || "PHP";
+
+            const response = await fetch("/api/paypal/orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    currency: userCurrency,
+                    displayCurrency: userCurrency,
+                    amount: totalAmountInDisplayCurrency.toFixed(2)
+                }),
+            });
+        
+            const orderData = await response.json();
+        
+            if (orderData.id) {
+                return orderData.id;
+            } else {
+                throw new Error("Failed to create PayPal order");
+            }
+        } catch (error) {
+            console.error("PayPal order creation failed:", error);
+            showToast('PayPal order creation failed', 'error');
+            throw error;
+        } finally {
+            setPaypalLoading(false);
+        }
+    };
+
+    const onPayPalApprove = async (data, actions) => {
+        try {
+
+            const response = await fetch(
+                `/api/paypal/orders/${data.orderID}/capture`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to capture PayPal payment');
+            }
+
+            const orderData = await response.json();
+
+            const errorDetail = orderData?.details?.[0];
+
+            if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
+                return actions.restart();
+            } else if (errorDetail) {
+                throw new Error(
+                    `${errorDetail.description} (${orderData.debug_id})`
+                );
+            } else {
+                const transaction = orderData.purchase_units[0].payments.captures[0];
+                
+                setPaypalMessage(`Transaction ${transaction.status}: ${transaction.id}`);
+                
+                
+                return {
+                    success: true,
+                    transactionId: transaction.id,
+                    status: transaction.status,
+                    amount: transaction.amount.value,
+                    currency: transaction.amount.currency_code
+                };
+            }
+        } catch (error) {
+            console.error("PayPal approve error:", error);
+            setPaypalMessage(`Sorry, your transaction could not be processed: ${error.message}`);
+            throw error;
+        }
+    };
+
     useEffect(() => {
         if (user?.id) {
             fetchOrders();
@@ -178,7 +297,14 @@ export const CheckoutProvider = ({ children }) => {
             cancelOrder, 
             setCurrentOrder,
             setDirectCheckout,
-            clearDirectCheckout
+            clearDirectCheckout,
+            fetchPaypalClientId,
+            paypalClientId,
+            paypalCurrency,
+            createPayPalOrder,
+            onPayPalApprove,
+            paypalMessage,
+            setPaypalMessage
         }}>
             {children}
         </CheckoutContext.Provider>

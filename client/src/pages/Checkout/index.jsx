@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Button, ReturnButton, Modal, InputField } from '@components';
 import { useAuth, useCart, useCheckout, useToast, useSettings } from '@contexts';
 import styles from './Checkout.module.css';
@@ -8,14 +9,19 @@ const Checkout = () => {
     const navigate = useNavigate();
     const { user, addressBook, getAddressBook, addAddress } = useAuth();
     const { selectedCartItems } = useCart();
-    const { createOrder, updateCheckoutData, checkoutData, loading, directCheckoutItem } = useCheckout();
+    const { createOrder, loading, directCheckoutItem } = useCheckout();
     const { showToast } = useToast();
-    const { settings, convertPrice, formatPrice } = useSettings();
+    const { settings, fetchSettings, fetchEnabledPaymentMethods, enabledPaymentMethods, convertPrice, formatPrice } = useSettings();
 
     const [paymentMethod, setPaymentMethod] = useState('');
     const [notes, setNotes] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [convertedItems, setConvertedItems] = useState([]);
+    const [paypalClientId, setPaypalClientId] = useState(null);
+    const [paypalLoading, setPaypalLoading] = useState(false);
+    const [paypalScriptLoading, setPaypalScriptLoading] = useState(false);
+    const [paypalScriptError, setPaypalScriptError] = useState(false);
+    const [paypalRetryCount, setPaypalRetryCount] = useState(0);
 
     const [selectedShippingAddress, setSelectedShippingAddress] = useState(null);
     const [selectedBillingAddress, setSelectedBillingAddress] = useState(null);
@@ -37,27 +43,48 @@ const Checkout = () => {
     
     const checkoutItems = directCheckoutItem ? [directCheckoutItem] : selectedCartItems;
 
-    const [enabledPaymentMethods, setEnabledPaymentMethods] = useState({});
-
     useEffect(() => {
-        fetchEnabledPaymentMethods();
+        const init = async () => {
+            await fetchSettings();
+            await fetchEnabledPaymentMethods();
+            await initializePayPal();
+        };
+        init();
     }, []);
 
-    const fetchEnabledPaymentMethods = async () => {
+    const initializePayPal = async () => {
         try {
-            const response = await fetch('/api/admin/settings', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setEnabledPaymentMethods(data.paymentMethods || {});
+            setPaypalScriptLoading(true);
+            setPaypalScriptError(false);
+            
+            const response = await fetch('/api/paypal/get-client-id');
+            if (!response.ok) {
+                throw new Error('Failed to fetch PayPal client ID');
             }
+            
+            const data = await response.json();
+            setPaypalClientId(data.clientId);
+            
         } catch (error) {
-            console.error('Error fetching payment methods:', error);
+            console.error('Failed to get PayPal client ID:', error);
+            setPaypalScriptError(true);
+            showToast('Failed to load PayPal. Please try again.', 'error');
+        } finally {
+            setPaypalScriptLoading(false);
         }
     };
+
+    const retryPayPalInitialization = () => {
+        setPaypalRetryCount(prev => prev + 1);
+        setPaypalClientId(null);
+        initializePayPal();
+    };
+
+    const paypalOptions = paypalClientId ? {
+        "client-id": paypalClientId,
+        currency: settings?.currency === 'PHP' ? "USD" : (settings?.currency || "USD"),
+        intent: "capture"
+    } : null;
 
     const safeFormatPrice = (price, currency = null) => {
         try {
@@ -166,7 +193,7 @@ const Checkout = () => {
         };
 
         convertItemPrices();
-    }, [settings?.currency, convertPrice]);
+    }, [settings?.currency, convertPrice, checkoutItems]);
 
     const subtotal = convertedItems.reduce((sum, item) => {
         const priceValue = parseFloat(item.displayPrice || item.price);
@@ -251,47 +278,44 @@ const Checkout = () => {
         }
     };
 
-    const convertDisplayPricesToPHP = async (items) => {
+    const convertDisplayPricesToPHP = (items) => {
         const displayCurrency = settings?.currency || 'PHP';
         
         if (displayCurrency === 'PHP') {
             return items; 
         }
 
-        return await Promise.all(
-            items.map(async (item) => {
-                let phpPrice = item.price; 
-                
-                if (item.displayPrice && convertPrice) {
-                    switch (displayCurrency?.toUpperCase()) {
-                        case 'USD':
-                            phpPrice = item.displayPrice / 0.018;
-                            break;
-                        case 'EUR':
-                            phpPrice = item.displayPrice / 0.016; 
-                            break;
-                        case 'JPY':
-                            phpPrice = item.displayPrice / 2.70;
-                            break;
-                        case 'CAD':
-                            phpPrice = item.displayPrice / 0.024; 
-                            break;
-                        default:
-                            phpPrice = item.price;
-                    }
+        return items.map(item => {
+            let phpPrice = item.price; 
+            
+            if (item.displayPrice) {
+                switch (displayCurrency?.toUpperCase()) {
+                    case 'USD':
+                        phpPrice = item.displayPrice / 0.018;
+                        break;
+                    case 'EUR':
+                        phpPrice = item.displayPrice / 0.016; 
+                        break;
+                    case 'JPY':
+                        phpPrice = item.displayPrice / 2.70;
+                        break;
+                    case 'CAD':
+                        phpPrice = item.displayPrice / 0.024; 
+                        break;
+                    default:
+                        phpPrice = item.price;
                 }
-                
-                return {
-                    ...item,
-                    price: phpPrice,
-                    displayPrice: item.displayPrice 
-                };
-            })
-        );
+            }
+            
+            return {
+                ...item,
+                price: phpPrice,
+                displayPrice: item.displayPrice 
+            };
+        });
     };
 
     const handlePlaceOrder = async () => {
-        
         if (!user || checkoutItems.length === 0 || !selectedShippingAddress) {
             showToast('Please complete all required fields', 'error');
             return;
@@ -299,14 +323,13 @@ const Checkout = () => {
 
         setIsPlacingOrder(true);
 
-        const itemsInPHP = await convertDisplayPricesToPHP(convertedItems);
+        const itemsInPHP = convertDisplayPricesToPHP(convertedItems);
         
         const totalInPHP = itemsInPHP.reduce((sum, item) => {
             return sum + (parseFloat(item.price) * item.quantity);
         }, 0);
 
         try {
-
             const orderData = {
                 items: itemsInPHP.map(item => ({
                     product_id: parseInt(item.product_id),
@@ -325,13 +348,13 @@ const Checkout = () => {
                 display_currency: settings?.currency || 'PHP',
                 notes: notes.trim(),
                 shipping_address_id: selectedShippingAddress.id,
-                billing_address_id: selectedBillingAddress.id
+                billing_address_id: selectedBillingAddress?.id || selectedShippingAddress.id
             };
 
             const result = await createOrder(orderData);
 
             if (result.success) {
-                navigate('/collections');
+                navigate('/orders');
             }
 
         } catch (err) {
@@ -340,6 +363,168 @@ const Checkout = () => {
         } finally {
             setIsPlacingOrder(false);
         }
+    };
+
+    const createPayPalOrder = async () => {
+        try {
+            setPaypalLoading(true);
+            
+            const totalAmountInDisplayCurrency = convertedItems.reduce((sum, item) => {
+                const priceValue = parseFloat(item.displayPrice || item.price);
+                return sum + (priceValue * parseInt(item.quantity));
+            }, 0);
+
+            const userCurrency = settings?.currency || "PHP";
+            
+            const response = await fetch("/api/paypal/orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    currency: userCurrency,
+                    displayCurrency: userCurrency,
+                    amount: totalAmountInDisplayCurrency.toFixed(2)
+                }),
+            });
+        
+            const orderData = await response.json();
+        
+            if (orderData.id) {
+                return orderData.id;
+            } else {
+                throw new Error("Failed to create PayPal order");
+            }
+        } catch (error) {
+            console.error("PayPal order creation failed:", error);
+            showToast('PayPal order creation failed', 'error');
+            throw error;
+        } finally {
+            setPaypalLoading(false);
+        }
+    };
+
+    const onPayPalApprove = async (data, actions) => {
+        try {
+            setPaypalLoading(true);
+
+            const response = await fetch(`/api/paypal/orders/${data.orderID}/capture`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const orderData = await response.json();
+
+            if (orderData.status === 'COMPLETED') {
+                const itemsInPHP = convertDisplayPricesToPHP(convertedItems);
+                
+                const totalInPHP = itemsInPHP.reduce((sum, item) => {
+                    return sum + (parseFloat(item.price) * item.quantity);
+                }, 0);
+
+                const orderPayload = {
+                    items: itemsInPHP.map(item => ({
+                        product_id: parseInt(item.product_id),
+                        quantity: parseInt(item.quantity),
+                        price: parseFloat(item.price),
+                        total: parseFloat(item.price) * parseInt(item.quantity)
+                    })),
+                    payment_method: 'paypal',
+                    subtotal: parseFloat(subtotal.toFixed(2)),
+                    shippingFee: parseFloat(shippingFee.toFixed(2)),
+                    tax: parseFloat(tax.toFixed(2)),
+                    discount: parseFloat(discount.toFixed(2)),
+                    totalAmount: totalInPHP,
+                    total_Amount: totalInPHP,
+                    currency: 'PHP',
+                    display_currency: settings?.currency || 'PHP',
+                    notes: notes.trim(),
+                    shipping_address_id: selectedShippingAddress.id,
+                    billing_address_id: selectedBillingAddress?.id || selectedShippingAddress.id,
+                    paypal_transaction_id: data.orderID
+                };
+
+                const result = await createOrder(orderPayload);
+
+                if (result.success) {
+                    showToast('Payment successful!', 'success');
+                    navigate('/orders');
+                }
+            } else {
+                throw new Error('PayPal payment not completed');
+            }
+        } catch (error) {
+            console.error("PayPal approval failed:", error);
+            showToast('Payment processing failed', 'error');
+        } finally {
+            setPaypalLoading(false);
+        }
+    };
+
+    const onPayPalError = (error) => {
+        console.error("PayPal error:", error);
+        setPaypalScriptError(true);
+        showToast('PayPal encountered an error. Please try again.', 'error');
+    };
+
+    const renderPayPalButtons = () => {
+        if (paypalScriptLoading) {
+            return (
+                <div className={styles['paypal-loading-state']}>
+                    <div className={styles['paypal-loader']}>
+                        <div className={styles['spinner']}></div>
+                        <p>Loading PayPal...</p>
+                    </div>
+                </div>
+            );
+        }
+
+        if (paypalScriptError || !paypalClientId) {
+            return (
+                <div className={styles['paypal-error-state']}>
+                    <div className={styles['paypal-error']}>
+                        <i className="fa-solid fa-exclamation-triangle"></i>
+                        <p>Failed to load PayPal</p>
+                        <Button
+                            type="secondary"
+                            label="Try Again"
+                            icon="fa-solid fa-refresh"
+                            iconPosition="left"
+                            action={retryPayPalInitialization}
+                            disabled={paypalScriptLoading}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className={styles['paypal-payment-section']}>
+                <PayPalScriptProvider 
+                    options={paypalOptions}
+                    onError={onPayPalError}
+                >
+                    <PayPalButtons
+                        createOrder={createPayPalOrder}
+                        onApprove={onPayPalApprove}
+                        onError={onPayPalError}
+                        disabled={!selectedShippingAddress || paypalLoading}
+                        style={{
+                            shape: "rect",
+                            layout: "vertical"
+                        }}
+                    />
+                </PayPalScriptProvider>
+                {paypalLoading && (
+                    <div className={styles['paypal-processing']}>
+                        <div className={styles['spinner']}></div>
+                        <p>Processing payment...</p>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     if (!checkoutItems || checkoutItems.length === 0) {
@@ -547,8 +732,8 @@ const Checkout = () => {
                                         onChange={(e) => setPaymentMethod(e.target.value)}
                                     />
                                     <div className={styles['payment-content']}>
-                                        <div className={styles['payment-title']}>Paypal</div>
-                                        <div className={styles['payment-description']}>Mobile payment through Paypal</div>
+                                        <div className={styles['payment-title']}>PayPal</div>
+                                        <div className={styles['payment-description']}>Pay securely with PayPal</div>
                                     </div>
                                 </label>
                             )}
@@ -604,13 +789,17 @@ const Checkout = () => {
                             </div>
                         </div>
                         
-                        <Button
-                            type="primary"
-                            label={isPlacingOrder ? 'Placing Order...' : 'Place Order'}
-                            disabled={isPlacingOrder || loading || !selectedShippingAddress}
-                            action={handlePlaceOrder}
-                            externalStyles={styles['place-order-button']}
-                        />
+                        {paymentMethod === 'paypal' && enabledPaymentMethods.paypal ? (
+                            renderPayPalButtons()
+                        ) : (
+                            <Button
+                                type="primary"
+                                label={isPlacingOrder ? 'Placing Order...' : 'Place Order'}
+                                disabled={isPlacingOrder || loading || !selectedShippingAddress}
+                                action={handlePlaceOrder}
+                                externalStyles={styles['place-order-button']}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

@@ -18,6 +18,7 @@ import staticPagesRouter from './routes/static-pages.js';
 import wishlistRoutes from './routes/wishlist.js';
 import userSettingsRoutes from './routes/user-settings.js';
 import settingsRouter from './routes/settings.js';
+import paypalRouter from './routes/paypal.js';
 
 dotenv.config();
 
@@ -29,10 +30,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({
 	origin: process.env.NODE_ENV === 'production' 
-        ? 'https://seraphimluxe.store'
-    	: [ 'http://localhost:5173', 'http://127.0.0.1:5173' ],
+        ? [ 'https://seraphimluxe.store', 'https://www.sandbox.paypal.com',
+        'https://js.paypal.com' ]
+    	: [ 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://www.sandbox.paypal.com', 'https://js.paypal.com' ],
   	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   	credentials: true,
+    optionsSuccessStatus: 200,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
@@ -58,6 +61,7 @@ app.use('/api/static-pages', staticPagesRouter);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
 app.use('/api/admin', settingsRouter);
+app.use('/api/paypal', paypalRouter);
 
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);
