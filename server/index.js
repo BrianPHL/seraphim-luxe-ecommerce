@@ -30,14 +30,40 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({
 	origin: process.env.NODE_ENV === 'production' 
-        ? [ 'https://seraphimluxe.store', 'https://www.sandbox.paypal.com',
-        'https://js.paypal.com' ]
-    	: [ 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://www.sandbox.paypal.com', 'https://js.paypal.com' ],
-  	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        ? [ 
+            'https://seraphimluxe.store', 
+            'https://www.sandbox.paypal.com',
+            'https://js.paypal.com',
+            'https://www.paypal.com',
+            'https://js-sdk.paypal.com',
+            'https://www.paypalobjects.com',
+            'https://checkout.paypal.com'
+        ]
+        : [ 
+            'http://localhost:5173', 
+            'http://127.0.0.1:5173', 
+            'https://www.sandbox.paypal.com', 
+            'https://js.paypal.com',
+            'https://www.paypal.com',
+            'https://js-sdk.paypal.com',
+            'https://www.paypalobjects.com',
+            'https://checkout.paypal.com'
+        ],
   	credentials: true,
-    optionsSuccessStatus: 200,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paypal.com https://www.paypal.com https://js-sdk.paypal.com https://www.paypalobjects.com; " +
+        "connect-src 'self' https://api.paypal.com https://www.sandbox.paypal.com https://api.sandbox.paypal.com; " +
+        "frame-src 'self' https://js.paypal.com https://www.paypal.com https://checkout.paypal.com; " +
+        "img-src 'self' data: https:; " +
+        "style-src 'self' 'unsafe-inline';"
+    );
+    next();
+});
 
 app.use((req, res, next) => {
     console.log(`${ new Date().toISOString() } - ${ req.method } ${ req.url }`);
