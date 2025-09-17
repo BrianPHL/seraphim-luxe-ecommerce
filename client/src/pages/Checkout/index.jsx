@@ -74,7 +74,10 @@ const Checkout = () => {
         currency: settings?.currency === 'PHP' ? "USD" : (settings?.currency || "USD"),
         intent: "capture",
         "data-sdk-integration-source": "react-paypal-js",
-        "buyer-country": "US"
+        "buyer-country": "US",
+        "disable-funding": "venmo",
+        "enable-funding": "",
+        "data-page-type": "checkout",
     } : null;
 
     const safeFormatPrice = (price, currency = null) => {

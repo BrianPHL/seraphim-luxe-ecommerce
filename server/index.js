@@ -55,7 +55,54 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-    console.log(`${ new Date().toISOString() } - ${ req.method } ${ req.url }`);
+    // Allow PayPal specific origins
+    const allowedOrigins = [
+        'https://seraphimluxe.store',
+        'https://www.sandbox.paypal.com',
+        'https://js.paypal.com',
+        'https://www.paypal.com',
+        'https://js-sdk.paypal.com',
+        'https://www.paypalobjects.com',
+        'https://checkout.paypal.com'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    
+    // PayPal specific headers
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, PayPal-Partner-Attribution-Id');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+    
+    next();
+});
+
+// Set CSP headers specifically for PayPal
+app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paypal.com https://www.paypal.com https://js-sdk.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com",
+        "connect-src 'self' https://api.paypal.com https://www.sandbox.paypal.com https://api-m.sandbox.paypal.com https://www.paypal.com https://js.paypal.com",
+        "frame-src 'self' https://js.paypal.com https://www.paypal.com https://checkout.paypal.com https://www.sandbox.paypal.com",
+        "img-src 'self' data: https: https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com",
+        "style-src 'self' 'unsafe-inline' https://www.paypal.com https://www.sandbox.paypal.com",
+        "font-src 'self' data: https://www.paypal.com https://www.sandbox.paypal.com"
+    ].join('; '));
+    
+    // Additional headers for PayPal compatibility
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+    
     next();
 });
 
