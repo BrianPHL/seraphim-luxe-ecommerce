@@ -58,8 +58,8 @@ const Home = () => {
                 .slice(0, 5);
 
             const sellers = products
-                .filter(product => product.interactions > 0)
-                .sort((a, b) => (b.interactions || 0) - (a.interactions || 0))
+                .filter(product => product.total_revenue > 0)
+                .sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0))
                 .slice(0, 5);
 
             const arrivals = products

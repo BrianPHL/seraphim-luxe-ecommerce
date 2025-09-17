@@ -235,13 +235,15 @@ router.post('/', async (req, res) => {
                     item.price, item.quantity * item.price, item.image_url
                 ]);
 
+                console.log(item.price);
+
                 await connection.query(
                     `
                         UPDATE products
-                        SET stock_quantity = stock_quantity - ?
+                        SET stock_quantity = stock_quantity - ?, total_revenue = total_revenue + ?
                         WHERE id = ?
                     `,
-                    [ item.quantity, item.product_id ]
+                    [ item.quantity, item.price, item.product_id ]
                 )
 
             }
