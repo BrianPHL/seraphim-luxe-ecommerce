@@ -74,10 +74,24 @@ const Checkout = () => {
         }
     };
 
-    const retryPayPalInitialization = () => {
-        setPaypalRetryCount(prev => prev + 1);
-        setPaypalClientId(null);
-        initializePayPal();
+    const retryPayPalInitialization = async () => {
+        try {
+            setPaypalRetryCount(prev => prev + 1);
+            
+            // Reset all PayPal states
+            setPaypalClientId(null);
+            setPaypalScriptError(false);
+            setPaypalScriptLoading(true);
+            
+            // Fetch PayPal client ID again
+            await initializePayPal();
+            
+        } catch (error) {
+            console.error('PayPal retry failed:', error);
+            setPaypalScriptError(true);
+        } finally {
+            setPaypalScriptLoading(false);
+        }
     };
 
     const paypalOptions = paypalClientId ? {
@@ -475,7 +489,8 @@ const Checkout = () => {
     };
 
     const renderPayPalButtons = () => {
-        if (paypalScriptLoading) {
+        // Show loading state when fetching client ID or when PayPal is loading
+        if (paypalLoading || paypalScriptLoading || !paypalClientId) {
             return (
                 <div className={styles['paypal-loading-state']}>
                     <div className={styles['paypal-loader']}>
@@ -486,7 +501,7 @@ const Checkout = () => {
             );
         }
 
-        if (paypalScriptError || !paypalClientId) {
+        if (paypalScriptError) {
             return (
                 <div className={styles['paypal-error-state']}>
                     <div className={styles['paypal-error']}>
@@ -498,7 +513,7 @@ const Checkout = () => {
                             icon="fa-solid fa-refresh"
                             iconPosition="left"
                             action={retryPayPalInitialization}
-                            disabled={paypalScriptLoading}
+                            disabled={paypalLoading || paypalScriptLoading}
                         />
                     </div>
                 </div>
@@ -509,12 +524,18 @@ const Checkout = () => {
             <div className={styles['paypal-payment-section']}>
                 <PayPalScriptProvider 
                     options={paypalOptions}
-                    onError={onPayPalError}
+                    onError={(error) => {
+                        console.error("PayPal Script Provider error:", error);
+                        setPaypalScriptError(true);
+                    }}
                 >
                     <PayPalButtons
                         createOrder={createPayPalOrder}
                         onApprove={onPayPalApprove}
-                        onError={onPayPalError}
+                        onError={(error) => {
+                            console.error("PayPal Buttons error:", error);
+                            setPaypalScriptError(true);
+                        }}
                         disabled={!selectedShippingAddress || paypalLoading}
                         style={{
                             shape: "rect",
@@ -546,113 +567,75 @@ const Checkout = () => {
             
             <div className={styles['container']}>
                 <div className={styles['checkout-main']}>
-                    <div className={styles['checkout-section']}>
-                        <div className={styles['checkout-section-header']}>
-                            <h2>Shipping Address</h2>
-                            <Button
-                                type='secondary'
-                                label={selectedShippingAddress ? 'Change' : 'Select'}
-                                icon='fa-solid fa-pen'
-                                iconPosition='left'
-                                action={() => handleAddressSelection('shipping')}
-                            />
-                        </div>
-                        {selectedShippingAddress ? (
-                            <div className={styles['address-display']}>
-                                <div className={styles['address-item-content']}>
-                                    <div className={styles['address-main']}>
-                                        <span className={styles['address-name']}>
-                                            <strong>{selectedShippingAddress.full_name}</strong>
-                                        </span>
-                                        <span className={styles['address-phone']}>
-                                            {selectedShippingAddress.phone_number && (
-                                                <>
-                                                    {"|"}
-                                                    <span>(+63) {selectedShippingAddress.phone_number}</span>
-                                                </>
-                                            )}
-                                        </span>
-                                    </div>
-                                    <div className={styles['address-details']}>
-                                        <div>
-                                            {selectedShippingAddress.street_address}
-                                            <br />
-                                            {selectedShippingAddress.barangay}, {selectedShippingAddress.city}, {selectedShippingAddress.province}, {selectedShippingAddress.postal_code}
-                                        </div>
-                                    </div>
-                                    <div className={styles['address-tags']}>
-                                        {addressBook?.defaults?.default_shipping_address === selectedShippingAddress.id && (
-                                            <span className={styles['address-tag']}>Default Shipping</span>
-                                        )}
-                                        {addressBook?.defaults?.default_billing_address === selectedShippingAddress.id && (
-                                            <span className={styles['address-tag']}>Default Billing</span>
-                                        )}
-                                    </div>
-                                </div>
+                    {/* Address Book Section - Grouped Side-by-Side */}
+                    <div className={styles['address-container']}>
+                        <div className={styles['address-section']}>
+                            <div className={styles['address-section-header']}>
+                                <h3>Shipping Address</h3>
+                                <Button
+                                    type='icon-outlined'
+                                    icon='fa-solid fa-pen'
+                                    action={() => handleAddressSelection('shipping')}
+                                />
                             </div>
-                        ) : (
-                            <div className={styles['address-display']}>
-                                <div className={styles['address-line']}>
+                            {selectedShippingAddress ? (
+                                <div className={styles['simplified-address']}>
+                                    <div className={styles['address-name-line']}>
+                                        {selectedShippingAddress.full_name}
+                                    </div>
+                                    <div className={styles['address-contact-line']}>
+                                        {selectedShippingAddress.phone_number && `(+63) ${selectedShippingAddress.phone_number}`}
+                                    </div>
+                                    <div className={styles['address-location-line']}>
+                                        {selectedShippingAddress.street_address}<br />
+                                        {selectedShippingAddress.barangay}, {selectedShippingAddress.city}, {selectedShippingAddress.province}, {selectedShippingAddress.postal_code}
+                                    </div>
+                                    {addressBook?.defaults?.default_shipping_address === selectedShippingAddress.id && (
+                                        <div className={styles['address-tag']}>Default Shipping</div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className={styles['empty-address']}>
                                     No shipping address selected
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                    
-                    <div className={styles['checkout-section']}>
-                        <div className={styles['checkout-section-header']}>
-                            <h2>Billing Address</h2>
-                            <Button
-                                type='secondary'
-                                label={selectedBillingAddress ? 'Change' : 'Select'}
-                                icon='fa-solid fa-pen'
-                                iconPosition='left'
-                                action={() => handleAddressSelection('billing')}
-                            />
+                            )}
                         </div>
-                        {selectedBillingAddress ? (
-                            <div className={styles['address-display']}>
-                                <div className={styles['address-item-content']}>
-                                    <div className={styles['address-main']}>
-                                        <span className={styles['address-name']}>
-                                            <strong>{selectedBillingAddress.full_name}</strong>
-                                        </span>
-                                        <span className={styles['address-phone']}>
-                                            {selectedBillingAddress.phone_number && (
-                                                <>
-                                                    {"|"}
-                                                    <span>(+63) {selectedBillingAddress.phone_number}</span>
-                                                </>
-                                            )}
-                                        </span>
-                                    </div>
-                                    <div className={styles['address-details']}>
-                                        <div>
-                                            {selectedBillingAddress.street_address}
-                                            <br />
-                                            {selectedBillingAddress.barangay}, {selectedBillingAddress.city}, {selectedBillingAddress.province}, {selectedBillingAddress.postal_code}
-                                        </div>
-                                    </div>
-                                    <div className={styles['address-tags']}>
-                                        {addressBook?.defaults?.default_billing_address === selectedBillingAddress.id && (
-                                            <span className={styles['address-tag']}>Default Billing</span>
-                                        )}
-                                        {addressBook?.defaults?.default_shipping_address === selectedBillingAddress.id && (
-                                            <span className={styles['address-tag']}>Default Shipping</span>
-                                        )}
-                                    </div>
-                                </div>
+                        
+                        <div className={styles['address-section']}>
+                            <div className={styles['address-section-header']}>
+                                <h3>Billing Address</h3>
+                                <Button
+                                    type='icon-outlined'
+                                    icon='fa-solid fa-pen'
+                                    action={() => handleAddressSelection('billing')}
+                                />
                             </div>
-                        ) : (
-                            <div className={styles['address-display']}>
-                                <div className={styles['address-line']}>
+                            {selectedBillingAddress ? (
+                                <div className={styles['simplified-address']}>
+                                    <div className={styles['address-name-line']}>
+                                        {selectedBillingAddress.full_name}
+                                    </div>
+                                    <div className={styles['address-contact-line']}>
+                                        {selectedBillingAddress.phone_number && `(+63) ${selectedBillingAddress.phone_number}`}
+                                    </div>
+                                    <div className={styles['address-location-line']}>
+                                        {selectedBillingAddress.street_address}<br />
+                                        {selectedBillingAddress.barangay}, {selectedBillingAddress.city}, {selectedBillingAddress.province}, {selectedBillingAddress.postal_code}
+                                    </div>
+                                    {addressBook?.defaults?.default_billing_address === selectedBillingAddress.id && (
+                                        <div className={styles['address-tag']}>Default Billing</div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className={styles['empty-address']}>
                                     Same as shipping address
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
 
-                    <div className={styles['checkout-section']}>
+                    {/* Order Items Section */}
+                    <div className={`${styles['checkout-section']} ${styles['order-items-section']}`}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Order Items ({checkoutItems.length})</h2>
                         </div>
@@ -689,8 +672,8 @@ const Checkout = () => {
                 </div>
 
                 <div className={styles['checkout-sidebar']}>
-                    
-                    <div className={styles['checkout-section']}>
+                    {/* Payment Method Section */}
+                    <div className={`${styles['checkout-section']} ${styles['payment-method-section']}`}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Payment Method</h2>
                         </div>
@@ -761,6 +744,7 @@ const Checkout = () => {
                         </div>
                     </div>
 
+                    {/* Order Notes Section */}
                     <div className={styles['checkout-section']}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Order Notes (Optional)</h2>
@@ -774,7 +758,8 @@ const Checkout = () => {
                         />
                     </div>
 
-                    <div className={styles['summary']}>
+                    {/* Order Summary Section */}
+                    <div className={`${styles['summary']} ${styles['order-summary-section']}`}>
                         <h2>Order Summary</h2>
                         <div className={styles['summary-wrapper']}>
                             <span>
@@ -809,6 +794,7 @@ const Checkout = () => {
                 </div>
             </div>
 
+            {/* Address Selection Modal */}
             <Modal 
                 isOpen={showAddressModal}
                 onClose={() => setShowAddressModal(false)}
@@ -878,20 +864,19 @@ const Checkout = () => {
                 </div>
             </Modal>
                         
+            {/* Add New Address Modal */}
             <Modal 
                 isOpen={showNewAddressModal}
                 onClose={() => setShowNewAddressModal(false)}
                 title="Add New Address"
             >
                 <div className={styles['modal-content']}>
-                    
                     <div className={styles['notice']}>
                         <i className='fa-solid fa-triangle-exclamation'></i>
                         <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
                     </div>
 
                     <div className={styles['inputs-container']}>
-
                         <div className={styles['input-wrapper-horizontal']}>
                             <div className={styles['input-wrapper']}>
                                 <label>Full name</label>
@@ -1005,7 +990,6 @@ const Checkout = () => {
                             <span className={styles['checkmark']}></span>
                             Set as default shipping address
                         </label>
-                        
                     </div>
                     
                     <div className={styles['modal-ctas']}>
@@ -1034,7 +1018,6 @@ const Checkout = () => {
                     </div>
                 </div>
             </Modal>
-
         </div>
     );
 };
