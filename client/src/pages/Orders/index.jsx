@@ -373,8 +373,7 @@ const Orders = () => {
                     <ReturnButton />
                     <h1>Your Orders</h1>
                 </div>
-                
-                {/* Add Tab Navigation */}
+
                 <div className={styles['tabs']}>
                     <button 
                         className={`${styles['tab']} ${activeTab === 'current' ? styles['active'] : ''}`}
@@ -393,7 +392,6 @@ const Orders = () => {
                 </div>
 
                 <div className={styles['container']}>
-                    {/* Current Orders Tab */}
                     {activeTab === 'current' && (
                         <>
                             {currentOrders.length === 0 ? (
@@ -415,8 +413,7 @@ const Orders = () => {
                                                     <span>{order.status}</span>
                                                 </div>
                                             </div>
-                                            
-                                            {/* Reservation Information for reserved products */}
+
                                             {order.hasReservedItems && order.reservationInfo && (
                                                 <div className={styles['reservation-info']}>
                                                     <div className={styles['reservation-estimate']}>
@@ -482,7 +479,6 @@ const Orders = () => {
                         </>
                     )}
 
-                    {/* Past Orders Tab */}
                     {activeTab === 'past' && (
                         <>
                             {pastOrders.length === 0 ? (
@@ -572,7 +568,6 @@ const Orders = () => {
                     size="large"
                 >
                     <div className={styles['order-details']}>
-                        {/* Header with Order Status Badge */}
                         <div className={styles['order-details-header']}>
                             <div className={styles['order-id-section']}>
                                 <h2>Order #{selectedOrder.order_number || 'N/A'}</h2>
@@ -597,7 +592,6 @@ const Orders = () => {
                             )}
                         </div>
 
-                        {/* Order Summary Card */}
                         <div className={styles['summary-card']}>
                             <div className={styles['summary-item']}>
                                 <i className="fa-solid fa-calendar"></i>
@@ -627,8 +621,7 @@ const Orders = () => {
                                 </div>
                             </div>
                         </div>
-                        
-                        {/* Shipping Information Card */}
+
                         <div className={styles['detail-section']}>
                             <div className={styles['section-header']}>
                                 <i className="fa-solid fa-truck"></i>
@@ -652,7 +645,6 @@ const Orders = () => {
                                     <div>
                                         <span className={styles['shipping-label']}>Delivery Address</span>
                                         <span className={styles['shipping-value']}>
-                                            {/* Use preferred shipping address from settings if available */}
                                             {settings?.preferred_shipping_address === 'billing' && user?.address ? (
                                                 user.address
                                             ) : selectedOrder.shipping_address ? (
@@ -679,8 +671,7 @@ const Orders = () => {
                                 </div>
                             </div>
                         </div>
-                        
-                        {/* Order Items Section */}
+
                         <div className={styles['detail-section']}>
                             <div className={styles['section-header']}>
                                 <i className="fa-solid fa-shopping-bag"></i>
@@ -747,7 +738,6 @@ const Orders = () => {
                             </div>
                         </div>
 
-                        {/* Order Total Section */}
                         <div className={styles['total-section']}>
                             <div className={styles['total-breakdown']}>
                                 <div className={styles['total-line']}>
@@ -764,8 +754,7 @@ const Orders = () => {
                                 </div>
                             </div>
                         </div>
-                        
-                        {/* Action Buttons */}
+
                         <div className={styles['modal-actions']}>
                             <Button
                                 label='Close'

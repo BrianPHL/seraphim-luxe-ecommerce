@@ -41,7 +41,6 @@ const Store = () => {
         return 'Unknown';
     };
 
-    // Filter products based on URL parameters
     const filteredProducts = useMemo(() => {
         if (!products || products.length === 0) return [];
         
@@ -52,8 +51,7 @@ const Store = () => {
                 product.category_id === parseInt(queryCategoryId)
             );
         }
-        
-        // Support multiple subcategory IDs for cross-category filtering
+    
         if (querySubcategoryId) {
             const subcategoryIds = querySubcategoryId.split(',').map(id => parseInt(id));
             filtered = filtered.filter(product => 
@@ -82,7 +80,6 @@ const Store = () => {
             );
         }
 
-        // Only apply jewelry type filtering if no specific subcategory is selected
         if (queryJewelryTypes.length > 0 && !querySubcategoryId) {
             filtered = filtered.filter(product => {
                 const productSubcategoryName = getSubcategoryDisplayName(product.subcategory_id);

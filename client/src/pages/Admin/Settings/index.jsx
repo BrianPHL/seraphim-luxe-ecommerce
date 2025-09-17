@@ -29,7 +29,7 @@ const Settings = () => {
         description: ''
     });
     const [loadingSettings, setLoadingSettings] = useState(false); 
-    const [activeTab, setActiveTab] = useState('payment'); // 'payment' or 'currency'
+    const [activeTab, setActiveTab] = useState('payment');
     const { showToast } = useToast();
 
     const paymentMethodLabels = {

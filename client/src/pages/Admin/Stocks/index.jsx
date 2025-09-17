@@ -10,13 +10,10 @@ const ITEMS_PER_PAGE = 10;
 
 const Stocks = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    
-    // URL params for Low Stock Products table
+
     const queryLowStockPage = parseInt(searchParams.get('lowStockPage') || '1', 10);
     const queryLowStockSort = searchParams.get('lowStockSort') || 'Sort by: Most Critical First';
     const queryLowStockSearch = searchParams.get('lowStockSearch') || '';
-    
-    // URL params for Stock History table
     const queryHistoryPage = parseInt(searchParams.get('historyPage') || '1', 10);
     const queryHistorySort = searchParams.get('historySort') || 'Sort by: Latest';
     const queryHistorySearch = searchParams.get('historySearch') || '';
@@ -32,7 +29,6 @@ const Stocks = () => {
     const { user } = useAuth();
     const { showToast } = useToast();
 
-    // Low Stock Products filtering and pagination
     const {
         data: filteredLowStockProducts,
         searchValue: lowStockSearchValue,
@@ -50,7 +46,6 @@ const Stocks = () => {
         resetPagination: resetLowStockPagination,
     } = usePagination(filteredLowStockProducts, ITEMS_PER_PAGE, queryLowStockPage);
 
-    // Stock History filtering and pagination
     const {
         data: filteredStockHistory,
         searchValue: historySearchValue,
@@ -68,7 +63,6 @@ const Stocks = () => {
         resetPagination: resetHistoryPagination,
     } = usePagination(filteredStockHistory, ITEMS_PER_PAGE, queryHistoryPage);
 
-    // Initialize Low Stock Products state from URL params
     useEffect(() => {
         if (lowStockSearchValue !== queryLowStockSearch) {
             handleLowStockSearchChange(queryLowStockSearch);
@@ -87,7 +81,6 @@ const Stocks = () => {
         }
     }, [queryLowStockPage]);
 
-    // Initialize Stock History state from URL params
     useEffect(() => {
         if (historySearchValue !== queryHistorySearch) {
             handleHistorySearchChange(queryHistorySearch);
@@ -120,7 +113,6 @@ const Stocks = () => {
         setSearchParams(params);
     };
 
-    // Low Stock Products handlers
     const handleLowStockSearchChangeWrapped = (value) => {
         handleLowStockSearchChange(value);
         resetLowStockPagination();
@@ -149,7 +141,6 @@ const Stocks = () => {
         updateSearchParams({ lowStockSearch: '', lowStockPage: 1 });
     };
 
-    // Stock History handlers
     const handleHistorySearchChangeWrapped = (value) => {
         handleHistorySearchChange(value);
         resetHistoryPagination();
@@ -236,7 +227,6 @@ const Stocks = () => {
                 </div>
             </div>
 
-            {/* Low Stock Products Section */}
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Low Stock Products</h2>
@@ -352,8 +342,7 @@ const Stocks = () => {
             </div>
 
             <div className={styles['divider']}></div>
-            
-            {/* Stock Transaction History Section */}
+
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Stock Transaction History</h2>

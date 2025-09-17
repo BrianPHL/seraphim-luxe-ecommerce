@@ -871,7 +871,6 @@ const Profile = ({}) => {
                         </section>
                         <div className={ styles['divider-horizontal'] }></div>
 
-                        {/* hide for admin */}
                         {!isAdmin && (
                             <>
                                 <section className={ styles['user-settings'] }>
@@ -924,7 +923,6 @@ const Profile = ({}) => {
                                                                 label: 'Credit Card',
                                                                 action: () => handlePlatformSettingsChange('preferred_payment_method', 'credit_card')
                                                             }] : []),
-                                                            // Add custom payment methods
                                                             ...customPaymentMethods
                                                                 .filter(method => method.enabled)
                                                                 .map(method => ({
@@ -966,7 +964,6 @@ const Profile = ({}) => {
                                 </section>
                             </>
                         )}
-                        {/* hide for admin */}
                         {!isAdmin && (
                             <>
                                 <section className={ styles['info-address_book'] }>
@@ -1179,7 +1176,6 @@ const Profile = ({}) => {
                         <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-danger'] }>
                             <h2>Danger Zone</h2>
-                            {/* hide for admin */}
                             {!isAdmin && (
                                 <>
                                     <div className={ styles['info-danger-action'] }>

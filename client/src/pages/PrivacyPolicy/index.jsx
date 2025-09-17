@@ -101,7 +101,6 @@ const PrivacyPolicy = () => {
             )}
             
             <div className={styles.content}>
-                {/* <p className={styles['effective-date']}>Effective Date: January 1, 2023</p> */}
                 
                 {privacySections.length > 0 ? (
                     privacySections.map((section, index) => (

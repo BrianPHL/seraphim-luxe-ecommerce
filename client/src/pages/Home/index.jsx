@@ -249,7 +249,6 @@ const Home = () => {
                 </div>
             </Carousel>
 
-            {/* Featured Products Section */}
             {renderProductSection(
                 "Featured Products",
                 featuredProducts,
@@ -258,7 +257,6 @@ const Home = () => {
                 "View All Featured"
             )}
 
-            {/* Best Sellers Section */}
             {renderProductSection(
                 "Best Sellers",
                 bestSellers,
@@ -267,7 +265,6 @@ const Home = () => {
                 "View All Best Sellers"
             )}
 
-            {/* New Arrivals Section */}
             {renderProductSection(
                 "New Arrivals",
                 newArrivals,

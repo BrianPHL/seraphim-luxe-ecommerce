@@ -33,7 +33,7 @@ export const WishlistProvider = ({ children }) => {
 
         } catch (err) {
             console.error("Failed to fetch wishlist items: ", err);
-            setWishlistItems([]); // Set empty array on error
+            setWishlistItems([]);
             showToast(`Failed to load your wishlist: ${ err.message } `, "error");
         } finally {
             setLoading(false);
@@ -48,7 +48,6 @@ export const WishlistProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            // Check if item already exists
             const exists = wishlistItems.find(item => item['product_id'] === product_id);
             if (exists) {
                 showToast('Item already in wishlist!', 'warning');

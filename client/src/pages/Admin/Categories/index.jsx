@@ -208,7 +208,6 @@ const Categories = () => {
                     </div>
             )}
 
-            {/* Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} label={getModalTitle()}>
                 <div className={styles.form}>
                     <InputField

@@ -47,7 +47,6 @@ const Orders = () => {
         endDate: ''
     })
 
-    // Initialize state from URL params ONLY - no bidirectional sync
     useEffect(() => {
         if (searchValue !== querySearch) {
             handleSearchChange(querySearch);
@@ -94,7 +93,6 @@ const Orders = () => {
         setSearchParams(params);
     };
 
-    // These handlers manage BOTH state and URL updates in one place
     const handleSearchChangeWrapped = (value) => {
         handleSearchChange(value);
         resetPagination();
@@ -841,7 +839,6 @@ const Orders = () => {
                 />
             </div>
 
-            {/* Print Date Range Modal */}
             <Modal
                 label="Print Invoice Report"
                 isOpen={showPrintModal}

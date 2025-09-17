@@ -130,8 +130,7 @@ const FilterSidebar = () => {
         
         if (categoryId) {
             params.set('category_id', categoryId);
-            
-            // Maintain only subcategories valid for the selected category
+
             const currentSubcategories = searchParams.get('subcategory_id')?.split(',').filter(Boolean) || [];
             if (currentSubcategories.length > 0) {
                 const validSubcategories = getActiveSubcategories(categoryId);
@@ -164,7 +163,7 @@ const FilterSidebar = () => {
         const anySelected = subcategoryIds.some(id => currentIdsSet.has(id.toString()));
         
         if (anySelected) {
-            // Remove all IDs in this group
+            
             const updatedSubcategories = currentSubcategories.filter(id => 
                 !subcategoryIds.includes(parseInt(id))
             );
@@ -175,7 +174,6 @@ const FilterSidebar = () => {
                 params.delete('subcategory_id');
             }
         } else {
-            // Add all IDs in this group
             params.set('subcategory_id', [...currentSubcategories, ...subcategoryIds.map(id => id.toString())].join(','));
         }
         
@@ -201,7 +199,6 @@ const FilterSidebar = () => {
         });
     };
 
-    // Group subcategories by name to show unique entries
     const getSubcategoriesToDisplay = () => {
         if (selectedCategoryId && subcategories.length > 0) {
             return subcategories;
@@ -229,7 +226,6 @@ const FilterSidebar = () => {
     
     const subcategoriesToDisplay = getSubcategoriesToDisplay();
     
-    // Count active filters by unique subcategory names, not IDs
     const getActiveFilterCount = () => {
         let count = 0;
     

@@ -32,7 +32,6 @@ const ProductPage = () => {
     };
 
     const handleMinimumReached = () => {
-        // Keep quantity at 1 for product page (different from cart behavior)
         setProductQuantity(1);
     };
 
@@ -214,7 +213,6 @@ const ProductPage = () => {
                 </div>
                 <div className={ styles['product'] }>
                     <div className={ styles['product-image-gallery'] }>
-                        {/* Vertical Thumbnails on the Left */}
                         {imageUrls.length > 1 && (
                             <div className={ styles['product-thumbnails-vertical'] }>
                                 {imageUrls.map((img, idx) => (
@@ -228,8 +226,7 @@ const ProductPage = () => {
                                 ))}
                             </div>
                         )}
-                        
-                        {/* Main Product Image */}
+
                         <div className={ styles['main-image-container'] }>
                             <img
                                 src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ imageUrls[selectedImageIdx] || product['image_url'] }` }
@@ -275,7 +272,6 @@ const ProductPage = () => {
                             </span>
                         </div>
 
-                        {/* Quantity Selector */}
                         <div className={ styles['quantity-selector'] }>
                             <h4 style={{ color: 'var(--tg-primary)' }}>Quantity</h4>
                             <Counter

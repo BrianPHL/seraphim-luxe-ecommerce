@@ -120,32 +120,29 @@ export const SettingsProvider = ({ children }) => {
 
             let convertedPrice;
 
-            // Updated conversion rates for better accuracy
             if (fromCurrency === 'PHP') {
                 switch (toCurrency) {
                     case 'USD':
-                        convertedPrice = numPrice * 0.018; // 1 PHP = 0.018 USD
+                        convertedPrice = numPrice * 0.018;
                         break;
                     case 'EUR':
-                        convertedPrice = numPrice * 0.016; // 1 PHP = 0.016 EUR
+                        convertedPrice = numPrice * 0.016;
                         break;
                     case 'JPY':
-                        convertedPrice = numPrice * 2.70; // 1 PHP = 2.70 JPY
+                        convertedPrice = numPrice * 2.70;
                         break;
                     case 'CAD':
-                        convertedPrice = numPrice * 0.024; // 1 PHP = 0.024 CAD
+                        convertedPrice = numPrice * 0.024;
                         break;
                     default:
                         convertedPrice = numPrice;
                 }
             }
 
-            // Round appropriately based on currency
             if (toCurrency === 'JPY') {
                 return Math.round(convertedPrice);
             }
-            
-            // Round to 2 decimal places for other currencies
+
             return Math.round(convertedPrice * 100) / 100; 
 
         } catch (error) {

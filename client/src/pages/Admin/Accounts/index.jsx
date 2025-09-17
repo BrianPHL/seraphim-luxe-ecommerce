@@ -36,7 +36,6 @@ const Accounts = () => {
     const customerAccounts = userList.filter(account => account.role === 'customer');
     const adminAccounts = userList.filter(account => account.role === 'admin');
 
-    // Customer table data filtering and pagination
     const {
         data: filteredCustomers,
         searchValue: customerSearchValue,
@@ -202,7 +201,6 @@ const Accounts = () => {
         fetchUsers();
     }, []);
 
-    // Modal handlers - Fixed to ensure all values are strings
     const openModal = (type, account = null) => {
         setModalType(type);
         setSelectedAccount(account);

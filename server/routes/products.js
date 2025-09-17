@@ -95,8 +95,7 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
         
         const { id } = req.params;
         const { display_order = 0, is_primary = false } = req.body;
-        
-        // Check if product exists
+
         const [productCheck] = await connection.query(
             'SELECT id FROM products WHERE id = ?',
             [id]
@@ -111,25 +110,21 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
             await connection.rollback();
             return res.status(400).json({ error: 'No image file uploaded' });
         }
-        
-        // Upload to Cloudinary
+
         const result = await cloudinary.uploader.upload(req.file.path, {
             folder: 'products',
             public_id: `product_${id}_${Date.now()}`
         });
-        
-        // Clean up temp file
+
         fs.unlinkSync(req.file.path);
-        
-        // If this is set as primary, remove primary status from other images
+
         if (is_primary) {
             await connection.query(
                 'UPDATE product_images SET is_primary = FALSE WHERE product_id = ?',
                 [id]
             );
         }
-        
-        // Insert new image record
+
         const [insertResult] = await connection.query(`
             INSERT INTO product_images (product_id, image_url, display_order, is_primary)
             VALUES (?, ?, ?, ?)
@@ -151,8 +146,7 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
     } catch (err) {
         await connection.rollback();
         console.error('Error adding product image:', err);
-        
-        // Clean up temp file if it exists
+
         if (req.file?.path) {
             try {
                 fs.unlinkSync(req.file.path);
@@ -300,7 +294,6 @@ router.delete('/:product_id', async (req, res) => {
     }
 });
 
-// Add to your products API routes
 router.post('/:productId/view', async (req, res) => {
     try {
         const { productId } = req.params;
@@ -327,8 +320,7 @@ router.delete('/:id/images/:imageId', async (req, res) => {
         await connection.beginTransaction();
         
         const { id, imageId } = req.params;
-        
-        // Get image details before deletion
+
         const [imageDetails] = await connection.query(
             'SELECT image_url FROM product_images WHERE id = ? AND product_id = ?',
             [imageId, id]
@@ -338,16 +330,13 @@ router.delete('/:id/images/:imageId', async (req, res) => {
             await connection.rollback();
             return res.status(404).json({ error: 'Image not found for this product' });
         }
-        
-        // Delete from Cloudinary
+
         try {
             await cloudinary.uploader.destroy(imageDetails[0].image_url);
         } catch (cloudinaryError) {
             console.error('Error deleting image from Cloudinary:', cloudinaryError);
-            // Continue with database deletion even if Cloudinary fails
         }
-        
-        // Delete from database
+
         await connection.query(
             'DELETE FROM product_images WHERE id = ? AND product_id = ?',
             [imageId, id]

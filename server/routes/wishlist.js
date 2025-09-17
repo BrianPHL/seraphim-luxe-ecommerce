@@ -3,7 +3,6 @@ import express from 'express';
 
 const router = express.Router();
 
-// Get user's wishlist
 router.get('/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -40,7 +39,6 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
-// Add item to wishlist
 router.post('/', async (req, res) => {
     try {
         const { userId, productId } = req.body;
@@ -51,7 +49,6 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Check if item already exists in wishlist
         const checkQuery = `
             SELECT id FROM wishlist 
             WHERE user_id = ? AND product_id = ?
@@ -64,7 +61,6 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Check if product exists
         const productCheckQuery = `
             SELECT id FROM products WHERE id = ?
         `;
@@ -76,14 +72,12 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Add to wishlist
         const insertQuery = `
             INSERT INTO wishlist (user_id, product_id, created_at)
             VALUES (?, ?, NOW())
         `;
         const [result] = await pool.execute(insertQuery, [userId, productId]);
 
-        // Fetch the added item with product details
         const fetchQuery = `
             SELECT 
                 w.id,
@@ -113,7 +107,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Remove item from wishlist
 router.delete('/:userId/:productId', async (req, res) => {
     try {
         const { userId, productId } = req.params;
@@ -142,7 +135,6 @@ router.delete('/:userId/:productId', async (req, res) => {
     }
 });
 
-// Clear entire wishlist for a user
 router.delete('/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -165,7 +157,6 @@ router.delete('/:userId', async (req, res) => {
     }
 });
 
-// Check if item is in wishlist
 router.get('/:userId/check/:productId', async (req, res) => {
     try {
         const { userId, productId } = req.params;
@@ -189,7 +180,6 @@ router.get('/:userId/check/:productId', async (req, res) => {
     }
 });
 
-// Get wishlist count for a user
 router.get('/:userId/count', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -211,7 +201,6 @@ router.get('/:userId/count', async (req, res) => {
     }
 });
 
-// Batch remove items from wishlist
 router.post('/:userId/batch-remove', async (req, res) => {
     try {
         const { userId } = req.params;

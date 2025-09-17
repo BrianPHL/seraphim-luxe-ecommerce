@@ -295,8 +295,6 @@ const Products = () => {
         
         const category = activeCategories.find(cat => cat.id === product.category_id);
         const categoryName = category?.name || product.category || 'N/A';
-        
-        // Fix: Pass the category_id to getActiveSubcategories
         const activeSubcategories = getActiveSubcategories(product.category_id);
         const subcategory = activeSubcategories.find(sub => sub.id === product.subcategory_id);
         const subcategoryName = subcategory?.name || product.subcategory || 'N/A';

@@ -291,7 +291,6 @@ const Wishlist = () => {
                 </div>
             </div>
 
-            {/* Modals */}
             {modalType === 'remove-confirmation' && (
                 <Modal label='Remove from Wishlist' isOpen={modalOpen} onClose={() => setModalOpen(false)}>
                     <p className={styles['modal-info']}>Are you sure you want to remove <strong>{selectedItem?.label}</strong> from your wishlist?</p>
