@@ -167,7 +167,7 @@ export const OrdersProvider = ({ children }) => {
             }
 
             showToast("Order deleted successfully!", "success");
-            await refreshProducts();
+
             return true;
             
         } catch (err) {
@@ -175,6 +175,7 @@ export const OrdersProvider = ({ children }) => {
             showToast(`Failed to delete order: ${err.message}`, "error");
             return false;
         } finally {
+            await refreshProducts();
             setLoading(false);
         }
     };

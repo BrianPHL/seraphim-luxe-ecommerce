@@ -13,10 +13,7 @@ export const ProductsProvider = ({ children }) => {
 
     const fetchProducts = async () => {
 
-        if (loading) return;
-
         try {
-
 
             setLoading(true);
 

@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import CheckoutContext from "./context";
-import { useAuth, useToast, useCart, useSettings } from "@contexts";
+import { useAuth, useToast, useCart, useSettings, useProducts } from "@contexts";
 import { fetchWithTimeout } from "@utils";
 
 export const CheckoutProvider = ({ children }) => {
@@ -22,6 +22,7 @@ export const CheckoutProvider = ({ children }) => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const { clearSelectedCartItems } = useCart();
+    const { refreshProducts } = useProducts();
 
     const generateOrderNumber = () => {
         const timestamp = Date.now();
@@ -122,6 +123,7 @@ export const CheckoutProvider = ({ children }) => {
             showToast(`Failed to place order: ${err.message}`, "error");
             return { error: err.message };
         } finally {
+            await refreshProducts();
             setLoading(false);
         }
     };
@@ -162,6 +164,7 @@ export const CheckoutProvider = ({ children }) => {
             showToast(`Failed to cancel order: ${err.message}`, "error");
             return false;
         } finally {
+            await refreshProducts();
             setLoading(false);
         }
     };
