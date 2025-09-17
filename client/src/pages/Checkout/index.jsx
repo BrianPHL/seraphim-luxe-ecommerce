@@ -9,7 +9,7 @@ const Checkout = () => {
     const navigate = useNavigate();
     const { user, addressBook, getAddressBook, addAddress } = useAuth();
     const { selectedCartItems } = useCart();
-    const { createOrder, loading, directCheckoutItem } = useCheckout();
+    const { createOrder, loading, directCheckoutItem, fetchPaypalClientId, paypalClientId, setPaypalClientId, paypalLoading, setPaypalLoading } = useCheckout();
     const { showToast } = useToast();
     const { settings, fetchSettings, fetchEnabledPaymentMethods, enabledPaymentMethods, convertPrice, formatPrice } = useSettings();
 
@@ -17,8 +17,6 @@ const Checkout = () => {
     const [notes, setNotes] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [convertedItems, setConvertedItems] = useState([]);
-    const [paypalClientId, setPaypalClientId] = useState(null);
-    const [paypalLoading, setPaypalLoading] = useState(false);
     const [paypalScriptLoading, setPaypalScriptLoading] = useState(false);
     const [paypalScriptError, setPaypalScriptError] = useState(false);
     const [paypalRetryCount, setPaypalRetryCount] = useState(0);
@@ -47,37 +45,28 @@ const Checkout = () => {
         const init = async () => {
             await fetchSettings();
             await fetchEnabledPaymentMethods();
-            await initializePayPal();
+            await fetchPaypalClientId();
         };
         init();
     }, []);
 
-    const initializePayPal = async () => {
+    const retryPayPalInitialization = async () => {
         try {
-            setPaypalScriptLoading(true);
+            setPaypalRetryCount(prev => prev + 1);
+
+            setPaypalClientId(null);
             setPaypalScriptError(false);
-            
-            const response = await fetch('/api/paypal/get-client-id');
-            if (!response.ok) {
-                throw new Error('Failed to fetch PayPal client ID');
-            }
-            
-            const data = await response.json();
-            setPaypalClientId(data.clientId);
-            
+            setPaypalScriptLoading(true);
+
+            await fetchPaypalClientId();
+
         } catch (error) {
-            console.error('Failed to get PayPal client ID:', error);
+            console.error('PayPal retry failed:', error);
             setPaypalScriptError(true);
-            showToast('Failed to load PayPal. Please try again.', 'error');
         } finally {
             setPaypalScriptLoading(false);
         }
-    };
 
-    const retryPayPalInitialization = () => {
-        setPaypalRetryCount(prev => prev + 1);
-        setPaypalClientId(null);
-        initializePayPal();
     };
 
     const paypalOptions = paypalClientId ? {
@@ -472,7 +461,8 @@ const Checkout = () => {
     };
 
     const renderPayPalButtons = () => {
-        if (paypalScriptLoading) {
+
+        if (paypalLoading || paypalScriptLoading || !paypalClientId) {
             return (
                 <div className={styles['paypal-loading-state']}>
                     <div className={styles['paypal-loader']}>
@@ -483,7 +473,7 @@ const Checkout = () => {
             );
         }
 
-        if (paypalScriptError || !paypalClientId) {
+        if (paypalScriptError) {
             return (
                 <div className={styles['paypal-error-state']}>
                     <div className={styles['paypal-error']}>
@@ -495,7 +485,7 @@ const Checkout = () => {
                             icon="fa-solid fa-refresh"
                             iconPosition="left"
                             action={retryPayPalInitialization}
-                            disabled={paypalScriptLoading}
+                            disabled={paypalLoading || paypalScriptLoading}
                         />
                     </div>
                 </div>
@@ -506,12 +496,18 @@ const Checkout = () => {
             <div className={styles['paypal-payment-section']}>
                 <PayPalScriptProvider 
                     options={paypalOptions}
-                    onError={onPayPalError}
+                    onError={(error) => {
+                        console.error("PayPal Script Provider error:", error);
+                        setPaypalScriptError(true);
+                    }}
                 >
                     <PayPalButtons
                         createOrder={createPayPalOrder}
                         onApprove={onPayPalApprove}
-                        onError={onPayPalError}
+                        onError={(error) => {
+                            console.error("PayPal Buttons error:", error);
+                            setPaypalScriptError(true);
+                        }}
                         disabled={!selectedShippingAddress || paypalLoading}
                         style={{
                             shape: "rect",
