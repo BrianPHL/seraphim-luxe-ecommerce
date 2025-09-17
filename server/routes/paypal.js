@@ -13,7 +13,7 @@ router.get("/get-client-id", async (req, res) => {
 
         const requestedCurrency = req.query.currency || 'USD';
         const supportedCurrency = getPayPalCurrency(requestedCurrency);
-
+        
         res.status(200).json({
             clientId: process.env.PAYPAL_CLIENT_ID,
             currency: supportedCurrency

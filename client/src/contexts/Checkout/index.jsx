@@ -12,12 +12,11 @@ export const CheckoutProvider = ({ children }) => {
         paymentMethod: 'cash',
         notes: ''
     });
-    const [ loading, setLoading] = useState(false);
-    const [ paypalClientId, setPaypalClientId ] = useState('');
-    const [ paypalCurrency, setPaypalCurrency ] = useState('');
-    const [ paypalMessage, setPaypalMessage ] = useState('');
-    const [ paypalLoading, setPaypalLoading ] = useState(false);
-
+    const [loading, setLoading] = useState(false);
+    const [paypalClientId, setPaypalClientId] = useState('');
+    const [paypalCurrency, setPaypalCurrency] = useState('');
+    const [paypalMessage, setPaypalMessage] = useState('');
+    
     const { settings } = useSettings();
     const { user } = useAuth();
     const { showToast } = useToast();
@@ -298,9 +297,6 @@ export const CheckoutProvider = ({ children }) => {
             clearDirectCheckout,
             fetchPaypalClientId,
             paypalClientId,
-            setPaypalClientId,
-            setPaypalLoading,
-            paypalLoading,
             paypalCurrency,
             createPayPalOrder,
             onPayPalApprove,
