@@ -107,21 +107,22 @@ const testDatabaseConnection = async () => {
     try {
         const pool = await import('./apis/db.js');
         await pool.default.query('SELECT 1');
-        console.log('✅ Database connection successful');
         return true;
     } catch (error) {
-        console.error('❌ Database connection failed:', error.message);
         return false;
     }
 };
 
 const startServer = async () => {
+    
     const dbConnected = await testDatabaseConnection();
     
     if (!dbConnected && process.env.NODE_ENV === 'production') {
         console.error('Database connection required for production. Exiting...');
         process.exit(1);
     }
+
+    app.listen(PORT, () => console.log(`Database connection successful. Listening to port ${ PORT }`));
 
 };
 
