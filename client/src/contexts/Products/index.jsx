@@ -17,7 +17,7 @@ export const ProductsProvider = ({ children }) => {
 
             setLoading(true);
 
-            const response = await fetchWithTimeout('api/products', {
+            const response = await fetchWithTimeout('/api/products', {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -27,14 +27,21 @@ export const ProductsProvider = ({ children }) => {
 
             const data = await response.json();
 
-            console.log("Products data in context: ", data);
-
-            setProducts(data);
+            if (Array.isArray(data)) {
+                setProducts(data);
+            } else {
+                
+                console.error('Products data is not an array:', data);
+                setProducts([]);
+                throw new Error('Invalid data format received');
+            }
 
         } catch (err) {
 
-            console.error("Products context fetchProducts function error: ", err);
-            showToast(err, "error");
+            console.error("Products context fetchProducts function error:", err);
+            showToast(`Failed to load products: ${err.message}`, 'error');
+            setError(err.message);
+            setProducts([]);
 
         } finally {
 
