@@ -167,26 +167,23 @@ export const CheckoutProvider = ({ children }) => {
 
     const fetchPaypalClientId = async () => {
         try {
-            const currentCurrency = settings?.currency || 'PHP';
-            const response = await fetch(`/api/paypal/get-client-id?currency=${currentCurrency}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-            });
+            setPaypalLoading(true);
+            const userCurrency = settings?.currency || 'USD';
+            const response = await fetch(`/api/paypal/get-client-id?currency=${userCurrency}`);
 
-            if (!response.ok) {
+            if (response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to fetch PayPal Client ID');
+                console.log('PayPal Config:', {
+                    clientId: data.clientId?.substring(0, 10) + '...',
+                    currency: userCurrency,
+                    environment: 'sandbox'
+                });
+                setPaypalClientId(data.clientId);
             }
-
-            const data = await response.json();
-            setPaypalClientId(data.clientId);
-            setPaypalCurrency(data.currency);
-            return data.clientId;
-
-        } catch (err) {
-            console.error("Checkout context fetchPaypalClientId function error: ", err);
-            showToast("Failed to load PayPal configuration", "error");
-            return null;
+        } catch (error) {
+            console.error('PayPal client ID fetch error:', error);
+        } finally {
+            setPaypalLoading(false);
         }
     };
 

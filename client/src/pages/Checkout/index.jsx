@@ -83,7 +83,9 @@ const Checkout = () => {
     const paypalOptions = paypalClientId ? {
         "client-id": paypalClientId,
         currency: settings?.currency === 'PHP' ? "USD" : (settings?.currency || "USD"),
-        intent: "capture"
+        intent: "capture",
+        "data-sdk-integration-source": "react-paypal-js",
+        "buyer-country": "US"
     } : null;
 
     const safeFormatPrice = (price, currency = null) => {
