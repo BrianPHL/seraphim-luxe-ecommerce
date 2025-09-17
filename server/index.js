@@ -40,8 +40,10 @@ app.use(cors({
             'https://checkout.paypal.com'
         ]
         : [ 
-            'http://localhost:5173', 
-            'http://127.0.0.1:5173', 
+            'http://localhost:5173',
+            'http://localhost:3000', 
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:3000',
             'https://www.sandbox.paypal.com', 
             'https://js.paypal.com',
             'https://www.paypal.com',
@@ -51,19 +53,6 @@ app.use(cors({
         ],
   	credentials: true,
 }));
-
-app.use((req, res, next) => {
-    res.setHeader(
-        'Content-Security-Policy',
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paypal.com https://www.paypal.com https://js-sdk.paypal.com https://www.paypalobjects.com; " +
-        "connect-src 'self' https://api.paypal.com https://www.sandbox.paypal.com https://api.sandbox.paypal.com; " +
-        "frame-src 'self' https://js.paypal.com https://www.paypal.com https://checkout.paypal.com; " +
-        "img-src 'self' data: https:; " +
-        "style-src 'self' 'unsafe-inline';"
-    );
-    next();
-});
 
 app.use((req, res, next) => {
     console.log(`${ new Date().toISOString() } - ${ req.method } ${ req.url }`);
@@ -114,7 +103,7 @@ const testDatabaseConnection = async () => {
 };
 
 const startServer = async () => {
-    
+
     const dbConnected = await testDatabaseConnection();
     
     if (!dbConnected && process.env.NODE_ENV === 'production') {
