@@ -12,6 +12,9 @@ export { default as ContactUs } from './ContactUs';
 export { default as FAQs } from './FAQs';
 export { default as PrivacyPolicy } from './PrivacyPolicy';
 export { default as Wishlist } from './Wishlist';
+export { default as Promotions } from './Promotions';
+export { default as Banners } from './Banners';
+
 
 export * from './Collections';
 export * from './PartsAndAccessories';

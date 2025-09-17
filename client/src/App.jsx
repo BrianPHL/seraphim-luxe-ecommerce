@@ -3,7 +3,7 @@ import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-route
 import { Header, Footer, OTPModal } from '@components';
 import { useAuth, useTheme } from '@contexts';
 import { ProtectedRoute } from '@routes';
-import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
+import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy, Promotions, Banners } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
 import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS, AdminSettings, AdminAccounts } from '@pages/Admin';
@@ -16,6 +16,8 @@ const PAGE_TITLES = {
 	"/contact": "Seraphim Luxe | Contact Us", 
 	"/faqs": "Seraphim Luxe | Frequently Asked Questions",
 	"/privacy-policy": "Seraphim Luxe | Privacy Policy",
+    "/promotions": "Seraphim Luxe | Promotions Settings",
+    "/banners": "Seraphim Luxe | Banners Settings",
 	"/collections": "Seraphim Luxe | Collections",
 	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
 	"/reservations": "Seraphim Luxe | Reservations",
@@ -97,6 +99,22 @@ const App = () => {
                 } />
                 
                 <Route path="/privacy-policy" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <PrivacyPolicy />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+       
+                   <Route path="/promotions" element={
+                    <ProtectedRoute>
+                        <Header />
+                            <PrivacyPolicy />
+                        <Footer />
+                    </ProtectedRoute>
+                } />
+
+                   <Route path="/banners" element={
                     <ProtectedRoute>
                         <Header />
                             <PrivacyPolicy />

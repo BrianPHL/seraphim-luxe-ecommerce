@@ -57,6 +57,7 @@ app.use(cors({
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/accounts', accountsRouter);
 app.use('/api/products', productsRouter);

@@ -88,17 +88,17 @@
     width: 100%;
 }
 
-.hero-banner-first {
-    /* background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/v1746275497/hero-banner_zfhs2p.webp'); */
-}
+.hero-banner-first { 
+    background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/v1746275497/hero-banner_zfhs2p.webp'); 
+} 
 
-.hero-banner-second {
-    /* background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/parts-and-accessories-banner_oiem58.webp'); */
-}
+.hero-banner-second { 
+     background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/parts-and-accessories-banner_oiem58.webp'); 
+ } 
 
-.hero-banner-third {
-    /* background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-in-and-sign-up-banner_o47rul.webp'); */
-}
+ .hero-banner-third { 
+     background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-in-and-sign-up-banner_o47rul.webp'); 
+ }
 
 
 .collections {
