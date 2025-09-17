@@ -910,7 +910,6 @@
     color: var(--error-foreground);
 }
 
-/* Empty State */
 .address-empty {
     text-align: center;
     padding: 3rem 1.5rem;
@@ -921,7 +920,6 @@
     background-color: var(--bg-secondary);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .address-item {
         padding: 1rem;

@@ -336,7 +336,6 @@
     min-width: 140px;
 }
 
-/* Responsive Design */
 @media only screen and (max-width: 768px) {
     .modal-ctas {
         flex-direction: column;
@@ -354,7 +353,6 @@
     }
 }
 
-/* Responsive Design - Maintain proportional scaling */
 @media only screen and (max-width: 1200px) {
     .table-header,
     .table-row {
@@ -436,7 +434,6 @@
         min-width: 500px;
     }
     
-    /* Hide email and phone columns but keep all other columns proportional */
     .table-cell:nth-child(3),
     .table-cell:nth-child(4) {
         display: none;
@@ -455,7 +452,6 @@
     }
 }
 
-/* Ensure horizontal scroll when needed */
 @media only screen and (max-width: 500px) {
     .table-wrapper {
         overflow-x: auto;

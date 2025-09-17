@@ -567,7 +567,6 @@
     line-height: 1.4;
 }
 
-/* Items Container */
 .items-container {
     display: flex;
     flex-direction: column;

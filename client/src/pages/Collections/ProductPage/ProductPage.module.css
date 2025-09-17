@@ -348,7 +348,6 @@
     border: 1px solid var(--bg-outline);
 }
 
-/* Media queries for responsive design */
 @media only screen and (max-width: 768px) {
     .product {
         flex-direction: column;

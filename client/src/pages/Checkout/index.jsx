@@ -76,14 +76,12 @@ const Checkout = () => {
 
     const retryPayPalInitialization = async () => {
         try {
+
             setPaypalRetryCount(prev => prev + 1);
-            
-            // Reset all PayPal states
             setPaypalClientId(null);
             setPaypalScriptError(false);
             setPaypalScriptLoading(true);
-            
-            // Fetch PayPal client ID again
+
             await initializePayPal();
             
         } catch (error) {
@@ -489,7 +487,7 @@ const Checkout = () => {
     };
 
     const renderPayPalButtons = () => {
-        // Show loading state when fetching client ID or when PayPal is loading
+
         if (paypalLoading || paypalScriptLoading || !paypalClientId) {
             return (
                 <div className={styles['paypal-loading-state']}>
@@ -567,7 +565,7 @@ const Checkout = () => {
             
             <div className={styles['container']}>
                 <div className={styles['checkout-main']}>
-                    {/* Address Book Section - Grouped Side-by-Side */}
+                    
                     <div className={styles['address-container']}>
                         <div className={styles['address-section']}>
                             <div className={styles['address-section-header']}>
@@ -634,7 +632,6 @@ const Checkout = () => {
                         </div>
                     </div>
 
-                    {/* Order Items Section */}
                     <div className={`${styles['checkout-section']} ${styles['order-items-section']}`}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Order Items ({checkoutItems.length})</h2>
@@ -672,7 +669,7 @@ const Checkout = () => {
                 </div>
 
                 <div className={styles['checkout-sidebar']}>
-                    {/* Payment Method Section */}
+                    
                     <div className={`${styles['checkout-section']} ${styles['payment-method-section']}`}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Payment Method</h2>
@@ -744,7 +741,6 @@ const Checkout = () => {
                         </div>
                     </div>
 
-                    {/* Order Notes Section */}
                     <div className={styles['checkout-section']}>
                         <div className={styles['checkout-section-header']}>
                             <h2>Order Notes (Optional)</h2>
@@ -758,7 +754,6 @@ const Checkout = () => {
                         />
                     </div>
 
-                    {/* Order Summary Section */}
                     <div className={`${styles['summary']} ${styles['order-summary-section']}`}>
                         <h2>Order Summary</h2>
                         <div className={styles['summary-wrapper']}>
@@ -794,7 +789,6 @@ const Checkout = () => {
                 </div>
             </div>
 
-            {/* Address Selection Modal */}
             <Modal 
                 isOpen={showAddressModal}
                 onClose={() => setShowAddressModal(false)}
@@ -863,8 +857,7 @@ const Checkout = () => {
                     </div>
                 </div>
             </Modal>
-                        
-            {/* Add New Address Modal */}
+
             <Modal 
                 isOpen={showNewAddressModal}
                 onClose={() => setShowNewAddressModal(false)}

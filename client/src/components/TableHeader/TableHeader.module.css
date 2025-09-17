@@ -1,6 +1,5 @@
 @import url('../../index.css');
 
-/* TableHeader Styles */
 .table-header {
     flex-direction: column;
     display: flex;

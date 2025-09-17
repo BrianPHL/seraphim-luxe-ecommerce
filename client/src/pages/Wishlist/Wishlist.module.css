@@ -438,7 +438,6 @@
     background-color: var(--error-hover) !important;
 }
 
-/* Responsive Design */
 @media only screen and (max-width: 1290px) {
     .container {
         flex-direction: column-reverse;

@@ -40,7 +40,7 @@
 }
 
 .content-active {
-    max-height: 1000px; /* Temporary, probably will be there forever though. */
+    max-height: 1000px;
     overflow: hidden;
     opacity: 1;
 }

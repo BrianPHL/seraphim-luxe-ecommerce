@@ -86,14 +86,14 @@
     font-size: 0.875rem;
     background-color: var(--bg-primary);
     color: var(--tg-primary);
-    width: calc(50% - 0.625rem); /* Ensures each input takes up half the space minus the gap */
-    min-width: 0; /* Prevents input from expanding beyond container */
+    width: calc(50% - 0.625rem);
+    min-width: 0;
     max-width: 100%;
 }
 
 .price-inputs span {
     color: var(--tg-secondary);
-    flex: 0 0 auto; /* Prevents the span from growing or shrinking */
+    flex: 0 0 auto;
 }
 
 .attribute-item {
@@ -130,7 +130,6 @@
     margin-top: 1.25rem;
 }
 
-/* Add this loading style */
 .loading {
     display: flex;
     align-items: center;

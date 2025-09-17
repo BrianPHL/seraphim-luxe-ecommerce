@@ -423,7 +423,6 @@
 
 @media only screen and (max-width: 374px) {
    .cart-item-details-right {
-        /* justify-content: space-between; */
         flex-direction: column;
         align-items: flex-start;
         display: flex;

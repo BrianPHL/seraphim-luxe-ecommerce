@@ -125,7 +125,7 @@
 
 .main-content {
     flex: 1;
-    min-width: 0; /* Prevents flexbox children from overflowing */
+    min-width: 0;
 }
 
 .filter-toggle-container {
@@ -136,7 +136,6 @@
     justify-content: flex-end;
 }
 
-/* Responsive Design */
 @media only screen and (max-width: 1575px) {
     .wrapper { 
         padding: 12rem 8rem 6rem 8rem; 
