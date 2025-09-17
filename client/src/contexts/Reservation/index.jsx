@@ -146,7 +146,7 @@ export const ReservationProvider = ({ children }) => {
                 showToast(`Successfully added to your reservations!`, "success");
             }
             
-            refreshProducts();
+            await refreshProducts();
             
             return { success: true, reservation_id: data.reservation_id };
         } catch (err) {
@@ -187,7 +187,7 @@ export const ReservationProvider = ({ children }) => {
             );
             
             showToast("Reservation cancelled successfully!", "success");
-            refreshProducts();
+            await refreshProducts();
 
         } catch (err) {
             console.error("Failed to cancel reservation:", err);
@@ -260,7 +260,7 @@ export const ReservationProvider = ({ children }) => {
             }
 
             showToast("Reservation reactivated successfully!", "success");
-            refreshProducts();
+            await refreshProducts();
             return true;
 
         } catch (err) {
@@ -299,7 +299,7 @@ export const ReservationProvider = ({ children }) => {
             }
 
             showToast("Reservation deleted successfully!", "success");
-            refreshProducts();
+            await refreshProducts();
             return true;
             
         } catch (err) {
@@ -333,7 +333,7 @@ export const ReservationProvider = ({ children }) => {
             }
             
             showToast(`Installment ${status === 'completed' ? 'approved' : 'rejected'} successfully!`, "success");
-            refreshProducts();
+            await refreshProducts();
             return true;
         } catch (err) {
             console.error(`Failed to process installment:`, err);

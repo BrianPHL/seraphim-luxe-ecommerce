@@ -34,7 +34,6 @@ router.get('/', async (req, res) => {
             product.product_images = images;
         }
 
-
         res.json(rows);
     
     } catch (err) {

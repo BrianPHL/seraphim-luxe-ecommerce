@@ -124,7 +124,7 @@ export const OrdersProvider = ({ children }) => {
             }
             
             showToast(`Order status updated to ${status}!`, "success");
-            refreshProducts();
+            await refreshProducts();
             return true;
 
         } catch (err) {
@@ -167,7 +167,7 @@ export const OrdersProvider = ({ children }) => {
             }
 
             showToast("Order deleted successfully!", "success");
-            refreshProducts();
+            await refreshProducts();
             return true;
             
         } catch (err) {

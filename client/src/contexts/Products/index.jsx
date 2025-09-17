@@ -1,54 +1,58 @@
 import { useContext, useState, useEffect, useCallback } from "react";
 import ProductsContext from "./context";
 import { useToast } from '@contexts';
+import { fetchWithTimeout } from "@utils";
 
 export const ProductsProvider = ({ children }) => {
 
-    const REFRESH_INTERVAL = 10 * 60 * 1000;
     const [ products, setProducts ] = useState([]);
     const [ loading, setLoading ] = useState(false);
     const [ error, setError ] = useState(null);
     const [ lastFetched, setLastFetched ] = useState(null);
     const { showToast } = useToast();
 
-    const fetchProducts = useCallback( async (force = false) => {
+    const fetchProducts = async () => {
 
         if (loading) return;
 
-        const minTimeBetweenFetches = 10000;
+        try {
 
-        if (force || !lastFetched || (Date.now() - lastFetched > minTimeBetweenFetches)) {
+
             setLoading(true);
-            try {
 
-                const response = await fetch('/api/products');
+            const response = await fetchWithTimeout('api/products', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
 
-                if (!response['ok']) throw new Error('Failed to fetch products');
-                
-                const data = await response.json();
+            if (!response.ok)
+                throw new Error("Failed to fetch products, something went wrong!");
 
-                if (Array.isArray(data)) {
-                    setProducts(data);
-                } else {
-                    console.error('Products data is not an array:', data);
-                    setProducts([]);
-                    throw new Error('Invalid data format received');
-                }
+            const data = await response.json();
 
-            } catch (err) {
-                console.error("Product fetch error:", err);
-                showToast(`Failed to load products: ${ err['message'] }`, 'error');
-                setError(err['message']);
-            } finally {
-                setLoading(false);
-            }
+            console.log("Products data in context: ", data);
+
+            setProducts(data);
+
+        } catch (err) {
+
+            console.error("Products context fetchProducts function error: ", err);
+            showToast(err, "error");
+
+        } finally {
+
+            setLoading(false);
 
         }
-    }, [ showToast ]);
+
+    };
 
     const deleteProduct = async (productId) => {
 
         try {
+
+            setLoading(true);
+            
             const response = await fetch(`/api/products/${ productId }`, {
                 method: 'DELETE',
                 headers: {
@@ -63,16 +67,18 @@ export const ProductsProvider = ({ children }) => {
             
             showToast('Product successfully deleted', 'success');
 
-            await fetchProducts(true);
-
         } catch (error) {
             console.error('Error deleting product:', error);
             showToast(`Failed to delete product: ${error.message}`, 'error');
+        } finally {
+            setLoading(false);
+            await fetchProducts();
         }
     };
 
     const addProduct = async (productData) => {
         try {
+
             setLoading(true);
             
             const response = await fetch('/api/products', {
@@ -96,6 +102,7 @@ export const ProductsProvider = ({ children }) => {
             showToast(`Failed to create product: ${err.message}`, 'error');
         } finally {
             setLoading(false);
+            await fetchProducts();
         }
     };
 
@@ -123,10 +130,13 @@ export const ProductsProvider = ({ children }) => {
 
 
         } catch (err) {
+
             console.error('Error updating product:', err);
             showToast(`Failed to update product: ${err.message}`, 'error');
+
         } finally {
             setLoading(false);
+            await fetchProducts();
         }
 
     };
@@ -157,23 +167,16 @@ export const ProductsProvider = ({ children }) => {
             console.error('Error updating product:', err);
             showToast(`Failed to update product: ${err.message}`, 'error');
         } finally {
+
             setLoading(false);
+            await fetchProducts();
+
         }
 
     };
 
     useEffect(() => {
-        fetchProducts(true);
-    }, [ fetchProducts ]);
-
-    useEffect(() => {
-        
-        const interval = setInterval(() => { 
-            fetchProducts(false)
-        }, REFRESH_INTERVAL);
-
-        return () => clearInterval(interval);
-  
+        fetchProducts();
     }, []);
 
     return (
@@ -183,7 +186,7 @@ export const ProductsProvider = ({ children }) => {
                 loading,
                 error,
                 lastFetched,
-                refreshProducts: () => fetchProducts(true),
+                refreshProducts: () => fetchProducts(),
                 deleteProduct,
                 updateProduct,
                 addProduct,
