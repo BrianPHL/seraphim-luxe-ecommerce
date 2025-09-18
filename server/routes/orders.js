@@ -1,7 +1,7 @@
 import pool from "../apis/db.js";
 import express from 'express';
 import { sendEmail } from "../apis/resend.js";
-import { createOrderRefundedEmail } from "../utils/email.js";
+import { createOrderPendingEmail, createOrderRefundedEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -202,9 +202,10 @@ router.post('/', async (req, res) => {
         await connection.beginTransaction();
 
         const { account_id, items, total_amount, shipping_address_id, billing_address_id, payment_method, notes } = req.body;
+        const parsedTotalAmount = total_amount.toFixed(2);
 
         const [userResult] = await connection.query(
-            'SELECT first_name, last_name, email FROM accounts WHERE id = ?',
+            'SELECT name, first_name, last_name, email FROM accounts WHERE id = ?',
             [account_id]
         );
 
@@ -222,7 +223,7 @@ router.post('/', async (req, res) => {
                 order_number, account_id, first_name, last_name, email, 
                 total_amount, shipping_address_id, billing_address_id, payment_method, notes, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [ orderNumber, account_id, user.first_name, user.last_name, user.email, total_amount, shipping_address_id, billing_address_id, payment_method, notes, account_id ]);
+        `, [ orderNumber, account_id, user.first_name, user.last_name, user.email, parsedTotalAmount, shipping_address_id, billing_address_id, payment_method, notes, account_id ]);
 
         const orderId = result.insertId;
 
@@ -237,8 +238,6 @@ router.post('/', async (req, res) => {
                     item.price, item.quantity * item.price, item.image_url
                 ]);
 
-                console.log(item.price);
-
                 await connection.query(
                     `
                         UPDATE products
@@ -250,6 +249,13 @@ router.post('/', async (req, res) => {
 
             }
         }
+
+        const { _, err } = await sendEmail({
+            from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+            to: userResult[0].email,
+            subject: `Order Pending #(${ orderNumber }) | Seraphim Luxe`,
+            html: createOrderPendingEmail(userResult[0].name, orderNumber, parsedTotalAmount)
+        });
 
         await connection.commit();
         res.status(201).json({ 
