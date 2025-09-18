@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../apis/db.js';
 import { createWishlistActivity } from '../utils/inbox.js';
+import { AuditLogger } from '../utils/audit-trail.js';
 
 const router = express.Router();
 
@@ -58,53 +59,58 @@ router.get('/:userId', async (req, res) => {
 
 /* POST add to wishlist */
 router.post('/', async (req, res) => {
-  try {
-    const product_id = req.body.product_id || req.body.productId;
-    const suppliedAccount = req.body.account_id || req.body.userId || req.body.user_id || req.body.accountId || req.body.account;
-    if (!product_id || !suppliedAccount) {
-      return res.status(400).json({ error: 'Missing account_id/userId or product_id' });
-    }
-
-    const accountCol = await detectAccountColumn('wishlist') || (req.body.userId ? 'user_id' : 'account_id');
-
-    // check duplicate
-    const checkSql = `SELECT id FROM wishlist WHERE ${accountCol} = ? AND product_id = ? LIMIT 1`;
-    const [existsRows] = await pool.query(checkSql, [suppliedAccount, product_id]);
-
-    if (Array.isArray(existsRows) && existsRows.length > 0) {
-      return res.status(409).json({ error: 'Product already in wishlist' });
-    }
-
-    // insert (use detected column name)
-    const insertSql = `INSERT INTO wishlist (${accountCol}, product_id, created_at) VALUES (?, ?, NOW())`;
-    const [insertResult] = await pool.query(insertSql, [suppliedAccount, product_id]);
-
-    if (!insertResult || !insertResult.insertId) {
-      console.error('[WISHLIST] insert failed:', insertResult);
-      return res.status(500).json({ error: 'Failed to insert wishlist item' });
-    }
-
-    // fetch product label for activity (best-effort)
-    let productLabel = 'Item';
     try {
-      const [productRows] = await pool.query('SELECT label FROM products WHERE id = ? LIMIT 1', [product_id]);
-      if (Array.isArray(productRows) && productRows.length > 0) productLabel = productRows[0].label || productLabel;
-    } catch (err) {
-      console.warn('[WISHLIST] product lookup failed:', err.message);
-    }
+        const userId = req.body.userId || req.body.account_id || req.body.user_id || req.body.accountId || req.body.account;
+        const productId = req.body.productId || req.body.product_id;
 
-    // create inbox activity (best-effort)
-    try {
-      await createWishlistActivity(suppliedAccount, productLabel, 'added');
-    } catch (err) {
-      console.warn('[WISHLIST] createWishlistActivity failed:', err.message);
-    }
+        if (!userId || !productId) {
+            return res.status(400).json({ error: 'User ID and Product ID are required' });
+        }
 
-    return res.status(201).json({ success: true, insertId: insertResult.insertId });
-  } catch (err) {
-    console.error('[WISHLIST] POST error:', err);
-    return res.status(500).json({ error: err.message || 'Internal server error' });
-  }
+        // Check for duplicate
+        const checkQuery = `SELECT id FROM wishlist WHERE user_id = ? AND product_id = ? LIMIT 1`;
+        const [existingItem] = await pool.query(checkQuery, [userId, productId]);
+        if (existingItem.length > 0) {
+            return res.status(409).json({ error: 'Item already exists in wishlist' });
+        }
+
+        // Check product exists
+        const productCheckQuery = `SELECT label FROM products WHERE id = ? LIMIT 1`;
+        const [productRows] = await pool.query(productCheckQuery, [productId]);
+        if (productRows.length === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        const productLabel = productRows[0].label || 'Item';
+
+        // Insert into wishlist
+        const insertQuery = `INSERT INTO wishlist (user_id, product_id, created_at) VALUES (?, ?, NOW())`;
+        const [insertResult] = await pool.query(insertQuery, [userId, productId]);
+        if (!insertResult || !insertResult.insertId) {
+            return res.status(500).json({ error: 'Failed to insert wishlist item' });
+        }
+
+        // Log audit and activity
+        await AuditLogger.logWishlistAdd(userId, productId, req);
+        await createWishlistActivity(userId, productLabel, 'added');
+
+        // Fetch added item for response
+        const fetchQuery = `
+            SELECT w.id, w.user_id, w.product_id, w.created_at,
+                   p.label, p.price, p.image_url, p.description
+            FROM wishlist w
+            JOIN products p ON w.product_id = p.id
+            WHERE w.id = ?
+        `;
+        const [addedItem] = await pool.query(fetchQuery, [insertResult.insertId]);
+
+        return res.status(201).json({
+            message: 'Item added to wishlist successfully',
+            item: addedItem[0]
+        });
+    } catch (error) {
+        console.error('Error adding to wishlist:', error);
+        return res.status(500).json({ error: 'Failed to add item to wishlist', details: error.message });
+    }
 });
 
 router.delete('/:userId/:productId', async (req, res) => {
@@ -122,6 +128,15 @@ router.delete('/:userId/:productId', async (req, res) => {
                 error: 'Item not found in wishlist' 
             });
         }
+
+        // Fetch product label for activity log
+        const [productRows] = await pool.query('SELECT label FROM products WHERE id = ?', [productId]);
+        const productLabel = productRows?.[0]?.label || 'Item';
+
+        // Log wishlist addition
+        await AuditLogger.logWishlistRemove(userId, productId, req);
+
+        await createWishlistActivity(userId, productLabel, 'removed');
 
         res.status(200).json({
             message: 'Item removed from wishlist successfully'

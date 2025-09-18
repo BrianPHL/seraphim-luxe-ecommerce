@@ -3,6 +3,8 @@ import express from 'express';
 import cloudinary from "../apis/cloudinary.js";
 import multer from 'multer';
 import fs from 'fs';
+import { AuditLogger } from '../utils/audit-trail.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 const upload = multer({
@@ -62,9 +64,10 @@ router.get('/:id/images', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
     try {
         const { label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold } = req.body;
+        const admin_id = req.user?.id || req.body?.admin_id;
         
         const [ result ] = await pool.query(
             `
@@ -75,6 +78,11 @@ router.post('/', async (req, res) => {
         );
         
         const newProductId = result['insertId'];
+
+        // Log product creation
+        await AuditLogger.logAdminProductCreate(admin_id, newProductId, {
+            label, price, category_id, subcategory_id, description, stock_quantity, stock_threshold
+        }, req);
         
         res.status(201).json({
             message: 'Product added successfully!', 
@@ -160,12 +168,15 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
     }
 });
 
-router.put('/:product_id', async (req, res) => {
+router.put('/:product_id', requireAdmin,  async (req, res) => {
 
     try {
 
         const { product_id } = req.params;
         const { label, price, category_id, subcategory_id, description, image_url, stock_quantity, stock_threshold } = req.body;
+        const admin_id = req.user?.id || req.body?.admin_id;
+
+        const [oldData] = await pool.query('SELECT * FROM products WHERE id = ?', [product_id]);
 
         const [ result ] = await pool.query(
             `
@@ -180,6 +191,11 @@ router.put('/:product_id', async (req, res) => {
             return res.status(404).json({ error: 'Product not found' });
         }
 
+        // Log product update
+        await AuditLogger.logAdminProductUpdate(admin_id, product_id, oldData[0], {
+            label, price, category_id, subcategory_id, description, stock_quantity, stock_threshold
+        }, req);
+
         res.status(200).json({
             product_id: product_id 
         });
@@ -191,12 +207,15 @@ router.put('/:product_id', async (req, res) => {
 
 });
 
-router.put('/:product_id/feature/:is_featured', async (req, res) => {
+router.put('/:product_id/feature/:is_featured', requireAdmin, async (req, res) => {
 
     try {
 
         const { product_id, is_featured } = req.params;
         const parsedIsFeatured = is_featured === 'true' ? 1 : 0;
+        const admin_id = req.user?.id || req.body?.admin_id;
+
+        const [oldData] = await pool.query('SELECT is_featured FROM products WHERE id = ?', [product_id]);
 
         const [ affectedRows ] = await pool.query(
             `
@@ -210,6 +229,11 @@ router.put('/:product_id/feature/:is_featured', async (req, res) => {
         if (affectedRows.affectedRows === 0) {
             return res.status(404).json({ error: 'Product not found' });
         };
+
+        // Log feature status update
+        await AuditLogger.logAdminProductUpdate(admin_id, product_id, oldData[0], {
+            is_featured: parsedIsFeatured
+        }, req);
 
         res.status(200).json({ message: 'Product successfully updated!' });
 
@@ -255,6 +279,7 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
 router.delete('/:product_id', async (req, res) => {
     try {
         const { product_id } = req.params;
+        const admin_id = req.user?.id || req.body?.admin_id;
         
         const [product] = await pool.query(
             `
@@ -285,6 +310,9 @@ router.delete('/:product_id', async (req, res) => {
             `,
             [product_id]
         );
+
+        // Log product deletion
+        await AuditLogger.logAdminProductDelete(admin_id, product_id, product[0], req);
         
         res.status(200).json({ message: 'Product and associated image deleted successfully' });
     } catch (err) {

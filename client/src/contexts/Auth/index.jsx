@@ -236,6 +236,20 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
+            // Log the sign-out event before actually signing out
+            if (user) {
+                try {
+                    await fetch('/api/oauth/audit/signout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ user_id: user.id })
+                    });
+                } catch (auditError) {
+                    console.error('Error logging sign-out audit trail:', auditError);
+                }
+            }
 
             await signOut();
             localStorage.removeItem('user');
@@ -247,7 +261,8 @@ export const AuthProvider = ({ children }) => {
             console.error('Auth context logout function error:', err);
             localStorage.removeItem('user');
             setUser(null);
-            navigate('/');
+            showToast('Logged out successfully.', 'success');
+            navigate('/sign-in');
         }
     };
 

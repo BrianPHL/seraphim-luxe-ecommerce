@@ -200,6 +200,29 @@ const Orders = () => {
             const items = await getOrderItems(order.id);
             orderWithItems = { ...order, items: items || [] };
         }
+
+        // Log the invoice print action
+        try {
+            await fetch('/api/orders/invoice-print', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    admin_id: user.id,
+                    order_id: order.id,
+                    order_data: {
+                        order_number: order.order_number || `ORD-${order.id}`,
+                        customer_name: `${order.first_name} ${order.last_name}`,
+                        total_amount: order.total_amount
+                    },
+                    type: 'single'
+                })
+            });
+        } catch (auditError) {
+            console.error('Error logging invoice print audit:', auditError);
+        }
+                
         const printWindow = window.open('', '_blank');
         const invoiceHTML = generateInvoiceHTML(orderWithItems);
         printWindow.document.write(invoiceHTML);
@@ -412,6 +435,34 @@ const Orders = () => {
                 return order;
             })
         );
+
+        // Calculate total revenue
+        const totalRevenue = ordersWithItems.reduce((sum, order) => 
+            sum + parseFloat(order.total_amount || 0), 0
+        );
+
+        // Log the invoice report print action
+        try {
+            await fetch('/api/orders/invoice-print', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    admin_id: user.id,
+                    order_data: {
+                        order_count: ordersWithItems.length,
+                        date_range: dateRangeText,
+                        total_revenue: totalRevenue.toFixed(2),
+                        start_date: startDate,
+                        end_date: endDate
+                    },
+                    type: 'report'
+                })
+            });
+        } catch (auditError) {
+            console.error('Error logging invoice report print audit:', auditError);
+        }
 
         const combinedHTML = `
             <!DOCTYPE html>

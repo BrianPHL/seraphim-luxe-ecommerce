@@ -2,6 +2,8 @@ import pool from "../apis/db.js";
 import express from 'express';
 import { sendEmail } from "../apis/resend.js";
 import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail, createOrderShippedEmail, createOrderDeliveredEmail, createOrderCancelledEmail, createOrderReturnedEmail } from "../utils/email.js";
+import { AuditLogger } from '../utils/audit-trail.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -153,8 +155,8 @@ router.get('/:order_id/items', async (req, res) => {
     }
 });
 
-router.put('/:order_id/status', async (req, res) => {
-    
+router.put('/:order_id/status', requireAdmin, async (req, res) => {
+
     function getCurrentDateTime() {
         const now = new Date();
         return now.toLocaleString('en-US', {
@@ -166,6 +168,7 @@ router.put('/:order_id/status', async (req, res) => {
             hour12: true
         });
     };
+    
     const connection = await pool.getConnection();
     
     try {
@@ -173,6 +176,7 @@ router.put('/:order_id/status', async (req, res) => {
         
         const { status, admin_id, notes } = req.body;
         const orderId = req.params.order_id;
+        const adminId = admin_id || req.user?.id || req.admin?.id;
 
         const [ currentOrder ] = await connection.query(
             `SELECT id, account_id, order_number, status FROM orders WHERE id = ?`,
@@ -183,6 +187,8 @@ router.put('/:order_id/status', async (req, res) => {
             await connection.rollback();
             return res.status(404).json({ error: 'Order not found' });
         }
+
+        const oldStatus = currentOrder[0].status;
 
         const [ accountRows ] = await connection.query(
             `
@@ -209,7 +215,7 @@ router.put('/:order_id/status', async (req, res) => {
                 modified_by = ?, 
                 modified_at = NOW()
             WHERE id = ?
-        `, [status, notes, notes, notes, admin_id, orderId]);
+        `, [status, notes, notes, notes, adminId, orderId]);
 
         switch(status) {
 
@@ -277,6 +283,22 @@ router.put('/:order_id/status', async (req, res) => {
         }
 
         await connection.commit();
+
+        await AuditLogger.logOrderUpdate(
+                adminId,
+                orderId,
+                { 
+                    status: oldStatus,
+                    order_number: currentOrder[0].order_number
+                },
+                { 
+                    status: status,
+                    notes: notes,
+                    order_number: currentOrder[0].order_number
+                },
+                req
+            );
+            
         res.json({ success: true });
 
     } catch (err) {
@@ -350,6 +372,24 @@ router.post('/', async (req, res) => {
         });
 
         await connection.commit();
+
+        await AuditLogger.logOrderCreate(
+                account_id,
+                orderId,
+                {
+                    order_number: orderNumber,
+                    total_amount: total_amount,
+                    payment_method: payment_method,
+                    item_count: items?.length || 0,
+                    items: items?.map(item => ({
+                        product_id: item.product_id,
+                        quantity: item.quantity,
+                        price: item.price
+                    })) || []
+                },
+                req
+            );
+
         res.status(201).json({ 
             order_id: orderId,
             order_number: orderNumber,
@@ -468,6 +508,33 @@ router.delete('/:order_id', async (req, res) => {
         res.status(500).json({ error: err.message });
     } finally {
         connection.release();
+    }
+});
+
+router.post('/invoice-print', requireAdmin, async (req, res) => {
+    try {
+        const { admin_id, order_id, order_data, type = 'single' } = req.body;
+
+        const adminId = admin_id || req.user?.id || req.admin?.id;
+        
+        if (!adminId) {
+            return res.status(400).json({ error: 'Admin ID is required' });
+        }
+
+        let result;
+        if (type === 'report') {
+            result = await AuditLogger.logInvoiceReportPrint(adminId, order_data, req);
+        } else {
+            if (!order_id) {
+                return res.status(400).json({ error: 'Order ID is required for single invoice print' });
+            }
+            result = await AuditLogger.logInvoicePrint(adminId, order_id, order_data, req);
+        }
+        
+        res.json({ success: true, logged: result });
+    } catch (error) {
+        console.error('Error logging invoice print audit:', error);
+        res.status(500).json({ error: 'Failed to log audit event', details: error.message });
     }
 });
 

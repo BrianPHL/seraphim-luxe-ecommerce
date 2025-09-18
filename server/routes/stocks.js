@@ -1,5 +1,7 @@
 import express from 'express';
 import pool from '../apis/db.js';
+import { AuditLogger } from '../utils/audit-trail.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -56,6 +58,47 @@ router.get('/status-count', async (req, res) => {
     }
 });
 
+router.put('/:product_id', requireAdmin, async (req, res) => {
+    try {
+        const { product_id } = req.params;
+        const { stock_quantity, stock_threshold } = req.body;
+        const admin_id = req.user?.id || req.body?.admin_id;
+
+        // Get old stock values first
+        const [oldData] = await pool.query(
+            'SELECT stock_quantity, stock_threshold FROM products WHERE id = ?',
+            [product_id]
+        );
+
+        if (oldData.length === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        const [result] = await pool.query(
+            'UPDATE products SET stock_quantity = ?, stock_threshold = ? WHERE id = ?',
+            [stock_quantity, stock_threshold, product_id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Log stock update
+        await AuditLogger.logAdminStockUpdate(
+            admin_id, 
+            product_id, 
+            oldData[0].stock_quantity, 
+            stock_quantity, 
+            req
+        );
+
+        res.json({ message: 'Stock updated successfully' });
+    } catch (err) {
+        console.error('Error updating stock:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/:product_id/stock', async (req, res) => {
     try {
         const [rows] = await pool.query(
@@ -74,16 +117,23 @@ router.get('/:product_id/stock', async (req, res) => {
     }
 });
 
-router.post('/add', async (req, res) => {
+router.post('/add', requireAdmin, async (req, res) => {
     const connection = await pool.getConnection();
     
     try {
         await connection.beginTransaction();
         
-        const { product_id, quantity_change, new_threshold, notes, admin_id } = req.body;
+        const { product_id, quantity_change, new_threshold, notes } = req.body;
+        const admin_id = req.user?.id || req.body?.admin_id; // Get admin_id
+        
+        // Validate admin_id
+        if (!admin_id) {
+            await connection.rollback();
+            return res.status(400).json({ error: 'Admin ID is required' });
+        }
         
         const [currentProduct] = await connection.query(
-            'SELECT stock_quantity, stock_threshold FROM products WHERE id = ?',
+            'SELECT stock_quantity, stock_threshold, label FROM products WHERE id = ?',
             [product_id]
         );
         
@@ -93,7 +143,9 @@ router.post('/add', async (req, res) => {
         }
         
         const previousQuantity = currentProduct[0].stock_quantity;
+        const previousThreshold = currentProduct[0].stock_threshold;
         const newQuantity = previousQuantity + quantity_change;
+        const finalThreshold = new_threshold || previousThreshold;
         
         const [productResult] = await connection.query(
             `
@@ -143,6 +195,33 @@ router.post('/add', async (req, res) => {
         );
         
         await connection.commit();
+        
+        // Add audit logging here
+        try {
+            await AuditLogger.logAdminStockUpdate(
+                admin_id,
+                product_id,
+                previousQuantity,
+                newQuantity,
+                req,
+                {
+                    action_type: 'admin_stock_restock',
+                    details: `Stock restocked: ${quantity_change > 0 ? '+' : ''}${quantity_change} units. ${notes ? `Notes: ${notes}` : ''}`,
+                    old_values: {
+                        stock_quantity: previousQuantity,
+                        stock_threshold: previousThreshold
+                    },
+                    new_values: {
+                        stock_quantity: newQuantity,
+                        stock_threshold: finalThreshold,
+                        quantity_change: quantity_change
+                    }
+                }
+            );
+        } catch (auditError) {
+            console.error('Error logging audit trail:', auditError);
+            // Don't fail the request if audit logging fails
+        }
         
         res.json({ 
             message: 'Stock updated successfully',

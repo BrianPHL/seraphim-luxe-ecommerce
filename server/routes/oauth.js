@@ -1,5 +1,6 @@
 import pool from "../apis/db.js";
 import express from 'express';
+import { AuditLogger } from "../utils/audit-trail.js";
 
 const router = express.Router();
 
@@ -103,6 +104,23 @@ router.get('/check-suspension-status/:email/', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 
+});
+
+router.post('/audit/signout', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        const result = await AuditLogger.logSignOut(user_id, req, 'User signed out');
+        
+        res.json({ success: true, logged: result });
+    } catch (error) {
+
+        res.status(500).json({ error: 'Failed to log audit event', details: error.message });
+    }
 });
 
 export default router;

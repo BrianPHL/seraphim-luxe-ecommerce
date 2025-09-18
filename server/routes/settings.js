@@ -1,5 +1,7 @@
 import pool from "../apis/db.js";
 import express from 'express';
+import { AuditLogger } from '../utils/audit-trail.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -85,12 +87,31 @@ router.get('/settings', async (req, res) => {
     }
 });
 
-router.put('/settings', async (req, res) => {
+router.put('/settings', requireAdmin, async (req, res) => {
+    const connection = await pool.getConnection();
+    
     try {
+        await connection.beginTransaction();
+        
+        const admin_id = req.user?.id || req.body?.admin_id;
         const { paymentMethods, customPaymentMethods, availableCurrencies } = req.body;
 
+        // Validate admin_id
+        if (!admin_id) {
+            await connection.rollback();
+            return res.status(400).json({ error: 'Admin ID is required' });
+        }
+
+        // Get old settings before update
+        const [oldSettings] = await connection.execute('SELECT * FROM platform_settings');
+        const oldValues = {};
+        oldSettings.forEach(setting => {
+            oldValues[setting.setting_key] = setting.setting_value;
+        });
+
+        // Clean up custom payment methods
         if (customPaymentMethods) {
-            const [existingRows] = await pool.execute(
+            const [existingRows] = await connection.execute(
                 'SELECT setting_key FROM platform_settings WHERE setting_key LIKE "custom_payment_%"'
             );
             const keepKeys = customPaymentMethods.map(m => m.key);
@@ -102,7 +123,7 @@ router.put('/settings', async (req, res) => {
 
             for (const methodKey of existingMethodKeys) {
                 if (!keepKeys.includes(methodKey)) {
-                    await pool.execute(
+                    await connection.execute(
                         'DELETE FROM platform_settings WHERE setting_key LIKE ?',
                         [`custom_payment_${methodKey}_%`]
                     );
@@ -110,10 +131,11 @@ router.put('/settings', async (req, res) => {
             }
         }
 
+        // Update payment methods
         if (paymentMethods) {
             for (const [method, enabled] of Object.entries(paymentMethods)) {
                 const settingKey = `payment_${method}_enabled`;
-                await pool.execute(
+                await connection.execute(
                     `INSERT INTO platform_settings (setting_key, setting_value, updated_at) 
                      VALUES (?, ?, NOW()) 
                      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`,
@@ -122,25 +144,26 @@ router.put('/settings', async (req, res) => {
             }
         }
 
+        // Update custom payment methods
         if (customPaymentMethods) {
             for (const method of customPaymentMethods) {
                 const enabledKey = `custom_payment_${method.key}_enabled`;
                 const labelKey = `custom_payment_${method.key}_label`;
                 const descriptionKey = `custom_payment_${method.key}_description`;
 
-                await pool.execute(
+                await connection.execute(
                     `INSERT INTO platform_settings (setting_key, setting_value, updated_at) 
                      VALUES (?, ?, NOW()) 
                      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`,
                     [enabledKey, method.enabled.toString()]
                 );
-                await pool.execute(
+                await connection.execute(
                     `INSERT INTO platform_settings (setting_key, setting_value, updated_at) 
                      VALUES (?, ?, NOW()) 
                      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`,
                     [labelKey, method.label]
                 );
-                await pool.execute(
+                await connection.execute(
                     `INSERT INTO platform_settings (setting_key, setting_value, updated_at) 
                      VALUES (?, ?, NOW()) 
                      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`,
@@ -149,10 +172,11 @@ router.put('/settings', async (req, res) => {
             }
         }
 
+        // Update available currencies
         if (availableCurrencies) {
             for (const [currency, enabled] of Object.entries(availableCurrencies)) {
                 const settingKey = `currency_${currency}_enabled`;
-                await pool.execute(
+                await connection.execute(
                     `INSERT INTO platform_settings (setting_key, setting_value, updated_at) 
                      VALUES (?, ?, NOW()) 
                      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`,
@@ -161,13 +185,35 @@ router.put('/settings', async (req, res) => {
             }
         }
 
+        await connection.commit();
+
+        // Log settings update in audit trail
+        try {
+            await AuditLogger.logAdminSettingsUpdate(
+                admin_id, 
+                oldValues, 
+                {
+                    paymentMethods,
+                    customPaymentMethods,
+                    availableCurrencies
+                }, 
+                req
+            );
+        } catch (auditError) {
+            console.error('Error logging audit trail:', auditError);
+            // Don't fail the request if audit logging fails
+        }
+
         res.json({ message: 'Settings updated successfully' });
     } catch (error) {
+        await connection.rollback();
         console.error('Error updating settings:', error);
         res.status(500).json({ 
             error: 'Failed to update settings',
             details: error.message 
         });
+    } finally {
+        connection.release();
     }
 });
 
