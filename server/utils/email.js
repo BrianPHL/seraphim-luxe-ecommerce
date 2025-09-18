@@ -82,7 +82,7 @@ export const createWelcomeEmail = (email, name = '') => {
 export const createOrderPendingEmail = (name, orderNumber, totalAmount) => {
     return `
         <div style="background: #f6f1ea; font-family: 'Lora', serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(180, 140, 90, 0.08); border: 1px solid #e5d4c0;">
-            <h2 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Order Received</h2>
+            <h1 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Order Received | ${ orderNumber }</h1>
             <p style="color: #7c5a3a; font-size: 1.1em;">Hi <strong>${ name }</strong>,</p>
             <p style="color: #7c5a3a; font-size: 1.05em;">
                 Thank you for your order! We've received your order and it's currently being reviewed.
@@ -110,7 +110,7 @@ export const createOrderPendingEmail = (name, orderNumber, totalAmount) => {
 export const createOrderRefundedEmail = (name, orderNumber, refundAmount, refundMethod) => {
     return `
         <div style="background: #f6f1ea; font-family: 'Lora', serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(180, 140, 90, 0.08); border: 1px solid #e5d4c0;">
-            <h2 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Refund Completed</h2>
+            <h1 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Refund Completed | ${ orderNumber }</h1>
             <p style="color: #7c5a3a; font-size: 1.1em;">Hi <strong>${ name }</strong>,</p>
             <p style="color: #7c5a3a; font-size: 1.05em;">
                 Your refund has been successfully processed and should appear in your account soon.
