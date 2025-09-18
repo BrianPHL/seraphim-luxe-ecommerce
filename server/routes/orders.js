@@ -1,5 +1,7 @@
 import pool from "../apis/db.js";
 import express from 'express';
+import { sendEmail } from "../apis/resend.js";
+import { createOrderRefundedEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -273,9 +275,18 @@ router.post('/:order_id/refund', async (req, res) => {
         const { amount, reason, admin_id, notes } = req.body;
         const orderId = req.params.order_id;
 
-        const [currentOrder] = await connection.query(
-            `SELECT id, total_amount, payment_method FROM orders WHERE id = ?`,
+        const [ currentOrder ] = await connection.query(
+            `SELECT id, order_number, account_id, total_amount, payment_method FROM orders WHERE id = ?`,
             [orderId]
+        );
+
+        const [ accountRows ] = await connection.query(
+            `
+                SELECT name, email
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ currentOrder[0].account_id ]
         );
 
         if (currentOrder.length === 0) {
@@ -283,19 +294,12 @@ router.post('/:order_id/refund', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        await connection.query(`
+        const [ orderRefundsResult ] = await connection.query(`
             INSERT INTO order_refunds 
             (order_id, refund_amount, reason, reason_description, refund_method, notes, processed_by, processed_at, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'completed')
-        `, [
-            orderId, 
-            amount, 
-            reason, 
-            notes,  
-            currentOrder[0].payment_method,
-            notes, 
-            admin_id 
-        ]);
+        `,
+        [ orderId, amount, reason, notes, currentOrder[0].payment_method, notes, admin_id ]);
 
         await connection.query(`
             UPDATE orders 
@@ -304,7 +308,17 @@ router.post('/:order_id/refund', async (req, res) => {
                 modified_by = ?, 
                 modified_at = NOW()
             WHERE id = ?
-        `, [amount, reason, admin_id, orderId]);
+        `,
+        [ amount, reason, admin_id, orderId ]);
+
+        const { _, err } = await sendEmail({
+            from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+            to: accountRows[0].email,
+            subject: `Order Refund #(${ currentOrder[0].order_number }) | Seraphim Luxe`,
+            html: createOrderRefundedEmail(accountRows[0].email, accountRows[0].name, currentOrder[0].order_number, amount, currentOrder[0].payment_method)
+        });
+        if (err)
+            throw new Error(err);
 
         await connection.commit();
         res.json({ 
