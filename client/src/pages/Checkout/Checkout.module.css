@@ -110,13 +110,17 @@
 }
 
 .empty-address {
+    display: flex;
     padding: 1.5rem;
+    justify-content: center;
     text-align: center;
+    align-items: center;
     color: var(--tg-secondary);
     font-size: 0.8rem;
     background: var(--bg-tertiary);
     border: 1px dashed var(--bg-outline);
     border-radius: 0.25rem;
+    height: 100%;
 }
 
 .checkout-section {
