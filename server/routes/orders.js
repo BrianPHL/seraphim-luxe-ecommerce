@@ -1,7 +1,7 @@
 import pool from "../apis/db.js";
 import express from 'express';
 import { sendEmail } from "../apis/resend.js";
-import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail, createOrderShippedEmail, createOrderDeliveredEmail } from "../utils/email.js";
+import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail, createOrderShippedEmail, createOrderDeliveredEmail, createOrderCancelledEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -255,7 +255,7 @@ router.put('/:order_id/status', async (req, res) => {
                     from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                     to: accountRows[0].email,
                     subject: `Order Cancelled | Seraphim Luxe`,
-                    html: createOrderCancelledEmail(accountRows[0].name, currentOrder[0].order_number)
+                    html: createOrderCancelledEmail(accountRows[0].name, currentOrder[0].order_number, notes || 'No reason provided.')
                 });
                 if (cancelledResult.err)
                     throw new Error(cancelledResult.err);
