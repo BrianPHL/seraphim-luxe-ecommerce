@@ -9,3 +9,4 @@ export { default as AdminCategories } from './Categories';
 export { default as AdminCMS } from './CMS';
 export { default as AdminSettings } from './Settings';
 export { default as AdminAccounts } from './Accounts';
+export { default as AdminAuditTrail } from './AuditTrail';

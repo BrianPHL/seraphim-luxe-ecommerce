@@ -211,6 +211,15 @@ const Profile = ({}) => {
         } else {
             showToast('Platform settings updated successfully', 'success');
             setIsPlatformSettingsChanged(false);
+
+            // Force update the local platform settings to match what was saved
+            if (result.settings) {
+                setPlatformSettings({
+                    currency: result.settings.currency,
+                    preferred_shipping_address: result.settings.preferred_shipping_address,
+                    preferred_payment_method: result.settings.preferred_payment_method
+                });
+            }
         }
     };
 
@@ -683,12 +692,15 @@ const Profile = ({}) => {
             validateIfPasswordExists();
         }
 
-        if (settings) {
-            setPlatformSettings({
+       if (settings) {
+            const newPlatformSettings = {
                 currency: settings.currency || 'PHP',
                 preferred_shipping_address: settings.preferred_shipping_address || 'home',
                 preferred_payment_method: settings.preferred_payment_method || 'cash_on_delivery'
-            });
+            };
+            
+            setPlatformSettings(newPlatformSettings);
+            console.log('🔄 Updated platformSettings:', newPlatformSettings);
         }
 
         const handleClickOutside = (event) => {

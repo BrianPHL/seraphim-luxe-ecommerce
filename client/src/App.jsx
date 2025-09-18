@@ -6,7 +6,7 @@ import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Reservations, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
 import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
-import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS, AdminSettings, AdminAccounts } from '@pages/Admin';
+import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS, AdminSettings, AdminAccounts, AdminAuditTrail } from '@pages/Admin';
 
 const PAGE_TITLES = {
 	"/": "Seraphim Luxe | Style Without Boundaries",
@@ -202,6 +202,7 @@ const App = () => {
                    <Route path="cms" element={<AdminCMS />} />
                    <Route path="settings" element={<AdminSettings />} />
                    <Route path="accounts" element={<AdminAccounts />} />
+                   <Route path="audit-trail" element={<AdminAuditTrail />} />
                 </Route>
 
                 <Route path="/admin/profile" element={

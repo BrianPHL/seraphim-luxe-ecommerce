@@ -27,7 +27,8 @@ export const SettingsProvider = ({ children }) => {
             });
             
             if (response.ok) {
-                const updatedSettings = await response.json();
+                const result = await response.json();
+                const updatedSettings = result.settings || result;
                 setSettings(updatedSettings);
                 return { success: true };
             } else {

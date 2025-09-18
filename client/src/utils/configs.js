@@ -683,3 +683,113 @@ export const ADMIN_FILTER_CONFIG = {
     ]
 };
 
+export const AUDIT_FILTER_CONFIG = {
+    searchFields: ['email', 'first_name', 'last_name', 'details'],
+    sortOptions: [
+        {
+            label: 'Latest',
+            value: 'Sort by: Latest',
+            field: 'created_at',
+            type: 'date',
+            direction: 'desc'
+        },
+        {
+            label: 'Oldest',
+            value: 'Sort by: Oldest',
+            field: 'created_at',
+            type: 'date',
+            direction: 'asc'
+        },
+        {
+            label: 'User (A-Z)',
+            value: 'Sort by: User (A-Z)',
+            sortFunction: (a, b) => {
+                const aName = `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.email || '';
+                const bName = `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.email || '';
+                return aName.localeCompare(bName);
+            }
+        },
+        {
+            label: 'User (Z-A)',
+            value: 'Sort by: User (Z-A)',
+            sortFunction: (a, b) => {
+                const aName = `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.email || '';
+                const bName = `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.email || '';
+                return bName.localeCompare(aName);
+            }
+        },
+        {
+            label: 'Action Type (A-Z)',
+            value: 'Sort by: Action Type (A-Z)',
+            sortFunction: (a, b) => {
+                const aAction = a.action_type || '';
+                const bAction = b.action_type || '';
+                return aAction.localeCompare(bAction);
+            }
+        },
+        {
+            label: 'Action Type (Z-A)',
+            value: 'Sort by: Action Type (Z-A)',
+            sortFunction: (a, b) => {
+                const aAction = a.action_type || '';
+                const bAction = b.action_type || '';
+                return bAction.localeCompare(aAction);
+            }
+        }
+    ],
+    filterOptions: [
+        {
+            key: 'action_type',
+            label: 'Action Type',
+            type: 'select',
+            field: 'action_type'
+        },
+        {
+            key: 'user_id',
+            label: 'User ID',
+            type: 'text',
+            field: 'user_id'
+        },
+        {
+            key: 'date_range',
+            label: 'Date Range',
+            type: 'date_range',
+            field: 'created_at'
+        }
+    ]
+};
+
+export const ACTION_TYPE_LABELS = {
+    'auth_signin': 'Sign In',
+    'auth_signup': 'Sign Up',
+    'auth_signout': 'Sign Out',
+    'auth_password_change': 'Password Change',
+    'profile_update': 'Profile Update',
+    'profile_preferences_update': 'Update Preferences', 
+    'account_suspension': 'Account Suspension',
+    'account_deletion': 'Account Deletion',
+    'product_view': 'Product View',
+    'cart_add': 'Add to Cart',
+    'cart_remove': 'Remove from Cart',
+    'cart_update': 'Update Cart',
+    'wishlist_add': 'Add to Wishlist',
+    'wishlist_remove': 'Remove from Wishlist',
+    'order_create': 'Create Order',
+    'order_update': 'Update Order',
+    'order_cancel': 'Cancel Order',
+    'admin_product_create': 'Create Product',
+    'admin_product_update': 'Update Product',
+    'admin_product_delete': 'Delete Product',
+    'admin_category_create': 'Create Category',
+    'admin_category_update': 'Update Category',
+    'admin_category_delete': 'Delete Category',
+    'admin_stock_update': 'Update Stock',
+    'admin_stock_restock': 'Restock Inventory', 
+    'admin_settings_update': 'Update Settings',
+    'admin_account_create': 'Admin Created An Account',
+    'admin_account_update': 'Admin Updated An Account',
+    'admin_account_suspend': 'Admin Suspended An Account',
+    'order_invoice_print': 'Print Invoice',
+    'order_invoice_report_print': 'Print Invoice Report',
+};
+

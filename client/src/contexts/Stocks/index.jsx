@@ -36,7 +36,7 @@ export const StocksProvider = ({ children }) => {
                     quantity_change: quantityChange,
                     new_threshold: newThreshold || undefined,
                     notes,
-                    admin_id: user.account_id
+                    admin_id: user?.id
                 })
             });
             

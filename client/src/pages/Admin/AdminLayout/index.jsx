@@ -73,6 +73,12 @@ const AdminLayout = () => {
                         isNested={ true }
                         isActive={ pathname === '/admin/settings' }
                     />
+                    <Anchor
+                        label="Audit Trail"
+                        link="/admin/audit-trail"
+                        isNested={ true }
+                        isActive={ pathname === '/admin/audit-trail' }
+                    />
                 </div>
                 <div className={ styles['admin-container'] }>
                     <Outlet />
