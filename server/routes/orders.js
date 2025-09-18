@@ -1,7 +1,7 @@
 import pool from "../apis/db.js";
 import express from 'express';
 import { sendEmail } from "../apis/resend.js";
-import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail } from "../utils/email.js";
+import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail, createOrderShippedEmail, createOrderDeliveredEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -212,6 +212,18 @@ router.put('/:order_id/status', async (req, res) => {
                 if (processingResult.err)
                     throw new Error(processingResult.err);
             
+                break;
+
+            case "shipped":
+
+                const shippedResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: accountRows[0].email,
+                    subject: `Order Shipped | Seraphim Luxe`,
+                    html: createOrderShippedEmail(accountRows[0].name, currentOrder[0].order_number)
+                });
+                if (shippedResult.err)
+                    throw new Error(shippedResult.err);
                 break;
 
 
