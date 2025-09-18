@@ -1,32 +1,50 @@
-import { useContext, useState, useRef, useEffect } from 'react';
+import { useState, useContext, useCallback, useEffect } from 'react';
 import DropdownContext from './context';
 
 export const DropdownProvider = ({ children }) => {
+    const [openDropdownId, setOpenDropdownId] = useState(null);
+    const [dropdowns, setDropdowns] = useState(new Map());
 
-    const [ openDropdownId, setOpenDropdownId ] = useState(null);
-    const dropdownRefs = useRef({});
-
-    useEffect(() => {
-        
-        const handleClick = (event) => {
-            const isInside = Object.values(dropdownRefs.current).some(ref => ref?.contains(event.target));
-            if (!isInside) setOpenDropdownId(null);
-        };
-        document.addEventListener('mousedown', handleClick);
-        return () => document.removeEventListener('mousedown', handleClick);
-
+    const registerDropdown = useCallback((id, element) => {
+        if (id && element) {
+            setDropdowns(prev => new Map(prev).set(id, element));
+        }
     }, []);
 
-    const registerDropdown = (id, ref) => {
-        dropdownRefs.current[id] = ref;
-    };
+    const closeAllDropdowns = useCallback(() => {
+        setOpenDropdownId(null);
+    }, []);
+
+    const handleClickOutside = useCallback((event) => {
+        if (openDropdownId) {
+            const dropdownElement = dropdowns.get(openDropdownId);
+            if (dropdownElement && !dropdownElement.contains(event.target)) {
+                setOpenDropdownId(null);
+            }
+        }
+    }, [openDropdownId, dropdowns]);
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [handleClickOutside]);
 
     return (
-        <DropdownContext.Provider value={{ openDropdownId, setOpenDropdownId, registerDropdown }}>
-            { children }
+        <DropdownContext.Provider value={{
+            openDropdownId,
+            setOpenDropdownId,
+            registerDropdown,
+            closeAllDropdowns
+        }}>
+            {children}
         </DropdownContext.Provider>
     );
-
 };
 
-export const useDropdown = () => useContext(DropdownContext);
+export const useDropdown = () => {
+    const context = useContext(DropdownContext);
+    if (!context) {
+        throw new Error('useDropdown must be used within a DropdownProvider');
+    }
+    return context;
+};

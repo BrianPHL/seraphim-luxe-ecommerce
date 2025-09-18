@@ -16,7 +16,8 @@ import {
   CategoriesProvider,
   WishlistProvider,
   SettingsProvider,
-  CMSProvider
+  CMSProvider,
+  InboxProvider
 } from '@contexts';
 import App from './App';
 
@@ -27,29 +28,31 @@ createRoot(document.getElementById('root')).render(
         <DropdownProvider>
           <ToastProvider>
             <AuthProvider>
-              <CMSProvider>
-                <SettingsProvider>
-                  <CategoriesProvider>
-                    <ProductsProvider>
-                      <ReservationProvider>
-                        <OrdersProvider>
-                          <WishlistProvider>
-                            <CartProvider>
-                              <CheckoutProvider>
-                                <InstallmentsProvider>
-                                  <StocksProvider>
-                                    <App />
-                                  </StocksProvider>
-                                </InstallmentsProvider>
-                              </CheckoutProvider>
-                            </CartProvider>
-                          </WishlistProvider>
-                        </OrdersProvider>
-                      </ReservationProvider>
-                    </ProductsProvider>
-                  </CategoriesProvider>
-                </SettingsProvider>
-              </CMSProvider>
+              <InboxProvider>
+                <CMSProvider>
+                  <SettingsProvider>
+                    <CategoriesProvider>
+                      <ProductsProvider>
+                        <ReservationProvider>
+                          <OrdersProvider>
+                            <WishlistProvider>
+                              <CartProvider>
+                                <CheckoutProvider>
+                                  <InstallmentsProvider>
+                                    <StocksProvider>
+                                      <App />
+                                    </StocksProvider>
+                                  </InstallmentsProvider>
+                                </CheckoutProvider>
+                              </CartProvider>
+                            </WishlistProvider>
+                          </OrdersProvider>
+                        </ReservationProvider>
+                      </ProductsProvider>
+                    </CategoriesProvider>
+                  </SettingsProvider>
+                </CMSProvider>
+              </InboxProvider>
             </AuthProvider>
           </ToastProvider>
         </DropdownProvider>

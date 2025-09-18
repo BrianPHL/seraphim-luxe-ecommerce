@@ -1,0 +1,272 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.popup {
+    position: fixed;
+    top: 22%;                 /* slightly higher on screen */
+    left: 50%;
+    transform: translate(-50%, -22%);
+    width: 520px;             /* smaller than before */
+    max-width: 92vw;
+    max-height: 60vh;         /* reduced height */
+    background-color: var(--bg-primary);
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-primary);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+    z-index: 11000; /* ensure above header/drawer */
+    overflow: hidden;
+    animation: slideIn 0.18s ease-out;
+    pointer-events: auto; /* ensure clicks register */
+    z-index: 12000;       /* keep above header/drawers */
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Theme-aligned header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--bg-outline);
+    background-color: var(--bg-secondary);    /* theme */
+    color: var(--tg-primary);                  /* theme text */
+}
+
+.header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--tg-primary);
+}
+
+/* header action buttons */
+.headerActions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.markAllBtn,
+.clearBtn,
+.closeBtn {
+    background: transparent;
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-primary);
+    padding: 0.4rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+
+.markAllBtn:hover,
+.clearBtn:hover,
+.closeBtn:hover {
+    background-color: var(--bg-hover);
+    color: var(--tg-primary);
+}
+
+/* content & items */
+.content {
+    background-color: var(--bg-primary);
+    padding: 0.6rem;
+    max-height: calc(60vh - 56px);
+    overflow-y: auto;
+}
+
+.empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--tg-secondary);
+    font-family: 'Lora', serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.empty i {
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+.activities {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.activity {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.6rem;
+    background-color: transparent; /* let page bg show */
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: background-color 0.12s;
+    font-family: 'Lora', serif;
+}
+
+.activity:hover {
+    background-color: var(--bg-hover);
+}
+
+.activityIcon {
+    background-color: var(--accent-base);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.activityContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.activityContent strong {
+    color: var(--tg-primary);
+    font-size: 0.92rem;
+}
+.activityContent p {
+    color: var(--tg-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* optional: visually distinguish unread items */
+.activity.unread {
+    border-left: 4px solid var(--accent-base);   /* theme accent for unread */
+    background: linear-gradient(90deg, rgba(166,124,82,0.03), transparent);
+}
+
+.activity.read {
+    opacity: 0.9;
+}
+
+/* item actions */
+.activityActions {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.markBtn,
+.deleteBtn {
+    background: transparent;
+    border: 1px solid var(--bg-outline);
+    color: var(--tg-primary);
+    padding: 0.35rem 0.45rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* badge for unread (if you render one) */
+.indicator-badge,
+.headerBadge {
+    background: var(--accent-base);
+    color: #fff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    line-height: 1;
+    display: inline-block;
+    margin-left: 0.4rem;
+}
+
+/* Mobile tweaks keep theme */
+@media (max-width: 768px) {
+    .popup {
+        z-index: 12000;
+        top: 6%;
+        left: 50%;
+        transform: translate(-50%, 0);
+        width: 94vw;
+        max-height: 82vh;
+        border-radius: 10px;
+        z-index: 9999;
+    }
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+        padding: 0.6rem;
+    }
+    .header h3 { font-size: 1rem; }
+    .headerActions { justify-content: flex-end; flex-wrap: wrap; }
+    .markAllBtn, .clearBtn, .closeBtn { width: auto; }
+    .activityIcon { width: 44px; height: 44px; }
+    .markBtn, .deleteBtn { min-width: 44px; min-height: 44px; }
+}
+
+/* Very small screens: stack header actions full width */
+@media (max-width: 420px) {
+    .headerActions {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .markAllBtn,
+    .clearBtn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .closeBtn { right: 8px; top: 6px; }
+}
+
+/* Scrollbar styling */
+.content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: var(--bg-outline);
+    border-radius: 2px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-base);
+}
+
+/* ensure buttons accept clicks */
+.popup button {
+  pointer-events: auto;
+}
+
+/* mobile override (keep high z-index) */
+@media (max-width: 768px) {
+  .popup { z-index: 13000; }
+  .closeBtn { z-index: 13001; }
+}

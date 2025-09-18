@@ -1,5 +1,6 @@
 import pool from "../apis/db.js";
 import express from 'express';
+import { createCartActivity } from '../utils/inbox.js';
 
 const router = express.Router();
 
@@ -39,39 +40,41 @@ router.get('/:account_id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+  try {
+    const { account_id, product_id, quantity = 1 } = req.body;
 
-    try {
+    const [existCheck] = await pool.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM carts WHERE account_id = ? AND product_id = ?
+       ) as item_exists`,
+      [account_id, product_id]
+    );
 
-        const { account_id, product_id, quantity = 1 } = req.body;
-        const [ existCheck ] = await pool.query(
-            `
-                SELECT EXISTS (
-                    SELECT 1 FROM carts
-                    WHERE account_id = ? AND product_id = ?
-                ) as item_exists FROM DUAL
-            `,
-            [ account_id, product_id ]
-        );
+    const itemExists = existCheck[0].item_exists || existCheck[0].item_exists === 1;
 
-        const itemExists = existCheck[0]['item_exists'];
-
-        if (itemExists) {
-            res.status(409).json({ message: 'Product already in cart' });
-        } else {
-            await pool.query(
-                `
-                    INSERT INTO carts (account_id, product_id, quantity)
-                    VALUES (?, ?, ?)
-                `,
-                [ account_id, product_id, quantity ]
-            );
-            res.status(201).json({ message: 'Product added to cart successfully!' });
-        }
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    if (itemExists) {
+      return res.status(409).json({ message: 'Product already in cart' });
     }
 
+    const [result] = await pool.query(
+      'INSERT INTO carts (account_id, product_id, quantity) VALUES (?, ?, ?)',
+      [ account_id, product_id, quantity ]
+    );
+
+    if (result.insertId) {
+      const [productRows] = await pool.query('SELECT label FROM products WHERE id = ?', [product_id]);
+      const productLabel = productRows?.[0]?.label || 'Product';
+
+      await createCartActivity(account_id, productLabel, 'added'); // create activity
+
+      return res.status(201).json({ success: true, insertId: result.insertId });
+    }
+
+    res.status(500).json({ error: 'Failed to insert cart item' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.put('/:account_id/:product_id', async (req, res) => {
