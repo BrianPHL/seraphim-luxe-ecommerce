@@ -200,21 +200,29 @@ router.put('/:order_id/status', async (req, res) => {
         `, [status, notes, notes, notes, admin_id, orderId]);
 
         switch(status) {
+
             case "processing":
-                const { _, err } = await sendEmail({
+
+                const processingResult = await sendEmail({
                     from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                     to: accountRows[0].email,
                     subject: `Order Processing | Seraphim Luxe`,
                     html: createOrderProcessingEmail(accountRows[0].name, currentOrder[0].order_number)
                 });
-                if (err)
-                    throw new Error(err);
+                if (processingResult.err)
+                    throw new Error(processingResult.err);
             
+                break;
+
 
         };
+            default:
+                throw new Error("Invalid status passed: ", status);
+        }
 
         await connection.commit();
         res.json({ success: true });
+
     } catch (err) {
         await connection.rollback();
         console.error('Error updating order status:', err);
