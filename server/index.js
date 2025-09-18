@@ -19,6 +19,7 @@ import wishlistRoutes from './routes/wishlist.js';
 import userSettingsRoutes from './routes/user-settings.js';
 import settingsRouter from './routes/settings.js';
 import paypalRouter from './routes/paypal.js';
+import inboxRouter from './routes/inbox.js';
 
 dotenv.config();
 
@@ -72,6 +73,7 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
 app.use('/api/admin', settingsRouter);
 app.use('/api/paypal', paypalRouter);
+app.use('/api/inbox', inboxRouter);
 
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);

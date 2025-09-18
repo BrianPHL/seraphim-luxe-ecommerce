@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Logo, Anchor, Button, Accordion, Modal } from '@components';
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from 'react-router';
-import { useTheme, useAuth, useCart, useWishlist } from "@contexts";
+import { useTheme, useAuth, useCart, useWishlist, useDropdown, useInbox } from "@contexts";
+import InboxPopup from '../InboxPopup'; // add this near other imports
 
 const Header = () => {
 
@@ -15,10 +16,17 @@ const Header = () => {
     const { user, logout } = useAuth();
     const { cartItems } = useCart();
     const { wishlistItems } = useWishlist();
+    const { toggleInbox, unreadCount } = useInbox();
     const handleLogout = () => setModalOpen(true);
+
+    // Calculate inbox count (cart + wishlist + orders)
+    const getInboxCount = () => {
+        return unreadCount > 0 ? unreadCount : null;
+    };
 
     return (
         <>
+            <InboxPopup />      {/* <-- add this so the popup is always mounted */}
             <div className={ styles['desktop-header'] }>
                 <Logo />
                 <div className={ styles['right'] }>
@@ -54,6 +62,30 @@ const Header = () => {
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 { user ? (
                                     <>
+                                        {/* Add Inbox Button */}
+                                        <div
+                                            className={ styles['indicator-wrapper'] }
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={toggleInbox}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleInbox(); }}
+                                            data-inbox-button="true"
+                                        >
+                                            <Button
+                                                type="icon"
+                                                icon='fa-solid fa-inbox'
+                                                action={() => toggleInbox()}
+                                                externalStyles={ styles['indicator-btn'] }
+                                                data-inbox-button="true"
+                                            />
+                                            { unreadCount > 0 ? (
+                                                <span className={ styles['indicator-badge'] }>
+                                                    { unreadCount }
+                                                </span>
+                                            ) : null }
+                                        </div>
+                                        
+                                        {/* Keep existing wishlist structure */}
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/wishlist')  }
@@ -70,6 +102,8 @@ const Header = () => {
                                                 </span>
                                             ) : null }
                                         </div>
+                                        
+                                        {/* Keep existing cart structure */}
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/cart')  }
@@ -77,7 +111,7 @@ const Header = () => {
                                             <Button
                                                 type="icon"
                                                 icon='fa-solid fa-cart-shopping'
-                                                action={ () => navigate('cart') }
+                                                action={ () => navigate('/cart') }
                                                 externalStyles={ styles['indicator-btn'] }
                                                 />
                                             { cartItems['length'] !== 0 ? (
@@ -230,6 +264,23 @@ const Header = () => {
                         <div style={{ display: 'flex', gap: '1rem' }}>
                             { user && user.role === 'customer' ? (
                                 <>
+                                    {/* Add Mobile Inbox Button */}
+                                    <div className={ styles['indicator-wrapper'] }>
+                                        <Button
+                                            type="icon"
+                                            icon='fa-solid fa-inbox'
+                                            action={() => toggleInbox()}
+                                            externalStyles={ styles['indicator-btn'] }
+                                            data-inbox-button="true"
+                                        />
+                                        { unreadCount > 0 ? (
+                                            <span className={ styles['indicator-badge'] }>
+                                                { unreadCount }
+                                            </span>
+                                        ) : null }
+                                    </div>
+                                    
+                                    {/* Keep existing mobile wishlist structure */}
                                     <div 
                                         className={ styles['indicator-wrapper'] }
                                         onClick={ () => navigate('/wishlist')  }
@@ -246,6 +297,8 @@ const Header = () => {
                                             </span>
                                         ) : null }
                                     </div>
+                                    
+                                    {/* Keep existing mobile cart structure */}
                                     <div 
                                         className={ styles['indicator-wrapper'] }
                                         onClick={ () => navigate('/cart')  }
@@ -273,6 +326,8 @@ const Header = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* Keep all your existing drawer code */}
             <div className={` ${ styles['drawer'] } ${ drawerOpen ? styles['drawer-open'] : null }`}>
                 <div className={ styles['drawer-header'] }>
                 <div className={ styles['drawer-header-top'] }>
@@ -341,6 +396,25 @@ const Header = () => {
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 { user && user.role === 'customer' ? (
                                     <>
+                                        {/* Add Drawer Inbox Button */}
+                                        <div 
+                                            className={ styles['indicator-wrapper'] }
+                                            onClick={toggleInbox}
+                                        >
+                                            <Button
+                                                type="icon"
+                                                icon='fa-solid fa-inbox'
+                                                action={toggleInbox}
+                                                externalStyles={ styles['indicator-btn'] }
+                                            />
+                                            { getInboxCount() ? (
+                                                <span className={ styles['indicator-badge'] }>
+                                                    { getInboxCount() }
+                                                </span>
+                                            ) : null }
+                                        </div>
+                                        
+                                        {/* Keep existing drawer wishlist structure */}
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/wishlist')  }
@@ -357,6 +431,8 @@ const Header = () => {
                                                 </span>
                                             ) : null }
                                         </div>
+                                        
+                                        {/* Keep existing drawer cart structure */}
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/cart')  }
@@ -384,6 +460,8 @@ const Header = () => {
                         </div>
                     </div>
                 </div>
+                
+                {/* Keep all your existing navigation code */}
                 <nav className={ styles['mobile-nav'] }>
                     {
                         !user || user.role === 'customer' ? (
@@ -485,6 +563,8 @@ const Header = () => {
                         )
                     }
                 </nav>
+                
+                {/* Keep all your existing profile display code */}
                 <div className={ styles['mobile-cta'] }>
                     { user ? (
                         <div className={ styles['profile-display'] }>
@@ -510,10 +590,9 @@ const Header = () => {
                                 type='icon'
                                 icon='fa-solid fa-right-from-bracket'
                                 action={ () => {
-                                        handleLogout()
-                                        setDrawerOpen(false)
-                                    }
-                                }
+                                    handleLogout();
+                                    setDrawerOpen(false);
+                                }}
                             />
                         </div>
                     ) : (
@@ -522,22 +601,23 @@ const Header = () => {
                                 label="Sign in"
                                 type="primary"
                                 action={() => {
-                                    setDrawerOpen(false);
                                     navigate('/sign-in');
+                                    setDrawerOpen(false);
                                 }}
                             />
                             <Button
                                 label="Sign up"
                                 type="secondary"
                                 action={() => {
-                                    setDrawerOpen(false);
                                     navigate('/sign-up');
+                                    setDrawerOpen(false);
                                 }}
                             />
                         </>
                     )}
                 </div>
             </div>
+            
             <Modal label='Logout Confirmation' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
                 <p className={ styles['modal-info'] }>Are you sure you want to log out of your account?</p>
                 <div className={ styles['modal-ctas'] }>
@@ -545,9 +625,9 @@ const Header = () => {
                         label='Confirm'
                         type='primary'
                         action={ () => {
-                            setModalOpen(false);
                             logout();
-                        } }
+                            setModalOpen(false);
+                        }}
                         externalStyles={ styles['modal-warn'] }
                     />
                     <Button
