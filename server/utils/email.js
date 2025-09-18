@@ -158,6 +158,36 @@ export const createOrderShippedEmail = (name, orderNumber) => {
     `;
 };
 
+export const createOrderDeliveredEmail = (name, orderNumber, deliveryDate) => {
+    return `
+        <div style="background: #f6f1ea; font-family: 'Lora', serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(180, 140, 90, 0.08); border: 1px solid #e5d4c0;">
+            <h1 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Order Delivered! | ${ orderNumber }</h1>
+            <p style="color: #7c5a3a; font-size: 1.1em;">Hi <strong>${ name }</strong>,</p>
+            <p style="color: #7c5a3a; font-size: 1.05em;">
+                Wonderful! Your order has been successfully delivered. We hope you love your purchase!
+            </p>
+            <div style="background: #fff8f0; border: 2px solid #e5d4c0; padding: 24px; border-radius: 12px; margin: 24px 0;">
+                <h3 style="color: #a67c52; margin-bottom: 16px; font-size: 1.3em;">Delivery Confirmation</h3>
+                <p style="color: #7c5a3a; margin: 8px 0;"><strong>Order Number:</strong> ${ orderNumber }</p>
+                <p style="color: #7c5a3a; margin: 8px 0;"><strong>Delivered On:</strong> ${ deliveryDate }</p>
+                <p style="color: #7c5a3a; margin: 8px 0;"><strong>Status:</strong> Delivered</p>
+            </div>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${ getBaseURL('client') }/orders" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none; margin-right: 16px;">
+                    Leave a Review
+                </a>
+                <a href="${ getBaseURL('client') }" style="background: #fff; color: #a67c52; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; border: 2px solid #a67c52;">
+                    Shop Again
+                </a>
+            </div>
+            <p style="text-align: center; color: #b08d57; font-size: 14px;">
+                We'd love to hear about your experience! Consider leaving a review.<br>
+                Thank you for choosing Seraphim Luxe!
+            </p>
+        </div>
+    `;
+};
+
 
 export const createOrderRefundedEmail = (name, orderNumber, refundAmount, refundMethod) => {
     return `

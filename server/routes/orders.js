@@ -154,6 +154,18 @@ router.get('/:order_id/items', async (req, res) => {
 });
 
 router.put('/:order_id/status', async (req, res) => {
+    
+    function getCurrentDateTime() {
+        const now = new Date();
+        return now.toLocaleString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
     const connection = await pool.getConnection();
     
     try {
@@ -226,8 +238,29 @@ router.put('/:order_id/status', async (req, res) => {
                     throw new Error(shippedResult.err);
                 break;
 
+            case "delivered":
 
-        };
+                const deliveredResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: accountRows[0].email,
+                    subject: `Order Delivered | Seraphim Luxe`,
+                    html: createOrderDeliveredEmail(accountRows[0].name, currentOrder[0].order_number, getCurrentDateTime())
+                });
+                if (deliveredResult.err)
+                    throw new Error(deliveredResult.err);
+                break;
+
+            case "cancelled":
+                const cancelledResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: accountRows[0].email,
+                    subject: `Order Cancelled | Seraphim Luxe`,
+                    html: createOrderCancelledEmail(accountRows[0].name, currentOrder[0].order_number)
+                });
+                if (cancelledResult.err)
+                    throw new Error(cancelledResult.err);
+                break;
+
             default:
                 throw new Error("Invalid status passed: ", status);
         }
