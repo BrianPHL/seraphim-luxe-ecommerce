@@ -281,7 +281,7 @@ router.post('/', async (req, res) => {
         const { _, err } = await sendEmail({
             from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
             to: userResult[0].email,
-            subject: `Order Pending #(${ orderNumber }) | Seraphim Luxe`,
+            subject: `Order Pending | Seraphim Luxe`,
             html: createOrderPendingEmail(userResult[0].name, orderNumber, parsedTotalAmount)
         });
 
