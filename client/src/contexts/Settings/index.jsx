@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useCallback } from 'react';
 import SettingsContext from './context';
 import { useAuth } from '../Auth';
 
@@ -106,7 +106,7 @@ export const SettingsProvider = ({ children }) => {
         }
     };
 
-    const convertPrice = async (price, targetCurrency) => {
+    const convertPrice = useCallback(async (price, targetCurrency) => {
         try {
             const numPrice = Number(price);
             if (isNaN(numPrice)) return price;
@@ -149,9 +149,9 @@ export const SettingsProvider = ({ children }) => {
             console.error('Currency conversion error:', error);
             return price; 
         }
-    };
+    }, []);
 
-    const formatPrice = (price, currency = null) => {
+    const formatPrice = useCallback((price, currency = null) => {
         try {
             const numPrice = Number(price);
             if (isNaN(numPrice)) {
@@ -207,7 +207,7 @@ export const SettingsProvider = ({ children }) => {
             const currentCurrency = currency || settings?.currency || 'PHP';
             return `${currentCurrency} ${Number(price).toFixed(2)}`;
         }
-    };
+    }, [ settings?.currency ]);
 
     const fetchSettings = async () => {
         if (!user?.id) return;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Button, ReturnButton, Modal, InputField } from '@components';
@@ -39,7 +39,10 @@ const Checkout = () => {
         is_default_shipping: false,
     });
     
-    const checkoutItems = directCheckoutItem ? [directCheckoutItem] : selectedCartItems;
+    const memoizedCheckoutItems = useMemo(() => 
+        directCheckoutItem ? [directCheckoutItem] : selectedCartItems,
+        [directCheckoutItem, selectedCartItems]
+    );
 
     useEffect(() => {
         const init = async () => {
@@ -146,36 +149,43 @@ const Checkout = () => {
 
     useEffect(() => {
         const convertItemPrices = async () => {
-            if (!checkoutItems.length) {
+            if (!memoizedCheckoutItems.length) {
                 setConvertedItems([]);
+                return;
+            }
+
+            // Skip conversion if currency is PHP or convertPrice is not available
+            if (!settings?.currency || settings.currency === 'PHP' || !convertPrice) {
+                setConvertedItems(memoizedCheckoutItems.map(item => ({
+                    ...item,
+                    displayPrice: item.price
+                })));
                 return;
             }
 
             try {
                 const itemsWithConvertedPrices = await Promise.all(
-                    checkoutItems.map(async (item) => {
+                    memoizedCheckoutItems.map(async (item) => {
                         let convertedPrice = item.price;
-                        
-                        if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
-                            try {
-                                convertedPrice = await convertPrice(item.price, settings.currency);
-                            } catch (error) {
-                                console.error('Error converting price for item:', item.product_id, error);
-                                convertedPrice = item.price; 
-                            }
+
+                        try {
+                            convertedPrice = await convertPrice(item.price, settings.currency);
+                        } catch (error) {
+                            console.error('Error converting price for item:', item.product_id, error);
+                            convertedPrice = item.price; 
                         }
-                        
+
                         return {
                             ...item,
                             displayPrice: convertedPrice
                         };
                     })
                 );
-                
+
                 setConvertedItems(itemsWithConvertedPrices);
             } catch (error) {
                 console.error('Error converting checkout item prices:', error);
-                setConvertedItems(checkoutItems.map(item => ({
+                setConvertedItems(memoizedCheckoutItems.map(item => ({
                     ...item,
                     displayPrice: item.price
                 })));
@@ -183,7 +193,7 @@ const Checkout = () => {
         };
 
         convertItemPrices();
-    }, [settings?.currency, convertPrice, checkoutItems]);
+    }, [settings?.currency, memoizedCheckoutItems.length, convertPrice]);
 
     const subtotal = convertedItems.reduce((sum, item) => {
         const priceValue = parseFloat(item.displayPrice || item.price);
@@ -306,7 +316,7 @@ const Checkout = () => {
     };
 
     const handlePlaceOrder = async () => {
-        if (!user || checkoutItems.length === 0 || !selectedShippingAddress) {
+        if (!user || memoizedCheckoutItems.length === 0 || !selectedShippingAddress) {
             showToast('Please complete all required fields', 'error');
             return;
         }
@@ -517,7 +527,7 @@ const Checkout = () => {
         );
     };
 
-    if (!checkoutItems || checkoutItems.length === 0) {
+    if (!memoizedCheckoutItems || memoizedCheckoutItems.length === 0) {
         return <div>Loading...</div>;
     }
 
@@ -600,7 +610,7 @@ const Checkout = () => {
 
                     <div className={`${styles['checkout-section']} ${styles['order-items-section']}`}>
                         <div className={styles['checkout-section-header']}>
-                            <h2>Order Items ({checkoutItems.length})</h2>
+                            <h2>Order Items ({memoizedCheckoutItems.length})</h2>
                         </div>
                         <div className={styles['checkout-items']}>
                             {convertedItems.map(item => (
@@ -725,7 +735,7 @@ const Checkout = () => {
                         <div className={styles['summary-wrapper']}>
                             <span>
                                 <div className={styles['summary-item']}>
-                                    <h3>Subtotal ({checkoutItems.length} items)</h3>
+                                    <h3>Subtotal ({memoizedCheckoutItems.length} items)</h3>
                                     <h3>{safeFormatPrice(subtotal)}</h3>
                                 </div>
                                 <div className={styles['summary-item']}>
