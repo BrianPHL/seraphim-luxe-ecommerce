@@ -64,7 +64,7 @@ export const createWelcomeEmail = (email, name = '') => {
                 Your account has been successfully created. We're excited to have you join our community!
             </p>
             <div style="text-align: center; margin: 32px 0;">
-                <a href="${ getBaseURL() }/profile" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                <a href="${ getBaseURL('client') }/profile" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
                     Go to My Profile
                 </a>
             </div>
@@ -94,7 +94,7 @@ export const createOrderPendingEmail = (name, orderNumber, totalAmount) => {
                 <p style="color: #7c5a3a; margin: 8px 0;"><strong>Status:</strong> Pending</p>
             </div>
             <div style="text-align: center; margin: 32px 0;">
-                <a href="${ getBaseURL() }/orders" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                <a href="${ getBaseURL('client') }/orders" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
                     View Order Details
                 </a>
             </div>
@@ -123,7 +123,7 @@ export const createOrderRefundedEmail = (name, orderNumber, refundAmount, refund
                 <p style="color: #7c5a3a; margin: 8px 0;"><strong>Status:</strong> Refunded</p>
             </div>
             <div style="text-align: center; margin: 32px 0;">
-                <a href="${ getBaseURL() }" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                <a href="${ getBaseURL('client') }" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
                     Shop Again
                 </a>
             </div>
