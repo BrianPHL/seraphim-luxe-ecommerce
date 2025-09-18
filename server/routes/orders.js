@@ -1,7 +1,7 @@
 import pool from "../apis/db.js";
 import express from 'express';
 import { sendEmail } from "../apis/resend.js";
-import { createOrderPendingEmail, createOrderRefundedEmail } from "../utils/email.js";
+import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -162,14 +162,28 @@ router.put('/:order_id/status', async (req, res) => {
         const { status, admin_id, notes } = req.body;
         const orderId = req.params.order_id;
 
-        const [currentOrder] = await connection.query(
-            `SELECT id, status FROM orders WHERE id = ?`,
+        const [ currentOrder ] = await connection.query(
+            `SELECT id, account_id, order_number, status FROM orders WHERE id = ?`,
             [orderId]
         );
 
         if (currentOrder.length === 0) {
             await connection.rollback();
             return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const [ accountRows ] = await connection.query(
+            `
+                SELECT name, email
+                FROM accounts
+                WHERE id = ?
+            `,
+            [ currentOrder[0].account_id ]
+        )
+
+        if (accountRows.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ error: 'Account not found associated with the order!' });
         }
 
         await connection.query(`
@@ -184,6 +198,20 @@ router.put('/:order_id/status', async (req, res) => {
                 modified_at = NOW()
             WHERE id = ?
         `, [status, notes, notes, notes, admin_id, orderId]);
+
+        switch(status) {
+            case "processing":
+                const { _, err } = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: accountRows[0].email,
+                    subject: `Order Processing | Seraphim Luxe`,
+                    html: createOrderProcessingEmail(accountRows[0].name, currentOrder[0].order_number)
+                });
+                if (err)
+                    throw new Error(err);
+            
+
+        };
 
         await connection.commit();
         res.json({ success: true });
