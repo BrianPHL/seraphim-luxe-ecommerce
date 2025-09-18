@@ -8,6 +8,16 @@ import { ORDER_FILTER_CONFIG } from '@utils';
 
 const ITEMS_PER_PAGE = 10;
 
+const ORDER_STATUS_CHAIN = {
+    pending: ['processing', 'cancelled'],
+    processing: ['shipped', 'cancelled'],
+    shipped: ['delivered', 'returned'],
+    delivered: ['returned', 'refunded'],
+    returned: ['refunded'],
+    cancelled: [],
+    refunded: []
+};
+
 const Orders = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const queryPage = parseInt(searchParams.get('page') || '1', 10);
@@ -1105,6 +1115,7 @@ const Orders = () => {
                                                     setIsModalOpen(false);
                                                     handleUpdateStatus(selectedOrder, status);
                                                 }}
+                                                disabled={ !ORDER_STATUS_CHAIN[selectedOrder.status]?.includes(status) }
                                             />
                                         ))}
                                 </div>
