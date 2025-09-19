@@ -21,6 +21,7 @@ import settingsRouter from './routes/settings.js';
 import paypalRouter from './routes/paypal.js';
 import inboxRouter from './routes/inbox.js';
 import auditTrailRoutes from './routes/audit-trail.js'
+import reviewsRouter from './routes/reviews.js';
 
 dotenv.config();
 
@@ -76,6 +77,7 @@ app.use('/api/admin', settingsRouter);
 app.use('/api/paypal', paypalRouter);
 app.use('/api/inbox', inboxRouter);
 app.use('/api/audit-trail', auditTrailRoutes);
+app.use('/api/reviews', reviewsRouter);
 
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);
