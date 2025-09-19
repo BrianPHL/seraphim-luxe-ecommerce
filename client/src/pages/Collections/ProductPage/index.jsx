@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import styles from './ProductPage.module.css';
-import { Button, ReturnButton, InputField, Modal, Counter } from '@components';
-import { useProducts, useAuth, useCart, useCheckout, useToast, useCategories, useSettings, useWishlist } from '@contexts';
+import { Button, ReturnButton, Modal, Counter } from '@components';
+import ProductReviews from '@components/ProductReviews';
+import { useProducts, useAuth, useCart, useCheckout, useToast, useSettings, useWishlist } from '@contexts';
 
 const ProductPage = () => {
-
+    // Router and state management
     const { product_id } = useParams();
     const [ product, setProduct ] = useState(null);
     const [ loading, setLoading ] = useState(true);
@@ -13,30 +14,58 @@ const ProductPage = () => {
     const [ modalType, setModalType ] = useState('');
     const [ productQuantity, setProductQuantity ] = useState(1);
     const [ paymentMethod, setPaymentMethod ] = useState('cash');
-    const [ installmentAmount, setInstallmentAmount ] = useState('');
-    const [ installmentPaymentDate, setInstallmentPaymentDate ] = useState('');
-    const [ installmentNotes, setInstallmentNotes ] = useState('');
     const [ selectedImageIdx, setSelectedImageIdx ] = useState(0);
+    const [ displayPrice, setDisplayPrice] = useState(0);
+    const [ reviewStats, setReviewStats ] = useState({
+        averageRating: 0,
+        totalReviews: 0
+    });
+
+    // Contexts
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const { products } = useProducts();
     const { user } = useAuth();
     const { addToCart } = useCart();
     const { setDirectCheckout } = useCheckout();
     const { showToast } = useToast();
-    const { getCategoryById, getSubcategoriesByCategory } = useCategories();
     const { settings, convertPrice, formatPrice } = useSettings(); 
     const navigate = useNavigate();
 
-    const handleQuantityChange = (newValue) => {
-        setProductQuantity(newValue);
-    };
+    // Fetch product from products context
+    useEffect(() => {
+        if (products && products.length > 0) {
+            const foundProduct = products.find(p => p.id === parseInt(product_id));
+            if (foundProduct) {
+                setProduct(foundProduct);
+            }
+            setLoading(false);
+        }
+    }, [products, product_id]);
 
-    const handleMinimumReached = () => {
-        setProductQuantity(1);
-    };
+    // Convert price based on currency settings
+    useEffect(() => {
+        const updatePrice = async () => {
+            if (!product?.price) return;
+            
+            try {
+                if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
+                    const converted = await convertPrice(product.price, settings.currency);
+                    setDisplayPrice(converted);
+                } else {
+                    setDisplayPrice(product.price);
+                }
+            } catch (error) {
+                console.error('Error converting price:', error);
+                setDisplayPrice(product.price);
+            }
+        };
+        
+        if (settings && product) {
+            updatePrice();
+        }
+    }, [product?.price, settings?.currency, convertPrice, settings, product]);
 
-    const [ displayPrice, setDisplayPrice] = useState(0);
-
+    // Helper Functions
     const safeFormatPrice = (price, currency = null) => {
         try {
             if (formatPrice && typeof formatPrice === 'function') {
@@ -132,6 +161,16 @@ const ProductPage = () => {
         action();
     };
 
+    // Event handlers
+    const handleQuantityChange = (newValue) => {
+        setProductQuantity(newValue);
+    };
+
+    const handleMinimumReached = () => {
+        // Keep quantity at 1 for product page
+        setProductQuantity(1);
+    };
+
     const handleAddToCart = async () => {
         if (product['stock_quantity'] <= 0) {
             showToast(`Sorry, ${product['label']} is currently out of stock.`, 'error');
@@ -174,19 +213,25 @@ const ProductPage = () => {
             };
 
             setDirectCheckout(directItem);
-            
             setModalOpen(false);
             navigate('/checkout');
-            
         } catch (err) {
             console.error("Error during buy now:", err);
             showToast(`Failed to process ${product['label']}. Please try again.`, 'error');
         }
     };
 
+    // Stock status indicators
     const isOutOfStock = product && product['stock_quantity'] <= 0;
     const isLowStock = product && product['stock_quantity'] > 0 && product['stock_quantity'] <= 5;
 
+    // For review functionality
+    const canUserReview = !!user;
+    
+    // Generate list of image URLs
+    const imageUrls = product ? getProductImageUrls(product) : [];
+
+    // Loading state
     if (loading) {
         return (
             <div className={styles['wrapper']}>
@@ -202,19 +247,18 @@ const ProductPage = () => {
         );
     };
 
-    const imageUrls = product ? getProductImageUrls(product) : [];
-
     return (
         <>
-            <div className={ styles['wrapper'] }>
-                <div className={ styles['header'] }>
+            <div className={styles['wrapper']}>
+                <div className={styles['header']}>
                     <ReturnButton />
                     <h1>Product Details</h1>
                 </div>
-                <div className={ styles['product'] }>
-                    <div className={ styles['product-image-gallery'] }>
+                <div className={styles['product']}>
+                    <div className={styles['product-image-gallery']}>
+                        {/* Vertical Thumbnails on the Left */}
                         {imageUrls.length > 1 && (
-                            <div className={ styles['product-thumbnails-vertical'] }>
+                            <div className={styles['product-thumbnails-vertical']}>
                                 {imageUrls.map((img, idx) => (
                                     <img
                                         key={`${img}-${idx}`}
@@ -226,23 +270,24 @@ const ProductPage = () => {
                                 ))}
                             </div>
                         )}
-
-                        <div className={ styles['main-image-container'] }>
+                        
+                        {/* Main Product Image */}
+                        <div className={styles['main-image-container']}>
                             <img
-                                src={ `https://res.cloudinary.com/dfvy7i4uc/image/upload/${ imageUrls[selectedImageIdx] || product['image_url'] }` }
-                                alt={ `${ product['label'] }. Price: ${ product['price'] }` } 
-                                className={ styles ['product-image'] }
+                                src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${imageUrls[selectedImageIdx] || product['image_url']}`}
+                                alt={`${product['label']}. Price: ${product['price']}`} 
+                                className={styles['product-image']}
                             />
                         </div>
                     </div>
                     
-                    <div className={ styles['product-details'] }>
-                        <div className={ styles['product-details-header'] }>
-                            <h2>{ product['label'] }</h2>
-                            <h3 style={{ marginTop: '2rem' }}>
-                                <strong>Category:</strong> { product['category'] } | <strong>Sub-category:</strong> { product['subcategory'] }
+                    <div className={styles['product-details']}>
+                        <div className={styles['product-details-header']}>
+                            <h2>{product['label']}</h2>
+                            <h3 className={styles['product-category']}>
+                                <strong>Category:</strong> {product['category']} | <strong>Sub-category:</strong> {product['subcategory']}
                             </h3>
-                            <h3 style={{ marginTop: '1rem' }}>
+                            <h3 className={styles['product-availability']}>
                                 <strong>Availability:</strong>{' '}
                                 <span className={
                                     isOutOfStock 
@@ -261,19 +306,33 @@ const ProductPage = () => {
                             </h3>
                         </div>
 
-                        <div className={ styles['product-details-info'] }>
+                        <div className={styles['product-details-info']}>
                             <span>
-                                <h4 style={{ color: 'var(--tg-primary)' }}>Description</h4>
-                                <p>{ product['description'] }</p>
+                                <h4>Description</h4>
+                                <p>{product['description']}</p>
                             </span>
                             <span>
-                                <h4 style={{ color: 'var(--tg-primary)' }}>Price</h4>
-                                <h3 style={{ color: 'var(--tg-primary)' }}>{ safeFormatPrice(displayPrice) }</h3>
+                                <h4>Price</h4>
+                                <h3>{safeFormatPrice(displayPrice)}</h3>
                             </span>
+                            
+                            {/* Stars and review count */}
+                            <div className={styles['product-rating']}>
+                                {[...Array(5)].map((_, i) => (
+                                    <i
+                                        key={i}
+                                        className={`fa-solid fa-star ${i < Math.round(reviewStats.averageRating) ? styles['filled-star'] : styles['empty-star']}`}
+                                    ></i>
+                                ))}
+                                <span className={styles['review-count']}>
+                                    ({reviewStats.totalReviews} {reviewStats.totalReviews === 1 ? 'review' : 'reviews'})
+                                </span>
+                            </div>
                         </div>
 
-                        <div className={ styles['quantity-selector'] }>
-                            <h4 style={{ color: 'var(--tg-primary)' }}>Quantity</h4>
+                        {/* Quantity Selector */}
+                        <div className={styles['quantity-selector']}>
+                            <h4>Quantity</h4>
                             <Counter
                                 value={productQuantity}
                                 max={product ? product['stock_quantity'] : 0}
@@ -283,14 +342,14 @@ const ProductPage = () => {
                             />
                         </div>
 
-                        <div className={ styles['product-details-ctas'] }>
+                        <div className={styles['product-details-ctas']}>
                             <Button
                                 type='secondary'
                                 label='Buy now'
                                 icon='fa-solid fa-credit-card'
                                 iconPosition='left'
-                                externalStyles={ styles['checkout'] }
-                                disabled={ isOutOfStock || !user }
+                                externalStyles={styles['checkout']}
+                                disabled={isOutOfStock || !user}
                                 action={() => {
                                     setModalType('checkout');
                                     setModalOpen(true);
@@ -301,8 +360,8 @@ const ProductPage = () => {
                                 label='Add to Cart'
                                 icon='fa-solid fa-cart-plus'
                                 iconPosition='left'
-                                externalStyles={ styles['cart'] }
-                                disabled={ isOutOfStock || !user }
+                                externalStyles={styles['cart']}
+                                disabled={isOutOfStock || !user}
                                 action={() => {
                                     setModalType('cart');
                                     setModalOpen(true);
@@ -310,58 +369,67 @@ const ProductPage = () => {
                             />
                             <Button
                                 type='icon-outlined'
-                                icon={ isInWishlist(product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }
-                                disabled={ !user }
-                                action={ () => {
+                                icon={isInWishlist(product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}
+                                disabled={!user}
+                                action={() => {
                                     isInWishlist(product_id) ? removeFromWishlist(product_id) : addToWishlist(product_id);
                                 }}
                             />
                         </div>
                     </div>
                 </div>
+                
+                {/* Reviews Section */}
+                <ProductReviews
+                    productId={product?.id}
+                    productName={product?.name}
+                    currentUserId={user?.id}
+                    canUserReview={!!user}
+                    onStatsUpdate={setReviewStats}
+                />
             </div>
-
+            
+            {/* Add to Cart Modal */}
             <Modal
-                label={ `Add ${ product ? product['label'] : 'Product' } to Cart` }
-                isOpen={ modalOpen && modalType === 'cart' }
-                onClose={ () => setModalOpen(false) }
+                label={`Add ${product ? product['label'] : 'Product'} to Cart`}
+                isOpen={modalOpen && modalType === 'cart'}
+                onClose={() => setModalOpen(false)}
             >
-                <h3 className={ styles['modal-info'] }>Are you sure you want to add this product to your cart?</h3>
+                <h3 className={styles['modal-info']}>Are you sure you want to add this product to your cart?</h3>
 
-                <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                    <h3>{ product ? product['label'] : 'Product' }</h3>
+                <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
+                    <h3>{product ? product['label'] : 'Product'}</h3>
                     <p>Stock Available: <strong>{product ? product['stock_quantity'] : 0}</strong></p>
                 </div>
 
-                <div className={ styles['modal-infos'] } style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    
-                    <span style={{ display: 'flex', gap: '1rem' }}>
+                <div className={`${styles['modal-infos']} ${styles['modal-row']}`}>
+                    <span className={styles['quantity-buttons']}>
                         <Button
                             type='icon-outlined'
                             icon='fa-solid fa-minus'
-                            action={ () => setProductQuantity(prevQuantity => prevQuantity - 1) }
-                            disabled={ productQuantity <= 1 }
+                            action={() => setProductQuantity(prevQuantity => prevQuantity - 1)}
+                            disabled={productQuantity <= 1}
                         />
                         <Button
                             type='icon-outlined'
                             icon='fa-solid fa-plus'
-                            action={ () => setProductQuantity(prevQuantity => prevQuantity + 1) }
-                            disabled={ productQuantity >= (product ? product['stock_quantity'] : 0) }
+                            action={() => setProductQuantity(prevQuantity => prevQuantity + 1)}
+                            disabled={productQuantity >= (product ? product['stock_quantity'] : 0)}
                         />
                     </span>
 
-                    <p style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--tg-primary)' }}>{ productQuantity }x</p>
-
+                    <p className={styles['quantity-label']}>{productQuantity}x</p>
                 </div>
 
-                <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
+                <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
                     <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
                 </div>
-                <div className={ styles['modal-ctas'] }>
+                
+                <div className={styles['modal-ctas']}>
                     <Button 
                         type="secondary" 
                         label="Cancel" 
-                        action={ () => setModalOpen(false) } 
+                        action={() => setModalOpen(false)} 
                     />
                     <Button 
                         type="primary" 
@@ -371,48 +439,47 @@ const ProductPage = () => {
                 </div>
             </Modal>
 
+            {/* Buy Now Modal */}
             <Modal
-                label={ `Buy ${ product ? product['label'] : 'Product' } Now` }
-                isOpen={ modalOpen && modalType === 'checkout' }
-                onClose={ () => setModalOpen(false) }
+                label={`Buy ${product ? product['label'] : 'Product'} Now`}
+                isOpen={modalOpen && modalType === 'checkout'}
+                onClose={() => setModalOpen(false)}
             >
-                <h3 className={ styles['modal-info'] }>This will take you directly to checkout.</h3>
+                <h3 className={styles['modal-info']}>This will take you directly to checkout.</h3>
 
-                <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
-                    <h3>{ product ? product['label'] : 'Product' }</h3>
+                <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
+                    <h3>{product ? product['label'] : 'Product'}</h3>
                     <p>Stock Available: <strong>{product ? product['stock_quantity'] : 0}</strong></p>
                 </div>
 
-                <div className={ styles['modal-infos'] } style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    
-                    <span style={{ display: 'flex', gap: '1rem' }}>
+                <div className={`${styles['modal-infos']} ${styles['modal-row']}`}>
+                    <span className={styles['quantity-buttons']}>
                         <Button
                             type='icon-outlined'
                             icon='fa-solid fa-minus'
-                            action={ () => setProductQuantity(prevQuantity => prevQuantity - 1) }
-                            disabled={ productQuantity <= 1 }
+                            action={() => setProductQuantity(prevQuantity => prevQuantity - 1)}
+                            disabled={productQuantity <= 1}
                         />
                         <Button
                             type='icon-outlined'
                             icon='fa-solid fa-plus'
-                            action={ () => setProductQuantity(prevQuantity => prevQuantity + 1) }
-                            disabled={ productQuantity >= (product ? product['stock_quantity'] : 0) }
+                            action={() => setProductQuantity(prevQuantity => prevQuantity + 1)}
+                            disabled={productQuantity >= (product ? product['stock_quantity'] : 0)}
                         />
                     </span>
 
-                    <p style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--tg-primary)' }}>{ productQuantity }x</p>
-
+                    <p className={styles['quantity-label']}>{productQuantity}x</p>
                 </div>
 
-                <div style={{ alignItems: 'flex-start' }} className={ styles['modal-infos'] }>
+                <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
                     <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
                 </div>
 
-                <div className={ styles['modal-ctas'] }>
+                <div className={styles['modal-ctas']}>
                     <Button 
                         type="secondary" 
                         label="Cancel" 
-                        action={ () => setModalOpen(false) } 
+                        action={() => setModalOpen(false)} 
                     />
                     <Button 
                         type="primary" 
