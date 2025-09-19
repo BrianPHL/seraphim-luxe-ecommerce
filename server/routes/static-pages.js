@@ -7,7 +7,7 @@ router.get('/admin', async (req, res) => {
     try {
         const [pages] = await pool.query(`
             SELECT id, page_slug, title, content, created_at, updated_at, last_updated_by 
-            FROM static_pages 
+            FROM cms
             ORDER BY page_slug
         `);
         
@@ -20,7 +20,7 @@ router.get('/admin', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const [pages] = await pool.query('SELECT page_slug, content FROM static_pages');
+        const [pages] = await pool.query('SELECT page_slug, content FROM cms');
         const result = {};
         pages.forEach(page => {
             result[page.page_slug] = page.content;
@@ -36,7 +36,7 @@ router.get('/:page_slug', async (req, res) => {
     try {
         const { page_slug } = req.params;
         const [pages] = await pool.query(
-            'SELECT page_slug, title, content FROM static_pages WHERE page_slug = ?',
+            'SELECT page_slug, title, content FROM cms WHERE page_slug = ?',
             [page_slug]
         );
         
@@ -66,7 +66,7 @@ router.put('/:page_slug', async (req, res) => {
         const last_updated_by = req.user?.id || null;
         
         const [result] = await pool.query(
-            'UPDATE static_pages SET content = ?, title = ?, last_updated_by = ?, updated_at = NOW() WHERE page_slug = ?',
+            'UPDATE cms SET content = ?, title = ?, last_updated_by = ?, updated_at = NOW() WHERE page_slug = ?',
             [content, title, last_updated_by, page_slug]
         );
         
