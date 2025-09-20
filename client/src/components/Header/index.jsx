@@ -26,7 +26,6 @@ const Header = () => {
 
     return (
         <>
-            <InboxPopup />      {/* <-- add this so the popup is always mounted */}
             <div className={ styles['desktop-header'] }>
                 <Logo />
                 <div className={ styles['right'] }>
@@ -62,7 +61,6 @@ const Header = () => {
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 { user ? (
                                     <>
-                                        {/* Add Inbox Button */}
                                         <div
                                             className={ styles['indicator-wrapper'] }
                                             role="button"
@@ -158,6 +156,10 @@ const Header = () => {
                                         action: () => { navigate('/wishlist') },
                                     },
                                     {
+                                        label: "Inbox",
+                                        action: () => toggleInbox()
+                                    },
+                                    {
                                         label: 'Logout',
                                         action: handleLogout,
                                     },
@@ -216,6 +218,10 @@ const Header = () => {
                                 {
                                     label: 'Wishlist',
                                     action: () => { navigate('/wishlist') },
+                                },
+                                {
+                                    label: 'Inbox',
+                                    action: () =>  toggleInbox(),
                                 },
                                 {
                                     label: 'Logout',
@@ -640,6 +646,8 @@ const Header = () => {
                     />
                 </div>
             </Modal>
+
+            <InboxPopup />
         </>
     );
 };
