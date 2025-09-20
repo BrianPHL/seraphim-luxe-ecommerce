@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useInbox } from '@contexts';
+import { Button } from '@components';
 import styles from './InboxPopup.module.css';
 
 const InboxPopup = () => {
@@ -38,36 +39,32 @@ const InboxPopup = () => {
         className={styles.popup}
         role="dialog"
         aria-label={`Activity Inbox (${activities.length})`}
-        onClick={(e) => e.stopPropagation()} // prevent bubbling to any parent handlers
+        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <h3>Activity Inbox ({activities.length})</h3>
           <div className={styles.headerActions}>
-            <button
-              type="button"
-              className={styles.markAllBtn}
-              onClick={(e) => { e.stopPropagation(); if (unreadCount > 0) markAllAsRead(); }}
-              disabled={unreadCount === 0}
-            >
-              Mark all as read
-            </button>
+            <Button
+                type="secondary"
+                label="Mark all as read"
+                action={ () => markAllAsRead() }
+                title="Mark all notifications as read"
+            />
 
-            <button
-              type="button"
-              className={styles.clearBtn}
-              onClick={(e) => { e.stopPropagation(); if (!activities.length) return; if (window.confirm('Clear all inbox items?')) clearInbox(); }}
-            >
-              Clear inbox
-            </button>
+            <Button
+                type="secondary"
+                label="Clear"
+                action={ () => clearInbox() }
+                title="Clear all notifications"
+            />
 
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={(e) => { e.stopPropagation(); closeInbox(); }}
-              aria-label="Close inbox"
-            >
-              ×
-            </button>
+            <Button
+                type="icon-outlined"
+                icon="fa-solid fa-xmark"
+                action={ () => closeInbox() }
+                title="Mark notification as read"
+            />
+
           </div>
         </div>
 
@@ -91,23 +88,19 @@ const InboxPopup = () => {
                   </div>
                   <div className={styles.activityActions}>
                     {!activity.read && (
-                      <button
-                        type="button"
-                        className={styles.markBtn}
-                        onClick={(e) => { e.stopPropagation(); markAsRead(activity.id); }}
-                        title="Mark as read"
-                      >
-                        ✓
-                      </button>
+                        <Button
+                            type="icon-outlined"
+                            icon="fa-solid fa-envelope-circle-check"
+                            action={ () => markAsRead(activity.id) }
+                            title="Mark notification as read"
+                        />
                     )}
-                    <button
-                      type="button"
-                      className={styles.deleteBtn}
-                      onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this inbox item?')) deleteActivity(activity.id); }}
-                      title="Delete"
-                    >
-                      🗑
-                    </button>
+                    <Button
+                        type="icon-outlined"
+                        icon="fa-solid fa-trash-can"
+                        action={ () => deleteActivity(activity.id) }
+                        title="Delete notification"
+                    />
                   </div>
                 </div>
               ))}
