@@ -106,10 +106,4 @@ export const InboxProvider = ({ children }) => {
   );
 };
 
-export const useInbox = () => {
-  const ctx = useContext(InboxContext);
-  if (!ctx) throw new Error('useInbox must be inside InboxProvider');
-  return ctx;
-};
-
-export default InboxProvider;
+export const useInbox = () => useContext(InboxContext);

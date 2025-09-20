@@ -13,5 +13,4 @@ export { CategoriesProvider, useCategories } from "./Categories";
 export { useWishlist, WishlistProvider } from './Wishlist';
 export { useSettings, SettingsProvider } from './Settings';
 export { useCMS, CMSProvider } from './CMS';
-export { default as InboxProvider } from './Inbox';
-export { useInbox } from './Inbox';
+export { useInbox, InboxProvider } from './Inbox';
