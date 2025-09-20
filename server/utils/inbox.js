@@ -1,7 +1,7 @@
 import pool from '../apis/db.js';
 
 export const createInboxActivity = async (account_id, type, title, message, icon = 'fa-bell') => {
-  const sql = `INSERT INTO inbox_activities (account_id, type, title, message, icon) VALUES (?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO inbox (account_id, type, title, message, icon) VALUES (?, ?, ?, ?, ?)`;
   const params = [account_id, type, title, message, icon];
   const [result] = await pool.query(sql, params);
   return result.insertId;

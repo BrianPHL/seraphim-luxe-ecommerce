@@ -18,7 +18,7 @@ router.get('/:account_id', async (req, res) => {
         icon,
         read_status AS \`read\`,
         created_at
-      FROM inbox_activities
+      FROM inbox
       WHERE account_id = ?
     `;
     const params = [account_id];
@@ -40,7 +40,7 @@ router.get('/:account_id', async (req, res) => {
 router.get('/:account_id/count', async (req, res) => {
   try {
     const { account_id } = req.params;
-    const [rows] = await pool.query('SELECT COUNT(*) AS cnt FROM inbox_activities WHERE account_id = ? AND read_status = 0', [account_id]);
+    const [rows] = await pool.query('SELECT COUNT(*) AS cnt FROM inbox WHERE account_id = ? AND read_status = 0', [account_id]);
     return res.json({ count: rows[0].cnt });
   } catch (err) {
     console.error('[INBOX] COUNT error', err);
@@ -52,7 +52,7 @@ router.get('/:account_id/count', async (req, res) => {
 router.put('/:account_id/activities/:activity_id/read', async (req, res) => {
   try {
     const { account_id, activity_id } = req.params;
-    const [result] = await pool.query('UPDATE inbox_activities SET read_status = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND account_id = ?', [activity_id, account_id]);
+    const [result] = await pool.query('UPDATE inbox SET read_status = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND account_id = ?', [activity_id, account_id]);
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
     return res.json({ success: true });
   } catch (err) {
@@ -65,7 +65,7 @@ router.put('/:account_id/activities/:activity_id/read', async (req, res) => {
 router.put('/:account_id/mark-all-read', async (req, res) => {
   try {
     const { account_id } = req.params;
-    const [result] = await pool.query('UPDATE inbox_activities SET read_status = 1, updated_at = CURRENT_TIMESTAMP WHERE account_id = ? AND read_status = 0', [account_id]);
+    const [result] = await pool.query('UPDATE inbox SET read_status = 1, updated_at = CURRENT_TIMESTAMP WHERE account_id = ? AND read_status = 0', [account_id]);
     return res.json({ success: true, updated: result.affectedRows });
   } catch (err) {
     console.error('[INBOX] mark-all error', err);
@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
   try {
     const { account_id, type, title, message, icon } = req.body;
     if (!account_id || !type || !title || !message) return res.status(400).json({ error: 'Missing fields' });
-    const [result] = await pool.query('INSERT INTO inbox_activities (account_id,type,title,message,icon) VALUES (?,?,?,?,?)', [account_id, type, title, message, icon || 'fa-bell']);
+    const [result] = await pool.query('INSERT INTO inbox (account_id,type,title,message,icon) VALUES (?,?,?,?,?)', [account_id, type, title, message, icon || 'fa-bell']);
     return res.status(201).json({ success: true, id: result.insertId });
   } catch (err) {
     console.error('[INBOX] POST error', err);
@@ -92,7 +92,7 @@ router.delete('/:account_id/activities/:activity_id', async (req, res) => {
     const { account_id, activity_id } = req.params;
 
     const [result] = await pool.query(
-      'DELETE FROM inbox_activities WHERE id = ? AND account_id = ?',
+      'DELETE FROM inbox WHERE id = ? AND account_id = ?',
       [activity_id, account_id]
     );
 
@@ -113,7 +113,7 @@ router.delete('/:account_id/clear', async (req, res) => {
     const { account_id } = req.params;
 
     const [result] = await pool.query(
-      'DELETE FROM inbox_activities WHERE account_id = ?',
+      'DELETE FROM inbox WHERE account_id = ?',
       [account_id]
     );
 
