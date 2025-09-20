@@ -265,7 +265,10 @@ const Header = () => {
                             { user && user.role === 'customer' ? (
                                 <>
                                     {/* Add Mobile Inbox Button */}
-                                    <div className={ styles['indicator-wrapper'] }>
+                                    <div
+                                        className={ styles['indicator-wrapper'] }
+                                        onClick={ () => toggleInbox() }
+                                    >
                                         <Button
                                             type="icon"
                                             icon='fa-solid fa-inbox'
