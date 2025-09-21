@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { InputField, Button, Anchor, ReturnButton, Accordion, Modal, Dropdown } from '@components';
-import { useToast, useAuth, useReservation, useSettings } from '@contexts';
+import { useToast, useAuth, useSettings } from '@contexts';
 import { useOAuth } from '@hooks';
 import { getErrorMessage } from '@utils';
 import styles from './Profile.module.css';
@@ -10,7 +10,6 @@ const Profile = ({}) => {
 
     const navigate = useNavigate();
     const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addressBook, getAddressBook, addAddress, updateAddress, deleteAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
-    const { reservationItems, clearReservations } = useReservation();
     const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
     const { showToast } = useToast();
@@ -1576,29 +1575,6 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            ) : modalType === 'clear-reservation-confirmation' ? (
-                <Modal label='Clear Reservation History Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>Are you sure you want to permanently delete all cancelled reservations from your history. This action cannot be undone.</p>
-                    <div className={ styles['modal-ctas'] }>
-                        <Button
-                            label='Confirm'
-                            type='primary'
-                            action={ () => {
-                                setIsModalOpen(false);
-                                clearReservations();
-                            }}
-                            externalStyles={ styles['modal-warn'] }
-                        />
-                        <Button
-                            label='Cancel'
-                            type='secondary'
-                            action={ () => {
-                                setModalType('');
-                                setIsModalOpen(false);
-                            }}
-                        />
-                    </div>
-                </Modal>
             ) : modalType === 'delete-account-confirmation' && (
                 <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
                     <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your account</strong>. This will remove all your data including profile information, reservation history, and saved preferences. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
@@ -1964,30 +1940,6 @@ const Profile = ({}) => {
                     />
                 </div>
             </Modal>
-            {!isAdmin && modalType === 'clear-reservation-confirmation' && (
-                <Modal label='Clear Reservation History Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>Are you sure you want to permanently delete all cancelled reservations from your history. This action cannot be undone.</p>
-                    <div className={ styles['modal-ctas'] }>
-                        <Button
-                            label='Confirm'
-                            type='primary'
-                            action={ () => {
-                                setIsModalOpen(false);
-                                clearReservations();
-                            }}
-                            externalStyles={ styles['modal-warn'] }
-                        />
-                        <Button
-                            label='Cancel'
-                            type='secondary'
-                            action={ () => {
-                                setModalType('');
-                                setIsModalOpen(false);
-                            }}
-                        />
-                    </div>
-                </Modal>
-            )}
             {modalType === 'delete-account-confirmation' && (
                 <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
                     <p className={ styles['modal-info'] }>

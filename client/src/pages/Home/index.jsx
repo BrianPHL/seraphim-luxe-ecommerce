@@ -154,14 +154,8 @@ const Home = () => {
                             </div>
                             <div className={styles['hero-left-info-ctas']}>
                                 <Button
-                                    type='primary'
-                                    label='Reserve Now'
-                                    action={() => navigate('/reservations')}
-                                />
-                                <h5>or</h5>
-                                <Button
                                     id='hero-browse-inventory-1'
-                                    type='secondary'
+                                    type='primary'
                                     label='Browse our Collections'
                                     options={getCategoryOptions()}
                                 />

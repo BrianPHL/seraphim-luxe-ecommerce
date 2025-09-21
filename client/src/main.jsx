@@ -6,7 +6,6 @@ import {
   AuthProvider,
   DropdownProvider,
   CartProvider,
-  ReservationProvider,
   ToastProvider,
   ProductsProvider,
   InstallmentsProvider,
@@ -33,21 +32,17 @@ createRoot(document.getElementById('root')).render(
                   <SettingsProvider>
                     <CategoriesProvider>
                       <ProductsProvider>
-                        <ReservationProvider>
-                          <OrdersProvider>
-                            <WishlistProvider>
-                              <CartProvider>
-                                <CheckoutProvider>
-                                  <InstallmentsProvider>
-                                    <StocksProvider>
-                                      <App />
-                                    </StocksProvider>
-                                  </InstallmentsProvider>
-                                </CheckoutProvider>
-                              </CartProvider>
-                            </WishlistProvider>
-                          </OrdersProvider>
-                        </ReservationProvider>
+                        <OrdersProvider>
+                          <WishlistProvider>
+                            <CartProvider>
+                              <CheckoutProvider>
+                                <StocksProvider>
+                                  <App />
+                                </StocksProvider>
+                              </CheckoutProvider>
+                            </CartProvider>
+                          </WishlistProvider>
+                        </OrdersProvider>
                       </ProductsProvider>
                     </CategoriesProvider>
                   </SettingsProvider>

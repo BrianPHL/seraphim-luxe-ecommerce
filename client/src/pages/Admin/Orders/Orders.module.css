@@ -62,10 +62,6 @@
     grid-template-columns: repeat(7, 1fr);
 }
 
-.recent-reservations {
-    grid-template-columns: repeat(5, 1fr);
-}
-
 .section {
     flex-direction: column;
     display: flex;

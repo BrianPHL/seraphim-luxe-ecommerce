@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import styles from './ProductCard.module.css';
 import { InputField, Button, Modal } from '@components';
-import { useAuth, useCart, useReservation, useToast, useCheckout, useCategories, useSettings, useWishlist } from '@contexts';
+import { useAuth, useCart, useToast, useCheckout, useCategories, useSettings, useWishlist } from '@contexts';
 
 const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
     
@@ -19,7 +19,6 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
     const [ isLowStock, setIsLowStock ] = useState(false);
     const [ isCheckingOut, setIsCheckingOut ] = useState(false);
     const { addToCart } = useCart();
-    const { addToReservations } = useReservation();
     const { setDirectCheckout } = useCheckout();
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const { user } = useAuth();

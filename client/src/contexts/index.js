@@ -2,7 +2,6 @@ export { AuthProvider, useAuth } from "./Auth";
 export { ThemeProvider, useTheme } from "./Theme";
 export { DropdownProvider, useDropdown } from "./Dropdown";
 export { CartProvider, useCart } from "./Cart";
-export { ReservationProvider, useReservation } from "./Reservation";
 export { ToastProvider, useToast } from "./Toast";
 export { ProductsProvider, useProducts } from "./Products";
 export { InstallmentsProvider, useInstallments } from "./Installments";

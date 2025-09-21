@@ -1,6 +1,6 @@
 import styles from './Dashboard.module.css';
 import { Button, Modal, InputField } from '@components';
-import { useProducts, useAuth, useToast, useInstallments, useReservation, useStocks, useOrders } from '@contexts';
+import { useProducts, useAuth, useToast, useStocks, useOrders } from '@contexts';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -19,7 +19,6 @@ const Dashboard = () => {
     const { user, userCount, fetchUserCount } = useAuth();
     const { showToast } = useToast();
     const { pendingCount, fetchPendingCount } = useInstallments();
-    const { recentReservations, pendingReservationsCount } = useReservation();
     const { lowStockProducts, addStock } = useStocks();
     const { fetchRecentOrders, recentOrders } = useOrders();
 
