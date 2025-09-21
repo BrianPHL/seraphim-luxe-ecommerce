@@ -35,6 +35,7 @@ router.get('/:account_id', async (req, res) => {
         res.json(rows);
     
     } catch (err) {
+        console.error('carts route GET /:account_id endpoint error: ', err);
         res.status(500).json({ error: err.message });
     }
 
@@ -74,7 +75,7 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ error: 'Failed to insert cart item' });
         }
     } catch (err) {
-        console.error(err);
+        console.error('carts route POST / endpoint error: ', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -130,6 +131,7 @@ router.put('/:account_id/:product_id', async (req, res) => {
 
         res.json({ message: 'Cart updated successfully' })
     } catch (err) {
+        console.error('carts route PUT /:account_id/:product_id endpoint error: ', err);
         res.status(500).json({ error: err.message });
     };
 });
@@ -156,6 +158,7 @@ router.delete('/:account_id/:product_id', async (req, res) => {
         res.status(200).json({ success: true });
         
     } catch (err) {
+        console.error('carts route DELETE /:account_id/:product_id endpoint error: ', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -174,6 +177,7 @@ router.delete('/clear/:account_id', async (req, res) => {
 
         res.json({ message: 'Cart Cleared' })
     } catch (err) {
+        console.error('carts route DELETE /clear/:account_id/ endpoint error: ', err);
         res.status(500).json({ error: err.message });
     }
 });
