@@ -145,6 +145,35 @@ export const NotificationsProvider = ({ children }) => {
 
     };
 
+    const setNotification = useCallback(async (data) => {
+
+        if (!user) return;
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/${ user.id }`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: data.type,
+                    title: data.title,
+                    message: data.message
+                })
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to set new notification!");
+
+            await fetchNotifications();
+
+        } catch (err) {
+
+            console.error("Notifications context setNotification function error: ", err);
+            showToast('Failed to set new notification!', 'error')
+            
+        }
+
+    }, [ user ]);
 
     useEffect(() => {
         fetchNotifications()
@@ -165,6 +194,7 @@ export const NotificationsProvider = ({ children }) => {
         // * Exposed functions
             fetchNotifications,
             readAllNotifications,
+            setNotification,
             setIsInboxOpen
 
         }}>
