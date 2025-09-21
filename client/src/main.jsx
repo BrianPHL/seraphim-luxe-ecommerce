@@ -8,7 +8,6 @@ import {
   CartProvider,
   ToastProvider,
   ProductsProvider,
-  InstallmentsProvider,
   StocksProvider,
   OrdersProvider,
   CheckoutProvider,

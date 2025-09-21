@@ -18,7 +18,6 @@ const Dashboard = () => {
     const { products } = useProducts();
     const { user, userCount, fetchUserCount } = useAuth();
     const { showToast } = useToast();
-    const { pendingCount, fetchPendingCount } = useInstallments();
     const { lowStockProducts, addStock } = useStocks();
     const { fetchRecentOrders, recentOrders } = useOrders();
 
@@ -31,7 +30,6 @@ const Dashboard = () => {
 
                 await Promise.all([
                     fetchUserCount(),
-                    fetchPendingCount(),
                     fetchRecentOrders()
                 ]);
 
