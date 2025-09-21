@@ -62,7 +62,7 @@ const CMS = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetchWithTimeout('/api/static-pages');
+        const response = await fetchWithTimeout('/api/cms');
         
         if (!response.ok) {
           throw new Error(`Server returned ${response.status}: ${response.statusText}`);
@@ -108,7 +108,7 @@ const CMS = () => {
     try {
       setError(null);
 
-      const response = await fetchWithTimeout(`/api/static-pages/${activeTab}`, {
+      const response = await fetchWithTimeout(`/api/cms/${activeTab}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

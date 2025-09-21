@@ -12,7 +12,7 @@ export const CMSProvider = ({ children }) => {
     
         try {
             
-            const response = fetchWithTimeout('/api/static-pages');
+            const response = fetchWithTimeout('/api/cms');
             const data = await response.json();
             
             return json.data;
@@ -32,7 +32,7 @@ export const CMSProvider = ({ children }) => {
         setLoading(true);
         
         try {
-            const response = await fetchWithTimeout(`/api/static-pages/${ pageSlug }`);
+            const response = await fetchWithTimeout(`/api/cms/${ pageSlug }`);
             const data = await response.json();
 
             setStaticPages(prev => ({ ...prev, [pageSlug]: data.data }));
@@ -52,7 +52,7 @@ export const CMSProvider = ({ children }) => {
         setLoading(true);
         
         try {
-            const response = await fetchWithTimeout(`/api/static-pages/${ pageSlug }`, {
+            const response = await fetchWithTimeout(`/api/cms/${ pageSlug }`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, content }),
