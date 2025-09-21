@@ -140,7 +140,7 @@ router.delete('/:account_id/:product_id', async (req, res) => {
     try {
         const { account_id, product_id } = req.params;
 
-        await pool.query(
+        const [ result ] = await pool.query(
             `
                 DELETE FROM carts
                 WHERE account_id = ? AND product_id = ?
