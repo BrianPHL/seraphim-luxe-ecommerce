@@ -1,6 +1,5 @@
 import pool from "../apis/db.js";
 import express from 'express';
-import { createCartActivity } from '../utils/inbox.js';
 import { AuditLogger } from '../utils/audit-trail.js';
 
 const router = express.Router();
@@ -67,7 +66,6 @@ router.post('/', async (req, res) => {
             const [productRows] = await pool.query('SELECT label FROM products WHERE id = ?', [product_id]);
             const productLabel = productRows?.[0]?.label || 'Product';
 
-            await createCartActivity(account_id, productLabel, 'added');
             await AuditLogger.logCartAdd(account_id, product_id, quantity, req);
 
             return res.status(201).json({ success: true, insertId: result.insertId, message: 'Product added to cart successfully!' });

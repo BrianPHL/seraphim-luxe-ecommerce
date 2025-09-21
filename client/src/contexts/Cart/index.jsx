@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import CartContext from "./context";
-import { useAuth, useToast } from "@contexts";
+import { useAuth, useToast, useNotifications } from "@contexts";
 
 export const CartProvider = ({ children }) => {
 
@@ -9,6 +9,7 @@ export const CartProvider = ({ children }) => {
     const [ loading, setLoading ] = useState(false);
     const { user } = useAuth();
     const { showToast } = useToast();
+    const { setNotification } = useNotifications();
 
     const fetchCartItems = async () => {
         
@@ -62,6 +63,12 @@ export const CartProvider = ({ children }) => {
                     product_id: item['product_id'],
                     quantity: item['quantity']
                 })
+            });
+
+            await setNotification({
+                type: 'cart',
+                title: 'Item added to cart',
+                message: `${ item.label } was added to your cart.`
             });
 
         } catch (err) {
@@ -137,6 +144,8 @@ export const CartProvider = ({ children }) => {
         if (!user) return;
 
         try {
+
+            const cartItem = cartItems.filter(item => item.product_id === product_id);
             
             setLoading(true);
             setCartItems(previous => previous.filter(item => item['product_id'] !== product_id));
@@ -145,6 +154,12 @@ export const CartProvider = ({ children }) => {
             await fetch(`/api/carts/${ user['id'] }/${ product_id }`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
+            });
+            
+            await setNotification({
+                type: 'cart',
+                title: 'Item removed from cart',
+                message: `${ cartItem[0].label } was removed from your cart.`
             });
 
         } catch (err) {
