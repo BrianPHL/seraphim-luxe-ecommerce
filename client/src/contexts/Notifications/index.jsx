@@ -45,6 +45,31 @@ export const NotificationsProvider = ({ children }) => {
 
     }, [ notifications ])
 
+    const readAllNotifications = async () => {
+
+        if (!user) return;
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/mark-all-as-read/${ user.id }`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to mark all notifications as read!");
+
+            await fetchNotifications();
+            
+        } catch (err) {
+
+            console.error("Notifications context readAllNotifications function error: ", err);
+            showToast('Failed to mark all notifications as read!', 'error')
+            
+        }
+
+    };
+
 
     useEffect(() => {
         fetchNotifications()
@@ -59,9 +84,12 @@ export const NotificationsProvider = ({ children }) => {
             
         // * Data
             notifications,
+            isInboxOpen,
             unreadCount,
+
         // * Exposed functions
             fetchNotifications,
+            readAllNotifications,
             setIsInboxOpen
 
         }}>

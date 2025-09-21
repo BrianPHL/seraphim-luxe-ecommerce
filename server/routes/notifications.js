@@ -61,4 +61,33 @@ router.post('/:account_id', async (req, res) => {
 
 });
 
+router.put('/mark-all-as-read/:account_id', async (req, res) => {
+
+    try {
+
+        const { account_id } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE notifications
+                SET is_read = 1
+                WHERE account_id = ?
+            `,
+            [ account_id ]
+        );
+
+        if (result.affectedRows === 0)
+            throw new Error('Failed to mark all notifications as read!');
+
+        res.status(200).send();
+
+    } catch (err) {
+
+        console.error("notifications router PUT /mark-all-as-read/:account_id endpoint error: ", err);
+        res.status(500).json(err);
+
+    }
+
+});
+
 export default router;
