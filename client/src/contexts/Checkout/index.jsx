@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import CheckoutContext from "./context";
-import { useAuth, useToast, useCart, useSettings, useProducts } from "@contexts";
+import { useAuth, useToast, useCart, useSettings, useProducts, useNotifications } from "@contexts";
 import { fetchWithTimeout } from "@utils";
 
 export const CheckoutProvider = ({ children }) => {
@@ -23,6 +23,7 @@ export const CheckoutProvider = ({ children }) => {
     const { showToast } = useToast();
     const { clearSelectedCartItems } = useCart();
     const { refreshProducts } = useProducts();
+    const { setNotification } = useNotifications();
 
     const generateOrderNumber = () => {
         const timestamp = Date.now();
@@ -116,6 +117,12 @@ export const CheckoutProvider = ({ children }) => {
 
             setCurrentOrder(data);
             showToast(`Order ${data.order_number} placed successfully!`, 'success');
+
+            await setNotification({
+                type: 'orders',
+                title: 'Item successfully ordered',
+                message: `Your new order is ${ data.order_number }. It is now pending.`
+            });
             
             return { success: true, order: data };
         } catch (err) {
