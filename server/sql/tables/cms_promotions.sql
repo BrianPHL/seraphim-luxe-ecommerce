@@ -7,21 +7,19 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE TABLE IF NOT EXISTS `stocks_history` (
+CREATE TABLE IF NOT EXISTS `cms_promotions` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `product_id` int NOT NULL,
-  `stock_history_type` enum('initial','restock','adjustment','reservation','return','order') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `quantity_change` int NOT NULL,
-  `previous_quantity` int NOT NULL,
-  `new_quantity` int NOT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `admin_id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `discount` decimal(5,2) NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `is_active` tinyint NOT NULL DEFAULT (1),
   `created_at` timestamp NOT NULL DEFAULT (now()),
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `stocks_history_accounts_id_fkey` (`admin_id`),
-  KEY `stocks_history_products_id_fkey` (`product_id`),
-  CONSTRAINT `stocks_history_accounts_id_fkey` FOREIGN KEY (`admin_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `stocks_history_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cms_promotions_code_unique_key` (`code`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 

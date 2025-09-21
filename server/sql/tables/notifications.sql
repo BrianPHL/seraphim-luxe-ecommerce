@@ -7,22 +7,22 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE TABLE IF NOT EXISTS `order_items` (
+CREATE TABLE IF NOT EXISTS `notifications` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `order_id` int NOT NULL,
-  `product_id` int NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `quantity` int NOT NULL DEFAULT '1',
-  `price` decimal(10,2) NOT NULL,
-  `discount_amount` decimal(10,2) DEFAULT '0.00',
-  `total_amount` decimal(10,2) NOT NULL,
-  `image_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_id` int NOT NULL,
+  `type` enum('cart','wishlist','orders','system') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `message` text COLLATE utf8mb4_general_ci NOT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `order_items_orders_id_fkey` (`order_id`),
-  KEY `order_items_products_id_fkey` (`product_id`),
-  CONSTRAINT `order_items_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `order_items_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
+  KEY `notifications_account_id_index` (`account_id`) USING BTREE,
+  KEY `notifications_inbox_created_at_index` (`created_at`) USING BTREE,
+  KEY `notifications_inbox_account_index` (`account_id`) USING BTREE,
+  KEY `notifications_inbox_read_status_index` (`is_read`) USING BTREE,
+  KEY `notifications_inbox_read_index` (`is_read`) USING BTREE,
+  CONSTRAINT `notifications_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 

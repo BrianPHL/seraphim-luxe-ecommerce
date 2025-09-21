@@ -1,10 +1,3 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Server version:               8.4.5 - MySQL Community Server - GPL
--- Server OS:                    Win64
--- HeidiSQL Version:             12.11.0.7065
--- --------------------------------------------------------
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
@@ -14,7 +7,6 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Dumping structure for table seraphim_luxe.product_subcategories
 CREATE TABLE IF NOT EXISTS `product_subcategories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `category_id` int NOT NULL,
@@ -29,7 +21,6 @@ CREATE TABLE IF NOT EXISTS `product_subcategories` (
   CONSTRAINT `product_subcategories_product_categories_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.product_subcategories: ~9 rows (approximately)
 INSERT INTO `product_subcategories` (`id`, `category_id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
 	(1, 1, 'Bracelets', NULL, 1, 1, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
 	(2, 1, 'Earrings', NULL, 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),

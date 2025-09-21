@@ -1,10 +1,3 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Server version:               8.4.5 - MySQL Community Server - GPL
--- Server OS:                    Win64
--- HeidiSQL Version:             12.11.0.7065
--- --------------------------------------------------------
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
@@ -14,12 +7,11 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+SET FOREIGN_KEY_CHECKS = 0;
 
--- Dumping database structure for seraphim_luxe
 CREATE DATABASE IF NOT EXISTS `seraphim_luxe` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `seraphim_luxe`;
 
--- Dumping structure for table seraphim_luxe.accounts
 CREATE TABLE IF NOT EXISTS `accounts` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -45,9 +37,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   CONSTRAINT `accounts_account_addresses_default_shipping_address_fkey` FOREIGN KEY (`default_shipping_address`) REFERENCES `account_addresses` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.accounts: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.account_addresses
 CREATE TABLE IF NOT EXISTS `account_addresses` (
   `id` int NOT NULL AUTO_INCREMENT,
   `account_id` int NOT NULL,
@@ -65,9 +55,31 @@ CREATE TABLE IF NOT EXISTS `account_addresses` (
   CONSTRAINT `account_addresses_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.account_addresses: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.carts
+CREATE TABLE IF NOT EXISTS `audit_trail` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `action_type` enum('auth_signin','auth_signup','auth_signout','auth_password_change','profile_update','account_suspension','account_deletion','product_view','cart_add','cart_remove','cart_update','wishlist_add','wishlist_remove','order_create','order_update','order_cancel','admin_product_create','admin_product_update','admin_product_delete','admin_category_create','admin_category_update','admin_category_delete','admin_stock_update','admin_settings_update','admin_account_create','admin_account_update','admin_account_suspend','order_invoice_print','profile_preferences_update','order_invoice_report_print') COLLATE utf8mb4_general_ci NOT NULL,
+  `resource_type` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `resource_id` int DEFAULT NULL,
+  `old_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `new_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_general_ci,
+  `session_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `details` text COLLATE utf8mb4_general_ci,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_action_type` (`action_type`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_resource` (`resource_type`,`resource_id`),
+  CONSTRAINT `audit_trail_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `audit_trail_chk_1` CHECK (json_valid(`old_values`)),
+  CONSTRAINT `audit_trail_chk_2` CHECK (json_valid(`new_values`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 CREATE TABLE IF NOT EXISTS `carts` (
   `id` int NOT NULL AUTO_INCREMENT,
   `account_id` int NOT NULL,
@@ -82,29 +94,77 @@ CREATE TABLE IF NOT EXISTS `carts` (
   CONSTRAINT `carts_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.carts: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.installments
-CREATE TABLE IF NOT EXISTS `installments` (
+CREATE TABLE IF NOT EXISTS `cms` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `reservation_id` int NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `payment_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` enum('pending','completed','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending',
-  `admin_id` int DEFAULT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `processed_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `installments_reservations_id_fkey` (`reservation_id`),
-  KEY `installments_accounts_id_fkey` (`admin_id`),
-  CONSTRAINT `installments_accounts_id_fkey` FOREIGN KEY (`admin_id`) REFERENCES `accounts` (`id`),
-  CONSTRAINT `installments_reservations_id_fkey` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`id`)
+  `page_slug` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `last_updated_by` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `page_slug` (`page_slug`),
+  KEY `idx_page_slug` (`page_slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.installments: ~0 rows (approximately)
+INSERT INTO `cms` (`id`, `page_slug`, `title`, `content`, `created_at`, `updated_at`, `last_updated_by`) VALUES
+	(1, 'about', 'About Us Content', 'Driven by Passion, Fueled by Expressions\n\nAt Seraphim Luxe, we believe that every accessory should be meaningful, versatile, and timeless. Whether you\'re expressing your daily style, making a statement, or seeking the perfect complement to your personality, our mission is to provide you with top-quality unisex jewelry and accessories to enhance your personal expression.\n\nWho We Ares\n\nFounded with a passion for inclusive fashion and a commitment to excellence, Seraphim Luxe has grown into a trusted name in the accessories industry. We cater to style enthusiasts of all preferences, offering a wide selection of unisex jewelry and premium accessories to ensure that your personal style shines at its best.', '2025-09-07 14:08:07', '2025-09-17 03:35:58', NULL),
+	(2, 'contact', 'Contact Information', 'Contact Seraphim Luxes\n\nWe\'d love to hear from you! Get in touch with our team.\n\nEmail: info@seraphimluxe.com\nPhone: +1 (555) 123-4567\nAddress: 123 Fashion Avenue, Style District, City 10001\n\nBusiness Hours:s\nMonday-Friday: 9AM-6PM\nSaturday: 10AM-4PM\nSunday: Closed', '2025-09-07 14:08:07', '2025-09-17 03:36:26', NULL),
+	(3, 'faqs', 'Frequently Asked Questions', 'Frequently Asked Questions\n\nFind answers to common questions about our products, services, and policies.\n\nOrders & Shippings\n\nQ: How long does shipping take?\nA: Standard shipping takes 3-5 business days. Express shipping is available for 1-2 business days.\n\nQ: Do you ship internationally?\nA: Yes, we ship to most countries worldwide. International shipping times vary by location.\n\nReturns & Exchangess\n\nQ: What is your return policy?\nA: We accept returns within 30 days of purchase with original receipt and tags attached.\n\nQ: How do I exchange an item?\nA: Please contact our customer service team to initiate an exchange.', '2025-09-07 14:08:07', '2025-09-16 18:03:28', NULL),
+	(4, 'privacy', 'Privacy Policy', 'Privacy Policy\n\nEffective Date: January 1, 2023\n\nIntroductions\n\nAt Seraphim Luxe, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our services.\n\nInformation We Collects\n\nWe collect information you provide directly to us, such as when you create an account, make a purchase, or contact us. This may include your name, email address, shipping address, payment information, and any other details you choose to provide.', '2025-09-07 14:08:07', '2025-09-16 18:03:37', NULL),
+	(7, 'home', 'Homepage Content Management', 'Hero Section\r\nTitle: Welcome to Seraphim Luxe\r\nSubtitle: Discover our exclusive collection\r\nButton Text: Shop Now\r\nLink: /collections\r\nImage: /images/home/hero.jpg\r\nActive: Yes\r\nOrder: 1\r\n\r\nFeatured Products Section\r\nTitle: Featured Products\r\nProducts: 101, 102, 103, 104\r\nActive: Yes\r\nOrder: 2\r\n\r\nText Section\r\nTitle: About Our Brand\r\nContent: Seraphim Luxe is dedicated to providing high-quality luxury products that combine style and functionality.\r\nActive: Yes\r\nOrder: 3', '2025-09-15 16:40:50', '2025-09-15 16:51:26', NULL);
 
--- Dumping structure for table seraphim_luxe.oauth_accounts
+CREATE TABLE IF NOT EXISTS `cms_banners` (
+  `id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `subtitle` text COLLATE utf8mb4_general_ci,
+  `image_url` varchar(500) COLLATE utf8mb4_general_ci NOT NULL,
+  `link_url` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `button_text` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `position` int DEFAULT '0',
+  `is_active` tinyint DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+CREATE TABLE IF NOT EXISTS `cms_promotions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `discount` decimal(5,2) NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `is_active` tinyint NOT NULL DEFAULT (1),
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cms_promotions_code_unique_key` (`code`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `account_id` int NOT NULL,
+  `type` enum('cart','wishlist','orders','system') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `message` text COLLATE utf8mb4_general_ci NOT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `notifications_account_id_index` (`account_id`) USING BTREE,
+  KEY `notifications_inbox_created_at_index` (`created_at`) USING BTREE,
+  KEY `notifications_inbox_account_index` (`account_id`) USING BTREE,
+  KEY `notifications_inbox_read_status_index` (`is_read`) USING BTREE,
+  KEY `notifications_inbox_read_index` (`is_read`) USING BTREE,
+  CONSTRAINT `notifications_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 CREATE TABLE IF NOT EXISTS `oauth_accounts` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
@@ -126,9 +186,7 @@ CREATE TABLE IF NOT EXISTS `oauth_accounts` (
   CONSTRAINT `oauth_accounts_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.oauth_accounts: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.oauth_sessions
 CREATE TABLE IF NOT EXISTS `oauth_sessions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
@@ -145,9 +203,7 @@ CREATE TABLE IF NOT EXISTS `oauth_sessions` (
   CONSTRAINT `oauth_sessions_accounts_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.oauth_sessions: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.oauth_verifications
 CREATE TABLE IF NOT EXISTS `oauth_verifications` (
   `id` int NOT NULL AUTO_INCREMENT,
   `identifier` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -160,9 +216,7 @@ CREATE TABLE IF NOT EXISTS `oauth_verifications` (
   KEY `oauth_verifications_expires_at_index` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.oauth_verifications: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.orders
 CREATE TABLE IF NOT EXISTS `orders` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -174,7 +228,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `total_amount` decimal(10,2) NOT NULL,
   `shipping_address_id` int NOT NULL,
   `billing_address_id` int NOT NULL,
-  `payment_method` enum('cash_on_delivery','gcash','bank_transfer','credit_card') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'cash_on_delivery',
+  `payment_method` enum('cash_on_delivery','paypal','bank_transfer','credit_card') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'cash_on_delivery',
   `payment_status` enum('pending','paid','failed','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending',
   `shipping_method` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `shipping_cost` decimal(10,2) DEFAULT '0.00',
@@ -195,9 +249,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   CONSTRAINT `orders_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.orders: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.order_items
 CREATE TABLE IF NOT EXISTS `order_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
@@ -216,16 +268,14 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   CONSTRAINT `order_items_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.order_items: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.order_refunds
 CREATE TABLE IF NOT EXISTS `order_refunds` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
   `refund_amount` decimal(10,2) NOT NULL,
   `reason` enum('customer_request','defective_product','wrong_item','damaged_shipping','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `reason_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `refund_method` enum('cash','gcash','bank_transfer','credit_card','store_credit') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `refund_method` enum('cash','paypal','bank_transfer','credit_card') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `status` enum('pending','processing','completed','failed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending',
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `processed_by` int DEFAULT NULL,
@@ -236,9 +286,7 @@ CREATE TABLE IF NOT EXISTS `order_refunds` (
   CONSTRAINT `order_refunds_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.order_refunds: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.order_status_history
 CREATE TABLE IF NOT EXISTS `order_status_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
@@ -252,9 +300,7 @@ CREATE TABLE IF NOT EXISTS `order_status_history` (
   CONSTRAINT `order_status_history_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.order_status_history: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.order_tracking
 CREATE TABLE IF NOT EXISTS `order_tracking` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
@@ -270,9 +316,7 @@ CREATE TABLE IF NOT EXISTS `order_tracking` (
   CONSTRAINT `order_tracking_orders_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.order_tracking: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.platform_settings
 CREATE TABLE IF NOT EXISTS `platform_settings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `setting_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -283,11 +327,10 @@ CREATE TABLE IF NOT EXISTS `platform_settings` (
   UNIQUE KEY `setting_key` (`setting_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table seraphim_luxe.platform_settings: ~9 rows (approximately)
 INSERT INTO `platform_settings` (`id`, `setting_key`, `setting_value`, `created_at`, `updated_at`) VALUES
 	(1, 'payment_cash_on_delivery_enabled', 'true', '2025-09-13 14:01:54', '2025-09-14 12:25:38'),
 	(2, 'payment_bank_transfer_enabled', 'true', '2025-09-13 14:01:54', '2025-09-14 12:25:38'),
-	(3, 'payment_paypal_enabled', 'true', '2025-09-13 14:01:54', '2025-09-14 12:25:38'),
+	(3, 'payment_paypal_enabled', 'true', '2025-09-13 14:01:54', '2025-09-18 12:09:49'),
 	(4, 'payment_credit_card_enabled', 'true', '2025-09-13 14:01:54', '2025-09-14 12:25:38'),
 	(5, 'currency_PHP_enabled', 'true', '2025-09-13 14:33:40', '2025-09-14 12:25:38'),
 	(6, 'currency_USD_enabled', 'true', '2025-09-13 14:33:40', '2025-09-14 12:25:38'),
@@ -295,7 +338,6 @@ INSERT INTO `platform_settings` (`id`, `setting_key`, `setting_value`, `created_
 	(8, 'currency_JPY_enabled', 'true', '2025-09-13 14:33:40', '2025-09-14 12:25:38'),
 	(9, 'currency_CAD_enabled', 'true', '2025-09-13 14:33:40', '2025-09-14 12:25:38');
 
--- Dumping structure for table seraphim_luxe.products
 CREATE TABLE IF NOT EXISTS `products` (
   `id` int NOT NULL AUTO_INCREMENT,
   `label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -306,15 +348,16 @@ CREATE TABLE IF NOT EXISTS `products` (
   `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `variants` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `stock_status` enum('in_stock','low_stock','out_of_stock') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'out_of_stock',
-  `stock_quantity` int(10) unsigned zerofill NOT NULL DEFAULT '0000000000',
+  `stock_quantity` int NOT NULL DEFAULT '0',
   `stock_threshold` int NOT NULL DEFAULT '5',
   `reserved_quantity` int NOT NULL DEFAULT '0',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `modified_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `views_count` int DEFAULT '0',
   `orders_count` int DEFAULT '0',
-  `last_viewed` timestamp NULL DEFAULT NULL,
   `total_revenue` decimal(10,2) DEFAULT '0.00',
+  `is_featured` tinyint NOT NULL DEFAULT '0',
+  `last_viewed` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `modified_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `products_product_categories_id_fkey` (`category_id`),
   KEY `products_product_subcategories_id_fkey` (`subcategory_id`),
@@ -326,55 +369,53 @@ CREATE TABLE IF NOT EXISTS `products` (
   CONSTRAINT `products_chk_1` CHECK (json_valid(`variants`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.products: ~45 rows (approximately)
-INSERT INTO `products` (`id`, `label`, `price`, `category_id`, `subcategory_id`, `description`, `image_url`, `variants`, `stock_status`, `stock_quantity`, `stock_threshold`, `reserved_quantity`, `created_at`, `modified_at`, `views_count`, `orders_count`, `last_viewed`, `total_revenue`) VALUES
-	(1, 'Maxi Pearl Gold Bracelet', 4500.00, 2, 4, 'Elegant maxi pearl bracelet in gold finish', 'products/maxi_pearl_gold_01', '[{"price": 4500, "stock": 10, "images": ["maxi_pearl_gold_01.webp", "maxi_pearl_gold_02.webp", "maxi_pearl_gold_03.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:54', 0, 0, NULL, 0.00),
-	(2, 'Rigid Gold Bracelet', 3800.00, 2, 4, 'Classic rigid gold bracelet with modern design', 'products/rigid_gold_01', '[{"price": 3800, "stock": 10, "images": ["rigid_gold_01.webp", "rigid_gold_02.webp", "rigid_gold_03.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:54', 0, 0, NULL, 0.00),
-	(3, 'Rigid Interlocking Gold Bracelet', 4200.00, 2, 4, 'Sophisticated interlocking design gold bracelet', 'products/rigid_interlocking_gold_01', '[{"price": 4200, "stock": 10, "images": ["rigid_interlocking_gold_01.webp", "rigid_interlocking_gold_02.webp", "rigid_interlocking_gold_03.webp"], "material": "Gold"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-13 16:03:30', 0, 0, NULL, 0.00),
-	(4, 'Rigid with Relief Gold Bracelet', 4800.00, 2, 4, 'Textured relief design gold bracelet', 'products/rigid_with_relief_gold_01', '[{"price": 4800, "stock": 10, "images": ["rigid_with_relief_gold_01.webp", "rigid_with_relief_gold_02.webp", "rigid_with_relief_gold_03.webp", "rigid_with_relief_gold_04.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:54', 0, 0, NULL, 0.00),
-	(5, 'Shiny Intertwined Gold Bracelet', 4000.00, 2, 4, 'Elegant intertwined design with shiny gold finish', 'products/shiny_intertwined_gold_01', '[{"price": 4000, "stock": 10, "images": ["shiny_intertwined_gold_01.webp", "shiny_intertwined_gold_02.webp"], "material": "Gold"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:54', 0, 0, NULL, 0.00),
-	(6, 'Beaded Drop Earrings', 2800.00, 2, 5, 'Elegant beaded drop earrings for special occasions', 'products/beaded_drop_mixed_metal_01', '[{"price": 2800, "stock": 10, "images": ["beaded_drop_mixed_metal_01.webp", "beaded_drop_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:01', 0, 0, NULL, 0.00),
-	(7, 'Combined Flower Earrings', 3200.00, 2, 5, 'Beautiful flower-inspired earrings with intricate details', 'products/combined_flower_mixed_metal_01', '[{"price": 3200, "stock": 10, "images": ["combined_flower_mixed_metal_01.webp", "combined_flower_mixed_metal_02.webp", "combined_flower_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:01', 0, 0, NULL, 0.00),
-	(8, 'Flower Pendant Earrings', 2900.00, 2, 5, 'Delicate flower pendant earrings with graceful movement', 'products/flower_pendant_mixed_metal_01', '[{"price": 2900, "stock": 10, "images": ["flower_pendant_mixed_metal_01.webp", "flower_pendant_mixed_metal_02.webp", "flower_pendant_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-13 16:03:33', 0, 0, NULL, 0.00),
-	(9, 'Linked Hoop Earrings with Crystals', 3800.00, 2, 5, 'Stunning linked hoop earrings adorned with crystals', 'products/linked_hoop_earrings_mixed_metal_with_crystals_01', '[{"price": 3800, "stock": 10, "images": ["linked_hoop_earrings_mixed_metal_with_crystals_01.webp", "linked_hoop_earrings_mixed_metal_with_crystals_01.webp", "linked_hoop_earrings_mixed_metal_with_crystals_01.webp"], "material": "Mixed Metal with Crystals"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:01', 0, 0, NULL, 0.00),
-	(10, 'Long Beaded Earrings', 3500.00, 2, 5, 'Dramatic long beaded earrings for evening wear', 'products/long_beaded_mixed_metal_01', '[{"price": 3500, "stock": 10, "images": ["long_beaded_mixed_metal_01.webp", "long_beaded_mixed_metal_02.webp", "long_beaded_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:01', 0, 0, NULL, 0.00),
-	(11, 'Bella Madre Gold Necklace', 7500.00, 2, 6, 'Luxurious Bella Madre collection gold necklace', 'products/bella_madre_gold_01', '[{"price": 7500, "stock": 10, "images": ["bella_madre_gold_01.webp", "bella_madre_gold_02.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:10', 0, 0, NULL, 0.00),
-	(12, 'Crystal Pendant Leather Necklace', 4200.00, 2, 6, 'Modern crystal pendant on premium leather cord', 'products/pendant_leather_with_crystal_01', '[{"price": 4200, "stock": 10, "images": ["pendant_leather_with_crystal_01.webp", "pendant_leather_with_crystal_02.webp", "pendant_leather_with_crystal_03.webp"], "material": "Leather w/ Crystal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:10', 0, 0, NULL, 0.00),
-	(13, 'Drop Necklace with Sphere Silver', 5800.00, 2, 6, 'Elegant silver drop necklace with sphere pendant', 'products/drop_necklace_with_sphere_silver_01', '[{"price": 5800, "stock": 10, "images": ["drop_necklace_with_sphere_silver_01.webp", "drop_necklace_with_sphere_silver_01.webp", "drop_necklace_with_sphere_silver_01.webp", "drop_necklace_with_sphere_silver_01.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:10', 0, 0, NULL, 0.00),
-	(14, 'Flower Pendant Gold Necklace', 6200.00, 2, 6, 'Exquisite flower pendant necklace in gold', 'products/flower_pendant_gold_01', '[{"price": 6200, "stock": 10, "images": ["flower_pendant_gold_01.webp", "flower_pendant_gold_02.webp", "flower_pendant_gold_03.webp", "flower_pendant_gold_04.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:10', 0, 0, NULL, 0.00),
-	(15, 'Loved Circle Gold Necklace', 5500.00, 2, 6, 'Romantic circle pendant gold necklace', 'products/loved_circle_gold_01', '[{"price": 5500, "stock": 10, "images": ["loved_circle_gold_01.webp", "loved_circle_gold_02.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:10', 0, 0, NULL, 0.00),
-	(16, 'Bancroft Scroll Silver Bracelet', 5200.00, 1, 1, 'Elegant scroll design silver bracelet for men', 'products/bancroft_scroll_silver_bracelet_01', '[{"price": 5200, "stock": 10, "images": ["bancroft_scroll_silver_bracelet_01.webp", "bancroft_scroll_silver_bracelet_02.webp"], "material": "Silver"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-13 16:03:26', 0, 0, NULL, 0.00),
-	(17, 'Braided Bangle Bracelet', 4800.00, 1, 1, 'Classic braided bangle bracelet with modern appeal', 'products/braided_bangle_mixed_metal_bracelet_01', '[{"price": 4800, "stock": 10, "images": ["braided_bangle_mixed_metal_bracelet_01.webp", "braided_bangle_mixed_metal_bracelet_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:17', 0, 0, NULL, 0.00),
-	(18, 'Minimal Cuban Bracelet', 3500.00, 1, 1, 'Sleek minimal cuban link bracelet', 'products/minimal_cuban_steel_bracelet_01', '[{"price": 3500, "stock": 25, "images": ["minimal_cuban_steel_bracelet_01.webp", "minimal_cuban_steel_bracelet_02.webp"], "material": "Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:17', 0, 0, NULL, 0.00),
-	(19, 'Tiffany Lock Bangle', 7500.00, 1, 1, 'Luxury lock design bangle bracelet', 'products/tiffany_lock_bangle_steel_01', '[{"price": 7500, "stock": 10, "images": ["tiffany_lock_bangle_steel_01.webp", "tiffany_lock_bangle_steel_02.webp"], "material": "Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:17', 0, 0, NULL, 0.00),
-	(20, 'Vesper Chain Bracelet Gold', 6200.00, 1, 1, 'Premium vesper chain bracelet in gold finish', 'products/vesper_chain_bracelet_gold_01', '[{"price": 6200, "stock": 10, "images": ["vesper_chain_bracelet_gold_01.webp", "vesper_chain_bracelet_gold_01.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:17', 0, 0, NULL, 0.00),
-	(21, 'Celestial Cross Earrings', 2800.00, 1, 2, 'Bold celestial cross design earrings', 'products/celestial_cross_earrings_mixed_metal_01', '[{"price": 2800, "stock": 10, "images": ["celestial_cross_earrings_mixed_metal_01.webp", "celestial_cross_earrings_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36', 0, 0, NULL, 0.00),
-	(22, 'Hammered Silver Stud', 2200.00, 1, 2, 'Textured hammered silver stud earrings', 'products/hammered_silver_stud_01', '[{"price": 2200, "stock": 10, "images": ["hammered_silver_stud_01.webp", "hammered_silver_stud_02.webp"], "material": "Silver"}]', 'in_stock', 0000000001, 5, 0, '2025-08-27 20:17:17', '2025-09-12 13:30:31', 0, 0, NULL, 0.00),
-	(23, 'Nyx Ear Silver Stud', 2500.00, 1, 2, 'Sleek Nyx collection silver stud earrings', 'products/nyx_ear_silver_stud_01', '[{"price": 2500, "stock": 10, "images": ["nyx_ear_silver_stud_01.webp", "nyx_ear_silver_stud_01.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36', 0, 0, NULL, 0.00),
-	(24, 'Square Stud Earrings', 2400.00, 1, 2, 'Modern square design stud earrings', 'products/square_stud_earrings_mixed_metal_01', '[{"price": 2400, "stock": 10, "images": ["square_stud_earrings_mixed_metal_01.webp", "square_stud_earrings_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36', 0, 0, NULL, 0.00),
-	(25, 'Tiffany Titan Earrings', 4500.00, 1, 2, 'Premium Tiffany Titan collection earrings', 'products/tiffany_titan_earrings_titanium_01', '[{"price": 4500, "stock": 10, "images": ["tiffany_titan_earrings_titanium_01.webp", "tiffany_titan_earrings_titanium_02.webp"], "material": "Titanium"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:36', 0, 0, NULL, 0.00),
-	(26, 'Classic Mens Minimal Box Cuban Chain', 6000.00, 1, 3, 'Premium minimal box cuban chain for men', 'products/classic_mens_minimal_box_cuban_chain_silver_01', '[{"price": 6000, "stock": 10, "images": ["classic_mens_minimal_box_cuban_chain_silver_01.webp", "classic_mens_minimal_box_cuban_chain_silver_02.webp", "classic_mens_minimal_box_cuban_chain_silver_03.webp"], "material": "Silver"}, {"price": 9000, "stock": 10, "images": ["classic_mens_minimal_box_cuban_chain_gold_01.webp", "classic_mens_minimal_box_cuban_chain_gold_02.webp", "classic_mens_minimal_box_cuban_chain_gold_03.webp"], "material": "Gold"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45', 0, 0, NULL, 0.00),
-	(27, 'Minimal Pendant Necklace', 4200.00, 1, 3, 'Sleek minimal pendant necklace for everyday wear', 'products/minimal_pendant_necklace_mixed_metal_01', '[{"price": 4200, "stock": 25, "images": ["minimal_pendant_necklace_mixed_metal_01.webp", "minimal_pendant_necklace_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45', 0, 0, NULL, 0.00),
-	(28, 'Monieyta Rectangular Spiral Bar Pendant', 5800.00, 1, 3, 'Unique rectangular spiral bar pendant design', 'products/monieyta_rectangular_spiral_bar_pendant_steel_01', '[{"price": 5800, "stock": 15, "images": ["monieyta_rectangular_spiral_bar_pendant_steel_01.webp", "monieyta_rectangular_spiral_bar_pendant_steel_02.webp"], "material": "Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45', 0, 0, NULL, 0.00),
-	(29, 'N917 Curb Necklace', 5200.00, 1, 3, 'Classic N917 curb chain necklace', 'products/n917_curb_necklace_mixed_metal_01', '[{"price": 5200, "stock": 18, "images": ["n917_curb_necklace_mixed_metal_01.webp", "n917_curb_necklace_mixed_metal_02.webp", "n917_curb_necklace_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45', 0, 0, NULL, 0.00),
-	(30, 'Sleek Apex Titanium Steel Bar Pendant', 6500.00, 1, 3, 'Modern titanium steel bar pendant with sleek design', 'products/sleek_apex_titanium_steel_bar_pendant_01', '[{"price": 6500, "stock": 12, "images": ["sleek_apex_titanium_steel_bar_pendant_01.webp", "sleek_apex_titanium_steel_bar_pendant_02.webp"], "material": "Titanium Steel"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:41:45', 0, 0, NULL, 0.00),
-	(31, 'David Yurman Box Chain Bracelet', 8500.00, 3, 7, 'Luxury David Yurman box chain bracelet for all genders', 'products/david_yurman_box_chain_bracelet_silver_01', '[{"price": 8500, "stock": 6, "images": ["david_yurman_box_chain_bracelet_silver_01.webp", "david_yurman_box_chain_bracelet_silver_02.webp"], "material": "Silver"}, {"price": 8800, "stock": 6, "images": ["david_yurman_box_chain_bracelet_black_01.webp", "david_yurman_box_chain_bracelet_black_02.webp"], "material": "Black"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-03 17:58:48', 0, 0, NULL, 0.00),
-	(32, 'Gucci Interlocking G Silver Bracelet', 9200.00, 3, 7, 'Iconic Gucci interlocking G silver bracelet', 'products/gucci_interlocking_g_silver_bracelet_silver_01', '[{"price": 9200, "stock": 10, "images": ["gucci_interlocking_g_silver_bracelet_silver_01.webp", "gucci_interlocking_g_silver_bracelet_silver_02.webp", "gucci_interlocking_g_silver_bracelet_silver_03.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20', 0, 0, NULL, 0.00),
-	(33, 'Montblanc MeisterstÃ¼ck Collection Steel 3 Rings Bracelet', 7800.00, 3, 7, 'Premium Montblanc MeisterstÃ¼ck steel and leather bracelet', 'products/montblanc_meisterstuck_collection_steel_3_rings_bracelet_white_leather_01', '[{"price": 7800, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_white_leather_01.webp"], "material": "Steel with White Leather"}, {"price": 7900, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_red_leather_02.webp"], "material": "Steel with Red Leather"}, {"price": 7850, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_brown_leather_03.webp"], "material": "Steel with Brown Leather"}, {"price": 7950, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_light_blue_leather_04.webp"], "material": "Steel with Light Blue Leather"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20', 0, 0, NULL, 0.00),
-	(34, 'Tateossian Pop Rigato Double Wrap Leather Bracelet', 4500.00, 3, 7, 'Contemporary double wrap leather bracelet by Tateossian', 'products/tateossian_pop_rigato_double_wrap_leather_bracelet_leather_01', '[{"price": 4400, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_black_leather_02.webp"], "material": "Black Leather"}, {"price": 4450, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_brown_leather_03.webp"], "material": "Brown Leather"}, {"price": 4500, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_blue_leather_04.webp", "tateossian_pop_rigato_double_wrap_leather_bracelet_blue_leather_05.webp"], "material": "Blue Leather"}]', 'in_stock', 0000000008, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20', 0, 0, NULL, 0.00),
-	(35, 'Tom Wood Curb M Bracelet', 5200.00, 3, 7, 'Scandinavian design Tom Wood curb bracelet', 'products/tom_wood_curb_m_bracelet_silver_01', '[{"price": 5200, "stock": 9, "images": ["tom_wood_curb_m_bracelet_silver_01.webp", "tom_wood_curb_m_bracelet_silver_02.webp"], "material": "Silver"}, {"price": 5800, "stock": 9, "images": ["tom_wood_curb_m_bracelet_gold_03.webp", "tom_wood_curb_m_bracelet_gold_04.webp"], "material": "Gold"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:20', 0, 0, NULL, 0.00),
-	(36, 'AMYO Tiny Stud Earring', 1800.00, 3, 8, 'Minimalist tiny stud earrings by AMYO', 'products/amyo_tiny_stud_earring_04', '[{"price": 1800, "stock": 10, "images": ["amyo_tiny_stud_earring_gold_01.webp"], "material": "Gold"}, {"price": 1600, "stock": 10, "images": ["amyo_tiny_stud_earring_copper_02.webp"], "material": "Copper"}, {"price": 1700, "stock": 10, "images": ["amyo_tiny_stud_earring_silver_03.webp"], "material": "Silver"}]', 'in_stock', 0000000000, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:29', 0, 0, NULL, 0.00),
-	(37, 'GLAMIRA Black Stud Earring', 2200.00, 3, 8, 'Elegant stud earrings by GLAMIRA in multiple finishes', 'products/glamira_black_stud_earring_01', '[{"price": 2200, "stock": 8, "images": ["glamira_black_stud_earring_silver_02.webp"], "material": "Silver"}, {"price": 2400, "stock": 9, "images": ["glamira_black_stud_earring_gold_03.webp"], "material": "Gold"}, {"price": 2350, "stock": 8, "images": ["glamira_black_stud_earring_rosegold_04.webp"], "material": "Rose Gold"}]', 'in_stock', 0000000009, 5, 0, '2025-08-27 20:17:17', '2025-09-11 13:07:18', 0, 0, NULL, 0.00),
-	(38, 'JAXXON Silver Cross Stud Earring', 2800.00, 3, 8, 'Bold silver cross stud earrings by JAXXON', 'products/jaxxon_silver_cross_stud_earring_silver_01', '[{"price": 2800, "stock": 10, "images": ["jaxxon_silver_cross_stud_earring_silver_01.webp", "jaxxon_silver_cross_stud_earring_silver_02.webp", "jaxxon_silver_cross_stud_earring_silver_03.webp", "jaxxon_silver_cross_stud_earring_silver_04.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:29', 0, 0, NULL, 0.00),
-	(39, 'MEJURI Gold Huggie Hoop Earrings', 3200.00, 3, 8, 'Classic gold huggie hoop earrings by MEJURI', 'products/mejuri_gold_huggie_hoop_earrings_gold_01', '[{"price": 3200, "stock": 10, "images": ["mejuri_gold_huggie_hoop_earrings_gold_01.webp", "mejuri_gold_huggie_hoop_earrings_gold_02.webp", "mejuri_gold_huggie_hoop_earrings_gold_03.webp", "mejuri_gold_huggie_hoop_earrings_gold_04.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:29', 0, 0, NULL, 0.00),
-	(40, 'REGALROSE Small Plain Silver Hoop Earring', 2400.00, 3, 8, 'Simple and elegant small silver hoop earrings', 'products/regalrose_small_plain_silver_hoop_earring_silver_01', '[{"price": 2400, "stock": 10, "images": ["regalrose_small_plain_silver_hoop_earring_silver_01.webp", "regalrose_small_plain_silver_hoop_earring_silver_02.webp", "regalrose_small_plain_silver_hoop_earring_silver_03.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:29', 0, 0, NULL, 0.00),
-	(41, 'Caitlyn Minimalist Interlocking Circles Necklace', 4800.00, 3, 9, 'Modern minimalist interlocking circles necklace', 'products/caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_01', '[{"price": 4800, "stock": 8, "images": ["caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_01.webp", "caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_02.webp", "caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_03.webp", "caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_04.webp"], "material": "Mixed Metal"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40', 0, 0, NULL, 0.00),
-	(42, 'GIVA Anushka Sharma Silver Deer Heart Necklace', 3200.00, 3, 9, 'Elegant deer heart necklace by GIVA featuring Anushka Sharma collection', 'products/giva_anushka_sharma_silver_deer_heart_necklace_silver_01', '[{"price": 3200, "stock": 10, "images": ["giva_anushka_sharma_silver_deer_heart_necklace_silver_01.webp", "giva_anushka_sharma_silver_deer_heart_necklace_silver_02.webp", "giva_anushka_sharma_silver_deer_heart_necklace_silver_03.webp", "giva_anushka_sharma_silver_deer_heart_necklace_silver_04.webp"], "material": "Silver"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40', 0, 0, NULL, 0.00),
-	(43, 'GLAMIRA Minimalist Necklace', 2800.00, 3, 9, 'Sleek minimalist necklace design by GLAMIRA', 'products/glamira_minimalist_necklaces_gold_01', '[{"price": 2800, "stock": 10, "images": ["glamira_minimalist_necklaces_gold_01.webp", "glamira_minimalist_necklaces_gold_02.webp", "glamira_minimalist_necklaces_gold_03.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40', 0, 0, NULL, 0.00),
-	(44, 'Minimalist Lab Roman Numerals Diamond Band Necklace', 5500.00, 3, 9, 'Sophisticated roman numerals diamond band necklace', 'products/minimalist_lab_roman_numerals_diamond_band_necklace_gold_01', '[{"price": 5500, "stock": 8, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_gold_01.webp", "minimalist_lab_roman_numerals_diamond_band_necklace_gold_04.webp"], "material": "Gold with Diamonds"}, {"price": 5400, "stock": 4, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_rosegold_02.webp"], "material": "Rose Gold with Diamonds"}, {"price": 5200, "stock": 3, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_silver_03"], "material": "Silver with Diamonds"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40', 0, 0, NULL, 0.00),
-	(45, 'Tiffany T Smile Necklace', 8500.00, 3, 9, 'Iconic Tiffany T Smile collection necklace', 'products/tiffany_t_smile_necklace_gold_01', '[{"price": 8500, "stock": 10, "images": ["tiffany_t_smile_necklace_gold_01.webp", "tiffany_t_smile_necklace_gold_02.webp", "tiffany_t_smile_necklace_gold_03.webp", "tiffany_t_smile_necklace_gold_04.webp"], "material": "Gold"}]', 'in_stock', 0000000010, 5, 0, '2025-08-27 20:17:17', '2025-09-03 14:42:40', 0, 0, NULL, 0.00);
+INSERT INTO `products` (`id`, `label`, `price`, `category_id`, `subcategory_id`, `description`, `image_url`, `variants`, `stock_status`, `stock_quantity`, `stock_threshold`, `reserved_quantity`, `views_count`, `orders_count`, `total_revenue`, `is_featured`, `last_viewed`, `created_at`, `modified_at`) VALUES
+	(1, 'Maxi Pearl Gold Bracelet', 4500.00, 2, 4, 'Elegant maxi pearl bracelet in gold finish', 'products/maxi_pearl_gold_01', '[{"price": 4500, "stock": 10, "images": ["maxi_pearl_gold_01.webp", "maxi_pearl_gold_02.webp", "maxi_pearl_gold_03.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(2, 'Rigid Gold Bracelet', 3800.00, 2, 4, 'Classic rigid gold bracelet with modern design', 'products/rigid_gold_01', '[{"price": 3800, "stock": 10, "images": ["rigid_gold_01.webp", "rigid_gold_02.webp", "rigid_gold_03.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(3, 'Rigid Interlocking Gold Bracelet', 4200.00, 2, 4, 'Sophisticated interlocking design gold bracelet', 'products/rigid_interlocking_gold_01', '[{"price": 4200, "stock": 10, "images": ["rigid_interlocking_gold_01.webp", "rigid_interlocking_gold_02.webp", "rigid_interlocking_gold_03.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(4, 'Rigid with Relief Gold Bracelet', 4800.00, 2, 4, 'Textured relief design gold bracelet', 'products/rigid_with_relief_gold_01', '[{"price": 4800, "stock": 10, "images": ["rigid_with_relief_gold_01.webp", "rigid_with_relief_gold_02.webp", "rigid_with_relief_gold_03.webp", "rigid_with_relief_gold_04.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(5, 'Shiny Intertwined Gold Bracelet', 4000.00, 2, 4, 'Elegant intertwined design with shiny gold finish', 'products/shiny_intertwined_gold_01', '[{"price": 4000, "stock": 10, "images": ["shiny_intertwined_gold_01.webp", "shiny_intertwined_gold_02.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(6, 'Beaded Drop Earrings', 2800.00, 2, 5, 'Elegant beaded drop earrings for special occasions', 'products/beaded_drop_mixed_metal_01', '[{"price": 2800, "stock": 10, "images": ["beaded_drop_mixed_metal_01.webp", "beaded_drop_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 1, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(7, 'Combined Flower Earrings', 3200.00, 2, 5, 'Beautiful flower-inspired earrings with intricate details', 'products/combined_flower_mixed_metal_01', '[{"price": 3200, "stock": 10, "images": ["combined_flower_mixed_metal_01.webp", "combined_flower_mixed_metal_02.webp", "combined_flower_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(8, 'Flower Pendant Earrings', 2900.00, 2, 5, 'Delicate flower pendant earrings with graceful movement', 'products/flower_pendant_mixed_metal_01', '[{"price": 2900, "stock": 10, "images": ["flower_pendant_mixed_metal_01.webp", "flower_pendant_mixed_metal_02.webp", "flower_pendant_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(9, 'Linked Hoop Earrings with Crystals', 3800.00, 2, 5, 'Stunning linked hoop earrings adorned with crystals', 'products/linked_hoop_earrings_mixed_metal_with_crystals_01', '[{"price": 3800, "stock": 10, "images": ["linked_hoop_earrings_mixed_metal_with_crystals_01.webp", "linked_hoop_earrings_mixed_metal_with_crystals_01.webp", "linked_hoop_earrings_mixed_metal_with_crystals_01.webp"], "material": "Mixed Metal with Crystals"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(10, 'Long Beaded Earrings', 3500.00, 2, 5, 'Dramatic long beaded earrings for evening wear', 'products/long_beaded_mixed_metal_01', '[{"price": 3500, "stock": 10, "images": ["long_beaded_mixed_metal_01.webp", "long_beaded_mixed_metal_02.webp", "long_beaded_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(11, 'Bella Madre Gold Necklace', 7500.00, 2, 6, 'Luxurious Bella Madre collection gold necklace', 'products/bella_madre_gold_01', '[{"price": 7500, "stock": 10, "images": ["bella_madre_gold_01.webp", "bella_madre_gold_02.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 7500.00, 1, NULL, '2025-08-27 20:17:17', '2025-09-18 16:28:09'),
+	(12, 'Crystal Pendant Leather Necklace', 4200.00, 2, 6, 'Modern crystal pendant on premium leather cord', 'products/pendant_leather_with_crystal_01', '[{"price": 4200, "stock": 10, "images": ["pendant_leather_with_crystal_01.webp", "pendant_leather_with_crystal_02.webp", "pendant_leather_with_crystal_03.webp"], "material": "Leather w/ Crystal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(13, 'Drop Necklace with Sphere Silver', 5800.00, 2, 6, 'Elegant silver drop necklace with sphere pendant', 'products/drop_necklace_with_sphere_silver_01', '[{"price": 5800, "stock": 10, "images": ["drop_necklace_with_sphere_silver_01.webp", "drop_necklace_with_sphere_silver_01.webp", "drop_necklace_with_sphere_silver_01.webp", "drop_necklace_with_sphere_silver_01.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(14, 'Flower Pendant Gold Necklace', 6200.00, 2, 6, 'Exquisite flower pendant necklace in gold', 'products/flower_pendant_gold_01', '[{"price": 6200, "stock": 10, "images": ["flower_pendant_gold_01.webp", "flower_pendant_gold_02.webp", "flower_pendant_gold_03.webp", "flower_pendant_gold_04.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(15, 'Loved Circle Gold Necklace', 5500.00, 2, 6, 'Romantic circle pendant gold necklace', 'products/loved_circle_gold_01', '[{"price": 5500, "stock": 10, "images": ["loved_circle_gold_01.webp", "loved_circle_gold_02.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(16, 'Bancroft Scroll Silver Bracelet', 5200.00, 1, 1, 'Elegant scroll design silver bracelet for men', 'products/bancroft_scroll_silver_bracelet_01', '[{"price": 5200, "stock": 10, "images": ["bancroft_scroll_silver_bracelet_01.webp", "bancroft_scroll_silver_bracelet_02.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 1, NULL, '2025-08-27 20:17:17', '2025-09-18 11:55:40'),
+	(17, 'Braided Bangle Bracelet', 4800.00, 1, 1, 'Classic braided bangle bracelet with modern appeal', 'products/braided_bangle_mixed_metal_bracelet_01', '[{"price": 4800, "stock": 10, "images": ["braided_bangle_mixed_metal_bracelet_01.webp", "braided_bangle_mixed_metal_bracelet_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 1, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(18, 'Minimal Cuban Bracelet', 3500.00, 1, 1, 'Sleek minimal cuban link bracelet', 'products/minimal_cuban_steel_bracelet_01', '[{"price": 3500, "stock": 25, "images": ["minimal_cuban_steel_bracelet_01.webp", "minimal_cuban_steel_bracelet_02.webp"], "material": "Steel"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(19, 'Tiffany Lock Bangle', 7500.00, 1, 1, 'Luxury lock design bangle bracelet', 'products/tiffany_lock_bangle_steel_01', '[{"price": 7500, "stock": 10, "images": ["tiffany_lock_bangle_steel_01.webp", "tiffany_lock_bangle_steel_02.webp"], "material": "Steel"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(20, 'Vesper Chain Bracelet Gold', 6200.00, 1, 1, 'Premium vesper chain bracelet in gold finish', 'products/vesper_chain_bracelet_gold_01', '[{"price": 6200, "stock": 10, "images": ["vesper_chain_bracelet_gold_01.webp", "vesper_chain_bracelet_gold_01.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(21, 'Celestial Cross Earrings', 2800.00, 1, 2, 'Bold celestial cross design earrings', 'products/celestial_cross_earrings_mixed_metal_01', '[{"price": 2800, "stock": 10, "images": ["celestial_cross_earrings_mixed_metal_01.webp", "celestial_cross_earrings_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(22, 'Hammered Silver Stud', 2200.00, 1, 2, 'Textured hammered silver stud earrings', 'products/hammered_silver_stud_01', '[{"price": 2200, "stock": 10, "images": ["hammered_silver_stud_01.webp", "hammered_silver_stud_02.webp"], "material": "Silver"}]', 'in_stock', 9, 3, 0, 0, 0, 6600.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-21 13:07:41'),
+	(23, 'Nyx Ear Silver Stud', 2500.00, 1, 2, 'Sleek Nyx collection silver stud earrings', 'products/nyx_ear_silver_stud_01', '[{"price": 2500, "stock": 10, "images": ["nyx_ear_silver_stud_01.webp", "nyx_ear_silver_stud_01.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 2500.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 16:28:09'),
+	(24, 'Square Stud Earrings', 2400.00, 1, 2, 'Modern square design stud earrings', 'products/square_stud_earrings_mixed_metal_01', '[{"price": 2400, "stock": 10, "images": ["square_stud_earrings_mixed_metal_01.webp", "square_stud_earrings_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 9, 3, 0, 0, 0, 4800.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-21 13:02:19'),
+	(25, 'Tiffany Titan Earrings', 4500.00, 1, 2, 'Premium Tiffany Titan collection earrings', 'products/tiffany_titan_earrings_titanium_01', '[{"price": 4500, "stock": 10, "images": ["tiffany_titan_earrings_titanium_01.webp", "tiffany_titan_earrings_titanium_02.webp"], "material": "Titanium"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(26, 'Classic Mens Minimal Box Cuban Chain', 6000.00, 1, 3, 'Premium minimal box cuban chain for men', 'products/classic_mens_minimal_box_cuban_chain_silver_01', '[{"price": 6000, "stock": 10, "images": ["classic_mens_minimal_box_cuban_chain_silver_01.webp", "classic_mens_minimal_box_cuban_chain_silver_02.webp", "classic_mens_minimal_box_cuban_chain_silver_03.webp"], "material": "Silver"}, {"price": 9000, "stock": 10, "images": ["classic_mens_minimal_box_cuban_chain_gold_01.webp", "classic_mens_minimal_box_cuban_chain_gold_02.webp", "classic_mens_minimal_box_cuban_chain_gold_03.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(27, 'Minimal Pendant Necklace', 4200.00, 1, 3, 'Sleek minimal pendant necklace for everyday wear', 'products/minimal_pendant_necklace_mixed_metal_01', '[{"price": 4200, "stock": 25, "images": ["minimal_pendant_necklace_mixed_metal_01.webp", "minimal_pendant_necklace_mixed_metal_02.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(28, 'Monieyta Rectangular Spiral Bar Pendant', 5800.00, 1, 3, 'Unique rectangular spiral bar pendant design', 'products/monieyta_rectangular_spiral_bar_pendant_steel_01', '[{"price": 5800, "stock": 15, "images": ["monieyta_rectangular_spiral_bar_pendant_steel_01.webp", "monieyta_rectangular_spiral_bar_pendant_steel_02.webp"], "material": "Steel"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(29, 'N917 Curb Necklace', 5200.00, 1, 3, 'Classic N917 curb chain necklace', 'products/n917_curb_necklace_mixed_metal_01', '[{"price": 5200, "stock": 18, "images": ["n917_curb_necklace_mixed_metal_01.webp", "n917_curb_necklace_mixed_metal_02.webp", "n917_curb_necklace_mixed_metal_03.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(30, 'Sleek Apex Titanium Steel Bar Pendant', 6500.00, 1, 3, 'Modern titanium steel bar pendant with sleek design', 'products/sleek_apex_titanium_steel_bar_pendant_01', '[{"price": 6500, "stock": 12, "images": ["sleek_apex_titanium_steel_bar_pendant_01.webp", "sleek_apex_titanium_steel_bar_pendant_02.webp"], "material": "Titanium Steel"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(31, 'David Yurman Box Chain Bracelet', 8500.00, 3, 7, 'Luxury David Yurman box chain bracelet for all genders', 'products/david_yurman_box_chain_bracelet_silver_01', '[{"price": 8500, "stock": 6, "images": ["david_yurman_box_chain_bracelet_silver_01.webp", "david_yurman_box_chain_bracelet_silver_02.webp"], "material": "Silver"}, {"price": 8800, "stock": 6, "images": ["david_yurman_box_chain_bracelet_black_01.webp", "david_yurman_box_chain_bracelet_black_02.webp"], "material": "Black"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(32, 'Gucci Interlocking G Silver Bracelet', 9200.00, 3, 7, 'Iconic Gucci interlocking G silver bracelet', 'products/gucci_interlocking_g_silver_bracelet_silver_01', '[{"price": 9200, "stock": 10, "images": ["gucci_interlocking_g_silver_bracelet_silver_01.webp", "gucci_interlocking_g_silver_bracelet_silver_02.webp", "gucci_interlocking_g_silver_bracelet_silver_03.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(33, 'Montblanc MeisterstÃ¼ck Collection Steel 3 Rings Bracelet', 7800.00, 3, 7, 'Premium Montblanc MeisterstÃ¼ck steel and leather bracelet', 'products/montblanc_meisterstuck_collection_steel_3_rings_bracelet_white_leather_01', '[{"price": 7800, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_white_leather_01.webp"], "material": "Steel with White Leather"}, {"price": 7900, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_red_leather_02.webp"], "material": "Steel with Red Leather"}, {"price": 7850, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_brown_leather_03.webp"], "material": "Steel with Brown Leather"}, {"price": 7950, "stock": 8, "images": ["montblanc_meisterstuck_collection_steel_3_rings_bracelet_light_blue_leather_04.webp"], "material": "Steel with Light Blue Leather"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(34, 'Tateossian Pop Rigato Double Wrap Leather Bracelet', 4500.00, 3, 7, 'Contemporary double wrap leather bracelet by Tateossian', 'products/tateossian_pop_rigato_double_wrap_leather_bracelet_leather_01', '[{"price": 4400, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_black_leather_02.webp"], "material": "Black Leather"}, {"price": 4450, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_brown_leather_03.webp"], "material": "Brown Leather"}, {"price": 4500, "stock": 5, "images": ["tateossian_pop_rigato_double_wrap_leather_bracelet_blue_leather_04.webp", "tateossian_pop_rigato_double_wrap_leather_bracelet_blue_leather_05.webp"], "material": "Blue Leather"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(35, 'Tom Wood Curb M Bracelet', 5200.00, 3, 7, 'Scandinavian design Tom Wood curb bracelet', 'products/tom_wood_curb_m_bracelet_silver_01', '[{"price": 5200, "stock": 9, "images": ["tom_wood_curb_m_bracelet_silver_01.webp", "tom_wood_curb_m_bracelet_silver_02.webp"], "material": "Silver"}, {"price": 5800, "stock": 9, "images": ["tom_wood_curb_m_bracelet_gold_03.webp", "tom_wood_curb_m_bracelet_gold_04.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(36, 'AMYO Tiny Stud Earring', 1800.00, 3, 8, 'Minimalist tiny stud earrings by AMYO', 'products/amyo_tiny_stud_earring_04', '[{"price": 1800, "stock": 10, "images": ["amyo_tiny_stud_earring_gold_01.webp"], "material": "Gold"}, {"price": 1600, "stock": 10, "images": ["amyo_tiny_stud_earring_copper_02.webp"], "material": "Copper"}, {"price": 1700, "stock": 10, "images": ["amyo_tiny_stud_earring_silver_03.webp"], "material": "Silver"}]', 'in_stock', 7, 3, 0, 0, 0, 12600.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-21 13:06:23'),
+	(37, 'GLAMIRA Black Stud Earring', 2200.00, 3, 8, 'Elegant stud earrings by GLAMIRA in multiple finishes', 'products/glamira_black_stud_earring_01', '[{"price": 2200, "stock": 8, "images": ["glamira_black_stud_earring_silver_02.webp"], "material": "Silver"}, {"price": 2400, "stock": 9, "images": ["glamira_black_stud_earring_gold_03.webp"], "material": "Gold"}, {"price": 2350, "stock": 8, "images": ["glamira_black_stud_earring_rosegold_04.webp"], "material": "Rose Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 2200.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 16:28:09'),
+	(38, 'JAXXON Silver Cross Stud Earring', 2800.00, 3, 8, 'Bold silver cross stud earrings by JAXXON', 'products/jaxxon_silver_cross_stud_earring_silver_01', '[{"price": 2800, "stock": 10, "images": ["jaxxon_silver_cross_stud_earring_silver_01.webp", "jaxxon_silver_cross_stud_earring_silver_02.webp", "jaxxon_silver_cross_stud_earring_silver_03.webp", "jaxxon_silver_cross_stud_earring_silver_04.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(39, 'MEJURI Gold Huggie Hoop Earrings', 3200.00, 3, 8, 'Classic gold huggie hoop earrings by MEJURI', 'products/mejuri_gold_huggie_hoop_earrings_gold_01', '[{"price": 3200, "stock": 10, "images": ["mejuri_gold_huggie_hoop_earrings_gold_01.webp", "mejuri_gold_huggie_hoop_earrings_gold_02.webp", "mejuri_gold_huggie_hoop_earrings_gold_03.webp", "mejuri_gold_huggie_hoop_earrings_gold_04.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(40, 'REGALROSE Small Plain Silver Hoop Earring', 2400.00, 3, 8, 'Simple and elegant small silver hoop earrings', 'products/regalrose_small_plain_silver_hoop_earring_silver_01', '[{"price": 2400, "stock": 10, "images": ["regalrose_small_plain_silver_hoop_earring_silver_01.webp", "regalrose_small_plain_silver_hoop_earring_silver_02.webp", "regalrose_small_plain_silver_hoop_earring_silver_03.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 2400.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 16:28:09'),
+	(41, 'Caitlyn Minimalist Interlocking Circles Necklace', 4800.00, 3, 9, 'Modern minimalist interlocking circles necklace', 'products/caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_01', '[{"price": 4800, "stock": 8, "images": ["caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_01.webp", "caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_02.webp", "caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_03.webp", "caitlyn_minimalist_interlocking_circles_necklace_mixed_metal_04.webp"], "material": "Mixed Metal"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 1, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(42, 'GIVA Anushka Sharma Silver Deer Heart Necklace', 3200.00, 3, 9, 'Elegant deer heart necklace by GIVA featuring Anushka Sharma collection', 'products/giva_anushka_sharma_silver_deer_heart_necklace_silver_01', '[{"price": 3200, "stock": 10, "images": ["giva_anushka_sharma_silver_deer_heart_necklace_silver_01.webp", "giva_anushka_sharma_silver_deer_heart_necklace_silver_02.webp", "giva_anushka_sharma_silver_deer_heart_necklace_silver_03.webp", "giva_anushka_sharma_silver_deer_heart_necklace_silver_04.webp"], "material": "Silver"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(43, 'GLAMIRA Minimalist Necklace', 2800.00, 3, 9, 'Sleek minimalist necklace design by GLAMIRA', 'products/glamira_minimalist_necklaces_gold_01', '[{"price": 2800, "stock": 10, "images": ["glamira_minimalist_necklaces_gold_01.webp", "glamira_minimalist_necklaces_gold_02.webp", "glamira_minimalist_necklaces_gold_03.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(44, 'Minimalist Lab Roman Numerals Diamond Band Necklace', 5500.00, 3, 9, 'Sophisticated roman numerals diamond band necklace', 'products/minimalist_lab_roman_numerals_diamond_band_necklace_gold_01', '[{"price": 5500, "stock": 8, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_gold_01.webp", "minimalist_lab_roman_numerals_diamond_band_necklace_gold_04.webp"], "material": "Gold with Diamonds"}, {"price": 5400, "stock": 4, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_rosegold_02.webp"], "material": "Rose Gold with Diamonds"}, {"price": 5200, "stock": 3, "images": ["minimalist_lab_roman_numerals_diamond_band_necklace_silver_03"], "material": "Silver with Diamonds"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01'),
+	(45, 'Tiffany T Smile Necklace', 8500.00, 3, 9, 'Iconic Tiffany T Smile collection necklace', 'products/tiffany_t_smile_necklace_gold_01', '[{"price": 8500, "stock": 10, "images": ["tiffany_t_smile_necklace_gold_01.webp", "tiffany_t_smile_necklace_gold_02.webp", "tiffany_t_smile_necklace_gold_03.webp", "tiffany_t_smile_necklace_gold_04.webp"], "material": "Gold"}]', 'in_stock', 10, 3, 0, 0, 0, 0.00, 0, NULL, '2025-08-27 20:17:17', '2025-09-18 11:54:01');
 
--- Dumping structure for table seraphim_luxe.product_categories
 CREATE TABLE IF NOT EXISTS `product_categories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -387,13 +428,11 @@ CREATE TABLE IF NOT EXISTS `product_categories` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.product_categories: ~3 rows (approximately)
 INSERT INTO `product_categories` (`id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
 	(1, 'Male', 'Jewelry and accessories for men', 1, 1, '2025-09-03 14:29:17', '2025-09-03 16:43:00'),
 	(2, 'Female', 'Jewelry and accessories for women', 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
 	(3, 'Unisex', 'Jewelry and accessories suitable for all genders', 1, 3, '2025-09-03 14:29:17', '2025-09-03 14:29:17');
 
--- Dumping structure for table seraphim_luxe.product_images
 CREATE TABLE IF NOT EXISTS `product_images` (
   `id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
@@ -406,7 +445,6 @@ CREATE TABLE IF NOT EXISTS `product_images` (
   CONSTRAINT `product_images_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.product_images: ~127 rows (approximately)
 INSERT INTO `product_images` (`id`, `product_id`, `image_url`, `display_order`, `is_primary`, `created_at`) VALUES
 	(1, 1, 'products/maxi_pearl_gold_01', 0, 1, '2025-09-10 18:10:50'),
 	(2, 1, 'products/maxi_pearl_gold_02', 1, 0, '2025-09-10 18:10:50'),
@@ -536,7 +574,36 @@ INSERT INTO `product_images` (`id`, `product_id`, `image_url`, `display_order`, 
 	(126, 45, 'products/tiffany_t_smile_necklace_gold_03', 2, 0, '2025-09-10 18:10:50'),
 	(127, 45, 'products/tiffany_t_smile_necklace_gold_04', 3, 0, '2025-09-10 18:10:50');
 
--- Dumping structure for table seraphim_luxe.product_subcategories
+CREATE TABLE IF NOT EXISTS `product_reviews` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `rating` int NOT NULL,
+  `review_text` text COLLATE utf8mb4_general_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `review_title` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_id` (`product_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `product_reviews_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `product_reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `product_reviews_chk_1` CHECK ((`rating` between 1 and 5))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+CREATE TABLE IF NOT EXISTS `product_review_helpful` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `review_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `review_id` (`review_id`,`user_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `product_review_helpful_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `product_reviews` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `product_review_helpful_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 CREATE TABLE IF NOT EXISTS `product_subcategories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `category_id` int NOT NULL,
@@ -551,7 +618,6 @@ CREATE TABLE IF NOT EXISTS `product_subcategories` (
   CONSTRAINT `product_subcategories_product_categories_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.product_subcategories: ~9 rows (approximately)
 INSERT INTO `product_subcategories` (`id`, `category_id`, `name`, `description`, `is_active`, `sort_order`, `created_at`, `modified_at`) VALUES
 	(1, 1, 'Bracelets', NULL, 1, 1, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
 	(2, 1, 'Earrings', NULL, 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
@@ -563,56 +629,6 @@ INSERT INTO `product_subcategories` (`id`, `category_id`, `name`, `description`,
 	(8, 3, 'Earrings', NULL, 1, 2, '2025-09-03 14:29:17', '2025-09-03 14:29:17'),
 	(9, 3, 'Necklaces', NULL, 1, 3, '2025-09-03 14:29:17', '2025-09-03 14:29:17');
 
--- Dumping structure for table seraphim_luxe.reservations
-CREATE TABLE IF NOT EXISTS `reservations` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `account_id` int NOT NULL,
-  `status` enum('pending','pending_approval','rejected','cancelled','completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `preferred_date` date NOT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `created_at` timestamp NOT NULL DEFAULT (now()),
-  `modified_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `reservations_accounts_id_fkey` (`account_id`),
-  CONSTRAINT `reservations_accounts_id_fkey` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table seraphim_luxe.reservations: ~0 rows (approximately)
-
--- Dumping structure for table seraphim_luxe.reservation_products
-CREATE TABLE IF NOT EXISTS `reservation_products` (
-  `id` int NOT NULL,
-  `product_id` int NOT NULL,
-  `quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`,`product_id`) USING BTREE,
-  KEY `reservations_products_product_id_fkey` (`product_id`),
-  CONSTRAINT `reservations_products_reservation_id_fkey` FOREIGN KEY (`id`) REFERENCES `reservations` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table seraphim_luxe.reservation_products: ~0 rows (approximately)
-
--- Dumping structure for table seraphim_luxe.static_pages
-CREATE TABLE IF NOT EXISTS `static_pages` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `page_slug` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `last_updated_by` int DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `page_slug` (`page_slug`),
-  KEY `idx_page_slug` (`page_slug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table seraphim_luxe.static_pages: ~4 rows (approximately)
-INSERT INTO `static_pages` (`id`, `page_slug`, `title`, `content`, `created_at`, `updated_at`, `last_updated_by`) VALUES
-	(1, 'about', 'About Us Content', 'Driven by Passion, Fueled by Expression\n\nAt Seraphim Luxe, we believe that every accessory should be meaningful, versatile, and timeless. Whether you\'re expressing your daily style, making a statement, or seeking the perfect complement to your personality, our mission is to provide you with top-quality unisex jewelry and accessories to enhance your personal expression.\n\nWho We Are\n\nFounded with a passion for inclusive fashion and a commitment to excellence, Seraphim Luxe has grown into a trusted name in the accessories industry. We cater to style enthusiasts of all preferences, offering a wide selection of unisex jewelry and premium accessories to ensure that your personal style shines at its best.', '2025-09-07 14:08:07', '2025-09-14 16:25:50', NULL),
-	(2, 'contact', 'Contact Information', 'Contact Seraphim Luxe\n\nWe\'d love to hear from you! Get in touch with our team.\n\nEmail: info@seraphimluxe.com\nPhone: +1 (555) 123-4567\nAddress: 123 Fashion Avenue, Style District, City 10001\n\nBusiness Hours:\nMonday-Friday: 9AM-6PM\nSaturday: 10AM-4PM\nSunday: Closed', '2025-09-07 14:08:07', '2025-09-07 14:08:07', NULL),
-	(3, 'faqs', 'Frequently Asked Questions', 'Frequently Asked Questions\n\nFind answers to common questions about our products, services, and policies.\n\nOrders & Shipping\n\nQ: How long does shipping take?\nA: Standard shipping takes 3-5 business days. Express shipping is available for 1-2 business days.\n\nQ: Do you ship internationally?\nA: Yes, we ship to most countries worldwide. International shipping times vary by location.\n\nReturns & Exchanges\n\nQ: What is your return policy?\nA: We accept returns within 30 days of purchase with original receipt and tags attached.\n\nQ: How do I exchange an item?\nA: Please contact our customer service team to initiate an exchange.', '2025-09-07 14:08:07', '2025-09-07 14:08:07', NULL),
-	(4, 'privacy', 'Privacy Policy', 'Privacy Policy\n\nEffective Date: January 1, 2023\n\nIntroduction\n\nAt Seraphim Luxe, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our services.\n\nInformation We Collect\n\nWe collect information you provide directly to us, such as when you create an account, make a purchase, or contact us. This may include your name, email address, shipping address, payment information, and any other details you choose to provide.', '2025-09-07 14:08:07', '2025-09-07 14:08:07', NULL);
-
--- Dumping structure for table seraphim_luxe.stocks_history
 CREATE TABLE IF NOT EXISTS `stocks_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
@@ -630,9 +646,7 @@ CREATE TABLE IF NOT EXISTS `stocks_history` (
   CONSTRAINT `stocks_history_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.stocks_history: ~0 rows (approximately)
 
--- Dumping structure for table seraphim_luxe.wishlist
 CREATE TABLE IF NOT EXISTS `wishlist` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
@@ -646,10 +660,11 @@ CREATE TABLE IF NOT EXISTS `wishlist` (
   CONSTRAINT `wishlist_products_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.wishlist: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+
+SET FOREIGN_KEY_CHECKS = 1;

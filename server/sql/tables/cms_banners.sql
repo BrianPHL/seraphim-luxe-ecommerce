@@ -1,10 +1,3 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Server version:               8.4.5 - MySQL Community Server - GPL
--- Server OS:                    Win64
--- HeidiSQL Version:             12.11.0.7065
--- --------------------------------------------------------
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
@@ -14,17 +7,20 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Dumping structure for table seraphim_luxe.reservation_products
-CREATE TABLE IF NOT EXISTS `reservation_products` (
+CREATE TABLE IF NOT EXISTS `cms_banners` (
   `id` int NOT NULL,
-  `product_id` int NOT NULL,
-  `quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`,`product_id`) USING BTREE,
-  KEY `reservations_products_product_id_fkey` (`product_id`),
-  CONSTRAINT `reservations_products_reservation_id_fkey` FOREIGN KEY (`id`) REFERENCES `reservations` (`id`)
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `subtitle` text COLLATE utf8mb4_general_ci,
+  `image_url` varchar(500) COLLATE utf8mb4_general_ci NOT NULL,
+  `link_url` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `button_text` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `position` int DEFAULT '0',
+  `is_active` tinyint DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT (now()),
+  `updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table seraphim_luxe.reservation_products: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
