@@ -119,6 +119,34 @@ router.put('/mark-all-as-read/:account_id', async (req, res) => {
 
 });
 
+router.delete('/clear/:notification_id/:account_id', async (req, res) => {
+    
+    try {
+
+        const { notification_id, account_id } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                DELETE FROM notifications
+                WHERE id = ? AND account_id = ?
+            `,
+            [ notification_id, account_id ]
+        );
+
+        if (result.affectedRows === 0)
+            throw new Error('Failed to clear the notification!');
+
+        res.status(200).send();
+
+    } catch (err) {
+
+        console.error("notifications router DELETE /clear/:notification_id/:account_id endpoint error: ", err);
+        res.status(500).json(err);
+
+    }
+
+});
+
 router.delete('/clear-all/:account_id', async (req, res) => {
     
     try {

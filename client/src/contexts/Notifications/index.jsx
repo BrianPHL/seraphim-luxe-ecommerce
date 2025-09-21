@@ -120,6 +120,31 @@ export const NotificationsProvider = ({ children }) => {
 
     };
 
+    const clearSpecificNotification = async (notificationId) => {
+
+        if (!user) return;
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/clear/${ notificationId }/${ user.id }`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to clear the notification!");
+
+            await fetchNotifications();
+            
+        } catch (err) {
+
+            console.error("Notifications context clearSpecificNotification function error: ", err);
+            showToast('Failed to clear the notification!', 'error')
+            
+        }
+
+    };
+
 
     useEffect(() => {
         fetchNotifications()
