@@ -95,6 +95,31 @@ export const NotificationsProvider = ({ children }) => {
 
     };
 
+    const clearAllNotifications = async () => {
+
+        if (!user) return;
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/clear-all/${ user.id }`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to clear all notifications!");
+
+            await fetchNotifications();
+            
+        } catch (err) {
+
+            console.error("Notifications context clearAllNotifications function error: ", err);
+            showToast('Failed to clear all notifications!', 'error')
+            
+        }
+
+    };
+
 
     useEffect(() => {
         fetchNotifications()
