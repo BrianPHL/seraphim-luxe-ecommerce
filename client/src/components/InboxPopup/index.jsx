@@ -78,7 +78,7 @@ const InboxPopup = () => {
                     ) : (
                         <div className={styles.notifications}>
                             {notifications.map((notification) => (
-                                <div key={notification.id} className={`${styles.notification} ${notification.read ? styles.read : styles.unread}`}>
+                                <div key={notification.id} className={`${ styles.notification } ${ notification.is_read ? styles.read : styles.unread }`}>
                                     <div className={styles.notificationIcon}>
                                         <i className={ ICON_ACCORDING_TO_TYPE[ notification.type ] }></i>
                                     </div>
