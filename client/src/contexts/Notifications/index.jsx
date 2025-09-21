@@ -70,6 +70,31 @@ export const NotificationsProvider = ({ children }) => {
 
     };
 
+    const readSpecificNotification = async (notificationId) => {
+        
+        if (!user) return;
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/mark-as-read/${ notificationId }/${ user.id }`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to mark the notification as read!");
+
+            await fetchNotifications();
+
+        } catch (err) {
+
+            console.error("Notifications context readSpecificNotification function error: ", err);
+            showToast('Failed to mark the notification as read!', 'error')
+
+        }
+
+    };
+
 
     useEffect(() => {
         fetchNotifications()
