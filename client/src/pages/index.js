@@ -13,5 +13,4 @@ export { default as PrivacyPolicy } from './PrivacyPolicy';
 export { default as Wishlist } from './Wishlist';
 
 export * from './Collections';
-export * from './PartsAndAccessories';
 export * from './Admin';

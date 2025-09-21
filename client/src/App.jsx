@@ -5,7 +5,6 @@ import { useAuth, useTheme } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
-import { Store as PartsAndAccessoriesStore, ProductPage as PartsAndAccessoriesProductPage } from '@pages/PartsAndAccessories';
 import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS, AdminSettings, AdminAccounts, AdminAuditTrail } from '@pages/Admin';
 
 const PAGE_TITLES = {
@@ -17,7 +16,6 @@ const PAGE_TITLES = {
 	"/faqs": "Seraphim Luxe | Frequently Asked Questions",
 	"/privacy-policy": "Seraphim Luxe | Privacy Policy",
 	"/collections": "Seraphim Luxe | Collections",
-	"/parts-and-accessories": "Seraphim Luxe | Parts & Accessories",
 	"/cart": "Seraphim Luxe | Cart",
 	"/wishlist": "Seraphim Luxe | Wishlist",
 	"/profile": "Seraphim Luxe | Profile",
