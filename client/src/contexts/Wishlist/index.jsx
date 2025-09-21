@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import WishlistContext from "./context";
-import { useAuth, useToast } from "@contexts";
-import { useInbox } from "../Inbox";
+import { useAuth, useToast, useNotifications, useProducts } from "@contexts";
 
 export const WishlistProvider = ({ children }) => {
 
@@ -9,8 +8,9 @@ export const WishlistProvider = ({ children }) => {
     const [ selectedWishlistItems, setSelectedWishlistItems ] = useState([]);
     const [ loading, setLoading ] = useState(false);
     const { user } = useAuth();
+    const { products } = useProducts();
     const { showToast } = useToast();
-    const { notifyWishlistAction } = useInbox();
+    const { setNotification } = useNotifications();
 
     const fetchWishlistItems = async () => {
         if (!user?.id) {
@@ -31,36 +31,41 @@ export const WishlistProvider = ({ children }) => {
         }
     };
 
-    const addToWishlist = async (product_id, productName = 'Item') => {
+    const addToWishlist = async (product_id) => {
         if (!user) return;
 
         try {
             setLoading(true);
 
-            const exists = wishlistItems.find(item => item['product_id'] === product_id);
+            const exists = wishlistItems.find(item => item['product_id'] === Number(product_id));
+
             if (exists) {
-                showToast('Item already in wishlist!', 'warning');
+                showToast('Item is already in wishlist!', 'warning');
                 return;
             }
 
-            const response = await fetch('/api/wishlist/', {
+            const response = await fetch('/api/wishlist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user['id'], productId: product_id })
+                body: JSON.stringify({
+                    userId: user.id,
+                    productId: product_id
+                })
             });
 
-            if (response.ok) {
-                showToast('Item added to wishlist!', 'success');
-                fetchWishlistItems();
-                
-                // Connect to inbox notification
-                if (notifyWishlistAction) {
-                    await notifyWishlistAction('added', productName, product_id, true);
-                }
-            } else {
-                showToast("Failed to add item to wishlist", "error");
-            }
+            if (!response.ok)
+                throw new Error('Failed to add item to wishlist!');
+
+            showToast(`${ products[product_id].label } successfully added to wishlist!`, 'success')
+            await fetchWishlistItems();
+            await setNotification({
+                type: 'wishlist',
+                title: 'Item added to wishlist',
+                message: `${ products[product_id].label } was added to your wishlist.`
+            });
+
         } catch (err) {
+            console.error("Wishlist context addToWishlist function error: ", err);
             showToast("Failed to add item to wishlist", "error");
         } finally {
             setLoading(false);
@@ -88,10 +93,13 @@ export const WishlistProvider = ({ children }) => {
             if (response.ok) {
                 showToast('Item removed from wishlist!', 'success');
                 
-                // Connect to inbox notification
-                if (notifyWishlistAction) {
-                    await notifyWishlistAction('removed', productName, parsedProductId, true);
-                }
+            await fetchWishlistItems();
+            await setNotification({
+                type: 'wishlist',
+                title: 'Item removed from wishlist',
+                message: `${ removedItem.label } was removed from your wishlist.`
+            });
+                
             } else {
                 showToast("Failed to remove item from wishlist", "error");
                 fetchWishlistItems();

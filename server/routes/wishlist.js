@@ -1,6 +1,5 @@
 import express from 'express';
 import pool from '../apis/db.js';
-import { createWishlistActivity } from '../utils/inbox.js';
 import { AuditLogger } from '../utils/audit-trail.js';
 
 const router = express.Router();
@@ -91,7 +90,6 @@ router.post('/', async (req, res) => {
 
         // Log audit and activity
         await AuditLogger.logWishlistAdd(userId, productId, req);
-        await createWishlistActivity(userId, productLabel, 'added');
 
         // Fetch added item for response
         const fetchQuery = `
@@ -103,7 +101,7 @@ router.post('/', async (req, res) => {
         `;
         const [addedItem] = await pool.query(fetchQuery, [insertResult.insertId]);
 
-        return res.status(201).json({
+        return res.status(200).json({
             message: 'Item added to wishlist successfully',
             item: addedItem[0]
         });
@@ -135,8 +133,6 @@ router.delete('/:userId/:productId', async (req, res) => {
 
         // Log wishlist addition
         await AuditLogger.logWishlistRemove(userId, productId, req);
-
-        await createWishlistActivity(userId, productLabel, 'removed');
 
         res.status(200).json({
             message: 'Item removed from wishlist successfully'
