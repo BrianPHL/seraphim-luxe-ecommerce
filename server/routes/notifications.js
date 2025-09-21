@@ -3,5 +3,62 @@ import express from 'express';
 
 const router = express.Router();
 
+router.get('/:account_id', async (req, res) => {
+
+    try {
+
+        const { account_id } = req.params;
+
+        const [ notificationsRows ] = await pool.query(
+            `
+                SELECT *
+                FROM notifications
+                WHERE account_id = ?
+                ORDER BY created_at DESC
+            `,
+            [ account_id ]
+        );
+
+        res.status(200).json(notificationsRows || []);
+
+    } catch (err) {
+
+        console.error("notifications router GET /:account_id endpoint error: ", err);
+        res.status(500).json(err);
+        
+    }
+
+});
+
+router.post('/:account_id', async (req, res) => {
+
+    try {
+
+        const { account_id } = req.params;
+        const { type, title, message } = req.body;
+
+        const [ result ] = await pool.query(
+            `
+                INSERT INTO notifications
+                (account_id, type, title, message)
+                VALUES
+                (?, ?, ?, ?)
+            `,
+            [ account_id, type, title, message ]
+        );
+
+        if (result.affectedRows === 0)
+            throw new Error('Failed to insert the notification!');
+
+        res.status(200).send();
+
+    } catch (err) {
+
+        console.error("notifications router POST /:account_id endpoint error: ", err);
+        res.status(500).json(err);
+
+    }
+
+});
 
 export default router;
