@@ -194,6 +194,9 @@ export const NotificationsProvider = ({ children }) => {
         // * Exposed functions
             fetchNotifications,
             readAllNotifications,
+            readSpecificNotification,
+            clearAllNotifications,
+            clearSpecificNotification,
             setNotification,
             setIsInboxOpen
 
