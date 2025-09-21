@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Logo, Anchor, Button, Accordion, Modal } from '@components';
+import { Logo, Anchor, Button, Accordion, Modal, InboxPopup } from '@components';
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from 'react-router';
-import { useTheme, useAuth, useCart, useWishlist, useDropdown, useInbox } from "@contexts";
-import InboxPopup from '../InboxPopup'; // add this near other imports
+import { useTheme, useAuth, useCart, useWishlist, useDropdown, useNotifications } from "@contexts";
 
 const Header = () => {
 
@@ -16,13 +15,8 @@ const Header = () => {
     const { user, logout } = useAuth();
     const { cartItems } = useCart();
     const { wishlistItems } = useWishlist();
-    const { toggleInbox, unreadCount } = useInbox();
+    const { notifications, setIsInboxOpen, unreadCount } = useNotifications();
     const handleLogout = () => setModalOpen(true);
-
-    // Calculate inbox count (cart + wishlist + orders)
-    const getInboxCount = () => {
-        return unreadCount > 0 ? unreadCount : null;
-    };
 
     return (
         <>
@@ -64,16 +58,15 @@ const Header = () => {
                                         <div
                                             className={ styles['indicator-wrapper'] }
                                             role="button"
-                                            tabIndex={0}
-                                            onClick={toggleInbox}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleInbox(); }}
+                                            tabIndex={ 0 }
+                                            onClick={ () => setIsInboxOpen(true) }
                                             data-inbox-button="true"
                                         >
                                             <Button
                                                 type="icon"
                                                 icon='fa-solid fa-inbox'
-                                                action={() => toggleInbox()}
                                                 externalStyles={ styles['indicator-btn'] }
+                                                action={ () => {} }
                                                 data-inbox-button="true"
                                             />
                                             { unreadCount > 0 ? (
@@ -82,8 +75,7 @@ const Header = () => {
                                                 </span>
                                             ) : null }
                                         </div>
-                                        
-                                        {/* Keep existing wishlist structure */}
+
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/wishlist')  }
@@ -157,7 +149,7 @@ const Header = () => {
                                     },
                                     {
                                         label: "Inbox",
-                                        action: () => toggleInbox()
+                                        action: () => setIsInboxOpen(true)
                                     },
                                     {
                                         label: 'Logout',
@@ -221,7 +213,7 @@ const Header = () => {
                                 },
                                 {
                                     label: 'Inbox',
-                                    action: () =>  toggleInbox(),
+                                    action: () =>  setIsInboxOpen(true),
                                 },
                                 {
                                     label: 'Logout',
@@ -273,12 +265,12 @@ const Header = () => {
                                     {/* Add Mobile Inbox Button */}
                                     <div
                                         className={ styles['indicator-wrapper'] }
-                                        onClick={ () => toggleInbox() }
+                                        onClick={ () => setIsInboxOpen(true) }
                                     >
                                         <Button
                                             type="icon"
                                             icon='fa-solid fa-inbox'
-                                            action={() => toggleInbox()}
+                                            action={ () => {} }
                                             externalStyles={ styles['indicator-btn'] }
                                             data-inbox-button="true"
                                         />
@@ -405,20 +397,20 @@ const Header = () => {
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 { user && user.role === 'customer' ? (
                                     <>
-                                        {/* Add Drawer Inbox Button */}
+                                        
                                         <div 
                                             className={ styles['indicator-wrapper'] }
-                                            onClick={toggleInbox}
+                                            onClick={ () => setIsInboxOpen(true) }
                                         >
                                             <Button
                                                 type="icon"
                                                 icon='fa-solid fa-inbox'
-                                                action={toggleInbox}
+                                                action={ () => {} }
                                                 externalStyles={ styles['indicator-btn'] }
                                             />
-                                            { getInboxCount() ? (
+                                            { unreadCount > 0 ? (
                                                 <span className={ styles['indicator-badge'] }>
-                                                    { getInboxCount() }
+                                                    { unreadCount }
                                                 </span>
                                             ) : null }
                                         </div>

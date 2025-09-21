@@ -17,7 +17,7 @@ import {
   WishlistProvider,
   SettingsProvider,
   CMSProvider,
-  InboxProvider
+  NotificationsProvider
 } from '@contexts';
 import App from './App';
 
@@ -28,7 +28,7 @@ createRoot(document.getElementById('root')).render(
         <DropdownProvider>
           <ToastProvider>
             <AuthProvider>
-              <InboxProvider>
+              <NotificationsProvider>
                 <CMSProvider>
                   <SettingsProvider>
                     <CategoriesProvider>
@@ -52,7 +52,7 @@ createRoot(document.getElementById('root')).render(
                     </CategoriesProvider>
                   </SettingsProvider>
                 </CMSProvider>
-              </InboxProvider>
+              </NotificationsProvider>
             </AuthProvider>
           </ToastProvider>
         </DropdownProvider>

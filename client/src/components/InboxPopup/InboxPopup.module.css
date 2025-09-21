@@ -111,13 +111,13 @@
     opacity: 0.5;
 }
 
-.activities {
+.notifications {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.activity {
+.notification {
     display: flex;
     gap: 0.6rem;
     align-items: center;
@@ -129,11 +129,11 @@
     font-family: 'Lora', serif;
 }
 
-.activity:hover {
+.notification:hover {
     background-color: var(--bg-hover);
 }
 
-.activityIcon {
+.notificationIcon {
     background-color: var(--accent-base);
     color: #fff;
     width: 36px;
@@ -144,33 +144,33 @@
     justify-content: center;
 }
 
-.activityContent {
+.notificationContent {
     flex: 1;
     min-width: 0;
 }
 
-.activityContent strong {
+.notificationContent strong {
     color: var(--tg-primary);
     font-size: 0.92rem;
 }
-.activityContent p {
+.notificationContent p {
     color: var(--tg-secondary);
     font-size: 0.8rem;
     margin-top: 0.25rem;
 }
 
 /* optional: visually distinguish unread items */
-.activity.unread {
+.notification.unread {
     border-left: 4px solid var(--accent-base);   /* theme accent for unread */
     background: linear-gradient(90deg, rgba(166,124,82,0.03), transparent);
 }
 
-.activity.read {
+.notification.read {
     opacity: 0.9;
 }
 
 /* item actions */
-.activityActions {
+.notificationActions {
     margin-left: auto;
     display: flex;
     gap: 0.5rem;
@@ -221,7 +221,7 @@
     .header h3 { font-size: 1rem; }
     .headerActions { justify-content: flex-end; flex-wrap: wrap; }
     .markAllBtn, .clearBtn, .closeBtn { width: auto; }
-    .activityIcon { width: 44px; height: 44px; }
+    .notificationIcon { width: 44px; height: 44px; }
     .markBtn, .deleteBtn { min-width: 44px; min-height: 44px; }
 }
 
