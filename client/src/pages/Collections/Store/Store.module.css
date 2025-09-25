@@ -34,9 +34,10 @@
 }
 
 .products-grid {
+    grid-template-columns: repeat(3, minmax(12rem, 1fr));
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    padding: 1rem;
+    gap: 1rem;
 }
 
 .results{
@@ -151,6 +152,16 @@
 @media only screen and (max-width: 1192px) {
     .wrapper { 
         padding: 14rem 2rem 2rem 2rem; 
+    }
+    .products-grid {
+        grid-template-columns: repeat(2, minmax(12rem, 1fr));
+    }
+    
+}
+
+@media only screen and (max-width: 900px) {
+    .products-grid {
+        grid-template-columns: minmax(12rem, 1fr);
     }
 }
 

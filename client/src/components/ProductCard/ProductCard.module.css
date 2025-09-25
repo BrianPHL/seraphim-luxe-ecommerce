@@ -8,13 +8,12 @@
     display: flex;
     padding: 1rem;
     border: 1px solid var(--bg-outline);
-    width: 18rem;
     gap: 1rem;
 }
 
 .product-img {
     border-radius: 0.25rem;
-    object-fit: contain;
+    object-fit: cover;
     height: 16rem;
 }
 
