@@ -122,23 +122,25 @@ const TableHeader = ({
         <div className={styles['table-header']}>
             
             <div className={styles['container-top']}>
-                <div className={ styles['status'] }>
-                    {
-                        (loading) ? (
-                            <i className={ `fa-solid fa-spinner ${ styles['spinner'] }` }></i>
-                        ) : (
-                            <i className={ 'fa-solid fa-magnifying-glass' }></i>
-                        )
-                    }
+                <div className={ styles['container-top-wrapper'] }>
+                    <div className={ styles['status'] }>
+                        {
+                            (loading) ? (
+                                <i className={ `fa-solid fa-spinner ${ styles['spinner'] }` }></i>
+                            ) : (
+                                <i className={ 'fa-solid fa-magnifying-glass' }></i>
+                            )
+                        }
+                    </div>
+                    <InputField
+                        value={ localSearchValue }
+                        hint={ `Search here...` }
+                        type={ 'text' }
+                        onKeyPress={ () => { handleKeyPress } }
+                        onChange={ (e) => handleSearchInputChange(e.target.value) }
+                        isSubmittable={ false }
+                    />
                 </div>
-                <InputField
-                    value={ localSearchValue }
-                    hint={ `Search here...` }
-                    type={ 'text' }
-                    onKeyPress={ () => { handleKeyPress } }
-                    onChange={ (e) => handleSearchInputChange(e.target.value) }
-                    isSubmittable={ false }
-                />
                 <Button
                     id={ id }
                     type='secondary'
