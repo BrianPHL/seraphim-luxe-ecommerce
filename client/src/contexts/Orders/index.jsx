@@ -83,59 +83,6 @@ export const OrdersProvider = ({ children }) => {
         }
     };
 
-    const updateOrderStatus = async (order_id, status, notes = '') => {
-        if (!user) return;
-
-        try {
-            setLoading(true);
-            
-            const response = await fetch(`/api/orders/${order_id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    status: newStatus,
-                    admin_id: user.account_id,
-                    notes: notes,
-                    modified_by: modifiedBy
-                })
-            });
-            
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to update order status!');
-            }
-            
-            setOrders(prev => 
-                prev.map(order => 
-                    order.order_id === order_id 
-                    ? { ...order, status, modified_at: new Date().toISOString() } 
-                    : order
-                )
-            );
-
-            if (recentOrders) {
-                setRecentOrders(prev => 
-                    prev.map(order => 
-                        order.order_id === order_id 
-                        ? { ...order, status, modified_at: new Date().toISOString() } 
-                        : order
-                    )
-                );
-            }
-            
-            showToast(`Order status updated to ${status}!`, "success");
-            await refreshProducts();
-            return true;
-
-        } catch (err) {
-            console.error("Failed to update order status:", err);
-            showToast(`Failed to update order status: ${err.message}`, "error");
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const cancelOrder = async (order_id, reason = '') => {
         return await updateOrderStatus(order_id, 'cancelled', reason);
     };
