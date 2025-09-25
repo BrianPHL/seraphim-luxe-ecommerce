@@ -81,6 +81,7 @@ const Home = () => {
     };
 
     const getSubcategoryOptions = () => {
+        console.log("triggered???")
         const subcategories = getSubcategoryNames();
         return subcategories.slice(0, 3).map(sub => ({
             label: sub.name,
@@ -154,9 +155,15 @@ const Home = () => {
                             </div>
                             <div className={styles['hero-left-info-ctas']}>
                                 <Button
-                                    id='hero-browse-inventory-1'
                                     type='primary'
                                     label='Browse our Collections'
+                                    action={() => navigate('/collections')}
+                                />
+                                <h5>or</h5>
+                                <Button
+                                    id='hero-browse-inventory-1'
+                                    type='secondary'
+                                    label='Browse by Category'
                                     options={getCategoryOptions()}
                                 />
                             </div>
@@ -179,15 +186,15 @@ const Home = () => {
                             <div className={styles['hero-left-info-ctas']}>
                                 <Button
                                     type='primary'
-                                    label='Shop Collections'
+                                    label='Browse our Collections'
                                     action={() => navigate('/collections')}
                                 />
                                 <h5>or</h5>
                                 <Button
                                     id='hero-browse-inventory-2'
                                     type='secondary'
-                                    label='View by Category'
-                                    options={getSubcategoryOptions()}
+                                    label='Browse by Category'
+                                    options={getCategoryOptions()}
                                 />
                             </div>
                         </div>
