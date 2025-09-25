@@ -31,6 +31,18 @@
     gap: 1rem;
 }
 
+@media only screen and (max-width: 932px) {
+    .wrapper {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+    }
+    .info {
+        align-items: center;
+    }
+}
+
 @media only screen and (max-width: 640px) {
     .wrapper {
         flex-direction: column;
