@@ -61,6 +61,7 @@
     font-weight: 600;
     background-color: var(--bg-secondary);
     transition: border-color 0.2s ease;
+    color: var(--accent-base);
 }
 
 .otpBox:nth-child(n+1):nth-child(-n+6) {
