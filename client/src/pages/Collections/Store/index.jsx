@@ -244,6 +244,7 @@ const Store = () => {
                                     views_count={ product.views_count }
                                     created_at={ product.created_at }
                                     orders_count={ product.orders_count }
+                                    externalStyles={ styles['products-grid-product'] }
                                 />
                             ))}
                         </div>

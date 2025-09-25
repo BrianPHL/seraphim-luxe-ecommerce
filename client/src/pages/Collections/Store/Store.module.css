@@ -40,6 +40,10 @@
     gap: 1rem;
 }
 
+.products-grid-product {
+    width: 100%;
+}
+
 .results{
     color: var(--tg-primary);
 }
@@ -153,31 +157,31 @@
     .wrapper { 
         padding: 14rem 2rem 2rem 2rem; 
     }
+}
+
+@media only screen and (max-width: 1070px) {
     .products-grid {
         grid-template-columns: repeat(2, minmax(12rem, 1fr));
     }
-    
 }
 
 @media only screen and (max-width: 900px) {
     .products-grid {
         grid-template-columns: minmax(12rem, 1fr);
+        justify-items: center;
     }
 }
 
 @media only screen and (max-width: 768px) {
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1rem;
-    }
-    
     .store-layout {
         flex-direction: column;
     }
-    
     .sidebar {
         width: 100%;
         margin-bottom: 20px;
+    }
+    .products-grid {
+        grid-template-columns: repeat(2, minmax(12rem, 1fr));
     }
 }
 

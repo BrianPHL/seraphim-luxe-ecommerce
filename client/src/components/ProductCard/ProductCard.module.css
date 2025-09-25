@@ -4,6 +4,8 @@
     background-color: var(--bg-secondary);
     flex-direction: column;
     border-radius: 0.5rem;
+    flex-basis: 20rem;
+    max-width: 20rem;
     position: relative;
     display: flex;
     padding: 1rem;

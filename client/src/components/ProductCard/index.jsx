@@ -4,7 +4,7 @@ import styles from './ProductCard.module.css';
 import { InputField, Button, Modal } from '@components';
 import { useAuth, useCart, useToast, useCheckout, useCategories, useSettings, useWishlist } from '@contexts';
 
-const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, image_url, label, price, stock_quantity = 0 }) => {
+const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, image_url, label, price, stock_quantity = 0, externalStyles }) => {
     
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ modalType, setModalType ] = useState('');
@@ -208,7 +208,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
 
     return (
         <>
-            <div className={ styles['wrapper'] }>
+            <div className={ `${ styles['wrapper'] } ${ externalStyles }` }>
                 { isOutOfStock && (
                     <div className={styles['out-of-stock-badge']}>
                         Out of Stock
