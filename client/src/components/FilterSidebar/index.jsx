@@ -202,25 +202,29 @@ const FilterSidebar = () => {
     const getSubcategoriesToDisplay = () => {
         if (selectedCategoryId && subcategories.length > 0) {
             return subcategories;
+        } else if (selectedCategoryId) {
+            return availableSubcategories.filter(sub =>
+                sub.category_id === selectedCategoryId && sub.is_active !== false
+            );
         } else {
-            const subcategoryNameMap = {};
-            
-            availableSubcategories
-                .filter(sub => sub.is_active !== false)
-                .forEach(sub => {
-                    if (!subcategoryNameMap[sub.name]) {
-                        subcategoryNameMap[sub.name] = {
-                            id: sub.name, 
-                            name: sub.name,
-                            allIds: [sub.id],
-                            category_id: sub.category_id
-                        };
-                    } else {
-                        subcategoryNameMap[sub.name].allIds.push(sub.id);
-                    }
-                });
-                
-            return Object.values(subcategoryNameMap);
+            const uniqueSubcategories = [];
+            const seenNames = new Set();
+
+            availableSubcategories.forEach(sub => {
+                if (!seenNames.has(sub.name)) {
+                    seenNames.add(sub.name);
+                    const allMatchingIds = availableSubcategories
+                        .filter(s => s.name === sub.name)
+                        .map(s => s.id);
+                        
+                    uniqueSubcategories.push({
+                        ...sub,
+                        allIds: allMatchingIds.length > 1 ? allMatchingIds : undefined
+                    });
+                }
+            });
+
+            return uniqueSubcategories;
         }
     };
     
