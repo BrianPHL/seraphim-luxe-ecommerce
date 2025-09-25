@@ -314,18 +314,7 @@ const ProductReviews = ({
         );
     };
 
-    const demoReview = {
-        id: 999,
-        user_id: currentUserId,
-        rating: 5,
-        review_title: "Stunning quality!",
-        review_text: "Absolutely love this piece. The gold finish is beautiful and it feels very well-made. Highly recommend!",
-        reviewer_name: "Dummy Account",
-        helpful_count: 3,
-        created_at: "2025-09-17T10:30:00Z"
-    };
-    
-    const reviewsToShow = reviews.length > 0 ? processedReviews : [demoReview];
+    const reviewsToShow = reviews.length > 0 ? processedReviews : [];
 
     return (
         <div className={styles['product-reviews']}>
@@ -452,11 +441,18 @@ const ProductReviews = ({
             </Modal>
             
             {/* Reviews List */}
-            {reviewsToShow.length > 0 && (
+            {reviewsToShow.length > 0 ? (
                 <div className={styles['reviews-list-section']}>
                     {reviewsToShow.map((review) => (
                         <ReviewCard key={review.id} review={review} />
                     ))}
+                </div>
+            ) : (
+                <div className={styles['reviews-list-section']}>
+                    <div className={styles['no-reviews-placeholder']}>
+                        <i className="fa-regular fa-face-frown" style={{fontSize: '2rem', color: 'var(--tg-secondary)', marginBottom: '0.5rem'}}></i>
+                        <p>No reviews yet. Be the first to share your experience!</p>
+                    </div>
                 </div>
             )}
         </div>

@@ -426,6 +426,32 @@
     vertical-align: middle;
 }
 
+.no-reviews-placeholder {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.5rem;
+    color: var(--tg-secondary);
+    font-size: 1.1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.no-reviews-placeholder i {
+    font-size: 3rem;
+    color: var(--accent-base);
+    margin-bottom: 1rem;
+}
+
+.no-reviews-placeholder p {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--tg-primary);
+}
+
+
+
 /* --------------- Review Form --------------- */
 .review-form-container {
     background: var(--bg-primary);
