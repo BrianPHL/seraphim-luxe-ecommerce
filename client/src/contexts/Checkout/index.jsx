@@ -121,7 +121,7 @@ export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
 
             await setNotification({
                 type: 'orders',
-                title: 'Item successfully ordered',
+                title: 'Order Successful',
                 message: `Your new order is ${ data.order_number }. It is now pending.`
             });
 
