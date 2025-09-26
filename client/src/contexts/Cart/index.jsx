@@ -2,7 +2,7 @@ import { useContext, useState, useEffect } from "react";
 import CartContext from "./context";
 import { useAuth, useToast, useNotifications } from "@contexts";
 
-export const CartProvider = ({ children }) => {
+export const CartProvider = ({ children, auditLoggers = {} }) => {
 
     const [ cartItems, setCartItems ] = useState([]);
     const [ selectedItems, setSelectedItems ] = useState([]);
@@ -10,6 +10,7 @@ export const CartProvider = ({ children }) => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const { setNotification } = useNotifications();
+    const { logCartAdd, logCartRemove, logCartUpdate } = auditLoggers;
 
     const fetchCartItems = async () => {
         
@@ -71,6 +72,22 @@ export const CartProvider = ({ children }) => {
                 message: `${ item.label } was added to your cart.`
             });
 
+            // Log cart add action
+            if (logCartAdd) {
+                await logCartAdd(
+                item.product_id,
+                item.quantity,
+                item.label || item.product_name,
+                {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                }
+                );
+            }
+
         } catch (err) {
             console.error("Failed to add item to cart:", err);
             showToast("Failed to add item to cart", "error");
@@ -101,7 +118,6 @@ export const CartProvider = ({ children }) => {
                     return;
                 }
             }
-
             
             setCartItems(previous => 
                 previous.map(item => 
@@ -128,6 +144,26 @@ export const CartProvider = ({ children }) => {
                     quantity: newQuantity
                 })
             });
+
+            const product = cartItems.find(item => item.product_id === product_id);
+            const oldQuantity = product?.quantity || 0;
+
+            // Log cart update action
+            if (logCartUpdate && product) {
+                await logCartUpdate(
+                    product_id,
+                    oldQuantity,
+                    newQuantity,
+                    product.label || product.product_name,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }           
 
         } catch (err) {
             console.error("Failed to update quantity:", err);
@@ -161,6 +197,21 @@ export const CartProvider = ({ children }) => {
                 title: 'Item removed from cart',
                 message: `${ cartItem[0].label } was removed from your cart.`
             });
+
+            // Log cart remove action
+            if (logCartRemove && cartItem) {
+                await logCartRemove(
+                    product_id,
+                    cartItem.label || cartItem.product_name,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
 
         } catch (err) {
             console.error("Failed to remove item:", err);

@@ -1,8 +1,9 @@
 import { useContext, useState, useEffect, useCallback } from 'react';
 import SettingsContext from './context';
 import { useAuth } from '../Auth';
+import { useAuditTrail } from '../AuditTrail';
 
-export const SettingsProvider = ({ children }) => {
+export const SettingsProvider = ({ children, auditLoggers = {} }) => {
     const { user } = useAuth();
     const [settings, setSettings] = useState({
         currency: 'PHP',
@@ -11,10 +12,12 @@ export const SettingsProvider = ({ children }) => {
     });
     const [ enabledPaymentMethods, setEnabledPaymentMethods ] = useState([]);
     const [loading, setLoading] = useState(false);
+    const { logProfilePreferences } = auditLoggers;
 
     const updateSettings = async (newSettings) => {
         if (!user?.id) return { error: 'User not logged in' };
-        
+
+        const oldSettings = { ...settings };
         setLoading(true);
         try {
             const response = await fetch(`/api/user-settings/${user.id}`, {
@@ -30,6 +33,22 @@ export const SettingsProvider = ({ children }) => {
                 const result = await response.json();
                 const updatedSettings = result.settings || result;
                 setSettings(updatedSettings);
+
+                // Log the preferences update with user info
+                if (logProfilePreferences) {
+                    await logProfilePreferences(
+                        oldSettings,
+                        newSettings,
+                        {
+                            user_id: user.id,
+                            first_name: user.first_name,
+                            last_name: user.last_name,
+                            email: user.email,
+                            role: user.role
+                        }
+                    );
+                }
+
                 return { success: true };
             } else {
                 const errorText = await response.text();

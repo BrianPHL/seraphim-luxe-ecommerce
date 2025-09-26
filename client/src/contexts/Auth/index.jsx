@@ -4,8 +4,9 @@ import { performOperationWithTimeout, fetchWithTimeout, apiRequest, extractAccou
 import { useOAuth } from "@hooks";
 import { useToast } from "@contexts";
 import AuthContext from "./context";
+import { phoneNumber } from "better-auth/plugins";
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children, auditLoggers = {} }) => {
 
     const [ user, setUser ] = useState(null);
     const [ userList, setUserList ] = useState([]);
@@ -25,6 +26,7 @@ export const AuthProvider = ({ children }) => {
     });
     const { signOut, getSession, signInThruEmail, signUpThruEmail, sendVerificationOTP, revokeSession } = useOAuth();
     const { showToast } = useToast();
+    const { logSignIn, logSignUp, logSignOut, logProfileUpdate, logPasswordChange, logAdminAccountDelete, logAdminAccountUpdate, logAdminAccountCreate } = auditLoggers;
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -162,9 +164,22 @@ export const AuthProvider = ({ children }) => {
 
                 return { error: errorData };
 
-}
+            }
 
-            completeSignInProcess();
+        await completeSignInProcess(); // This sets the user context
+
+        // Get user info from signInThruEmailResult
+        const signedInUser = signInThruEmailResult?.data?.user;
+        // Pass user info directly to logSignIn
+        if (logSignIn && signedInUser) {
+            await logSignIn(`User signed in: ${signedInUser.email}`, {
+                user_id: signedInUser.id,
+                first_name: signedInUser.first_name,
+                last_name: signedInUser.last_name,
+                email: signedInUser.email,
+                role: signedInUser.role
+            });
+        }
 
             return signInThruEmailResult;
 
@@ -224,6 +239,16 @@ export const AuthProvider = ({ children }) => {
             }
 
             showToast(`Account created successfully! You may now sign in.`, 'success');
+
+            // Log successful sign up
+            if (logSignUp) {
+                await logSignUp(`New account created: ${data.email}`, {
+                    email: data.email,
+                    first_name: data.firstName,
+                    last_name: data.lastName,
+                    role: 'user'
+                });
+            }
             
             return result;
         
@@ -236,22 +261,19 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            // Log the sign-out event before actually signing out
-            if (user) {
-                try {
-                    await fetch('/api/oauth/audit/signout', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ user_id: user.id })
-                    });
-                } catch (auditError) {
-                    console.error('Error logging sign-out audit trail:', auditError);
-                }
+
+            // Log sign out before clearing user data
+            if (user && logSignOut) {
+                await logSignOut(`User signed out: ${user.email}`, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
             }
 
-            await signOut();
+            await signOut(); 
             localStorage.removeItem('user');
             setUser(null);
             showToast('Logged out successfully.', 'success');
@@ -269,6 +291,13 @@ export const AuthProvider = ({ children }) => {
     const updatePersonalInfo = async (personalInfo) => {
         
         try {
+
+            // Capture old values for audit logging
+            const oldValues = {
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email
+            };
         
             const data = await apiRequest(`/api/accounts/${ !personalInfo.id ? user.id : personalInfo.id }/personal-info`, {
                 method: 'PUT',
@@ -276,10 +305,16 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify(personalInfo)
             }, TIMEOUTS.FILE_UPLOAD_API);
 
-            if (data.user) {
-                setUser(data.user);
-                showToast('Personal information updated successfully!', 'success');
+            if (logProfileUpdate) {
+                await logProfileUpdate(oldValues, personalInfo, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
             }
+
             return data;
         
         } catch (err) {
@@ -308,6 +343,17 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Failed to update password');
             }
             showToast('Password updated successfully!', 'success');
+
+            if (logPasswordChange) {
+                await logPasswordChange(`Password changed for: ${user.email}`, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error("Failed to update password:", err);
@@ -363,6 +409,17 @@ export const AuthProvider = ({ children }) => {
 
             const updatedUser = { ...data };
             setUser(updatedUser);
+
+            if (logProfileUpdate) {
+                await logProfileUpdate({}, addressData, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
         } catch (err) {
@@ -395,6 +452,17 @@ export const AuthProvider = ({ children }) => {
 
             const updatedUser = { ...data };
             setUser(updatedUser);
+
+            if (logProfileUpdate) {
+                await logProfileUpdate({}, addressData, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
         } catch (err) {
@@ -423,6 +491,16 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Failed to delete address');
             }
 
+            if (logProfileUpdate) {
+                await logProfileUpdate({}, { deleted_address_id: id }, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
         } catch (err) {
             console.error("AuthContext deleteAddress function error: ", err);
             return { error: err };
@@ -440,6 +518,10 @@ export const AuthProvider = ({ children }) => {
 
             setIsInitializing(true);
 
+            // Get account data before deletion for audit logging
+            const accountResponse = await fetch(`/api/accounts/${id}`);
+            const accountData = accountResponse.ok ? await accountResponse.json() : {};
+
             const response = await fetch(`/api/accounts/${id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
@@ -450,6 +532,17 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Failed to delete account');
             }
             showToast('Account deleted successfully.', 'success');
+
+            if (logAdminAccountDelete) {
+                await logAdminAccountDelete(id, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
             logout();
 
             return { success: true };
@@ -485,6 +578,17 @@ export const AuthProvider = ({ children }) => {
             const updatedUser = { ...user, image_url: data['image_url'] };
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser))
+
+            if (logProfileUpdate) {
+                await logProfileUpdate({}, { avatar_updated: true }, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
             return data;
 
         } catch (err) {
@@ -518,6 +622,16 @@ export const AuthProvider = ({ children }) => {
 
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            if (data.user) {
+                setUser(data.user);
+                showToast('Personal information updated successfully!', 'success');
+                
+                // Log profile update
+                if (logProfileUpdate) {
+                    await logProfileUpdate(oldValues, personalInfo);
+                }
+            }
 
             return { success: true };
 
@@ -591,6 +705,18 @@ export const AuthProvider = ({ children }) => {
 
             showToast(`Account ${ isSuspended ? 'suspended' : 're-activated' } successfully!`, 'success');
             fetchUsers();
+
+            try {
+                if (logAdminAccountUpdate) {
+                    await logAdminAccountUpdate(accountId, 
+                        { is_suspended: !isSuspended }, 
+                        { is_suspended: isSuspended }
+                    );
+                }
+            } catch (auditError) {
+                console.warn('Failed to log account suspension audit trail:', auditError);
+            }
+
             return { success: true };
         } catch (error) {
             console.error('Error suspending account:', error);
@@ -618,6 +744,7 @@ export const AuthProvider = ({ children }) => {
             logout,
             remove,
             updatePersonalInfo,
+            updatePassword,
             updateAvatar,
             removeAvatar,
             addressBook,

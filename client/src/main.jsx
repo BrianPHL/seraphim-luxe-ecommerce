@@ -15,9 +15,62 @@ import {
   WishlistProvider,
   SettingsProvider,
   CMSProvider,
-  NotificationsProvider
+  NotificationsProvider,
+  AuditTrailProvider,
+  useAuditTrail
 } from '@contexts';
 import App from './App';
+
+// Wrapper component to connect AuditTrail and Auth
+const AuthWithAuditWrapper = ({ children }) => {
+  const auditLoggers = useAuditTrail();
+  
+  return (
+    <AuthProvider auditLoggers={auditLoggers}>
+      {children}
+    </AuthProvider>
+  );
+};
+
+const CartWithAuditWrapper = ({ children }) => {
+  const auditLoggers = useAuditTrail();
+
+  return (
+    <CartProvider auditLoggers={auditLoggers}>
+      {children}
+    </CartProvider>
+  );
+};
+
+const WishlistWithAuditWrapper = ({ children }) => {
+  const auditLoggers = useAuditTrail();
+
+  return (
+    <WishlistProvider auditLoggers={auditLoggers}>
+      {children}
+    </WishlistProvider>
+  );
+};
+
+const CheckoutWithAuditWrapper = ({ children }) => {
+  const auditLoggers = useAuditTrail();
+
+  return (
+    <CheckoutProvider auditLoggers={auditLoggers}>
+      {children}
+    </CheckoutProvider>
+  );
+};
+
+const SettingsWithAuditWrapper = ({ children }) => {
+  const auditLoggers = useAuditTrail();
+
+  return (
+    <SettingsProvider auditLoggers={auditLoggers}>
+      {children}
+    </SettingsProvider>
+  );
+};
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -25,29 +78,39 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <DropdownProvider>
           <ToastProvider>
-            <AuthProvider>
-              <NotificationsProvider>
-                <CMSProvider>
-                  <SettingsProvider>
-                    <CategoriesProvider>
-                      <ProductsProvider>
-                        <OrdersProvider>
-                          <WishlistProvider>
-                            <CartProvider>
-                              <CheckoutProvider>
-                                <StocksProvider>
-                                  <App />
-                                </StocksProvider>
-                              </CheckoutProvider>
-                            </CartProvider>
-                          </WishlistProvider>
-                        </OrdersProvider>
-                      </ProductsProvider>
-                    </CategoriesProvider>
-                  </SettingsProvider>
-                </CMSProvider>
-              </NotificationsProvider>
-            </AuthProvider>
+            <AuditTrailProvider>
+              <AuthWithAuditWrapper>
+                <NotificationsProvider>
+                  <CMSProvider>
+                    <SettingsProvider>
+                      <SettingsWithAuditWrapper>
+                        <CategoriesProvider>
+                          <ProductsProvider>
+                            <OrdersProvider>
+                              <WishlistProvider>
+                                <WishlistWithAuditWrapper>
+                                  <CartProvider>
+                                    <CartWithAuditWrapper>
+                                      <CheckoutProvider>
+                                        <CheckoutWithAuditWrapper>
+                                          <StocksProvider>
+                                            <App />
+                                          </StocksProvider>
+                                        </CheckoutWithAuditWrapper>
+                                      </CheckoutProvider>
+                                    </CartWithAuditWrapper>
+                                  </CartProvider>
+                                </WishlistWithAuditWrapper>
+                              </WishlistProvider>
+                            </OrdersProvider>
+                          </ProductsProvider>
+                        </CategoriesProvider>
+                      </SettingsWithAuditWrapper>
+                    </SettingsProvider>
+                  </CMSProvider>
+                </NotificationsProvider>
+              </AuthWithAuditWrapper>
+            </AuditTrailProvider>
           </ToastProvider>
         </DropdownProvider>
       </ThemeProvider>

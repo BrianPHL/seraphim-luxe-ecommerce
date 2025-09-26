@@ -8,6 +8,7 @@ export { StocksProvider, useStocks } from "./Stocks";
 export { CheckoutProvider, useCheckout } from "./Checkout";
 export { OrdersProvider, useOrders } from "./Orders";
 export { CategoriesProvider, useCategories } from "./Categories";
+export { AuditTrailProvider, useAuditTrail } from './AuditTrail';
 export { useWishlist, WishlistProvider } from './Wishlist';
 export { useSettings, SettingsProvider } from './Settings';
 export { useCMS, CMSProvider } from './CMS';

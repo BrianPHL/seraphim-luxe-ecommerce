@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import WishlistContext from "./context";
 import { useAuth, useToast, useNotifications, useProducts } from "@contexts";
 
-export const WishlistProvider = ({ children }) => {
+export const WishlistProvider = ({ children, auditLoggers = {} }) => {
 
     const [ wishlistItems, setWishlistItems ] = useState([]);
     const [ selectedWishlistItems, setSelectedWishlistItems ] = useState([]);
@@ -11,6 +11,7 @@ export const WishlistProvider = ({ children }) => {
     const { products } = useProducts();
     const { showToast } = useToast();
     const { setNotification } = useNotifications();
+    const { logWishlistAdd, logWishlistRemove } = auditLoggers;
 
     const fetchWishlistItems = async () => {
         if (!user?.id) {
@@ -64,6 +65,22 @@ export const WishlistProvider = ({ children }) => {
                 message: `${ products[product_id].label } was added to your wishlist.`
             });
 
+            // Log wishlist add action
+            if (logWishlistAdd) {
+                const product = products[product_id];
+                await logWishlistAdd(
+                    product_id,
+                    product?.label || product?.name || 'Unknown Item',
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
         } catch (err) {
             console.error("Wishlist context addToWishlist function error: ", err);
             showToast("Failed to add item to wishlist", "error");
@@ -104,6 +121,22 @@ export const WishlistProvider = ({ children }) => {
                 showToast("Failed to remove item from wishlist", "error");
                 fetchWishlistItems();
             }
+
+            // Log wishlist remove action
+            if (logWishlistRemove && removedItem) {
+                await logWishlistRemove(
+                    parsedProductId,
+                    removedItem?.label || removedItem?.product_name || 'Unknown Item',
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
         } catch (err) {
             console.error("Error removing from wishlist:", err);
             showToast("Failed to remove item from wishlist", "error");

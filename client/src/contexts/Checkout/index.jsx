@@ -3,7 +3,7 @@ import CheckoutContext from "./context";
 import { useAuth, useToast, useCart, useSettings, useProducts, useNotifications } from "@contexts";
 import { fetchWithTimeout } from "@utils";
 
-export const CheckoutProvider = ({ children }) => {
+export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
     const [orders, setOrders] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
     const [directCheckoutItem, setDirectCheckoutItem] = useState(null);
@@ -22,8 +22,9 @@ export const CheckoutProvider = ({ children }) => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const { clearSelectedCartItems } = useCart();
-    const { refreshProducts } = useProducts();
+    const { products, refreshProducts } = useProducts();
     const { setNotification } = useNotifications();
+    const { logOrderCreate } = auditLoggers;
 
     const generateOrderNumber = () => {
         const timestamp = Date.now();
@@ -123,6 +124,31 @@ export const CheckoutProvider = ({ children }) => {
                 title: 'Item successfully ordered',
                 message: `Your new order is ${ data.order_number }. It is now pending.`
             });
+
+            const productNames = orderData.items
+            .map(item => products[item.product_id]?.label || products[item.product_id]?.name || `Product #${item.product_id}`)
+            .join(', ');
+
+            // Log order creation
+            if (logOrderCreate && data?.order_number) {
+                await logOrderCreate(
+                    data.order_id, // or data.order_id if that's your primary key
+                    {
+                        order_number: data.order_number,
+                        total_amount: data.total_amount,
+                        items_count: orderData.items?.length || 0,
+                        product_names: productNames
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role,
+                        details: `Order created for: ${productNames}`
+                    }
+                );
+            }
             
             return { success: true, order: data };
         } catch (err) {
