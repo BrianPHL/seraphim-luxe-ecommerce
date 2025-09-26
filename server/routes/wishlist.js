@@ -1,6 +1,5 @@
 import express from 'express';
 import pool from '../apis/db.js';
-import { AuditLogger } from '../utils/audit-trail.js';
 
 const router = express.Router();
 
@@ -88,9 +87,6 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ error: 'Failed to insert wishlist item' });
         }
 
-        // Log audit and activity
-        await AuditLogger.logWishlistAdd(userId, productId, req);
-
         // Fetch added item for response
         const fetchQuery = `
             SELECT w.id, w.user_id, w.product_id, w.created_at,
@@ -126,13 +122,6 @@ router.delete('/:userId/:productId', async (req, res) => {
                 error: 'Item not found in wishlist' 
             });
         }
-
-        // Fetch product label for activity log
-        const [productRows] = await pool.query('SELECT label FROM products WHERE id = ?', [productId]);
-        const productLabel = productRows?.[0]?.label || 'Item';
-
-        // Log wishlist addition
-        await AuditLogger.logWishlistRemove(userId, productId, req);
 
         res.status(200).json({
             message: 'Item removed from wishlist successfully'
