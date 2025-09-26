@@ -20,6 +20,7 @@ import paypalRouter from './routes/paypal.js';
 import notificationsRouter from './routes/notifications.js';
 import auditTrailRoutes from './routes/audit-trail.js'
 import reviewsRouter from './routes/reviews.js';
+import sseRouter from './routes/sse.js';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
 
+app.use('/api/sse', sseRouter);
 app.use('/api/accounts', accountsRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
