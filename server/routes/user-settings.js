@@ -51,7 +51,12 @@ router.put('/:userId', async (req, res) => {
             });
         }
         
-        const checkQuery = 'SELECT id FROM accounts WHERE id = ?';
+        const checkQuery = `
+            SELECT id, currency, preferred_shipping_address, preferred_payment_method 
+            FROM accounts 
+            WHERE id = ?
+        `;
+
         const [existingUser] = await connection.execute(checkQuery, [userId]);
         
         if (existingUser.length === 0) {
@@ -65,7 +70,7 @@ router.put('/:userId', async (req, res) => {
             WHERE id = ?
         `;
 
-        await pool.execute(updateQuery, [currency, preferred_shipping_address, preferred_payment_method, userId]);
+        await connection.execute(updateQuery, [currency, preferred_shipping_address, preferred_payment_method, userId]);
 
         // Get updated settings to return
         const selectQuery = `
@@ -79,6 +84,8 @@ router.put('/:userId', async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).json({ error: 'User not found after update' });
         }
+
+        await connection.commit();
         
         res.json({
             message: 'Preferences updated successfully',

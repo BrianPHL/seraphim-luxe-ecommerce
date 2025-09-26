@@ -82,8 +82,10 @@ router.put('/:account_id/:product_id', async (req, res) => {
         const { account_id, product_id } = req.params;
         const { quantity } = req.body;
 
+        let result;
+
         if (quantity <= 0) {
-            await pool.query(
+            [result] = await pool.query(
                 `
                     DELETE FROM carts
                     WHERE account_id = ? AND product_id = ?
@@ -91,7 +93,7 @@ router.put('/:account_id/:product_id', async (req, res) => {
                 [ account_id, product_id ]
             );
         } else {
-            await pool.query(
+            [result] = await pool.query(
                 `
                     UPDATE carts SET quantity = ?
                     WHERE account_id = ? AND product_id = ?
@@ -126,9 +128,6 @@ router.delete('/:account_id/:product_id', async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Cart item not found!' });
         }
-
-        // Log cart removal
-        await AuditLogger.logCartRemove(account_id, product_id, req);
 
         res.status(200).json({ success: true });
         

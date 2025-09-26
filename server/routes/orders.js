@@ -353,23 +353,6 @@ router.post('/', async (req, res) => {
 
         await connection.commit();
 
-        await AuditLogger.logOrderCreate(
-                account_id,
-                orderId,
-                {
-                    order_number: orderNumber,
-                    total_amount: total_amount,
-                    payment_method: payment_method,
-                    item_count: items?.length || 0,
-                    items: items?.map(item => ({
-                        product_id: item.product_id,
-                        quantity: item.quantity,
-                        price: item.price
-                    })) || []
-                },
-                req
-            );
-
         res.status(201).json({ 
             order_id: orderId,
             order_number: orderNumber,
