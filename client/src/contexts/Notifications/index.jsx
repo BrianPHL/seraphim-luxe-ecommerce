@@ -10,6 +10,7 @@ export const NotificationsProvider = ({ children }) => {
     const [ notifications, setNotifications ] = useState([]);
     const [ isInboxOpen, setIsInboxOpen ] = useState(false);
     const [ unreadCount, setUnreadCount ] = useState(0);
+    const [ sseConnected, setSseConnected ] = useState(false);
 
     const fetchNotifications = useCallback(async () => {
 
@@ -181,7 +182,90 @@ export const NotificationsProvider = ({ children }) => {
 
     useEffect(() => {
         fetchUnreadCount()
-    }, [ notifications ])
+    }, [ notifications ]);
+
+    useEffect(() => {
+
+        if (!user) return;
+
+        const eventSource = new EventSource(`/api/sse/${ user.id }`);
+
+        eventSource.onopen = () => setSseConnected(true);
+
+        eventSource.onmessage = (event) => {
+
+            const data = JSON.parse(event.data);
+            const status = data?.type;
+            const orderNumber = data?.order_number;
+
+            if (!status || status === 'connected') return;
+
+            switch (status) {
+                case 'processing':
+                    setNotification({
+                        type: 'orders',
+                        title: 'Order Processing',
+                        message: `Your order ${ data.order_number } is now processing.`
+                    });
+                    break;
+
+                case 'shipped':
+                    setNotification({
+                        type: 'orders',
+                        title: 'Order Shipped',
+                        message: `Your order ${ data.order_number } is now shipped.`
+                    });
+                    break;
+
+                case 'delivered':
+                    setNotification({
+                        type: 'orders',
+                        title: 'Order Delivered',
+                        message: `Your order ${ data.order_number } is now delivered.`
+                    });
+                    break;
+
+                case 'cancelled':
+                    setNotification({
+                        type: 'orders',
+                        title: 'Order Cancelled',
+                        message: `Your order ${ data.order_number } is now cancelled.`
+                    });
+                    break;
+
+                case 'returned':
+                    setNotification({
+                        type: 'orders',
+                        title: 'Order Returned',
+                        message: `Your order ${ data.order_number } is now returned.`
+                    });
+                    break;
+                    
+                case 'refunded':
+                    setNotification({
+                        type: 'orders',
+                        title: 'Order Refunded',
+                        message: `Your order ${ data.order_number } is now refunded.`
+                    });
+                    break;
+                    
+                default:
+                    console.error('Invalid status value passed from server!');
+            }
+
+        };
+
+        eventSource.onerror = (error) => {
+            console.error('SSE error:', error);
+            setSseConnected(false);
+        };
+        
+        return () => {
+            eventSource.close();
+            setSseConnected(false); 
+        };
+
+    }, [ user ]);
 
     return (
         <NotificationsContext.Provider value={{
@@ -190,6 +274,7 @@ export const NotificationsProvider = ({ children }) => {
             notifications,
             isInboxOpen,
             unreadCount,
+            sseConnected,
 
         // * Exposed functions
             fetchNotifications,

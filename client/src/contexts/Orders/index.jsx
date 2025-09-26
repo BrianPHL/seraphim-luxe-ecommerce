@@ -83,10 +83,6 @@ export const OrdersProvider = ({ children }) => {
         }
     };
 
-    const cancelOrder = async (order_id, reason = '') => {
-        return await updateOrderStatus(order_id, 'cancelled', reason);
-    };
-
     const deleteOrder = async (order_id) => {
         if (!user) return;
 
@@ -237,8 +233,6 @@ export const OrdersProvider = ({ children }) => {
             orderStats,
             loading,
             fetchRecentOrders,
-            updateOrderStatus,
-            cancelOrder,
             deleteOrder,
             processRefund,
             getOrderById,

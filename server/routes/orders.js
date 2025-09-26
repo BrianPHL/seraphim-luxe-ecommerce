@@ -2,6 +2,7 @@ import pool from "../apis/db.js";
 import express from 'express';
 import { sendEmail } from "../apis/resend.js";
 import { createOrderPendingEmail, createOrderProcessingEmail, createOrderRefundedEmail, createOrderShippedEmail, createOrderDeliveredEmail, createOrderCancelledEmail, createOrderReturnedEmail } from "../utils/email.js";
+import { pingUser } from "../utils/sse.js";
 
 const router = express.Router();
 
@@ -187,7 +188,7 @@ router.put('/:order_id/status', async (req, res) => {
 
         const [ accountRows ] = await connection.query(
             `
-                SELECT name, email
+                SELECT id, name, email
                 FROM accounts
                 WHERE id = ?
             `,
@@ -276,6 +277,11 @@ router.put('/:order_id/status', async (req, res) => {
             default:
                 throw new Error("Invalid status passed: ", status);
         }
+
+        pingUser(accountRows[0].id, {
+            type: status,
+            order_number: currentOrder[0].order_number
+        });
 
         await connection.commit();
 
@@ -422,6 +428,12 @@ router.post('/:order_id/refund', async (req, res) => {
             throw new Error(err);
 
         await connection.commit();
+
+        pingUser(accountRows[0].id, {
+            type: 'refunded',
+            order_number: currentOrder[0].order_number
+        });
+        
         res.json({ 
             success: true, 
             message: 'Refund processed successfully' 
