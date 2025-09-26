@@ -77,20 +77,14 @@ router.get('/hierarchy', async (req, res) => {
     }
 });
 
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { name, description = null, sort_order = 0 } = req.body;
-        const admin_id = req.user?.id || req.body?.admin_id; // Get admin ID
         
         const [ result ] = await pool.query(
             'INSERT INTO product_categories (name, description, sort_order) VALUES (?, ?, ?)',
             [name, description, sort_order]
         );
-
-        // Log category creation
-        await AuditLogger.logAdminCategoryCreate(admin_id, result.insertId, {
-            name, description, sort_order
-        }, req);
         
         res.status(201).json({
             message: 'Category created successfully',
@@ -102,22 +96,16 @@ router.post('/', requireAdmin, async (req, res) => {
     }
 });
 
-router.post('/:category_id/subcategories', requireAdmin, async (req, res) => {
+router.post('/:category_id/subcategories', async (req, res) => {
     try {
         const { category_id } = req.params;
         const { name, description = null, sort_order = 0 } = req.body;
-        const admin_id = req.user?.id || req.body?.admin_id;
         
         const [ result ] = await pool.query(
             'INSERT INTO product_subcategories (category_id, name, description, sort_order) VALUES (?, ?, ?, ?)',
             [category_id, name, description, sort_order]
         );
 
-        // Log subcategory creation
-        await AuditLogger.logAdminCategoryCreate(admin_id, result.insertId, {
-            name, description, sort_order, category_id, type: 'subcategory'
-        }, req);
-        
         res.status(201).json({
             message: 'Subcategory created successfully',
             id: result.insertId
@@ -128,17 +116,10 @@ router.post('/:category_id/subcategories', requireAdmin, async (req, res) => {
     }
 });
 
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, sort_order, is_active } = req.body;
-        const admin_id = req.user?.id || req.body?.admin_id;
-
-        // Get old values first
-        const [oldData] = await pool.query(
-            'SELECT * FROM product_categories WHERE id = ?',
-            [id]
-        );
+        const { name, description, sort_order, is_active } = req.body
         
         const [ result ] = await pool.query(
             'UPDATE product_categories SET name = ?, description = ?, sort_order = ?, is_active = ? WHERE id = ?',
@@ -149,11 +130,6 @@ router.put('/:id', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Category not found' });
         }
 
-        // Log category update
-        await AuditLogger.logAdminCategoryUpdate(admin_id, id, oldData[0], {
-            name, description, sort_order, is_active
-        }, req);
-        
         res.json({ message: 'Category updated successfully' });
     } catch (err) {
         console.error('Error updating category:', err);
@@ -161,17 +137,10 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
 });
 
-router.put('/subcategories/:id', requireAdmin, async (req, res) => {
+router.put('/subcategories/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, sort_order, is_active } = req.body;
-        const admin_id = req.user?.id || req.body?.admin_id;
-
-        // Get old values first
-        const [oldData] = await pool.query(
-            'SELECT * FROM product_subcategories WHERE id = ?',
-            [id]
-        );
         
         const [ result ] = await pool.query(
             'UPDATE product_subcategories SET name = ?, description = ?, sort_order = ?, is_active = ? WHERE id = ?',
@@ -181,11 +150,6 @@ router.put('/subcategories/:id', requireAdmin, async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Subcategory not found' });
         }
-
-        // Log subcategory update
-        await AuditLogger.logAdminCategoryUpdate(admin_id, id, oldData[0], {
-            name, description, sort_order, is_active, type: 'subcategory'
-        }, req);
         
         res.json({ message: 'Subcategory updated successfully' });
     } catch (err) {
@@ -194,20 +158,13 @@ router.put('/subcategories/:id', requireAdmin, async (req, res) => {
     }
 });
 
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     const connection = await pool.getConnection();
     
     try {
         await connection.beginTransaction();
         
         const { id } = req.params;
-        const admin_id = req.user?.id || req.body?.admin_id;
-
-        // Get category data before deletion
-        const [categoryData] = await connection.query(
-            'SELECT * FROM product_categories WHERE id = ?',
-            [id]
-        );
 
         const [ productCheck ] = await connection.query(
             'SELECT COUNT(*) as count FROM products WHERE category_id = ?',
@@ -244,12 +201,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Category not found' });
         }
         
-        await connection.commit();
-
-        // Log category deletion
-        if (categoryData.length > 0) {
-            await AuditLogger.logAdminCategoryDelete(admin_id, id, categoryData[0], req);
-        }
+        await connection.commit()
     
         res.json({ message: 'Category and its subcategories deleted successfully' });
     } catch (err) {
@@ -261,18 +213,9 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     }
 });
 
-router.delete('/subcategories/:id', requireAdmin, async (req, res) => {
+router.delete('/subcategories/:id', async (req, res) => {
     try {
         const { id } = req.params;
-
-        const admin_id = req.user?.id || req.body?.admin_id;
-
-        // Get subcategory data before deletion
-        const [subcategoryData] = await pool.query(
-            'SELECT * FROM product_subcategories WHERE id = ?',
-            [id]
-        );
-
 
         const [ productCheck ] = await pool.query(
             'SELECT COUNT(*) as count FROM products WHERE subcategory_id = ?',
@@ -291,12 +234,6 @@ router.delete('/subcategories/:id', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Subcategory not found' });
         }
 
-        // Log subcategory deletion
-        if (subcategoryData.length > 0) {
-            await AuditLogger.logAdminCategoryDelete(admin_id, id, {
-                ...subcategoryData[0], type: 'subcategory'
-            }, req);
-        }
         
         res.json({ message: 'Subcategory deleted successfully' });
     } catch (err) {

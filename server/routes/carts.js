@@ -1,6 +1,5 @@
 import pool from "../apis/db.js";
 import express from 'express';
-import { AuditLogger } from '../utils/audit-trail.js';
 
 const router = express.Router();
 
@@ -66,14 +65,12 @@ router.post('/', async (req, res) => {
             const [productRows] = await pool.query('SELECT label FROM products WHERE id = ?', [product_id]);
             const productLabel = productRows?.[0]?.label || 'Product';
 
-            await AuditLogger.logCartAdd(account_id, product_id, quantity, req);
-
             return res.status(201).json({ success: true, insertId: result.insertId, message: 'Product added to cart successfully!' });
         } else {
             return res.status(500).json({ error: 'Failed to insert cart item' });
         }
     } catch (err) {
-        console.error('carts route POST / endpoint error: ', err);
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -84,23 +81,6 @@ router.put('/:account_id/:product_id', async (req, res) => {
 
         const { account_id, product_id } = req.params;
         const { quantity } = req.body;
-
-        // Get old quantity first
-        const [oldData] = await pool.query(
-            'SELECT quantity FROM carts WHERE account_id = ? AND product_id = ?',
-            [account_id, product_id]
-        );
-
-        const old_quantity = oldData[0]?.quantity;
-
-        const [ result ] = await pool.query(
-            `
-                UPDATE carts 
-                SET quantity = ?
-                WHERE account_id = ? AND product_id = ?
-            `,
-            [ quantity, account_id, product_id ]
-        );
 
         if (quantity <= 0) {
             await pool.query(
@@ -123,9 +103,6 @@ router.put('/:account_id/:product_id', async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Cart item not found!' });
         }
-
-        // Log cart update
-        await AuditLogger.logCartUpdate(account_id, product_id, old_quantity, quantity, req);
 
         res.json({ message: 'Cart updated successfully' })
     } catch (err) {
