@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useAuditTrail } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { Button, TableHeader, TableFooter, Modal } from '@components';
 import { AUDIT_FILTER_CONFIG, ACTION_TYPE_LABELS } from '@utils/configs';
@@ -12,18 +12,20 @@ const AuditTrail = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
     const { showToast } = useToast();
+    
+    const {
+        auditLogs,
+        loading,
+        stats,
+        filters,
+        fetchAuditLogs,
+        fetchStats,
+        updateFilters,
+        clearFilters
+    } = useAuditTrail();
 
-    const [auditLogs, setAuditLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState(null);
     const [selectedLog, setSelectedLog] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [filters, setFilters] = useState({
-        action_type: searchParams.get('action_type') || '',
-        start_date: searchParams.get('start_date') || '',
-        end_date: searchParams.get('end_date') || '',
-        user_id: searchParams.get('user_id') || ''
-    });
 
     const queryPage = parseInt(searchParams.get('page')) || 1;
     const querySort = searchParams.get('sort') || 'Sort by: Latest';
@@ -46,53 +48,41 @@ const AuditTrail = () => {
         resetPagination,
     } = usePagination(filteredLogs, ITEMS_PER_PAGE, queryPage);
 
+    // Load audit logs on mount and when filters change
     useEffect(() => {
-        fetchAuditLogs();
-        fetchStats();
-    }, [currentPage, sortValue, searchValue, filters]);
+        fetchAuditLogs({ search: searchValue });
+    }, [filters, searchValue]);
 
-    const fetchAuditLogs = async () => {
-        try {
-            setLoading(true);
-            const params = new URLSearchParams({
-                search: searchValue,
-                ...filters
-            });
-
-            const response = await fetch(`/api/audit-trail?${params}`);
-            if (!response.ok) throw new Error('Failed to fetch audit logs');
-            
-            const data = await response.json();
-            setAuditLogs(data.logs);
-        } catch (error) {
-            console.error('Error fetching audit logs:', error);
-            showToast('Failed to load audit logs', 'error');
-        } finally {
-            setLoading(false);
+    // Sync URL params
+    useEffect(() => {
+        if (searchValue !== querySearch) {
+            handleSearchChange(querySearch);
         }
-    };
+    }, [querySearch]);
 
-    const fetchStats = async () => {
-        try {
-            const response = await fetch('/api/audit-trail/stats');
-            if (!response.ok) throw new Error('Failed to fetch stats');
-            
-            const data = await response.json();
-            setStats(data);
-        } catch (error) {
-            console.error('Error fetching stats:', error);
+    useEffect(() => {
+        if (sortValue !== querySort) {
+            handleSortChange(querySort);
         }
-    };
+    }, [querySort]);
+
+    useEffect(() => {
+        if (currentPage !== queryPage) {
+            handlePageChange(queryPage);
+        }
+    }, [queryPage]);
 
     const updateSearchParams = ({ page, sort, search, ...filterParams }) => {
         const params = new URLSearchParams(searchParams);
         if (page !== undefined) params.set('page', page);
         if (sort !== undefined) params.set('sort', sort);
         if (search !== undefined) params.set('search', search);
+        
         Object.entries(filterParams).forEach(([key, value]) => {
             if (value) params.set(key, value);
             else params.delete(key);
         });
+        
         setSearchParams(params);
     };
 
@@ -114,21 +104,22 @@ const AuditTrail = () => {
     };
 
     const handleFilterChange = (key, value) => {
-        const newFilters = { ...filters, [key]: value };
-        setFilters(newFilters);
+        const newFilters = { [key]: value };
+        updateFilters(newFilters);
         resetPagination();
         updateSearchParams({ page: 1, [key]: value });
     };
 
-    const clearFilters = () => {
-        setFilters({
-            action_type: '',
-            start_date: '',
-            end_date: '',
-            user_id: ''
-        });
+    const handleClearFilters = () => {
+        clearFilters();
         resetPagination();
-        updateSearchParams({ page: 1, action_type: '', start_date: '', end_date: '', user_id: '' });
+        updateSearchParams({ 
+            page: 1, 
+            action_type: '', 
+            start_date: '', 
+            end_date: '', 
+            user_id: '' 
+        });
     };
 
     const viewLogDetails = (log) => {
@@ -247,6 +238,15 @@ const AuditTrail = () => {
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Audit Trail Overview</h2>
+                    <Button
+                        type="secondary"
+                        label="Refresh"
+                        icon="fa-solid fa-refresh"
+                        action={() => {
+                            fetchAuditLogs({ search: searchValue });
+                            fetchStats();
+                        }}
+                    />
                 </div>
                 
                 {stats && (
@@ -255,7 +255,7 @@ const AuditTrail = () => {
                             <div className={styles['overview-item-header']}>
                                 <h3>Recent Activity (24h)</h3>
                             </div>
-                            <h2>{stats.recentActivityCount}</h2>
+                            <h2>{stats.recentActivityCount || 0}</h2>
                         </div>
                         <div className={styles['overview-item']}>
                             <div className={styles['overview-item-header']}>
@@ -272,7 +272,7 @@ const AuditTrail = () => {
             {/* Filters Section */}
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
-                    <h3>Filters</h3>
+                    <h2>Filters</h2>
                 </div>
                 
                 <div className={styles['filters']}>
@@ -284,8 +284,8 @@ const AuditTrail = () => {
                             className={styles['filter-select']}
                         >
                             <option value="">All Actions</option>
-                            {Object.entries(ACTION_TYPE_LABELS).map(([value, label]) => (
-                                <option key={value} value={value}>{label}</option>
+                            {Object.entries(ACTION_TYPE_LABELS).map(([key, label]) => (
+                                <option key={key} value={key}>{label}</option>
                             ))}
                         </select>
                     </div>
@@ -314,7 +314,7 @@ const AuditTrail = () => {
                         type="secondary"
                         label="Clear Filters"
                         icon="fa-solid fa-times"
-                        action={clearFilters}
+                        action={handleClearFilters}
                     />
                 </div>
             </div>
