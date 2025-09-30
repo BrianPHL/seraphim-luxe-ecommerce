@@ -2,16 +2,50 @@ import { useEffect, useState } from 'react';
 import { Button, ProductCard, Carousel } from '@components';
 import styles from './Home.module.css';
 import { useNavigate } from 'react-router';
-import { useProducts, useCategories } from '@contexts';
+import { useProducts, useCategories, useCMS } from '@contexts';
 
 const Home = () => {
-
     const navigate = useNavigate();
     const { products, loading } = useProducts();
     const { getActiveCategories, getActiveSubcategories } = useCategories();
+    const { pages, loading: cmsLoading } = useCMS();
     const [ featuredProducts, setFeaturedProducts ] = useState([]);
     const [ bestSellers, setBestSellers ] = useState([]);
     const [ newArrivals, setNewArrivals ] = useState([]);
+
+    // Debug: Log the CMS data to see what we're getting
+    console.log('CMS Pages Data:', pages);
+    console.log('Home Content:', pages?.home);
+
+    // Parse CMS content locally
+    const parseHomeContent = (homeContent) => {
+        if (!homeContent) return {};
+        
+        const lines = homeContent.split('\n');
+        const parsed = {};
+        
+        lines.forEach(line => {
+            if (line.trim() && line.includes(':')) {
+                const colonIndex = line.indexOf(':');
+                const key = line.substring(0, colonIndex).trim();
+                const value = line.substring(colonIndex + 1).trim();
+                if (key && value) {
+                    parsed[key] = value;
+                }
+            }
+        });
+        
+        console.log('Parsed CMS Data:', parsed);
+        return parsed;
+    };
+
+    // Get CMS text with fallback
+    const getCMSText = (key, fallback) => {
+        const homeContent = parseHomeContent(pages?.home || '');
+        const result = homeContent[key] || fallback;
+        console.log(`getCMSText(${key}):`, result);
+        return result;
+    };
 
     const getCategoryNames = () => {
         const activeCategories = getActiveCategories();
@@ -81,7 +115,6 @@ const Home = () => {
     };
 
     const getSubcategoryOptions = () => {
-        console.log("triggered???")
         const subcategories = getSubcategoryNames();
         return subcategories.slice(0, 3).map(sub => ({
             label: sub.name,
@@ -89,13 +122,13 @@ const Home = () => {
         }));
     };
 
-    const renderProductSection = (title, products, description, viewAllLink, viewAllLabel = "View All") => (
+    const renderProductSection = (titleKey, descKey, products, viewAllLink, viewAllLabel = "View All") => (
         <div className={styles['product-section']}>
             <div className={styles['section-header']}>
                 <div className={styles['section-header-info']}>
-                    <h2>{title}</h2>
+                    <h2>{getCMSText(titleKey, titleKey.replace('_', ' '))}</h2>
                     <div className={styles['highlight-divider']}></div>
-                    <h3>{description}</h3>
+                    <h3>{getCMSText(descKey, 'Product description')}</h3>
                 </div>
                 {products.length > 0 && (
                     <Button
@@ -124,7 +157,7 @@ const Home = () => {
                     ))
                 ) : (
                     <div className={styles['empty-section']}>
-                        <p>No {title.toLowerCase()} available at the moment.</p>
+                        <p>No products available at the moment.</p>
                     </div>
                 )}
             </div>
@@ -145,6 +178,7 @@ const Home = () => {
     return (
         <div className={styles['wrapper']}>
             <Carousel>
+                {/* Hero sections remain unchanged as requested */}
                 <div className={styles['hero']}>
                     <div className={styles['hero-left']}>
                         <h5>Home</h5>
@@ -250,51 +284,53 @@ const Home = () => {
                 </div>
             </Carousel>
 
+            {/* CMS-enabled Product Sections */}
             {renderProductSection(
-                "Featured Products",
+                "FEATURED_TITLE",
+                "FEATURED_DESC", 
                 featuredProducts,
-                "Discover our handpicked selection of standout pieces, carefully chosen for their exceptional quality and style.",
                 "/collections?featured=true",
                 "View All Featured"
             )}
 
             {renderProductSection(
-                "Best Sellers",
+                "BESTSELLERS_TITLE",
+                "BESTSELLERS_DESC",
                 bestSellers,
-                "Shop our most popular items loved by customers worldwide for their quality and timeless appeal.",
                 "/collections?sort=best-sellers",
                 "View All Best Sellers"
             )}
 
             {renderProductSection(
-                "New Arrivals",
+                "NEWARRIVALS_TITLE",
+                "NEWARRIVALS_DESC",
                 newArrivals,
-                "Be the first to discover our latest additions – fresh styles and trending pieces just added to our collection.",
                 "/collections?sort=newest",
                 "View All New Arrivals"
             )}
 
+            {/* CMS-enabled Trust Section */}
             <div className={styles['trust']}>
                 <div className={styles['trust-header']}>
-                    <h2>Why Style Enthusiasts Trust Seraphim Luxe</h2>
+                    <h2>{getCMSText('TRUST_TITLE', 'Why Style Enthusiasts Trust Seraphim Luxe')}</h2>
                     <div className={styles['highlight-divider']}></div>
-                    <p>At Seraphim Luxe, we go the extra mile to ensure you get the best unisex accessories and jewelry at unbeatable quality. Whether you're expressing your daily style or seeking the perfect statement piece, we've got what you need to make every look elegant and authentic.</p>
+                    <p>{getCMSText('TRUST_DESC', 'At Seraphim Luxe, we go the extra mile to ensure you get the best unisex accessories and jewelry at unbeatable quality.')}</p>
                 </div>
                 <div className={styles['trust-container']}>
                     <div className={styles['trust-container-card']}>
-                        <i className='fa-solid fa-truck'></i>
-                        <h3>Fast Delivery</h3>
-                        <p>Get your accessories delivered quickly and securely anywhere in the Philippines.</p>
+                        <i className={getCMSText('TRUST_CARD1_ICON', 'fa-solid fa-truck')}></i>
+                        <h3>{getCMSText('TRUST_CARD1_TITLE', 'Fast Delivery')}</h3>
+                        <p>{getCMSText('TRUST_CARD1_DESC', 'Get your accessories delivered quickly and securely anywhere in the Philippines.')}</p>
                     </div>
                     <div className={styles['trust-container-card']}>
-                        <i className='fa-solid fa-star'></i>
-                        <h3>Quality Guaranteed</h3>
-                        <p>Every piece is carefully selected and quality-tested for durability and style.</p>
+                        <i className={getCMSText('TRUST_CARD2_ICON', 'fa-solid fa-star')}></i>
+                        <h3>{getCMSText('TRUST_CARD2_TITLE', 'Quality Guaranteed')}</h3>
+                        <p>{getCMSText('TRUST_CARD2_DESC', 'Every piece is carefully selected and quality-tested for durability and style.')}</p>
                     </div>
                     <div className={styles['trust-container-card']}>
-                        <i className='fa-solid fa-headset'></i>
-                        <h3>Expert Support</h3>
-                        <p>Our team is ready to help you find the perfect pieces for your unique style.</p>
+                        <i className={getCMSText('TRUST_CARD3_ICON', 'fa-solid fa-headset')}></i>
+                        <h3>{getCMSText('TRUST_CARD3_TITLE', 'Expert Support')}</h3>
+                        <p>{getCMSText('TRUST_CARD3_DESC', 'Our team is ready to help you find the perfect pieces for your unique style.')}</p>
                     </div>
                 </div>
             </div>
