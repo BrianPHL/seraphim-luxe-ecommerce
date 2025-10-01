@@ -42,8 +42,8 @@ router.get('/:page_slug', async (req, res) => {
         
         if (pages.length === 0)
             return res.status(404).json({ error: 'Page not found' });
-        
-        res.json({ success: true, data: pages[0] });
+
+        res.json({ success: true, content: pages[0] });
 
     } catch (error) {
         console.error('Error fetching static page:', error);

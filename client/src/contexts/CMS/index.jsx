@@ -99,6 +99,45 @@ export const CMSProvider = ({ children }) => {
         }
     }, []);
 
+    const fetchAllPages = useCallback(async () => {
+        return await fetchCMSContent();
+    }, [fetchCMSContent]);
+
+    const fetchSpecificPage = useCallback(async (pageSlug) => {
+        
+        try {
+
+            const response = await fetchWithTimeout(`/api/cms/${pageSlug}`);
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+
+            const responseData = await response.json();
+            const pageContent = responseData.content || responseData;
+
+            setPages(prev => ({ 
+                ...prev, 
+                [pageSlug]: pageContent 
+            }));
+
+            return pageContent;
+
+        } catch (error) {
+            console.error(`Error fetching ${pageSlug} page:`, error);
+            // Return default content for the page if available
+            const defaultPageContent = defaultContent[pageSlug];
+            if (defaultPageContent) {
+                setPages(prev => ({ 
+                    ...prev, 
+                    [pageSlug]: defaultPageContent 
+                }));
+                return defaultPageContent;
+            }
+            throw error;
+        }
+    }, [defaultContent]);
+
     const updatePage = async (pageSlug, content, title) => {
         try {
             const response = await fetchWithTimeout(`/api/cms/${pageSlug}`, {
@@ -122,6 +161,10 @@ export const CMSProvider = ({ children }) => {
             throw err;
         }
     };
+
+    const updateSpecificPage = useCallback(async (pageSlug, content, title) => {
+        return await updatePage(pageSlug, content, title);
+    }, [updatePage]);
 
     // Parse home content into usable sections
     const parseHomeContent = useCallback((homeContent) => {
@@ -160,11 +203,13 @@ export const CMSProvider = ({ children }) => {
 
             // Functions
             fetchCMSContent,
+            fetchAllPages,
+            fetchSpecificPage,
             updatePage,
+            updateSpecificPage,
             getCMSText,
             parseHomeContent: () => parseHomeContent(pages.home),
 
-            // Convenience getters
             homeContent: pages.home || '',
             aboutContent: pages.about || '',
             contactContent: pages.contact || '',
