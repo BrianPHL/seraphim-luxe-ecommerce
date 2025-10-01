@@ -2,33 +2,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap');
 
 .wrapper {
-    padding: 32px 24px;
-    background: var(--surface-background, var(--bg-primary));
-    min-height: 100vh;
+    flex-direction: column;
+    border-radius: 0.5rem;
+    align-self: stretch;
+    display: flex;
+    gap: 4rem;
 }
 
 .section {
-    margin-bottom: 32px;
+    flex-direction: column;
+    display: flex;
+    gap: 2rem;
+    & > h2 {
+        font-weight: 600;
+        font-size: 2rem;
+        color: var(--tg-primary);
+    }
 }
 
 .section-header {
-    display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
+    display: flex;
+    & > h2 {
+        font-weight: 600;
+        font-size: 2rem;
+        color: var(--tg-primary);
+    }
 }
 
 .section-header h2,
 .section-header h3 {
     margin: 0;
-    color: var(--text-primary, var(--tg-primary));
-    font-size: 1.5em;
+    color: var(--tg-primary);
+    font-size: 2rem;
+    font-weight: 600;
 }
 
 .divider {
     height: 1px;
     background: var(--border-color, var(--bg-outline));
-    margin: 32px 0;
+    width: 100%;
 }
 
 /* Overview */
@@ -65,20 +78,18 @@
     font-weight: 600;
 }
 
-/* Filters */
+/* Filters Section */
 .filters {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: 24px;
+    gap: 1rem;
     margin-top: 12px;
-    background: var(--surface-primary, var(--bg-secondary));
-    border: 1px solid var(--border-color, var(--bg-outline));
-    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.5rem;
     padding: 18px 24px;
-    width: 100%;
     box-sizing: border-box;
-    box-shadow: var(--filters-shadow, 0 2px 8px var(--shadow-color, transparent));
 }
 
 .filter-group {
@@ -90,14 +101,14 @@
 }
 
 .filter-group label {
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-secondary, var(--tg-hint));
 }
 
 .filter-select,
 .filter-input {
-    padding: 10px 14px;
+    padding: 0.75rem 1.25rem;
     border: 1px solid var(--border-color, var(--bg-outline));
     border-radius: 6px;
     font-size: 15px;

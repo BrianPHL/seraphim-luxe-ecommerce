@@ -77,6 +77,7 @@ router.get('/', async (req, res) => {
             LEFT JOIN accounts a ON at.user_id = a.id
             ${whereClause}
             ORDER BY at.created_at DESC
+            LIMIT ? OFFSET ?
         `;
 
         const dataParams = [...params, parseInt(limit), parseInt(offset)];

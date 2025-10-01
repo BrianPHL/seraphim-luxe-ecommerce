@@ -13,7 +13,8 @@ export const AuditTrailProvider = ({ children, user }) => {
         action_type: '',
         start_date: '',
         end_date: '',
-        user_id: ''
+        user_id: '',
+        user_role: ''
     });
 
     // Fetch audit logs from server
@@ -21,23 +22,30 @@ export const AuditTrailProvider = ({ children, user }) => {
         try {
             setLoading(true);
             
-            const params = new URLSearchParams({
-                page: options.page || 1,
-                limit: options.limit || 50,
-                search: options.search || '',
-                ...filters
-            });
+            const queryParams = new URLSearchParams();
+            
+            // Add pagination and search options
+            queryParams.append('page', options.page || 1);
+            queryParams.append('limit', options.limit || 10000);
+            if (options.search) queryParams.append('search', options.search);
+            
+            // Add existing filters only if they have values
+            if (filters.action_type) queryParams.append('action_type', filters.action_type);
+            if (filters.start_date) queryParams.append('start_date', filters.start_date);
+            if (filters.end_date) queryParams.append('end_date', filters.end_date);
+            if (filters.user_id) queryParams.append('user_id', filters.user_id);
+            if (filters.user_role) queryParams.append('user_role', filters.user_role); // Add this
 
-            const response = await fetch(`/api/audit-trail?${params}`);
+            const response = await fetch(`/api/audit-trail?${queryParams}`);
             if (!response.ok) throw new Error('Failed to fetch audit logs');
             
             const data = await response.json();
             
             if (options.page === 1 || !options.page) {
-                setAuditLogs(data.logs);
+                setAuditLogs(data.logs || data);
             } else {
                 // For pagination, append to existing logs
-                setAuditLogs(prev => [...prev, ...data.logs]);
+                setAuditLogs(prev => [...prev, ...(data.logs || data)]);
             }
             
             return data;
@@ -131,19 +139,21 @@ export const AuditTrailProvider = ({ children, user }) => {
     };
 
     // Specific logging methods
-    const logSignUp = (details = 'User signed up', userInfo = {}) => {
+    const logSignUp = (details = 'User signed up ', userData, userInfo = {}) => {
         return logAction({
             action_type: 'auth_signup',
             resource_type: 'session',
+            new_values: userData,
             details,
             ...userInfo
         });
     };
 
-    const logSignIn = (details = 'User signed in', userInfo = {}) => {
+    const logSignIn = (details = 'User signed in', userData, userInfo = {}) => {
         return logAction({
             action_type: 'auth_signin',
             resource_type: 'session',
+            old_values: userData,
             details,
             ...userInfo
         });
@@ -153,7 +163,19 @@ export const AuditTrailProvider = ({ children, user }) => {
         return logAction({
             action_type: 'auth_signout',
             resource_type: 'session',
+            old_values: userInfo,
             details,
+            ...userInfo
+        });
+    };
+
+    const logCustomerAccountDelete = (userId, userData, userInfo = {}) => {
+        return logAction({
+            action_type: 'customer_account_remove',
+            resource_type: 'account',
+            resource_id: userId,
+            old_values: userData,
+            details: `Customer deleted their own account (${userData.email})`,
             ...userInfo
         });
     };
@@ -317,34 +339,37 @@ export const AuditTrailProvider = ({ children, user }) => {
         });
     };
 
-    const logAdminAccountCreate = (newUserId, userData) => {
+    const logAdminAccountCreate = (newUserId, userData, userInfo = {}) => {
         return logAction({
             action_type: 'admin_account_create',
             resource_type: 'account',
             resource_id: newUserId,
             new_values: userData,
-            details: `Account created for ${userData.email}`
+            details: `Account created for ${userData.email}`,
+            ...userInfo
         });
     };
 
-    const logAdminAccountUpdate = (targetUserId, oldValues, newValues) => {
+    const logAdminAccountUpdate = (targetUserId, oldValues, newValues, userInfo = {}) => {
         return logAction({
             action_type: 'admin_account_update',
             resource_type: 'account',
             resource_id: targetUserId,
             old_values: oldValues,
             new_values: newValues,
-            details: `Account updated for ${newValues.email || 'user'}`
+            details: ``,
+            ...userInfo
         });
     };
 
-    const logAdminAccountDelete = (targetUserId, userData) => {
+    const logAdminAccountDelete = (targetUserId, userData, userInfo = {}) => {
         return logAction({
-            action_type: 'admin_account_delete',
+            action_type: 'admin_account_remove',
             resource_type: 'account',
             resource_id: targetUserId,
             old_values: userData,
-            details: `Account deleted for ${userData.email}`
+            details: `Account deleted for ${userData.email || 'unknown user'}`,
+            ...userInfo
         });
     };
 
@@ -377,7 +402,8 @@ export const AuditTrailProvider = ({ children, user }) => {
             action_type: '',
             start_date: '',
             end_date: '',
-            user_id: ''
+            user_id: '',
+            user_role: ''
         });
     };
 
@@ -415,6 +441,7 @@ export const AuditTrailProvider = ({ children, user }) => {
             logSignUp,
             logSignIn,
             logSignOut,
+            logCustomerAccountDelete,
             logProfileUpdate,
             logProfilePreferences,
             logPasswordChange,

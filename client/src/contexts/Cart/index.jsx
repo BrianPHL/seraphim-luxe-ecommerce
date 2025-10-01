@@ -82,6 +82,7 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
                     user_id: user.id,
                     first_name: user.first_name,
                     last_name: user.last_name,
+                    name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
                     email: user.email,
                     role: user.role
                 }

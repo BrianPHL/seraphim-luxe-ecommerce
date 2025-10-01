@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { useAuth, useToast, useAuditTrail } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { Button, TableHeader, TableFooter, Modal } from '@components';
-import { AUDIT_FILTER_CONFIG, ACTION_TYPE_LABELS } from '@utils/configs';
+import { AUDIT_FILTER_CONFIG, ACTION_TYPE_LABELS, getActionTypesByRole } from '@utils/configs';
 import styles from './audit-trail.module.css';
 
 const ITEMS_PER_PAGE = 10;
@@ -48,6 +48,12 @@ const AuditTrail = () => {
         resetPagination,
     } = usePagination(filteredLogs, ITEMS_PER_PAGE, queryPage);
 
+    const [selectedUserRole, setSelectedUserRole] = useState('');
+
+    const getFilteredActionTypes = () => {
+        return getActionTypesByRole(selectedUserRole);
+    };
+    
     // Load audit logs on mount and when filters change
     useEffect(() => {
         fetchAuditLogs({ search: searchValue });
@@ -105,6 +111,13 @@ const AuditTrail = () => {
 
     const handleFilterChange = (key, value) => {
         const newFilters = { [key]: value };
+        
+        // If user role changes, reset action type filter
+        if (key === 'user_role') {
+            setSelectedUserRole(value);
+            newFilters.action_type = ''; // Reset action type when role changes
+        }
+        
         updateFilters(newFilters);
         resetPagination();
         updateSearchParams({ page: 1, [key]: value });
@@ -112,13 +125,15 @@ const AuditTrail = () => {
 
     const handleClearFilters = () => {
         clearFilters();
+        setSelectedUserRole('');
         resetPagination();
         updateSearchParams({ 
             page: 1, 
             action_type: '', 
             start_date: '', 
             end_date: '', 
-            user_id: '' 
+            user_id: '',
+            user_role: '' 
         });
     };
 
@@ -201,7 +216,8 @@ const AuditTrail = () => {
             'admin_account_update': 'fa-solid fa-user-edit',
             'admin_account_suspend': 'fa-solid fa-user-lock',
             'order_invoice_print': 'fa-solid fa-print',
-            'order_invoice_report_print': 'fa-solid fa-print'
+            'order_invoice_report_print': 'fa-solid fa-print',
+            'admin_account_remove': 'fa-solid fa-user-minus'
         };
         return iconMap[actionType] || 'fa-solid fa-info-circle';
     };
@@ -276,6 +292,21 @@ const AuditTrail = () => {
                 </div>
                 
                 <div className={styles['filters']}>
+                    {/* User Role Filter */}
+                    <div className={styles['filter-group']}>
+                        <label>User Role:</label>
+                        <select
+                            value={filters.user_role || ''}
+                            onChange={(e) => handleFilterChange('user_role', e.target.value)}
+                            className={styles['filter-select']}
+                        >
+                            <option value="">All Users</option>
+                            <option value="admin">Admin</option>
+                            <option value="customer">Customer</option>
+                        </select>
+                    </div>
+
+                    {/* Action Type Filter - now filtered based on user role */}
                     <div className={styles['filter-group']}>
                         <label>Action Type:</label>
                         <select
@@ -284,7 +315,7 @@ const AuditTrail = () => {
                             className={styles['filter-select']}
                         >
                             <option value="">All Actions</option>
-                            {Object.entries(ACTION_TYPE_LABELS).map(([key, label]) => (
+                            {Object.entries(getFilteredActionTypes()).map(([key, label]) => (
                                 <option key={key} value={key}>{label}</option>
                             ))}
                         </select>
@@ -362,24 +393,115 @@ const AuditTrail = () => {
                                     </div>
                                     <div className={styles['table-cell']}>
                                         <div className={styles['user-info']}>
-                                            {log.user_id && log.user_id !== 'null' ? (
-                                                <>
-                                                    <span className={styles['user-name']}>
-                                                        {log.first_name && log.last_name ? 
-                                                            `${log.first_name} ${log.last_name}` : 
-                                                            `User ID: ${log.user_id}`
+                                            {(() => {
+                                                // First, try to get data from direct log properties (most reliable)
+                                                let actorName = '';
+                                                let actorEmail = '';
+                                                let actorRole = '';
+
+                                                // Priority 1: Direct log properties (from your previous structure)
+                                                if (log.first_name && log.last_name) {
+                                                    actorName = `${log.first_name} ${log.last_name}`;
+                                                } else if (log.name) {
+                                                    actorName = log.name;
+                                                }
+
+                                                if (log.email) {
+                                                    actorEmail = log.email;
+                                                }
+
+                                                if (log.role) {
+                                                    actorRole = log.role;
+                                                }
+
+                                                // Priority 2: For sign-up and other creation actions, check new_values first
+                                                if ((!actorName || !actorEmail || !actorRole) && ['auth_signup', 'admin_account_create'].includes(log.action_type)) {
+                                                    try {
+                                                        const newValues = log.new_values ? JSON.parse(log.new_values) : null;
+                                                        if (newValues) {
+                                                            if (!actorName && newValues.name) {
+                                                                actorName = newValues.name;
+                                                            } else if (!actorName && newValues.first_name && newValues.last_name) {
+                                                                actorName = `${newValues.first_name} ${newValues.last_name}`;
+                                                            }
+                                                            if (!actorEmail && newValues.email) {
+                                                                actorEmail = newValues.email;
+                                                            }
+                                                            if (!actorRole && newValues.role) {
+                                                                actorRole = newValues.role;
+                                                            }
                                                         }
-                                                    </span>
-                                                    {log.email && (
-                                                        <span className={styles['user-email']}>{log.email}</span>
-                                                    )}
-                                                    <span className={`${styles['role-badge']} ${styles[log.role || 'admin']}`}>
-                                                        {log.role || 'admin'}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <span className={styles['anonymous']}>Anonymous</span>
-                                            )}
+                                                    } catch (e) {
+                                                        console.warn('Error parsing new_values:', e);
+                                                    }
+                                                }
+
+                                                // Priority 3: Fallback to old_values for other actions
+                                                if (!actorName || !actorEmail || !actorRole) {
+                                                    try {
+                                                        const oldValues = log.old_values ? JSON.parse(log.old_values) : null;
+                                                        if (oldValues) {
+                                                            if (!actorName && oldValues.name) {
+                                                                actorName = oldValues.name;
+                                                            } else if (!actorName && oldValues.first_name && oldValues.last_name) {
+                                                                actorName = `${oldValues.first_name} ${oldValues.last_name}`;
+                                                            }
+                                                            if (!actorEmail && oldValues.email) {
+                                                                actorEmail = oldValues.email;
+                                                            }
+                                                            if (!actorRole && oldValues.role) {
+                                                                actorRole = oldValues.role;
+                                                            }
+                                                        }
+                                                    } catch (e) {
+                                                        console.warn('Error parsing old_values:', e);
+                                                    }
+                                                }
+
+                                                // Priority 4: If still missing and not a sign-up, check new_values
+                                                if ((!actorName || !actorEmail || !actorRole) && !['auth_signup', 'admin_account_create'].includes(log.action_type)) {
+                                                    try {
+                                                        const newValues = log.new_values ? JSON.parse(log.new_values) : null;
+                                                        if (newValues) {
+                                                            if (!actorName && newValues.name) {
+                                                                actorName = newValues.name;
+                                                            } else if (!actorName && newValues.first_name && newValues.last_name) {
+                                                                actorName = `${newValues.first_name} ${newValues.last_name}`;
+                                                            }
+                                                            if (!actorEmail && newValues.email) {
+                                                                actorEmail = newValues.email;
+                                                            }
+                                                            if (!actorRole && newValues.role) {
+                                                                actorRole = newValues.role;
+                                                            }
+                                                        }
+                                                    } catch (e) {
+                                                        console.warn('Error parsing new_values:', e);
+                                                    }
+                                                }
+
+                                                // Final fallbacks
+                                                actorName = actorName || 'Unknown User';
+                                                actorEmail = actorEmail || 'unknown@email.com';
+                                                actorRole = actorRole || 'user';
+
+                                                // For sign-up actions, we always have valid user data in new_values
+                                                const hasValidUser = log.action_type === 'auth_signup' || 
+                                                                    log.action_type === 'admin_account_create' || 
+                                                                    (log.user_id && log.user_id !== 'null');
+
+                                                return hasValidUser ? (
+                                                    <>
+                                                        <span className={styles['user-name']}>{actorName}</span>
+                                                        <span className={styles['user-email']}>{actorEmail}</span>
+                                                        <span className={`${styles['role-badge']} ${styles[actorRole.toLowerCase().replace(/\s+/g, '-')]}`}>
+                                                            {actorRole}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className={styles['anonymous']}>Anonymous</span>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                     <div className={styles['table-cell']}>
@@ -458,21 +580,83 @@ const AuditTrail = () => {
                         <div className={styles['detail-section']}>
                             <h4>User Information</h4>
                             <div className={styles['detail-grid']}>
-                                <div className={styles['detail-item']}>
-                                    <span className={styles['detail-label']}>User:</span>
-                                    <span className={styles['detail-value']}>
-                                        {selectedLog.user_id && selectedLog.user_id !== 'null' ? 
-                                            (selectedLog.email ? 
-                                                `${selectedLog.first_name || 'Unknown'} ${selectedLog.last_name || 'User'} (${selectedLog.email})` : 
-                                                `User ID: ${selectedLog.user_id}`
-                                            ) : 
-                                            'Anonymous'
+                            <div className={styles['detail-item']}>
+                                <span className={styles['detail-label']}>User:</span>
+                                <span className={styles['detail-value']}>
+                                    {(() => {
+                                        // Same logic as above but for modal
+                                        let actorName = '';
+                                        let actorEmail = '';
+
+                                        // Priority 1: Direct log properties
+                                        if (selectedLog.first_name && selectedLog.last_name) {
+                                            actorName = `${selectedLog.first_name} ${selectedLog.last_name}`;
+                                        } else if (selectedLog.name) {
+                                            actorName = selectedLog.name;
                                         }
-                                    </span>
-                                </div>
+
+                                        if (selectedLog.email) {
+                                            actorEmail = selectedLog.email;
+                                        }
+
+                                        // Priority 2: Fallback to old_values
+                                        if (!actorName || !actorEmail) {
+                                            try {
+                                                const oldValues = selectedLog.old_values ? JSON.parse(selectedLog.old_values) : null;
+                                                if (oldValues) {
+                                                    if (!actorName && oldValues.name) {
+                                                        actorName = oldValues.name;
+                                                    } else if (!actorName && oldValues.first_name && oldValues.last_name) {
+                                                        actorName = `${oldValues.first_name} ${oldValues.last_name}`;
+                                                    }
+                                                    if (!actorEmail && oldValues.email) {
+                                                        actorEmail = oldValues.email;
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                console.warn('Error parsing old_values:', e);
+                                            }
+                                        }
+
+                                        // Priority 3: Fallback to new_values
+                                        if (!actorName || !actorEmail) {
+                                            try {
+                                                const newValues = selectedLog.new_values ? JSON.parse(selectedLog.new_values) : null;
+                                                if (newValues) {
+                                                    if (!actorName && newValues.name) {
+                                                        actorName = newValues.name;
+                                                    } else if (!actorName && newValues.first_name && newValues.last_name) {
+                                                        actorName = `${newValues.first_name} ${newValues.last_name}`;
+                                                    }
+                                                    if (!actorEmail && newValues.email) {
+                                                        actorEmail = newValues.email;
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                console.warn('Error parsing new_values:', e);
+                                            }
+                                        }
+
+                                        // Final fallbacks
+                                        actorName = actorName || (selectedLog.user_id && selectedLog.user_id !== 'null' ? `User ID: ${selectedLog.user_id}` : 'Anonymous');
+                                        actorEmail = actorEmail || 'unknown@email.com';
+
+                                        return `${actorName} (${actorEmail})`;
+                                    })()}
+                                </span>
+                            </div>
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>Role:</span>
-                                    <span className={styles['detail-value']}>{selectedLog.role || 'N/A'}</span>
+                                    <span className={styles['detail-value']}>
+                                        {(() => {
+                                            const actorRole =
+                                                selectedLog.role ||
+                                                (selectedLog.old_values && JSON.parse(selectedLog.old_values).role) ||
+                                                (selectedLog.new_values && JSON.parse(selectedLog.new_values).role) ||
+                                                "N/A";
+                                            return actorRole;
+                                        })()}
+                                    </span>
                                 </div>
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>IP Address:</span>

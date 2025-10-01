@@ -751,12 +751,76 @@ export const AUDIT_FILTER_CONFIG = {
             field: 'user_id'
         },
         {
+            key: 'user_role', // Add this new filter
+            label: 'User Role',
+            type: 'select',
+            field: 'role',
+            options: [
+                { value: '', label: 'All Users' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'customer', label: 'Customer' }
+            ]
+        },
+        {
             key: 'date_range',
             label: 'Date Range',
             type: 'date_range',
             field: 'created_at'
         }
     ]
+};
+
+// Add role-specific action types
+export const ADMIN_ACTION_TYPES = [
+    'admin_product_create',
+    'admin_product_update', 
+    'admin_product_delete',
+    'admin_category_create',
+    'admin_category_update',
+    'admin_category_delete',
+    'admin_stock_update',
+    'admin_stock_restock',
+    'admin_settings_update',
+    'admin_account_create',
+    'admin_account_update',
+    'admin_account_suspend',
+    'admin_account_remove',
+    'order_invoice_print',
+    'order_invoice_report_print',
+    'auth_signin',
+    'auth_signout',
+    'auth_password_change',
+    'profile_update',
+    'profile_preferences_update'
+];
+
+export const CUSTOMER_ACTION_TYPES = [
+    'auth_signin',
+    'auth_signup',
+    'auth_signout',
+    'auth_password_change',
+    'profile_update',
+    'profile_preferences_update',
+    'product_view',
+    'cart_add',
+    'cart_remove',
+    'cart_update',
+    'wishlist_add',
+    'wishlist_remove',
+    'order_create',
+    'order_update',
+    'order_cancel',
+    'customer_account_remove'
+];
+
+// Function to get filtered action types based on user role
+export const getActionTypesByRole = (role) => {
+    if (!role) return ACTION_TYPE_LABELS;
+    
+    const actionTypes = role === 'admin' ? ADMIN_ACTION_TYPES : CUSTOMER_ACTION_TYPES;
+    return Object.fromEntries(
+        Object.entries(ACTION_TYPE_LABELS).filter(([key]) => actionTypes.includes(key))
+    );
 };
 
 export const ACTION_TYPE_LABELS = {
@@ -791,5 +855,7 @@ export const ACTION_TYPE_LABELS = {
     'admin_account_suspend': 'Admin Suspended An Account',
     'order_invoice_print': 'Print Invoice',
     'order_invoice_report_print': 'Print Invoice Report',
+    'admin_account_remove': 'Account Removed',
+    'customer_account_remove': 'Account Removed',
 };
 

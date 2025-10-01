@@ -5,7 +5,6 @@ import { createOTPEmail, createChangePasswordVerificationLinkEmail, createWelcom
 import { getBaseURL } from "../utils/urls.js";
 import { sendEmail } from "./resend.js";
 import pool from "./db.js";
-import { AuditLogger } from "../utils/audit-trail.js";
 
 export const auth = betterAuth({
     database: pool,
@@ -148,65 +147,56 @@ export const auth = betterAuth({
     hooks: {
         after: createAuthMiddleware(async (ctx) => {
 
-            // Sign-up audit logging
             if (ctx.path === '/sign-up/email') {
-                const user = ctx.context?.returned?.user;
-                const email = user?.email || '';
-                const name = user?.name || '';
+
+                const email = ctx.context?.returned?.user?.email || '';
+                const name = ctx.context?.returned?.user?.name || '';
 
                 if (!email) return;
-                
-                // Log sign-up event
-                if (user) {
-                    try {
-                        await AuditLogger.logSignUp(user.id, {
-                            email: user.email,
-                            first_name: user.first_name || '',
-                            last_name: user.last_name || '',
-                            role: user.role || 'customer'
-                        }, ctx.request);
-                    } catch (error) {
-                        console.error('Error logging sign-up audit:', error);
-                    }
-                }
                 
                 const { _, err } = await sendEmail({
                     from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                     to: email,
-                    subject: "Welcome | Seraphim Luxe",
-                    html: createWelcomeEmail(email, name)
+                    subject: 'Welcome to Seraphim Luxe!',
+                    html: createWelcomeEmail(name)
                 });
-                
-                if (err) console.error(err);
-            }
 
-            // Sign-in audit logging
+                if (err) console.error(err);
+
+            }
+            
             if (ctx.path === '/sign-in/email') {
                 const user = ctx?.context?.session?.user || ctx?.context?.returned?.user;
                 
-                if (user) {
-                    try {
-                        await AuditLogger.logSignIn(user.id, 'User signed in via email');
-                    } catch (error) {
-                        console.error('Error logging sign-in audit:', error);
+                if (user && user.id) {
+                    // Fetch complete user data from database
+                    const [userRows] = await pool.execute(
+                        'SELECT first_name, last_name, name, role FROM accounts WHERE id = ?',
+                        [user.id]
+                    );
+                    
+                    if (userRows.length > 0) {
+                        // Add name fields to the returned user object
+                        ctx.context.returned = {
+                            ...ctx.context.returned,
+                            user: {
+                                ...user,
+                                first_name: userRows[0].first_name,
+                                last_name: userRows[0].last_name,
+                                name: userRows[0].name,
+                                role: userRows[0].role
+                            }
+                        };
                     }
                 }
-            }
+            }   
+        
+            if (ctx.path === '/callback/:id') {
 
-            // OAuth callback handling
-            if (ctx.path.startsWith('/callback/')) {
-                const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user || ctx?.context?.returned?.user;
-                
+                const user = ctx?.context?.session?.user || ctx?.context?.newSession?.user;
+                const responseHeaders = ctx.context?.responseHeaders?.get('location') || '';
+
                 if (user) {
-                    // Log sign-in event for OAuth authentication
-                    try {
-                        const provider = ctx.context?.provider || 'OAuth';
-                        await AuditLogger.logSignIn(user.id, `User signed in via ${provider}`);
-                    } catch (error) {
-                        console.error('Error logging OAuth sign-in audit:', error);
-                    }
-
-                    const responseHeaders = ctx.context?.responseHeaders?.get('location') || '';
                     const isAdminPlatform = responseHeaders.includes('/admin');
                     const expectedRole = isAdminPlatform ? 'admin' : 'customer';
                     const isNewlyCreated = (!user.first_name || !user.last_name) && user.name;
@@ -216,24 +206,24 @@ export const auth = betterAuth({
                             if (user.is_suspended) {
                                 (user.role === 'admin')
                                 ? ctx.redirect(`${ getBaseURL('client') }/admin/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`)
-                                : ctx.redirect(`${ getBaseURL('client') }/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`)
-                                await ctx?.context?.internalAdapter?.deleteSessions(user.id);
+                                : ctx.redirect(`${ getBaseURL('client') }/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`);
+                                return;
                             }
 
-                            if (expectedRole === user.role)
+                            if (user.role !== expectedRole) {
+                                const redirectURL = isAdminPlatform
+                                    ? `${ getBaseURL('client') }/admin/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
+                                    : `${ getBaseURL('client') }/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
+                                ctx.redirect(redirectURL);
                                 return;
-                            
-                            await ctx?.context?.internalAdapter?.deleteSessions(user.id);
-                            const redirectURL = isAdminPlatform 
-                                ? `${ getBaseURL('client') }/admin/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_ADMIN`
-                                : `${ getBaseURL('client') }/sign-in?error=TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER`;
-                            ctx.redirect(redirectURL);
-                            return;
+                            }
                         } catch (err) {
                             console.error("Auth betterAuth signIn hook error: ", err);
                         }
                     } else {
+
                         try {
+
                             const capitalizeWord = (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
                             const fullName = user.name.trim().split(' ').filter(part => part.length > 0);
                             let firstName, lastName;
@@ -242,12 +232,16 @@ export const auth = betterAuth({
                                 return;
 
                             if (fullName.length === 1) {
+
                                 firstName = capitalizeWord(fullName[0]);
                                 lastName = '';
+
                             } else if (fullName.length === 2) {
+
                                 firstName = capitalizeWord(fullName[0]);
                                 lastName = capitalizeWord(fullName[1]);
                             } else {
+
                                 const lastNamePart = fullName[fullName.length - 1];
                                 const firstNameParts = fullName.slice(0, -1);
                                 firstName = firstNameParts.map(capitalizeWord).join(' ');
@@ -259,19 +253,7 @@ export const auth = betterAuth({
                                 last_name: lastName,
                                 role: expectedRole
                             });
-
-                            // Log sign-up event for OAuth users (newly created accounts)
-                            try {
-                                await AuditLogger.logSignUp(user.id, {
-                                    email: user.email,
-                                    first_name: firstName,
-                                    last_name: lastName,
-                                    role: expectedRole
-                                }, ctx.request);
-                            } catch (error) {
-                                console.error('Error logging OAuth sign-up audit:', error);
-                            }
-
+                            
                             const { _, err } = await sendEmail({
                                 from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                                 to: user.email,
@@ -280,13 +262,18 @@ export const auth = betterAuth({
                             });
 
                             if (err) console.error(err);
+
                             return;
+
                         } catch(err) {
                             console.error("Auth betterAuth signUp hook error: ", err);
                         }
+
                     }
+
                 }
             }
+
         })
     }
 });

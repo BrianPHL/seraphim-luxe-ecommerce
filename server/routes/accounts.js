@@ -295,7 +295,7 @@ router.put('/:account_id/suspend', async (req, res) => {
         const { account_id } = req.params;
         const { is_suspended } = req.body
 
-        const [result] = await connection.query(
+        const [result] = await pool.query(
             'UPDATE accounts SET is_suspended = ? WHERE id = ?',
             [is_suspended, account_id]
         );
@@ -303,8 +303,6 @@ router.put('/:account_id/suspend', async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Account not found' });
         }
-
-        await connection.commit();
 
         res.json({ message: 'Account suspension updated successfully' });
 

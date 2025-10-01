@@ -26,7 +26,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
     });
     const { signOut, getSession, signInThruEmail, signUpThruEmail, sendVerificationOTP, revokeSession } = useOAuth();
     const { showToast } = useToast();
-    const { logSignIn, logSignUp, logSignOut, logProfileUpdate, logPasswordChange, logAdminAccountDelete, logAdminAccountUpdate, logAdminAccountCreate } = auditLoggers;
+    const { logSignIn, logSignUp, logSignOut, logProfileUpdate, logPasswordChange, logCustomerAccountDelete, logAdminAccountDelete, logAdminAccountUpdate, logAdminAccountCreate } = auditLoggers;
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -172,13 +172,25 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
         const signedInUser = signInThruEmailResult?.data?.user;
         // Pass user info directly to logSignIn
         if (logSignIn && signedInUser) {
-            await logSignIn(`User signed in: ${signedInUser.email}`, {
-                user_id: signedInUser.id,
-                first_name: signedInUser.first_name,
-                last_name: signedInUser.last_name,
-                email: signedInUser.email,
-                role: signedInUser.role
-            });
+            await logSignIn(
+                `User signed in: ${signedInUser.email}`,
+                {
+                    user_id: signedInUser.id,
+                    first_name: signedInUser.first_name,
+                    last_name: signedInUser.last_name,
+                    name: `${signedInUser.first_name || ''} ${signedInUser.last_name || ''}`.trim(),
+                    email: signedInUser.email,
+                    role: signedInUser.role
+                },
+                {
+                    user_id: signedInUser.id,
+                    first_name: signedInUser.first_name,
+                    last_name: signedInUser.last_name,
+                    name: `${signedInUser.first_name || ''} ${signedInUser.last_name || ''}`.trim(),
+                    email: signedInUser.email,
+                    role: signedInUser.role
+                }
+            );
         }
 
             return signInThruEmailResult;
@@ -240,16 +252,39 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
 
             showToast(`Account created successfully! You may now sign in.`, 'success');
 
-            // Log successful sign up
-            if (logSignUp) {
-                await logSignUp(`New account created: ${data.email}`, {
-                    email: data.email,
-                    first_name: data.firstName,
-                    last_name: data.lastName,
-                    role: 'user'
-                });
+            // Log successful sign up - Fix the parameter structure
+            if (user && user.role === 'admin' && logAdminAccountCreate) {
+                await logAdminAccountCreate(
+                    result?.data?.user?.id,
+                    {
+                        email: result?.data?.user?.email,
+                        first_name: result?.data?.user?.first_name,
+                        last_name: result?.data?.user?.last_name,
+                        role: result?.data?.user?.role
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            } else if (logSignUp) {
+                await logSignUp(
+                    `New account created: ${data.email}`,
+                    {
+                        user_id: result?.data?.user?.id,
+                        email: data.email,
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+                        role: 'customer'
+                    }
+                );
             }
-            
+
             return result;
         
         } catch (err) {
@@ -262,14 +297,21 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
     const logout = async () => {
         try {
 
-            // Log sign out before clearing user data
-            if (user && logSignOut) {
-                await logSignOut(`User signed out: ${user.email}`, {
-                    user_id: user.id,
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    email: user.email,
-                    role: user.role
+            let currentUser = user;
+
+            if (!currentUser) {
+                const sessionResult = await getSession();
+                currentUser = sessionResult?.data?.user || JSON.parse(localStorage.getItem('user'));
+            }
+
+            if (currentUser && logSignOut) {
+                await logSignOut(`User signed out: ${currentUser.email}`, {
+                    user_id: currentUser.id,
+                    first_name: currentUser.first_name,
+                    last_name: currentUser.last_name,
+                    email: currentUser.email,
+                    name: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(),
+                    role: currentUser.role
                 });
             }
 
@@ -296,7 +338,9 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             const oldValues = {
                 first_name: user.first_name,
                 last_name: user.last_name,
-                email: user.email
+                email: user.email,
+                phone_number: user.phone_number,
+                address: user.address,
             };
         
             const data = await apiRequest(`/api/accounts/${ !personalInfo.id ? user.id : personalInfo.id }/personal-info`, {
@@ -310,8 +354,10 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
                     user_id: user.id,
                     first_name: user.first_name,
                     last_name: user.last_name,
+                    name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    phone_number: user.phone_number
                 });
             }
 
@@ -496,6 +542,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
                     user_id: user.id,
                     first_name: user.first_name,
                     last_name: user.last_name,
+                    name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
                     email: user.email,
                     role: user.role
                 });
@@ -522,6 +569,29 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             const accountResponse = await fetch(`/api/accounts/${id}`);
             const accountData = accountResponse.ok ? await accountResponse.json() : {};
 
+            
+            // Log customer self-deletion
+            if (logCustomerAccountDelete && id === user.id) {
+                await logCustomerAccountDelete(id, accountData, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+            
+            // Log admin deleting another user's account
+            if (logAdminAccountDelete && user.role === 'admin' && id !== user.id) {
+                await logAdminAccountDelete(id, accountData, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
+
             const response = await fetch(`/api/accounts/${id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
@@ -533,17 +603,14 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             }
             showToast('Account deleted successfully.', 'success');
 
-            if (logAdminAccountDelete) {
-                await logAdminAccountDelete(id, {
-                    user_id: user.id,
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    email: user.email,
-                    role: user.role
-                });
+            // Only log out if the deleted account is the current user
+            if (id === user.id) {
+                // Skip audit logging in logout since user is already deleted
+                await signOut(); 
+                // localStorage.removeItem('user');
+                setUser(null);
+                navigate('/sign-in');
             }
-
-            logout();
 
             return { success: true };
         } catch (err) {
@@ -626,10 +693,17 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             if (data.user) {
                 setUser(data.user);
                 showToast('Personal information updated successfully!', 'success');
-                
-                // Log profile update
+
+                // Log avatar removal
                 if (logProfileUpdate) {
-                    await logProfileUpdate(oldValues, personalInfo);
+                    await logProfileUpdate({}, { avatar_removed: true }, {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                        email: user.email,
+                        role: user.role
+                    });
                 }
             }
 
@@ -708,9 +782,19 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
 
             try {
                 if (logAdminAccountUpdate) {
-                    await logAdminAccountUpdate(accountId, 
-                        { is_suspended: !isSuspended }, 
-                        { is_suspended: isSuspended }
+                    const targetUser = userList.find(u => u.id === accountId);
+                    await logAdminAccountUpdate(
+                        accountId,
+                        { is_suspended: !isSuspended },
+                        { is_suspended: isSuspended, },
+                        {
+                            user_id: user.id,
+                            email: targetUser?.email,
+                            first_name: targetUser?.first_name,
+                            last_name: targetUser?.last_name,
+                            role: targetUser?.role,
+                            details: `Account updated for ${targetUser?.email}`
+                        }
                     );
                 }
             } catch (auditError) {
