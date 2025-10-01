@@ -210,11 +210,6 @@ export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('PayPal Config:', {
-                    clientId: data.clientId?.substring(0, 10) + '...',
-                    currency: userCurrency,
-                    environment: 'sandbox'
-                });
                 setPaypalClientId(data.clientId);
             }
         } catch (error) {

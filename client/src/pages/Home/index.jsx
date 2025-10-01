@@ -13,10 +13,6 @@ const Home = () => {
     const [ bestSellers, setBestSellers ] = useState([]);
     const [ newArrivals, setNewArrivals ] = useState([]);
 
-    // Debug: Log the CMS data to see what we're getting
-    console.log('CMS Pages Data:', pages);
-    console.log('Home Content:', pages?.home);
-
     // Parse CMS content locally
     const parseHomeContent = (homeContent) => {
         if (!homeContent) return {};
@@ -34,8 +30,7 @@ const Home = () => {
                 }
             }
         });
-        
-        console.log('Parsed CMS Data:', parsed);
+
         return parsed;
     };
 
@@ -43,7 +38,6 @@ const Home = () => {
     const getCMSText = (key, fallback) => {
         const homeContent = parseHomeContent(pages?.home || '');
         const result = homeContent[key] || fallback;
-        console.log(`getCMSText(${key}):`, result);
         return result;
     };
 

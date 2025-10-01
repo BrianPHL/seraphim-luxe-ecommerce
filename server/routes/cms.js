@@ -56,8 +56,6 @@ router.put('/:page_slug', async (req, res) => {
     try {
         const { page_slug } = req.params;
         const { content, title } = req.body;
-
-        console.log(page_slug, content, title);
         
         if (!content) {
             return res.status(400).json({ success: false, error: 'Content is required' });

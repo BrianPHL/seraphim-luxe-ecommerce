@@ -699,7 +699,6 @@ const Profile = ({}) => {
             };
             
             setPlatformSettings(newPlatformSettings);
-            console.log('🔄 Updated platformSettings:', newPlatformSettings);
         }
 
         const handleClickOutside = (event) => {

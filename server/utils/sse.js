@@ -14,7 +14,6 @@ export const connectSSE = (userId, res, req) => {
 
     req.on('close', () => {
         connections.delete(userId.toString());
-        console.log(`User ${ userId } disconnected!`);
     });
 
     req.on('error', (err) => {
@@ -32,7 +31,6 @@ export const pingUser = (userId, data) => {
     if (connection && !connection.destroyed) {
         try {
             connection.write(`data: ${ JSON.stringify(data) }\n\n`);
-            console.log(`Pinged user ${ userId }`);
         } catch (err) {
             console.error('sse.js utils pingUser function error: ', err);
             connections.delete(userId.toString());
