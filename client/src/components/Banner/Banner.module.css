@@ -1,0 +1,30 @@
+/* type: header, carousel, hero */
+/* header: about us, our collections, FAQs, wishlist, cart, checkout, contact us, privacy policy */
+/* carousel: home page carousel component images */
+/* hero: sign in & sign up */
+
+@import url('../../index.css');
+
+.banner-header {
+    border-radius: 0.5rem;
+    object-fit: cover;
+    height: 8rem;
+    border: 1px solid var(--bg-outline);
+}
+
+.banner-carousel {
+    border-radius: 0.25rem;
+    object-fit: cover;
+    border: 1px solid var(--bg-outline);
+    align-items: center;
+    width: 50vw;
+    display: flex;
+}
+
+.banner-hero {
+    border-radius: 0.5rem;
+    object-fit: cover;
+    display: flex;
+    border: 1px solid var(--bg-outline);
+    flex: 1 0 0;
+}

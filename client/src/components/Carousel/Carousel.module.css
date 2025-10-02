@@ -4,7 +4,9 @@
     background-color: var(--bg-secondary);
     border-radius: 0.5rem;
     position: relative;
+    justify-self: flex-start;
     overflow: hidden;
+    display: flex;
     border: 1px solid var(--bg-outline);
     width: 100%;
 }

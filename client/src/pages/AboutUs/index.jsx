@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ReturnButton } from '@components';
+import { ReturnButton, Banner } from '@components';
 import { useCMS } from '@contexts';
 import styles from './AboutUs.module.css';
 
@@ -93,7 +93,12 @@ const AboutUs = () => {
 
     return (
         <div className={styles.wrapper}>
-            <div className={styles.banner}></div>
+            
+            <Banner
+                type="header"
+                imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/about-us_ztw9dq.webp"
+            />
+            
             <div className={styles.header}>
                 <ReturnButton />
                 <h1>About Seraphim Luxe</h1>

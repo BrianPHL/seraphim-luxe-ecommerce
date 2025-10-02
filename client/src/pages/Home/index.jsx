@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, ProductCard, Carousel } from '@components';
+import { Button, ProductCard, Carousel, Banner } from '@components';
 import styles from './Home.module.css';
 import { useNavigate } from 'react-router';
 import { useProducts, useCategories, useCMS } from '@contexts';
@@ -201,7 +201,13 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    <div className={`${styles['hero-banner']} ${styles['hero-banner-first']}`}></div>
+
+                    <Banner
+                        type="carousel"
+                        imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-01_yhluwj.jpg"
+                        externalStyles={ styles['carousel-banner'] }
+                    />
+
                 </div>
                 <div className={styles['hero']}>
                     <div className={styles['hero-left']}>
@@ -231,7 +237,12 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    <div className={`${styles['hero-banner']} ${styles['hero-banner-second']}`}></div>
+
+                    <Banner
+                        type="carousel"
+                        imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-02_bms6yi.jpg"
+                    />
+
                 </div>
                 <div className={styles['hero']}>
                     <div className={styles['hero-left']}>
@@ -274,7 +285,12 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    <div className={`${styles['hero-banner']} ${styles['hero-banner-third']}`}></div>
+                    
+                    <Banner
+                        type="carousel"
+                        imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-03_wbhqwk.jpg"
+                    />
+
                 </div>
             </Carousel>
 
