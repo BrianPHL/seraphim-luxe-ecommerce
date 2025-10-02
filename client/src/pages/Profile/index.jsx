@@ -777,8 +777,8 @@ const Profile = ({}) => {
                                 <h3>{ user['email'] }</h3>
                             </span>
                             <span>
-                                <h4><strong>Member since:</strong> {user['created_at'] ? new Date(user['created_at']).toISOString().replace('T', ' ').slice(0, 19) : 'N/A'}</h4>
-                                <h4><strong>Last modified since:</strong> {user['modified_at'] ? new Date(user['modified_at']).toISOString().replace('T', ' ').slice(0, 19) : 'N/A'}</h4>
+                                <h4><strong>Member since:</strong> {user['createdAt'] ? new Date(user['createdAt']).toISOString().replace('T', ' ').slice(0, 19) : 'N/A'}</h4>
+                                <h4><strong>Last modified since:</strong> {user['updatedAt'] ? new Date(user['updatedAt']).toISOString().replace('T', ' ').slice(0, 19) : 'N/A'}</h4>
                             </span>
                         </div>
 
