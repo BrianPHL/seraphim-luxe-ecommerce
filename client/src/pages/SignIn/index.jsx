@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton } from '@components';
+import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton, Banner } from '@components';
 import { useSearchParams, useNavigate } from 'react-router';
 import styles from './SignIn.module.css';
 import { useAuth, useToast } from '@contexts';
@@ -128,7 +128,10 @@ const SignIn = () => {
                         <p>Don't have an account yet? <Anchor label="Sign up" link="/sign-up" isNested={ false }/></p>
                     </div>
                 </form>
-                <div className={ styles['banner'] }></div>
+                <Banner
+                    type="hero"
+                    imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-in_ettdlu.webp"
+                />
             </div>
         </div>
     );
