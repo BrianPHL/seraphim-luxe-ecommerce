@@ -40,6 +40,12 @@ const Header = () => {
                                     isActive={ pathname === '/about-us' }
                                 />
                                 <Anchor
+                                    label="Contact us"
+                                    link="/contact-us"
+                                    isNested={ false }
+                                    isActive={ pathname === '/contact-us' }
+                                />
+                                <Anchor
                                     label="Our Collections"
                                     link="/collections"
                                     isNested={ false }
@@ -487,6 +493,15 @@ const Header = () => {
                                 </span>
                                 <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
                                     <Anchor
+                                        label="Contact us"
+                                        link="/contact-us"
+                                        isNested={ true }
+                                        isActive={ pathname === '/contact-us' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
                                         label="Our Collections"
                                         link="/collections"
                                         isNested={ true }
@@ -500,6 +515,15 @@ const Header = () => {
                                         link="/faqs"
                                         isNested={ true }
                                         isActive={ pathname === '/faqs' }
+                                        externalStyles={ styles['mobile-nav-anchor'] }
+                                    />
+                                </span>
+                                <span style={{ display: 'contents' }} onClick={ () => setDrawerOpen(false) }>
+                                    <Anchor
+                                        label="Privacy Policy"
+                                        link="/privacy-policy"
+                                        isNested={ true }
+                                        isActive={ pathname === '/privacy-policy' }
                                         externalStyles={ styles['mobile-nav-anchor'] }
                                     />
                                 </span>
