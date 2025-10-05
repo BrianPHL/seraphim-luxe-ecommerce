@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
-import { Anchor, Button, InputField, ReturnButton, Modal } from '@components';
+import { Anchor, Button, InputField, ReturnButton, Modal, Banner } from '@components';
 import styles from './SignUp.module.css';
 import { useAuth, useToast } from '@contexts';
 import { getErrorMessage } from '@utils';
@@ -184,7 +184,11 @@ const SignUp = () => {
                         <p>Already have an account? <Anchor label="Sign in" link="/sign-in" isNested={ false }/></p>
                     </div>
                 </form>
-                <div className={ styles['banner'] }></div>
+                <Banner
+                    type="hero"
+                    imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-up_pjyxoj.webp"
+                    externalStyles={ styles['banner'] }
+                />
             </div>
             <Modal label='Account Creation Confirmation' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
                 <p className={ styles['modal-info'] }>Creating an account with <strong>Seraphim Luxe</strong> means you agree with our Terms and Conditions. Do you wish to continue?</p>
