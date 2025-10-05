@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Anchor, ReturnButton, Modal, Counter } from '@components';
+import { Button, Anchor, ReturnButton, Modal, Counter, Banner } from '@components';
 import styles from './Cart.module.css';
 import { useCart, useToast, useSettings } from '@contexts';
 
@@ -190,7 +190,10 @@ const Cart = () => {
     return (
         <>
             <div className={ styles['wrapper'] }>
-                <div className={ styles['banner'] }></div>
+                <Banner
+                    type="header"
+                    imageURL="" // TODO: Add banner image later.
+                />
                 <div className={ styles['header'] }>
                     <ReturnButton />
                     <h1>Your Cart</h1>
