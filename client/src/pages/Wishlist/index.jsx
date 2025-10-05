@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Anchor, ReturnButton, Modal } from '@components';
+import { Button, Anchor, ReturnButton, Modal, Banner } from '@components';
 import styles from './Wishlist.module.css';
 import { useWishlist, useCart, useToast } from '@contexts';
 
@@ -111,7 +111,10 @@ const Wishlist = () => {
     return (
         <>
             <div className={styles['wrapper']}>
-                <div className={styles['banner']}></div>
+                <Banner
+                    type="header"
+                    imageURL="" // TODO: Add banner image later.
+                />
                 <div className={styles['header']}>
                     <ReturnButton />
                     <h1>Your Wishlist</h1>
