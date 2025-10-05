@@ -10,11 +10,12 @@ const Banner = ({ type, imageURL, externalStyles }) => {
     
     const imageAlt = `${ type.charAt(0).toUpperCase() + type.slice(1) } banner image.`;
     console.log(type, imageURL, imageAlt);
+    const imagePlaceholder = 'https://res.cloudinary.com/dfvy7i4uc/image/upload/placeholder_vcj6hz.webp';
 
     return (
         <img
             className={` ${ styles[`banner-${ type }`] } ${ externalStyles } `}
-            src={ imageURL }
+            src={ !imageURL ? imagePlaceholder : imageURL }
             alt={ type + " banner image." }
         />
     );
