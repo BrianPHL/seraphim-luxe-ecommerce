@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCMS } from '@contexts';
-import { ReturnButton } from '@components';
+import { ReturnButton, Banner } from '@components';
 import styles from './PrivacyPolicy.module.css';
 
 const PrivacyPolicy = () => {
@@ -88,7 +88,10 @@ const PrivacyPolicy = () => {
 
     return (
         <div className={styles.wrapper}>
-            <div className={styles.banner}></div>
+            <Banner
+                type="header"
+                imageURL="" // TODO: Add banner image later.
+            />
             <div className={styles.header}>
                 <ReturnButton />
                 <h1>Privacy Policy</h1>

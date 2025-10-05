@@ -9,15 +9,6 @@
     box-sizing: border-box;
 }
 
-.banner {
-    background-color: var(--bg-secondary);
-    height: 200px;
-    border-radius: 0.5rem;
-    max-width: 1000px;
-    margin: 0 auto;
-    width: 100%;
-}
-
 .header {
     justify-content: flex-start;
     align-items: center;
