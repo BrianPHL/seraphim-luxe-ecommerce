@@ -146,6 +146,7 @@ const ContactUs = () => {
         <div className={styles.wrapper}>
             <Banner
                 type="header"
+                page="contact-us"
                 imageURL="" // TODO: Add banner image later.
             />
             <div className={styles.header}>

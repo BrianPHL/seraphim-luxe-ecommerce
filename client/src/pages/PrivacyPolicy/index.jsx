@@ -90,6 +90,7 @@ const PrivacyPolicy = () => {
         <div className={styles.wrapper}>
             <Banner
                 type="header"
+                page="privacy-policy"
                 imageURL="" // TODO: Add banner image later.
             />
             <div className={styles.header}>

@@ -112,6 +112,7 @@ const FAQs = () => {
         <div className={styles['wrapper']}>
             <Banner
                 type="header"
+                page="faq"
                 imageURL="" // TODO: Add banner image later.
             />
             <div className={styles['header']}>

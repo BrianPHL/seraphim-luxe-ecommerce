@@ -96,6 +96,7 @@ const AboutUs = () => {
             
             <Banner
                 type="header"
+                page="about-us"
                 imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/about-us_ztw9dq.webp"
             />
             

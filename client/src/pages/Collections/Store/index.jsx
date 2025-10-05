@@ -186,6 +186,7 @@ const Store = () => {
         <div className={ styles['wrapper'] }>
             <Banner
                 type="header"
+                page="collections"
                 imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/collections_p9bd1e.webp"
             />
             <span className={ styles['pagewrap'] }>

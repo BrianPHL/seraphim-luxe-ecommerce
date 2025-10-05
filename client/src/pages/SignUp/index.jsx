@@ -186,6 +186,7 @@ const SignUp = () => {
                 </form>
                 <Banner
                     type="hero"
+                    page="sign-up"
                     imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-up_pjyxoj.webp"
                     externalStyles={ styles['banner'] }
                 />

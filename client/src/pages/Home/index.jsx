@@ -204,6 +204,7 @@ const Home = () => {
 
                     <Banner
                         type="carousel"
+                        page="home"
                         imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-01_yhluwj.jpg"
                         externalStyles={ styles['carousel-banner'] }
                     />
@@ -240,6 +241,7 @@ const Home = () => {
 
                     <Banner
                         type="carousel"
+                        page="home"
                         imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-02_bms6yi.jpg"
                     />
 
@@ -288,6 +290,7 @@ const Home = () => {
                     
                     <Banner
                         type="carousel"
+                        page="home"
                         imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-03_wbhqwk.jpg"
                     />
 

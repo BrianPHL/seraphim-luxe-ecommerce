@@ -113,6 +113,7 @@ const Wishlist = () => {
             <div className={styles['wrapper']}>
                 <Banner
                     type="header"
+                    page="wishlist"
                     imageURL="" // TODO: Add banner image later.
                 />
                 <div className={styles['header']}>

@@ -535,6 +535,7 @@ const Checkout = () => {
         <div className={styles['wrapper']}>
             <Banner
                 type="header"
+                page="checkout"
                 imageURL="" // TODO: Add banner image later.
             />
             <div className={styles['header']}>
