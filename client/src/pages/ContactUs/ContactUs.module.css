@@ -1,41 +1,32 @@
 @import url('../../index.css');
 
 .wrapper {
-    min-height: 100vh;
-    background-color: var(--bg-primary);
-    padding: 2rem;
-    box-sizing: border-box;
-}
-
-.banner {
-    background: linear-gradient(135deg, #667eea00 0%, #764ba200 100%);
-    height: 250px;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    position: relative;
+    flex-direction: column;
+    padding: 12rem 16rem 6rem 16rem;
+    display: flex;
+    gap: 4rem;
 }
 
 .header {
+    flex-direction: column;
+    align-self: flex-start;
     display: flex;
-    align-items: center;
     gap: 1rem;
-    margin-bottom: 2rem;
-    position: relative;
-    left: 25%; 
-}
-
-.header h1 {
-    font-weight: 700;
-    font-size: 2.5rem;
-    color: var(--tg-primary);
-    margin: 0;
+    & > button {
+        align-self: flex-start;
+    }
+    & > h1 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--tg-primary);
+    }
 }
 
 .content {
-    display: grid;
     grid-template-columns: 1fr;
+    display: grid;
+    width: 100%;
     gap: 3rem;
-    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -195,6 +186,24 @@
     text-align: center;
     margin-bottom: 2rem;
     border: 1px solid #f44336;
+}
+
+@media only screen and (max-width: 1575px) {
+
+    .wrapper { padding: 12rem 8rem 6rem 8rem; }
+
+}
+
+@media only screen and (max-width: 1320px) {
+
+    .wrapper { padding: 8rem 4rem 4rem 4rem; }
+
+}
+
+@media only screen and (max-width: 1230px) {
+
+    .wrapper { padding: 14rem 2rem 2rem 2rem; }
+
 }
 
 @media (max-width: 768px) {
