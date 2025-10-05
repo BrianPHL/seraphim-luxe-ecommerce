@@ -131,6 +131,7 @@ const SignIn = () => {
                 <Banner
                     type="hero"
                     imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-in_ettdlu.webp"
+                    externalStyles={ styles['banner'] }
                 />
             </div>
         </div>

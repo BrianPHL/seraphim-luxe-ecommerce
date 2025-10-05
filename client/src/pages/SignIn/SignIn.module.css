@@ -4,6 +4,7 @@
     flex-direction: column;
     padding: 12rem 16rem 6rem 16rem;
     display: flex;
+    height: 100vh;
     gap: 4rem;
 }
 
