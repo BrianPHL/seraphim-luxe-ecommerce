@@ -142,19 +142,23 @@ const Header = () => {
                                 dropdownPosition='right'
                                 options={[
                                     {
-                                        label: 'Profile',
+                                        label: 'My Profile',
                                         action: () => { navigate('/profile') },
                                     },
                                     {
-                                        label: 'Orders',
+                                        label: 'My Cart',
+                                        action: () => { navigate('/cart') },
+                                    },
+                                    {
+                                        label: 'My Orders',
                                         action: () => { navigate('/orders') },
                                     },
                                     {
-                                        label: 'Wishlist',
+                                        label: 'My Wishlist',
                                         action: () => { navigate('/wishlist') },
                                     },
                                     {
-                                        label: "Inbox",
+                                        label: "My Inbox",
                                         action: () => setIsInboxOpen(true)
                                     },
                                     {
@@ -171,7 +175,7 @@ const Header = () => {
                                 dropdownPosition='right'
                                 options={[
                                     {
-                                        label: 'Profile',
+                                        label: 'My Profile',
                                         action: () => { navigate('/admin/profile') },
                                     },
                                     {
@@ -206,19 +210,23 @@ const Header = () => {
                             dropdownPosition='right'
                             options={[
                                 {
-                                    label: 'Profile',
+                                    label: 'My Profile',
                                     action: () => { navigate('/profile') },
                                 },
                                 {
-                                    label: 'Orders',
+                                    label: 'My Cart',
+                                    action: () => { navigate('/cart') },
+                                },
+                                {
+                                    label: 'My Orders',
                                     action: () => { navigate('/orders') },
                                 },
                                 {
-                                    label: 'Wishlist',
+                                    label: 'My Wishlist',
                                     action: () => { navigate('/wishlist') },
                                 },
                                 {
-                                    label: 'Inbox',
+                                    label: 'My Inbox',
                                     action: () =>  setIsInboxOpen(true),
                                 },
                                 {
@@ -235,7 +243,7 @@ const Header = () => {
                             dropdownPosition='right'
                             options={[
                                 {
-                                    label: 'Admin Profile',
+                                    label: 'My Profile',
                                     action: () => { navigate('/admin/profile') },
                                     },
                                 {
@@ -350,16 +358,24 @@ const Header = () => {
                                 dropdownPosition='right'
                                 options={[
                                     {
-                                        label: 'Profile',
+                                        label: 'My Profile',
                                         action: () => { navigate('/profile') },
                                     },
                                     {
-                                        label: 'Orders',
+                                        label: 'My Cart',
+                                        action: () => { navigate('/cart') },
+                                    },
+                                    {
+                                        label: 'My Orders',
                                         action: () => { navigate('/orders') },
                                     },
                                     {
-                                        label: 'Wishlist',
+                                        label: 'My Wishlist',
                                         action: () => { navigate('/wishlist') },
+                                    },
+                                    {
+                                        label: "My Inbox",
+                                        action: () => setIsInboxOpen(true)
                                     },
                                     {
                                         label: 'Logout',
