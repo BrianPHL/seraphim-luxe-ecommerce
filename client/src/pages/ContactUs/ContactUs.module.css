@@ -7,14 +7,6 @@
     box-sizing: border-box;
 }
 
-.banner {
-    background: linear-gradient(135deg, #667eea00 0%, #764ba200 100%);
-    height: 250px;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    position: relative;
-}
-
 .header {
     display: flex;
     align-items: center;

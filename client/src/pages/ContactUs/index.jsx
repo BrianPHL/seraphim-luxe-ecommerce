@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCMS } from '@contexts';
-import { ReturnButton } from '@components';
+import { ReturnButton, Banner } from '@components';
 import styles from './ContactUs.module.css';
 
 const ContactUs = () => {
@@ -144,7 +144,10 @@ const ContactUs = () => {
 
     return (
         <div className={styles.wrapper}>
-            <div className={styles.banner}></div>
+            <Banner
+                type="header"
+                imageURL="" // TODO: Add banner image later.
+            />
             <div className={styles.header}>
                 <ReturnButton />
                 <h1>Contact Us</h1>
