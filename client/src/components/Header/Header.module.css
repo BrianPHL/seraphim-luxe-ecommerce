@@ -206,7 +206,7 @@
 
 }
 
-@media only screen and (max-width: 1192px) {
+@media only screen and (max-width: 1230px) {
 
     .desktop-header { display: none; }
     .drawer { display: flex; }
@@ -214,7 +214,7 @@
 
 }
 
-@media only screen and (min-width: 1192px) {
+@media only screen and (min-width: 1230px) {
 
     .desktop-header { display: flex; }
     .drawer { display: none; }
