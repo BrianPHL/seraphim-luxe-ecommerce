@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import { Button, ProductCard, TableHeader, TableFooter, ReturnButton } from '@components';
+import { Button, ProductCard, TableHeader, TableFooter, ReturnButton, Banner } from '@components';
 import { useProducts, useCategories } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { COLLECTIONS_FILTER_CONFIG } from '@utils';
@@ -184,7 +184,10 @@ const Store = () => {
     
     return (
         <div className={ styles['wrapper'] }>
-            <div className={ styles['banner'] }></div>
+            <Banner
+                type="header"
+                imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/collections_p9bd1e.webp"
+            />
             <span className={ styles['pagewrap'] }>
                 <ReturnButton />
             </span>
