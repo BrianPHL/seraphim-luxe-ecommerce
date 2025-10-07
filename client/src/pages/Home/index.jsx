@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Button, ProductCard, Carousel, Banner } from '@components';
 import styles from './Home.module.css';
 import { useNavigate } from 'react-router';
-import { useProducts, useCategories, useCMS } from '@contexts';
+import { useProducts, useCategories, useCMS, useBanners } from '@contexts';
 
 const Home = () => {
     const navigate = useNavigate();
     const { products, loading } = useProducts();
     const { getActiveCategories, getActiveSubcategories } = useCategories();
     const { pages, loading: cmsLoading } = useCMS();
+    const { banners } = useBanners();
     const [ featuredProducts, setFeaturedProducts ] = useState([]);
     const [ bestSellers, setBestSellers ] = useState([]);
     const [ newArrivals, setNewArrivals ] = useState([]);
@@ -203,9 +204,7 @@ const Home = () => {
                     </div>
 
                     <Banner
-                        type="carousel"
-                        page="home"
-                        imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-01_yhluwj.jpg"
+                        data={ banners.filter(banner => banner.page === 'home' && banner.id === 1) }
                         externalStyles={ styles['carousel-banner'] }
                     />
 
@@ -240,9 +239,8 @@ const Home = () => {
                     </div>
 
                     <Banner
-                        type="carousel"
-                        page="home"
-                        imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-02_bms6yi.jpg"
+                        data={ banners.filter(banner => banner.page === 'home' && banner.id === 2) }
+                        externalStyles={ styles['carousel-banner'] }
                     />
 
                 </div>
@@ -287,11 +285,10 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    
+
                     <Banner
-                        type="carousel"
-                        page="home"
-                        imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/Home-Page-03_wbhqwk.jpg"
+                        data={ banners.filter(banner => banner.page === 'home' && banner.id === 3) }
+                        externalStyles={ styles['carousel-banner'] }
                     />
 
                 </div>
