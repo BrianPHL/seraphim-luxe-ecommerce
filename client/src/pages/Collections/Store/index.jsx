@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button, ProductCard, TableHeader, TableFooter, ReturnButton, Banner } from '@components';
-import { useProducts, useCategories } from '@contexts';
+import { useProducts, useCategories, useBanners } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { COLLECTIONS_FILTER_CONFIG } from '@utils';
 import FilterSidebar from '@components/FilterSidebar';
@@ -11,7 +11,8 @@ const Store = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { products, loading, error, refreshProducts } = useProducts();
     const { getActiveCategories, getActiveSubcategories, getCategoryById } = useCategories();
-    
+    const { banners } = useBanners();
+
     const queryPage = parseInt(searchParams.get('page') || '1', 10);
     const querySort = searchParams.get('sort') || 'Sort by: Price (Low to High)';
     const querySearch = searchParams.get('search') || '';
@@ -185,9 +186,7 @@ const Store = () => {
     return (
         <div className={ styles['wrapper'] }>
             <Banner
-                type="header"
-                page="collections"
-                imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/collections_p9bd1e.webp"
+                data={ banners.filter(banner => banner.page === 'collections') }
             />
             <span className={ styles['pagewrap'] }>
                 <ReturnButton />
