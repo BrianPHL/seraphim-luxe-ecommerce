@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useCMS } from '@contexts';
+import { useCMS, useBanners } from '@contexts';
 import { ReturnButton, Banner } from '@components';
 import styles from './FAQs.module.css';
 
 
 const FAQs = () => {
     const { fetchSpecificPage, loading } = useCMS();
+    const { banners } = useBanners();
     const [ content, setContent ] = useState('');
     const [ error, setError ] = useState(null);
     const [ activeIndex, setActiveIndex ] = useState(null);
@@ -111,9 +112,7 @@ const FAQs = () => {
     return (
         <div className={styles['wrapper']}>
             <Banner
-                type="header"
-                page="faq"
-                imageURL="" // TODO: Add banner image later.
+                data={ banners.filter(banner => banner.page === 'faqs') }
             />
             <div className={styles['header']}>
                 <ReturnButton />
