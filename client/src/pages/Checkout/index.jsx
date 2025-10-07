@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Button, ReturnButton, Modal, InputField, Banner } from '@components';
-import { useAuth, useCart, useCheckout, useToast, useSettings } from '@contexts';
+import { useAuth, useCart, useCheckout, useToast, useSettings, useBanners } from '@contexts';
 import styles from './Checkout.module.css';
 
 const Checkout = () => {
     const navigate = useNavigate();
     const { user, addressBook, getAddressBook, addAddress } = useAuth();
     const { selectedCartItems } = useCart();
+    const { banners } = useBanners();
     const { createOrder, loading, directCheckoutItem, fetchPaypalClientId, paypalClientId, setPaypalClientId, paypalLoading, setPaypalLoading } = useCheckout();
     const { showToast } = useToast();
     const { settings, fetchSettings, fetchEnabledPaymentMethods, enabledPaymentMethods, convertPrice, formatPrice } = useSettings();
@@ -534,9 +535,7 @@ const Checkout = () => {
     return (
         <div className={styles['wrapper']}>
             <Banner
-                type="header"
-                page="checkout"
-                imageURL="" // TODO: Add banner image later.
+                data={ banners.filter(banner => banner.page === 'checkout') }
             />
             <div className={styles['header']}>
                 <ReturnButton />
