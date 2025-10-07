@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Anchor, ReturnButton, Modal, Banner } from '@components';
 import styles from './Wishlist.module.css';
-import { useWishlist, useCart, useToast } from '@contexts';
+import { useWishlist, useCart, useToast, useBanners } from '@contexts';
 
 const Wishlist = () => {
     const { 
@@ -15,6 +15,7 @@ const Wishlist = () => {
         clearSelectedItems,
         isItemSelected
     } = useWishlist();
+    const { banners } = useBanners();
     const { addToCart } = useCart();
     const { showToast } = useToast();
     const [modalType, setModalType] = useState('');
@@ -112,9 +113,7 @@ const Wishlist = () => {
         <>
             <div className={styles['wrapper']}>
                 <Banner
-                    type="header"
-                    page="wishlist"
-                    imageURL="" // TODO: Add banner image later.
+                    data={ banners.filter(banner => banner.page === 'wishlist') }
                 />
                 <div className={styles['header']}>
                     <ReturnButton />
