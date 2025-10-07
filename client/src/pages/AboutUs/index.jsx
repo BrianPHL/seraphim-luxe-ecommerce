@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ReturnButton, Banner } from '@components';
-import { useCMS } from '@contexts';
+import { useCMS, useBanners } from '@contexts';
 import styles from './AboutUs.module.css';
 
 const AboutUs = () => {
 
     const { fetchSpecificPage, loading } = useCMS();
+    const { banners } = useBanners();
     const [ content, setContent ] = useState('');
     const [ error, setError ] = useState(null);
 
@@ -95,9 +96,7 @@ const AboutUs = () => {
         <div className={styles.wrapper}>
             
             <Banner
-                type="header"
-                page="about-us"
-                imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/about-us_ztw9dq.webp"
+                data={ banners.filter(banner => banner.page === 'about-us') }
             />
             
             <div className={styles.header}>
