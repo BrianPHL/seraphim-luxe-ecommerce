@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useCMS } from '@contexts';
+import { useCMS, useBanners } from '@contexts';
 import { ReturnButton, Banner } from '@components';
 import styles from './PrivacyPolicy.module.css';
 
 const PrivacyPolicy = () => {
     const { fetchSpecificPage, loading } = useCMS();
+    const { banners } = useBanners();
     const [ content, setContent ] = useState('');
     const [ error, setError ] = useState(null);
 
@@ -89,9 +90,7 @@ const PrivacyPolicy = () => {
     return (
         <div className={styles.wrapper}>
             <Banner
-                type="header"
-                page="privacy-policy"
-                imageURL="" // TODO: Add banner image later.
+                data={ banners.filter(banner => banner.page === 'privacy-policy') }
             />
             <div className={styles.header}>
                 <ReturnButton />
