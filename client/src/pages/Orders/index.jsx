@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Anchor, ReturnButton, Modal, Banner } from '@components';
 import styles from './Orders.module.css';
-import { useToast, useAuth, useSettings } from '@contexts';
+import { useToast, useAuth, useSettings, useBanners } from '@contexts';
 
 const Orders = () => {
     const { showToast } = useToast();
     const { settings, convertPrice, formatPrice } = useSettings();
+    const { banners } = useBanners();
     const [orders, setOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -353,9 +354,7 @@ const Orders = () => {
         return (
             <div className={styles['wrapper']}>
                 <Banner
-                    type="header"
-                    page="orders"
-                    imageURL="" // TODO: Add banner image later.
+                    data={ banners.filter(banner => banner.page == 'orders') }
                 />
                 <div className={styles['header']}>
                     <ReturnButton />
@@ -372,7 +371,9 @@ const Orders = () => {
     return (
         <>
             <div className={styles['wrapper']}>
-                <div className={styles['banner']}></div>
+                <Banner
+                    data={ banners.filter(banner => banner.page == 'orders') }
+                />
                 <div className={styles['header']}>
                     <ReturnButton />
                     <h1>Your Orders</h1>
