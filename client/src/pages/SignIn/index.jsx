@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton, Banner } from '@components';
 import { useSearchParams, useNavigate } from 'react-router';
 import styles from './SignIn.module.css';
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useBanners } from '@contexts';
 import { getErrorMessage, getBaseURL } from '@utils';
 
 const SignIn = () => {
@@ -12,6 +12,7 @@ const SignIn = () => {
     const [ password, setPassword ] = useState('');
     const [ formError, setFormError ] = useState('');
     const [ searchParams ] = useSearchParams();
+    const { banners } = useBanners();
     const { signIn } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
@@ -129,9 +130,7 @@ const SignIn = () => {
                     </div>
                 </form>
                 <Banner
-                    type="hero"
-                    page="sign-in"
-                    imageURL="https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-in_ettdlu.webp"
+                    data={ banners.filter(banner => banner.page === 'sign-in') }
                     externalStyles={ styles['banner'] }
                 />
             </div>
