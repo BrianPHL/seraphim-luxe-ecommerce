@@ -32,6 +32,34 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/banners', async (req, res) => {
+
+    try {
+
+        const [ banners ] = await pool.query(
+            `
+                SELECT
+                    id, type, page, image_url, modified_at
+                FROM
+                    cms_banners
+                ORDER BY id ASC
+            `
+        );
+
+        if (banners.length === 0)
+            return res.status(404).json({ error: 'Banners not found' });
+
+        res.json({ success: true, banners: banners || [] });
+
+    } catch (err) {
+
+        console.error('cms route GET /banners endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to fetc h banners' });
+    
+    }
+
+});
+
 router.get('/:page_slug', async (req, res) => {
     try {
         const { page_slug } = req.params;
@@ -78,5 +106,72 @@ router.put('/:page_slug', async (req, res) => {
         res.status(500).json({ success: false, error: 'Failed to update content' });
     }
 });
+
+router.put('/banners/modify/:page/:image_url', async (req, res) => {
+
+    try {
+
+        const { page, image_url } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE
+                    cms_banners
+                SET
+                    image_url = ?, modified_at = NOW() 
+                WHERE
+                    page = ?
+            `,
+            [ image_url, page ]
+        );
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ success: false, error: 'Banner to modify not found' });
+
+        res.json({ success: true });
+
+    } catch (err) {
+
+        console.error('cms route PUT /banners/modify/:page/:image_url endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to modify banner' });
+    
+    }
+
+});
+
+router.put('/banners/reset/:page', async (req, res) => {
+
+    try {
+
+        const { page } = req.params;
+        const imagePlaceholder = 'https://res.cloudinary.com/dfvy7i4uc/image/upload/placeholder_vcj6hz.webp';
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE
+                    cms_banners
+                SET
+                    image_url = ${ imagePlaceholder }, modified_at = NOW() 
+                WHERE
+                    page = ?
+            `,
+            [ page ]
+        );
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ success: false, error: 'Banner to reset not found' });
+
+        res.json({ success: true });
+
+    } catch (err) {
+
+        console.error('cms route PUT /banners/reset/:page endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to reset banner' });
+    
+    }
+
+});
+
+
 
 export default router;
