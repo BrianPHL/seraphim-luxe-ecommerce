@@ -107,11 +107,14 @@ router.put('/:page_slug', async (req, res) => {
     }
 });
 
-router.put('/banners/modify/:page/:image_url', async (req, res) => {
+router.put('/banners/modify/:page', async (req, res) => {
 
     try {
 
-        const { page, image_url } = req.params;
+        const { page } = req.params;
+        const { image_url } = req.body; 
+
+        console.log(page, image_url);
 
         const [ result ] = await pool.query(
             `
@@ -151,7 +154,7 @@ router.put('/banners/reset/:page', async (req, res) => {
                 UPDATE
                     cms_banners
                 SET
-                    image_url = ${ imagePlaceholder }, modified_at = NOW() 
+                    image_url = "${ imagePlaceholder }", modified_at = NOW() 
                 WHERE
                     page = ?
             `,
