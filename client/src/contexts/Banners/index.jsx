@@ -1,11 +1,12 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useAuth } from '@contexts';
+import { useAuth, useToast } from '@contexts';
 import { fetchWithTimeout } from "@utils";
 import BannersContext from './context';
 
 export const BannersProvider = ({ children }) => {
 
     const { user } = useAuth();
+    const { showToast } = useToast();
     const [ banners, setBanners ] = useState([]);
     const [ loading, setLoading ] = useState(true);
 
@@ -37,68 +38,14 @@ export const BannersProvider = ({ children }) => {
 
     }, []);
 
-    const fetchSpecificBanner = async (page) => {
+    const removeSpecificBanner = async (page) => {
 
         try {
 
             setLoading(true);
 
-            const response = await fetchWithTimeout(`/api/cms/banners/${ page }`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!response.ok)
-                throw new Error(`Failed to fetch ${ page } banner!`);
-
-            const data = await response.json();
-
-            setBanners(data || []);
-
-        } catch (err) {
-
-            console.error("Banners context fetchSpecificBanner function error: ", err);
-
-        } finally {
-            setLoading(false);
-        }
-
-    };
-
-    const modifySpecificBanner = async () => {
-        try {
-
-            setLoading(true);
-
-            const response = await fetchWithTimeout(`/api/cms/banners/${ page }`, {
+            const response = await fetchWithTimeout(`/api/cms/banners/reset/${ page }`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!response.ok)
-                throw new Error(`Failed to modify ${ page } banner!`);
-
-            const data = await response.json();
-
-            setBanners(data || []);
-
-        } catch (err) {
-
-            console.error("Banners context modifySpecificBanner function error: ", err);
-
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const removeSpecificBanner = async () => {
-
-        try {
-
-            setLoading(true);
-
-            const response = await fetchWithTimeout(`/api/cms/banners/${ page }`, {
-                method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });
 
@@ -107,7 +54,7 @@ export const BannersProvider = ({ children }) => {
 
             const data = await response.json();
 
-            setBanners(data || []);
+            await fetchBanners();
 
         } catch (err) {
 
@@ -117,6 +64,41 @@ export const BannersProvider = ({ children }) => {
             setLoading(false);
         }
 
+    };
+
+    const modifySpecificBanner = async (page, image_url) => {
+        try {
+
+            setLoading(true);
+
+            const doesImageExist = await fetchWithTimeout(image_url, { method: 'HEAD' });
+
+            if (!doesImageExist.ok || (doesImageExist.status >= 300 && doesImageExist.status < 400)) {
+                showToast('The Image URL you\'ve set does not exist, using placeholder image as fallback.', 'error');
+                removeSpecificBanner(page);
+                return;
+            };
+
+            const response = await fetchWithTimeout(`/api/cms/banners/modify/${ page }`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_url: image_url })
+            });
+
+            if (!response.ok)
+                throw new Error(`Failed to modify ${ page } banner!`);
+
+            const data = await response.json();
+
+            await fetchBanners();
+
+        } catch (err) {
+
+            console.error("Banners context modifySpecificBanner function error: ", err);
+
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -131,7 +113,6 @@ export const BannersProvider = ({ children }) => {
 
             // Functions
             fetchBanners,
-            fetchSpecificBanner,
             modifySpecificBanner,
             removeSpecificBanner
 
