@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton } from '@components';
+import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton, Banner } from '@components';
 import { useSearchParams, useNavigate } from 'react-router';
 import styles from './SignIn.module.css';
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useBanners } from '@contexts';
 import { getErrorMessage, getBaseURL } from '@utils';
 
 const SignIn = () => {
@@ -12,6 +12,7 @@ const SignIn = () => {
     const [ password, setPassword ] = useState('');
     const [ formError, setFormError ] = useState('');
     const [ searchParams ] = useSearchParams();
+    const { banners } = useBanners();
     const { signIn } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
@@ -128,7 +129,10 @@ const SignIn = () => {
                         <p>Don't have an account yet? <Anchor label="Sign up" link="/sign-up" isNested={ false }/></p>
                     </div>
                 </form>
-                <div className={ styles['banner'] }></div>
+                <Banner
+                    data={ banners.filter(banner => banner.page === 'sign-in') }
+                    externalStyles={ styles['banner'] }
+                />
             </div>
         </div>
     );

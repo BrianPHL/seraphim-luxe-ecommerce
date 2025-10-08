@@ -4,6 +4,7 @@
     flex-direction: column;
     padding: 12rem 16rem 6rem 16rem;
     display: flex;
+    height: 120vh;
     gap: 4rem;
 }
 
@@ -29,31 +30,16 @@
     gap: 2rem;
 }
 
-.banner {
-    background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/sign-up_pjyxoj.webp');
-    background-position: center;
-    background-repeat: no-repeat;
-    justify-content: center;
-    background-size: 100%;
-    border-radius: 0.5rem;
-    align-items: center;
-    align-self: stretch;
-    display: flex;
-    border: 1px solid var(--bg-outline);
-    flex: 1 0 0;
-}
-
 .form {
     background-color: var(--bg-secondary);
-    justify-content: center;
     flex-direction: column;
     border-radius: 0.5rem;
-    align-items: center;
-    padding: 4rem 2rem;
+    flex-shrink: 0;
+    max-width: 25rem;
+    padding: 3rem 2rem;
     display: flex;
     border: 1px solid var(--bg-outline);
-    width: 26rem;
-    gap: 4rem;
+    gap: 2rem;
 }
 
 .inputs-container {

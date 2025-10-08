@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Anchor, ReturnButton, Modal, Counter } from '@components';
+import { Button, Anchor, ReturnButton, Modal, Counter, Banner } from '@components';
 import styles from './Cart.module.css';
-import { useCart, useToast, useSettings } from '@contexts';
+import { useCart, useToast, useSettings, useBanners } from '@contexts';
 
 const Cart = () => {
 
@@ -18,6 +18,7 @@ const Cart = () => {
         isItemSelected
     } = useCart();
     const { showToast } = useToast();
+    const { banners } = useBanners();
     const { settings, convertPrice, formatPrice } = useSettings();
     const [ modalType, setModalType ] = useState('');
     const [ modalOpen, setModalOpen ] = useState(false);
@@ -190,7 +191,9 @@ const Cart = () => {
     return (
         <>
             <div className={ styles['wrapper'] }>
-                <div className={ styles['banner'] }></div>
+                <Banner
+                    data={ banners.filter(banner => banner.page === 'cart') }
+                />
                 <div className={ styles['header'] }>
                     <ReturnButton />
                     <h1>Your Cart</h1>

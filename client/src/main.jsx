@@ -16,6 +16,7 @@ import {
   SettingsProvider,
   CMSProvider,
   NotificationsProvider,
+  BannersProvider,
   AuditTrailProvider,
   useAuditTrail
 } from '@contexts';
@@ -82,31 +83,33 @@ createRoot(document.getElementById('root')).render(
               <AuthWithAuditWrapper>
                 <NotificationsProvider>
                   <CMSProvider>
-                    <SettingsProvider>
-                      <SettingsWithAuditWrapper>
-                        <CategoriesProvider>
-                          <ProductsProvider>
-                            <OrdersProvider>
-                              <WishlistProvider>
-                                <WishlistWithAuditWrapper>
-                                  <CartProvider>
-                                    <CartWithAuditWrapper>
-                                      <CheckoutProvider>
-                                        <CheckoutWithAuditWrapper>
-                                          <StocksProvider>
-                                            <App />
-                                          </StocksProvider>
-                                        </CheckoutWithAuditWrapper>
-                                      </CheckoutProvider>
-                                    </CartWithAuditWrapper>
-                                  </CartProvider>
-                                </WishlistWithAuditWrapper>
-                              </WishlistProvider>
-                            </OrdersProvider>
-                          </ProductsProvider>
-                        </CategoriesProvider>
-                      </SettingsWithAuditWrapper>
-                    </SettingsProvider>
+                    <BannersProvider>
+                      <SettingsProvider>
+                        <SettingsWithAuditWrapper>
+                          <CategoriesProvider>
+                            <ProductsProvider>
+                              <OrdersProvider>
+                                <WishlistProvider>
+                                  <WishlistWithAuditWrapper>
+                                    <CartProvider>
+                                      <CartWithAuditWrapper>
+                                        <CheckoutProvider>
+                                          <CheckoutWithAuditWrapper>
+                                            <StocksProvider>
+                                              <App />
+                                            </StocksProvider>
+                                          </CheckoutWithAuditWrapper>
+                                        </CheckoutProvider>
+                                      </CartWithAuditWrapper>
+                                    </CartProvider>
+                                  </WishlistWithAuditWrapper>
+                                </WishlistProvider>
+                              </OrdersProvider>
+                            </ProductsProvider>
+                          </CategoriesProvider>
+                        </SettingsWithAuditWrapper>
+                      </SettingsProvider>
+                    </BannersProvider>
                   </CMSProvider>
                 </NotificationsProvider>
               </AuthWithAuditWrapper>

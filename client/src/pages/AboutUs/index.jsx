@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ReturnButton } from '@components';
-import { useCMS } from '@contexts';
+import { ReturnButton, Banner } from '@components';
+import { useCMS, useBanners } from '@contexts';
 import styles from './AboutUs.module.css';
 
 const AboutUs = () => {
 
     const { fetchSpecificPage, loading } = useCMS();
+    const { banners } = useBanners();
     const [ content, setContent ] = useState('');
     const [ error, setError ] = useState(null);
 
@@ -93,7 +94,11 @@ const AboutUs = () => {
 
     return (
         <div className={styles.wrapper}>
-            <div className={styles.banner}></div>
+            
+            <Banner
+                data={ banners.filter(banner => banner.page === 'about-us') }
+            />
+            
             <div className={styles.header}>
                 <ReturnButton />
                 <h1>About Seraphim Luxe</h1>

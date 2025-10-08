@@ -7,11 +7,6 @@
     gap: 4rem;
 }
 
-.banner {
-    height: 2rem;
-    background: linear-gradient(90deg, var(--accent-base), var(--accent-light));
-}
-
 .header {
     flex-direction: column;
     align-self: flex-start;

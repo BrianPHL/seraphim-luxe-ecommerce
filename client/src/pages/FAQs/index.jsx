@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useCMS } from '@contexts';
-import { ReturnButton } from '@components';
+import { useCMS, useBanners } from '@contexts';
+import { ReturnButton, Banner } from '@components';
 import styles from './FAQs.module.css';
 
 
 const FAQs = () => {
     const { fetchSpecificPage, loading } = useCMS();
+    const { banners } = useBanners();
     const [ content, setContent ] = useState('');
     const [ error, setError ] = useState(null);
     const [ activeIndex, setActiveIndex ] = useState(null);
@@ -110,7 +111,9 @@ const FAQs = () => {
 
     return (
         <div className={styles['wrapper']}>
-            <div className={styles['banner']}></div>
+            <Banner
+                data={ banners.filter(banner => banner.page === 'faqs') }
+            />
             <div className={styles['header']}>
                 <ReturnButton />
                 <h1>Frequently Asked Questions</h1>

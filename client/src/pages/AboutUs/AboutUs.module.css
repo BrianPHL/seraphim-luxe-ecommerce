@@ -7,7 +7,7 @@
     gap: 4rem;
 }
 
-.banner {
+/* .banner {
     background-image: url('https://res.cloudinary.com/dfvy7i4uc/image/upload/about-us_ztw9dq.webp');
     background-position: center;
     background-repeat: no-repeat;
@@ -19,7 +19,7 @@
     display: flex;
     height: 8rem;
     border: 1px solid var(--bg-outline);
-}
+} */
 
 .header {
     flex-direction: column;

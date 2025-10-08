@@ -1,6 +1,5 @@
 @import url('../../../index.css');
 
-
 .pagesTabs {
     display: flex;
     gap: 0.5rem;
@@ -27,7 +26,7 @@
 .tabButton.active {
     background: var(--accent-base);
     border-color: var(--accent-base);
-    color: white;
+    color: var(--tg-inverted);
 }
 
 .editorContainer {
@@ -144,7 +143,7 @@
 
 .saveButton {
     background: var(--accent-base);
-    color: var(--tg-primary);
+    color: var(--tg-inverted);
     border: none;
     border-radius: 8px;
     padding: 0.75rem 1.5rem;
@@ -162,8 +161,302 @@
     font-weight: 500;
 }
 
-@media (max-width: 768px) {
+.loading {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+    color: var(--tg-secondary);
+}
+
+.errorMessage {
+    background-color: var(--error-background);
+    border: 1px solid var(--error-foreground);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--error-foreground);
+}
+
+.errorMessage p {
+    margin: 0;
+    font-weight: 500;
+    color: var(--error-foreground);
+}
+
+/* Banner Management Styles */
+.bannersSection {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.bannersHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.bannersHeader h3 {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--tg-primary);
+    margin: 0;
+}
+
+.bannersTable {
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--bg-primary);
+}
+
+.tableHeader {
+    display: grid;
+    grid-template-columns: 60px 100px 120px 150px 180px 120px;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--bg-outline);
+    font-weight: 600;
+    color: var(--tg-primary);
+}
+
+.tableHeader span {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.tableRow {
+    display: grid;
+    grid-template-columns: 60px 100px 120px 150px 180px 120px;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--bg-outline);
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+    background-color: var(--bg-secondary);
+}
+
+.tableRow:last-child {
+    border-bottom: none;
+}
+
+.bannerId {
+    font-weight: 600;
+    color: var(--tg-primary);
+    font-size: 0.875rem;
+}
+
+.bannerType {
+    padding: 0.25rem 0.5rem;
+    background-color: var(--accent-light);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--accent-base);
+    text-align: center;
+}
+
+.bannerPage {
+    font-weight: 500;
+    color: var(--tg-primary);
+    font-size: 0.875rem;
+    text-transform: capitalize;
+}
+
+.imagePreview {
+    display: flex;
+    justify-content: center;
+}
+
+.imagePreview img {
+    width: 100px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 0.25rem;
+    border: 1px solid var(--bg-outline);
+}
+
+.modifiedDate {
+    font-size: 0.75rem;
+    color: var(--tg-secondary);
+    font-weight: 400;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.actionBtn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    border: 1px solid var(--bg-outline);
+    background: var(--bg-secondary);
+    color: var(--tg-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+    background: var(--accent-base);
+    color: var(--tg-inverted);
+    border-color: var(--accent-base);
+}
+
+.noBanners {
+    padding: 2rem;
+    text-align: center;
+    color: var(--tg-secondary);
+    font-style: italic;
+}
+
+.noBanners p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Modal Content Styles */
+.bannerDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detailRow {
+    word-break: break-all;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--tg-secondary);
+    background-color: var(--bg-secondary);
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.25rem;
+    margin-top: 0.25rem;
+    border: 1px solid var(--bg-outline);
+}
+
+.detailRow strong {
+    color: var(--tg-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.imagePreviewLarge {
+    margin: 1rem 0;
+}
+
+.imagePreviewLarge h4 {
+    margin-bottom: 0.5rem;
+    color: var(--tg-primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.imagePreviewLarge img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--bg-outline);
+    background: var(--bg-secondary);
+}
+
+.modifyBanner, .resetBanner {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modifyBanner p, .resetBanner p {
+    color: var(--tg-primary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.inputGroup label {
+    font-weight: 600;
+    color: var(--tg-primary);
+    font-size: 0.875rem;
+}
+
+.urlInput {
+    padding: 0.75rem;
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background: var(--bg-primary);
+    color: var(--tg-primary);
+    transition: border-color 0.2s ease;
+}
+
+.urlInput:focus {
+    outline: none;
+    border-color: var(--accent-base);
+    box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.urlInput::placeholder {
+    color: var(--tg-tertiary);
+    font-style: italic;
+}
+
+.modalActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.resetButton {
+    background-color: var(--error-background) !important;
+    color: var(--error-foreground) !important;
+    border-color: var(--error-foreground) !important;
+}
+
+.resetButton:hover {
+    background-color: var(--error-foreground) !important;
+    color: var(--tg-inverted) !important;
+    border-color: var(--error-foreground) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .tableHeader,
+    .tableRow {
+        grid-template-columns: 50px 80px 100px 120px 150px 100px;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
     
+    .imagePreview img {
+        width: 80px;
+        height: 50px;
+    }
+}
+
+@media (max-width: 768px) {
     .editorContainer {
         padding: 1.5rem;
     }
@@ -186,38 +479,83 @@
         min-height: 300px;
     }
     
-    .loading {
-    text-align: center;
-    padding: 2rem;
-    font-size: 1.1rem;
-    color: var(--tg-secondary);
+    .bannersHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
-
-    .errorMessage {
-    background-color: #ffebee;
-    border: 1px solid #f44336;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    color: #d32f2f;
+    
+    .tableHeader,
+    .tableRow {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        text-align: left;
     }
-
-    .errorMessage p {
-    margin: 0;
-    font-weight: 500;
+    
+    .tableHeader {
+        display: none; /* Hide header on mobile, use card layout */
+    }
+    
+    .tableRow {
+        border-left: 4px solid var(--accent-base);
+        background-color: var(--bg-secondary);
+        margin-bottom: 0.5rem;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .tableRow > * {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .tableRow > *:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--tg-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .actionButtons {
+        justify-content: flex-start;
+        margin-top: 0.5rem;
+    }
+    
+    .modalActions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modalActions button {
+        width: 100%;
     }
 }
 
-.errorMessage {
-    background-color: #ffebee;
-    border: 1px solid #f44336;
-    border-radius: 4px;
-    padding: 10px;
-    margin: 15px 0;
-    color: #d32f2f;
-}
-
-.errorMessage p {
-    margin: 0;
-    font-size: 14px;
+@media (max-width: 480px) {
+    .editorContainer {
+        padding: 1rem;
+        border-radius: 8px;
+    }
+    
+    .pagesTabs {
+        flex-direction: column;
+    }
+    
+    .tabButton {
+        text-align: center;
+    }
+    
+    .imagePreviewLarge img {
+        max-width: 100%;
+    }
+    
+    .urlInput {
+        font-size: 0.75rem;
+    }
 }

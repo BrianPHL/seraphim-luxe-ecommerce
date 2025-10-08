@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Button, ProductCard, Carousel } from '@components';
+import { Button, ProductCard, Carousel, Banner } from '@components';
 import styles from './Home.module.css';
 import { useNavigate } from 'react-router';
-import { useProducts, useCategories, useCMS } from '@contexts';
+import { useProducts, useCategories, useCMS, useBanners } from '@contexts';
 
 const Home = () => {
     const navigate = useNavigate();
     const { products, loading } = useProducts();
     const { getActiveCategories, getActiveSubcategories } = useCategories();
     const { pages, loading: cmsLoading } = useCMS();
+    const { banners } = useBanners();
     const [ featuredProducts, setFeaturedProducts ] = useState([]);
     const [ bestSellers, setBestSellers ] = useState([]);
     const [ newArrivals, setNewArrivals ] = useState([]);
@@ -201,7 +202,12 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    <div className={`${styles['hero-banner']} ${styles['hero-banner-first']}`}></div>
+
+                    <Banner
+                        data={ banners.filter(banner => banner.page === 'home' && banner.id === 1) }
+                        externalStyles={ styles['carousel-banner'] }
+                    />
+
                 </div>
                 <div className={styles['hero']}>
                     <div className={styles['hero-left']}>
@@ -231,7 +237,12 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    <div className={`${styles['hero-banner']} ${styles['hero-banner-second']}`}></div>
+
+                    <Banner
+                        data={ banners.filter(banner => banner.page === 'home' && banner.id === 2) }
+                        externalStyles={ styles['carousel-banner'] }
+                    />
+
                 </div>
                 <div className={styles['hero']}>
                     <div className={styles['hero-left']}>
@@ -274,7 +285,12 @@ const Home = () => {
                             <i className='fa-solid fa-arrow-down'></i>
                         </div>
                     </div>
-                    <div className={`${styles['hero-banner']} ${styles['hero-banner-third']}`}></div>
+
+                    <Banner
+                        data={ banners.filter(banner => banner.page === 'home' && banner.id === 3) }
+                        externalStyles={ styles['carousel-banner'] }
+                    />
+
                 </div>
             </Carousel>
 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useCMS } from '@contexts';
-import { ReturnButton } from '@components';
+import { useCMS, useBanners } from '@contexts';
+import { ReturnButton, Banner } from '@components';
 import styles from './ContactUs.module.css';
 
 const ContactUs = () => {
     const { fetchSpecificPage, loading: cmsLoading } = useCMS();
+    const { banners } = useBanners();
     const [contactContent, setContactContent] = useState('');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +145,9 @@ const ContactUs = () => {
 
     return (
         <div className={styles.wrapper}>
-            <div className={styles.banner}></div>
+            <Banner
+                data={ banners.filter(banner => banner.page === 'contact-us') }
+            />
             <div className={styles.header}>
                 <ReturnButton />
                 <h1>Contact Us</h1>

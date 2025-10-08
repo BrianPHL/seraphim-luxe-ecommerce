@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
-import { Anchor, Button, InputField, ReturnButton, Modal } from '@components';
+import { Anchor, Button, InputField, ReturnButton, Modal, Banner } from '@components';
 import styles from './SignUp.module.css';
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useBanners } from '@contexts';
 import { getErrorMessage } from '@utils';
 
 const SignUp = () => {
@@ -17,6 +17,7 @@ const SignUp = () => {
     const [ confirmPassword, setConfirmPassword ] = useState('');
     const [ formError, setFormError ] = useState('');
     const [ searchParams ] = useSearchParams();
+    const { banners } = useBanners();
     const { signUp } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
@@ -184,7 +185,10 @@ const SignUp = () => {
                         <p>Already have an account? <Anchor label="Sign in" link="/sign-in" isNested={ false }/></p>
                     </div>
                 </form>
-                <div className={ styles['banner'] }></div>
+                <Banner
+                    data={ banners.filter(banner => banner.page === 'sign-up') }
+                    externalStyles={ styles['banner'] }
+                />
             </div>
             <Modal label='Account Creation Confirmation' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
                 <p className={ styles['modal-info'] }>Creating an account with <strong>Seraphim Luxe</strong> means you agree with our Terms and Conditions. Do you wish to continue?</p>
