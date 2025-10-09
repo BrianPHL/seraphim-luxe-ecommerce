@@ -19,18 +19,14 @@ const SignIn = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (containerRef.current) {
-            // Apply height equalization after component mounts
+        if (containerRef.current)
             equalizeChildrenHeightInContainer(containerRef.current);
-        }
     }, []);
 
-    // Also apply on window resize
     useEffect(() => {
         const handleResize = () => {
-            if (containerRef.current) {
+            if (containerRef.current)
                 equalizeChildrenHeightInContainer(containerRef.current);
-            }
         };
 
         window.addEventListener('resize', handleResize);

@@ -2,9 +2,9 @@
 
 .wrapper {
     flex-direction: column;
+    min-height: 100vh;
     padding: 12rem 16rem 6rem 16rem;
     display: flex;
-    height: 120vh;
     gap: 4rem;
 }
 
@@ -24,9 +24,9 @@
 }
 
 .container {
-    align-items: flex-start;
-    align-self: stretch;
+    flex-direction: row;
     display: flex;
+    width: 100%;
     gap: 2rem;
 }
 
@@ -35,11 +35,18 @@
     flex-direction: column;
     border-radius: 0.5rem;
     flex-shrink: 0;
+    align-self: flex-start;
     max-width: 25rem;
     padding: 3rem 2rem;
     display: flex;
     border: 1px solid var(--bg-outline);
     gap: 2rem;
+}
+
+.banner-wrapper {
+    min-width: 0;
+    display: flex;
+    flex: 1;
 }
 
 .inputs-container {
@@ -144,6 +151,6 @@
         justify-content: center;
     }
 
-    .banner { display: none; }
+    .banner-wrapper { display: none; }
 
 }

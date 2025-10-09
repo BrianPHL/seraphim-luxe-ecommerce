@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { Anchor, Button, InputField, ReturnButton, Modal, Banner } from '@components';
 import styles from './SignUp.module.css';
 import { useAuth, useToast, useBanners } from '@contexts';
-import { getErrorMessage } from '@utils';
+import { getErrorMessage, equalizeChildrenHeightInContainer } from '@utils';
 
 const SignUp = () => {
+    const containerRef = useRef(null);
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ showPassword, setShowPassword ] = useState(false);
     const [ showConfirmPassword, setShowConfirmPassword ] = useState(false);
@@ -21,6 +22,23 @@ const SignUp = () => {
     const { signUp } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (containerRef.current)
+            equalizeChildrenHeightInContainer(containerRef.current);
+    }, []);
+
+    useEffect(() => {
+    
+        const handleResize = () => {
+            if (containerRef.current) equalizeChildrenHeightInContainer(containerRef.current);
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => window.removeEventListener('resize', handleResize);
+    
+    }, []);
 
     useEffect(() => {
 
@@ -88,7 +106,7 @@ const SignUp = () => {
                 <ReturnButton />
                 <h1>Create your account</h1>
             </div>
-            <div className={ styles['container'] }>
+            <div ref={ containerRef } className={ styles['container'] }>
                 <form className={ styles['form'] }>
                     { formError &&
                         <div className={ styles['error'] }>
@@ -185,10 +203,11 @@ const SignUp = () => {
                         <p>Already have an account? <Anchor label="Sign in" link="/sign-in" isNested={ false }/></p>
                     </div>
                 </form>
-                <Banner
-                    data={ banners.filter(banner => banner.page === 'sign-up') }
-                    externalStyles={ styles['banner'] }
-                />
+                <div className={ styles['banner-wrapper'] }>
+                    <Banner
+                        data={ banners.filter(banner => banner.page === 'sign-up') }
+                    />
+                </div>
             </div>
             <Modal label='Account Creation Confirmation' isOpen={ modalOpen } onClose={ () => setModalOpen(false) }>
                 <p className={ styles['modal-info'] }>Creating an account with <strong>Seraphim Luxe</strong> means you agree with our Terms and Conditions. Do you wish to continue?</p>

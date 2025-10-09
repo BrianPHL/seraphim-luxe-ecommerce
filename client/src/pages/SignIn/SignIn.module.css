@@ -2,9 +2,9 @@
 
 .wrapper {
     flex-direction: column;
+    min-height: 100vh;
     padding: 12rem 16rem 6rem 16rem;
     display: flex;
-    min-height: 100vh;
     gap: 4rem;
 }
 
@@ -24,9 +24,8 @@
 }
 
 .container {
-    background-color: var(--bg-primary);
-    display: flex;
     flex-direction: row;
+    display: flex;
     width: 100%;
     gap: 2rem;
 }
@@ -36,9 +35,9 @@
     flex-direction: column;
     border-radius: 0.5rem;
     flex-shrink: 0;
+    align-self: flex-start;
     max-width: 25rem;
     padding: 3rem 2rem;
-    align-self: flex-start;
     display: flex;
     border: 1px solid var(--bg-outline);
     gap: 2rem;
