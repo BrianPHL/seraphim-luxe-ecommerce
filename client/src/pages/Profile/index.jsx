@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { InputField, Button, Anchor, ReturnButton, Accordion, Modal, Dropdown } from '@components';
-import { useToast, useAuth, useSettings } from '@contexts';
+import { InputField, Button, Anchor, ReturnButton, Accordion, Modal, Dropdown, Banner } from '@components';
+import { useToast, useAuth, useSettings, useBanners } from '@contexts';
 import { useOAuth } from '@hooks';
 import { getErrorMessage } from '@utils';
 import styles from './Profile.module.css';
@@ -12,6 +12,7 @@ const Profile = ({}) => {
     const { user, loading, logout, isUpdatingAvatar, isRemovingAvatar, updateAvatar, removeAvatar, updatePersonalInfo: updatePersonalInfoAPI, addressBook, getAddressBook, addAddress, updateAddress, deleteAddress, updatePassword: updatePasswordAPI, remove } = useAuth();
     const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
+    const { banners } = useBanners();
     const { showToast } = useToast();
     const [ searchParams, setSearchParams ] = useSearchParams();
     const [ avatarFile, setAvatarFile ] = useState(null);
@@ -721,6 +722,9 @@ const Profile = ({}) => {
     return(
         <>
             <div className={ styles['wrapper'] }>
+                <Banner
+                    data={ banners.filter(banner => banner.page === 'profile') }
+                />
                 <div className={ styles['header'] }>
                     <ReturnButton />
                     <h1>{isAdmin ? 'Admin Profile' : 'My Profile'}</h1>
