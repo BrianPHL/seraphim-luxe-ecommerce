@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Anchor, Button, InputField, ReturnButton, GoogleLoginButton, Banner } from '@components';
 import { useSearchParams, useNavigate } from 'react-router';
 import styles from './SignIn.module.css';
 import { useAuth, useToast, useBanners } from '@contexts';
-import { getErrorMessage, getBaseURL } from '@utils';
+import { getErrorMessage, getBaseURL, equalizeChildrenHeightInContainer } from '@utils';
 
 const SignIn = () => {
+    const containerRef = useRef(null);
     const [ showPassword, setShowPassword ] = useState(false);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ email, setEmail ] = useState('');
@@ -16,6 +17,25 @@ const SignIn = () => {
     const { signIn } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (containerRef.current) {
+            // Apply height equalization after component mounts
+            equalizeChildrenHeightInContainer(containerRef.current);
+        }
+    }, []);
+
+    // Also apply on window resize
+    useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current) {
+                equalizeChildrenHeightInContainer(containerRef.current);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
 
@@ -81,7 +101,7 @@ const SignIn = () => {
                 <ReturnButton />
                 <h1>Sign into your account</h1>
             </div>
-            <div className={ styles['container'] }>
+            <div ref={ containerRef } className={ styles['container'] }>
                 <form className={ styles['form'] }>
                     { formError &&
                         <div className={ styles['error'] }>
@@ -129,10 +149,11 @@ const SignIn = () => {
                         <p>Don't have an account yet? <Anchor label="Sign up" link="/sign-up" isNested={ false }/></p>
                     </div>
                 </form>
-                <Banner
-                    data={ banners.filter(banner => banner.page === 'sign-in') }
-                    externalStyles={ styles['banner'] }
-                />
+                <div className={ styles['banner-wrapper'] }>
+                    <Banner
+                        data={ banners.filter(banner => banner.page === 'sign-in') }
+                    />
+                </div>
             </div>
         </div>
     );
