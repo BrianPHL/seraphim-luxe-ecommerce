@@ -114,8 +114,6 @@ router.put('/banners/modify/:page', async (req, res) => {
         const { page } = req.params;
         const { image_url } = req.body; 
 
-        console.log(page, image_url);
-
         const [ result ] = await pool.query(
             `
                 UPDATE

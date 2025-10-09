@@ -126,8 +126,6 @@ const CMS = () => {
   };
 
   const confirmModifyBanner = async () => {
-
-    console.log(selectedBanner, newImageUrl);
     
     if (!selectedBanner || !newImageUrl) return;
     
@@ -151,7 +149,6 @@ const CMS = () => {
     
     setBannerActionLoading(true);
     try {
-      console.log(selectedBanner);
       const success = await removeSpecificBanner(selectedBanner.page);
       if (success) {
         setIsModalOpen(false);
