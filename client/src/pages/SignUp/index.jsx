@@ -29,15 +29,18 @@ const SignUp = () => {
     }, []);
 
     useEffect(() => {
-    
         const handleResize = () => {
-            if (containerRef.current) equalizeChildrenHeightInContainer(containerRef.current);
+            if (containerRef.current)
+                equalizeChildrenHeightInContainer(containerRef.current);
         };
 
+        window.addEventListener('load', handleResize);
         window.addEventListener('resize', handleResize);
 
-        return () => window.removeEventListener('resize', handleResize);
-    
+        return () => {
+            window.removeEventListener('load', handleResize);
+            window.removeEventListener('resize', handleResize);
+        }
     }, []);
 
     useEffect(() => {
