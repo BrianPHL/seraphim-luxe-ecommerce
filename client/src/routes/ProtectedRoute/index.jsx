@@ -14,7 +14,9 @@ const ProtectedRoute = ({ children, requiresAdmin = false }) => {
         const isAuthPage = location.pathname === '/sign-in' || location.pathname === '/sign-up';
         const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
         const isCustomerRoute = ['/profile', '/cart', '/checkout', '/orders'].includes(location.pathname);
-        const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up', '/faqs', '/privacy-policy', '/terms-and-conditions', 'contact-us'].includes(location.pathname) || location.pathname.startsWith('/collections/');
+        const isPublicRoute = ['/', '/admin/sign-in', '/admin/sign-up', '/about-us', '/collections', '/sign-up', '/faqs', '/privacy-policy', '/terms-and-conditions', '/contact-us'].includes(location.pathname) || location.pathname.startsWith('/collections/');
+
+        console.log(location.pathname);
 
         if (location.pathname === '/profile' && new URLSearchParams(location.search).get('redirect') === 'yes')
             return;
