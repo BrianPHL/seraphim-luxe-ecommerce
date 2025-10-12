@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import styles from './ProductPage.module.css';
 import { Button, ReturnButton, Modal, Counter } from '@components';
 import ProductReviews from '@components/ProductReviews';
-import { useProducts, useAuth, useCart, useCheckout, useToast, useSettings, useWishlist } from '@contexts';
+import { useProducts, useAuth, useCart, useCheckout, useToast, useSettings, useWishlist, usePromotions } from '@contexts';
 
 const ProductPage = () => {
     // Router and state management
@@ -16,6 +16,7 @@ const ProductPage = () => {
     const [ paymentMethod, setPaymentMethod ] = useState('cash');
     const [ selectedImageIdx, setSelectedImageIdx ] = useState(0);
     const [ displayPrice, setDisplayPrice] = useState(0);
+    const [ timeLeft, setTimeLeft ] = useState(null);
     const [ reviewStats, setReviewStats ] = useState({
         averageRating: 0,
         totalReviews: 0
@@ -24,12 +25,135 @@ const ProductPage = () => {
     // Contexts
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const { products } = useProducts();
+    const { promotions } = usePromotions();
     const { user } = useAuth();
     const { addToCart } = useCart();
     const { setDirectCheckout } = useCheckout();
     const { showToast } = useToast();
     const { settings, convertPrice, formatPrice } = useSettings(); 
     const navigate = useNavigate();
+
+    // Get active promotion for this product (same logic as ProductCard)
+    const getActivePromotion = () => {
+        if (!promotions || promotions.length === 0 || !product) return null;
+        
+        const now = new Date();
+        const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().replace('Z', '');
+        
+        return promotions.find(promotion => {
+            // Check if promotion is active
+            if (promotion.is_active !== 1) return false;
+            
+            // Check dates with better validation (same as ProductCard)
+            try {
+
+                const startDate = promotion.start_date.replace('Z', '');
+                const endDate = promotion.end_date.replace('Z', '');
+    
+                if (today < startDate || today > endDate) {
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('Date validation error:', error);
+                return false;
+            }
+            
+            // If promotion has no products, it applies to all products
+            if (!promotion.products || promotion.products.length === 0) {
+                return true;
+            }
+            
+            // Check if this product is in the promotion
+            const productArray = Array.isArray(promotion.products) ? promotion.products : [];
+            return productArray.some(p => parseInt(p.id) === parseInt(product.id));
+        });
+    };
+
+    const activePromotion = getActivePromotion();
+    
+    // Calculate discounted price
+    const getDiscountedPrice = (originalPrice) => {
+        if (!activePromotion) return originalPrice;
+        const discount = parseFloat(activePromotion.discount) / 100;
+        return originalPrice * (1 - discount);
+    };
+
+    const discountedPrice = activePromotion && product ? getDiscountedPrice(product.price) : (product?.price || 0);
+
+    // Calculate time left for promotion (same logic as ProductCard)
+    const calculateTimeLeft = (promotion) => {
+        if (!promotion || !promotion.end_date) return null;
+        
+        try {
+        const now = new Date();
+        const endDate = new Date(promotion.end_date.replace('Z', ''));
+        const timeDiff = endDate - now;
+        
+        if (timeDiff <= 0) return null;
+            
+            if (timeDiff <= 0) return null;
+            
+            const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+            
+            return { days, hours, minutes, seconds };
+        } catch (error) {
+            console.error('Error calculating time left:', error);
+            return null;
+        }
+    };
+
+    // Format countdown display (same logic as ProductCard)
+    const formatCountdown = (timeObj) => {
+        if (!timeObj || typeof timeObj !== 'object') return '';
+        
+        const { days, hours, minutes, seconds } = timeObj;
+        
+        if (isNaN(days) || isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+            return '';
+        }
+        
+        if (days > 0) {
+            return `${days}d, ${hours.toString().padStart(2, '0')}h, ${minutes.toString().padStart(2, '0')}m, ${seconds.toString().padStart(2, '0')}s`;
+        } else if (hours > 0) {
+            return `${hours}h, ${minutes.toString().padStart(2, '0')}m, ${seconds.toString().padStart(2, '0')}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m, ${seconds.toString().padStart(2, '0')}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    };
+
+    // Update countdown timer every second (same logic as ProductCard)
+    useEffect(() => {
+        if (!activePromotion) {
+            setTimeLeft(null);
+            return;
+        }
+        
+        const updateTimer = () => {
+            const newTimeLeft = calculateTimeLeft(activePromotion);
+            setTimeLeft(newTimeLeft);
+            
+            if (!newTimeLeft) {
+                return false;
+            }
+            return true;
+        };
+        
+        if (!updateTimer()) return;
+        
+        const interval = setInterval(() => {
+            if (!updateTimer()) {
+                clearInterval(interval);
+            }
+        }, 1000);
+        
+        return () => clearInterval(interval);
+    }, [activePromotion]);
 
     // Fetch product from products context
     useEffect(() => {
@@ -48,22 +172,23 @@ const ProductPage = () => {
             if (!product?.price) return;
             
             try {
+                const priceToConvert = activePromotion ? discountedPrice : product.price;
                 if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
-                    const converted = await convertPrice(product.price, settings.currency);
+                    const converted = await convertPrice(priceToConvert, settings.currency);
                     setDisplayPrice(converted);
                 } else {
-                    setDisplayPrice(product.price);
+                    setDisplayPrice(priceToConvert);
                 }
             } catch (error) {
                 console.error('Error converting price:', error);
-                setDisplayPrice(product.price);
+                setDisplayPrice(activePromotion ? discountedPrice : product.price);
             }
         };
         
         if (settings && product) {
             updatePrice();
         }
-    }, [product?.price, settings?.currency, convertPrice, settings, product]);
+    }, [product?.price, discountedPrice, activePromotion, settings?.currency, convertPrice, settings, product]);
 
     // Helper Functions
     const safeFormatPrice = (price, currency = null) => {
@@ -120,39 +245,6 @@ const ProductPage = () => {
         return product?.image_url ? [product.image_url] : [];
     };
 
-    useEffect(() => {
-        if (products && products.length > 0) {
-            const foundProduct = products.find(p => p.id === parseInt(product_id));
-            if (foundProduct) {
-                setProduct(foundProduct);
-            }
-            setLoading(false);
-        }
-    }, [products, product_id]);
-
-    //Use Effect for Price Conversion
-    useEffect(() => {
-        const updatePrice = async () => {
-            if (!product?.price) return;
-            
-            try {
-                if (settings?.currency && settings.currency !== 'PHP' && convertPrice) {
-                    const converted = await convertPrice(product.price, settings.currency);
-                    setDisplayPrice(converted);
-                } else {
-                    setDisplayPrice(product.price);
-                }
-            } catch (error) {
-                console.error('Error converting price:', error);
-                setDisplayPrice(product.price);
-            }
-        };
-        
-        if (settings && product) {
-            updatePrice();
-        }
-    }, [product?.price, settings?.currency, convertPrice, settings, product]);
-
     const requireAuth = (action) => {
         if (!user) {
             showToast('You must be signed in to perform this action!', 'error');
@@ -184,23 +276,25 @@ const ProductPage = () => {
                 subcategory: product['subcategory'],
                 image_url: product['image_url'], 
                 label: product['label'], 
-                price: product['price'],
+                price: activePromotion ? discountedPrice : product['price'], // Use discounted price if promotion exists
+                original_price: product['price'], // Keep track of original price
+                promotion_code: activePromotion?.code || null, // Include promotion code if applicable
                 quantity: productQuantity
             });
-            showToast(`Successfully added ${ product['label'] } to your cart!`, 'success');
+            showToast(`Successfully added ${ product['label'] } to your cart${activePromotion ? ` with ${activePromotion.discount}% discount applied!` : '!'}`, 'success');
             setModalOpen(false);
         } catch (err) {
             showToast(`Uh oh! An error occurred during the addition of ${ product['label'] } to your cart! Please try again later. ${ err }`, 'error');
             console.error("ProductPage component handleAddToCart error: ", err);
         }
     };
-
+    
     const handleBuyNow = () => {
         if (product['stock_quantity'] <= 0) {
             showToast(`Sorry, ${product['label']} is currently out of stock.`, 'error');
             return;
         }
-
+    
         try {
             const directItem = {
                 product_id: product['id'],
@@ -208,10 +302,12 @@ const ProductPage = () => {
                 subcategory: product['subcategory'],
                 image_url: product['image_url'],
                 label: product['label'],
-                price: product['price'],
+                price: activePromotion ? discountedPrice : product['price'], // Use discounted price if promotion exists
+                original_price: product['price'], // Keep track of original price
+                promotion_code: activePromotion?.code || null, // Include promotion code if applicable
                 quantity: productQuantity
             };
-
+        
             setDirectCheckout(directItem);
             setModalOpen(false);
             navigate('/checkout');
@@ -306,6 +402,20 @@ const ProductPage = () => {
                             </h3>
                         </div>
 
+                        {/* Promotion Banner - Updated to use same logic as ProductCard */}
+                        {activePromotion && timeLeft && formatCountdown(timeLeft) && (
+                            <div className={styles['promotion-banner']}>
+                                <div className={styles['promotion-content']}>
+                                    <div className={styles['promotion-icon']}>🎉</div>
+                                    <div className={styles['promotion-details']}>
+                                        <h4>{activePromotion.title}</h4>
+                                        <p>Save {activePromotion.discount}% - Discount automatically applied!</p>
+                                        <p className={styles['promotion-timer']}>⏰ Ends in: {formatCountdown(timeLeft)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className={styles['product-details-info']}>
                             <span>
                                 <h4>Description</h4>
@@ -313,7 +423,17 @@ const ProductPage = () => {
                             </span>
                             <span>
                                 <h4>Price</h4>
-                                <h3>{safeFormatPrice(displayPrice)}</h3>
+                                {activePromotion ? (
+                                    <div className={styles['price-display']}>
+                                        <h3 className={styles['discounted-price']}>{safeFormatPrice(displayPrice)}</h3>
+                                        <span className={styles['original-price']}>{safeFormatPrice(product['price'])}</span>
+                                        <span className={styles['savings']}>
+                                            You save: {safeFormatPrice(product['price'] - discountedPrice)}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <h3>{safeFormatPrice(displayPrice)}</h3>
+                                )}
                             </span>
                             
                             {/* Stars and review count */}
@@ -400,6 +520,18 @@ const ProductPage = () => {
                 <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
                     <h3>{product ? product['label'] : 'Product'}</h3>
                     <p>Stock Available: <strong>{product ? product['stock_quantity'] : 0}</strong></p>
+                    {activePromotion && (
+                        <div className={styles['modal-promotion']}>
+                            <p className={styles['promotion-badge']}>
+                                🎉 {activePromotion.discount}% OFF - Automatically Applied!
+                            </p>
+                            {timeLeft && formatCountdown(timeLeft) && (
+                                <p className={styles['promotion-timer']}>
+                                    ⏰ Expires in: {formatCountdown(timeLeft)}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className={`${styles['modal-infos']} ${styles['modal-row']}`}>
@@ -422,7 +554,21 @@ const ProductPage = () => {
                 </div>
 
                 <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
-                    <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
+                    {activePromotion ? (
+                        <div className={styles['price-breakdown']}>
+                            <p className={styles['original-total']}>
+                                Original: {safeFormatPrice(product['price'] * productQuantity)}
+                            </p>
+                            <p className={styles['discount-amount']}>
+                                Discount ({activePromotion.discount}%): -{safeFormatPrice((product['price'] - discountedPrice) * productQuantity)}
+                            </p>
+                            <h3 className={styles['final-total']}>
+                                Total: {safeFormatPrice(displayPrice * productQuantity)}
+                            </h3>
+                        </div>
+                    ) : (
+                        <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
+                    )}
                 </div>
                 
                 <div className={styles['modal-ctas']}>
@@ -450,6 +596,18 @@ const ProductPage = () => {
                 <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
                     <h3>{product ? product['label'] : 'Product'}</h3>
                     <p>Stock Available: <strong>{product ? product['stock_quantity'] : 0}</strong></p>
+                    {activePromotion && (
+                        <div className={styles['modal-promotion']}>
+                            <p className={styles['promotion-badge']}>
+                                🎉 {activePromotion.discount}% OFF - Automatically Applied!
+                            </p>
+                            {timeLeft && formatCountdown(timeLeft) && (
+                                <p className={styles['promotion-timer']}>
+                                    ⏰ Expires in: {formatCountdown(timeLeft)}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className={`${styles['modal-infos']} ${styles['modal-row']}`}>
@@ -472,7 +630,21 @@ const ProductPage = () => {
                 </div>
 
                 <div className={`${styles['modal-infos']} ${styles['modal-align-start']}`}>
-                    <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
+                    {activePromotion ? (
+                        <div className={styles['price-breakdown']}>
+                            <p className={styles['original-total']}>
+                                Original: {safeFormatPrice(product['price'] * productQuantity)}
+                            </p>
+                            <p className={styles['discount-amount']}>
+                                Discount ({activePromotion.discount}%): -{safeFormatPrice((product['price'] - discountedPrice) * productQuantity)}
+                            </p>
+                            <h3 className={styles['final-total']}>
+                                Total: {safeFormatPrice(displayPrice * productQuantity)}
+                            </h3>
+                        </div>
+                    ) : (
+                        <h3>Total: {safeFormatPrice(displayPrice * productQuantity)}</h3>
+                    )}
                 </div>
 
                 <div className={styles['modal-ctas']}>

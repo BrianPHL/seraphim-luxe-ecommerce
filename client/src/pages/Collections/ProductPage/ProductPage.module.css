@@ -362,3 +362,111 @@
         font-size: 1.5rem;
     }
 }
+
+.promotion-banner {
+    background: linear-gradient(135deg, var(--accent-base), var(--accent-hovered));
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.promotion-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.promotion-icon {
+    font-size: 2rem;
+}
+
+.promotion-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: white !important;
+    font-weight: 600;
+}
+
+.promotion-details p {
+    margin: 0.25rem 0;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.875rem;
+}
+
+.promotion-timer {
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.price-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.discounted-price {
+    color: var(--success-foreground) !important;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: var(--tg-secondary) !important;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.savings {
+    color: var(--success-foreground) !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--success-background);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    width: fit-content;
+}
+
+.modal-promotion {
+    margin: 0.5rem 0;
+}
+
+.promotion-badge {
+    background: linear-gradient(135deg, var(--accent-base), var(--accent-hovered));
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    margin: 0;
+}
+
+.price-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+}
+
+.original-total {
+    color: var(--tg-secondary) !important;
+    text-decoration: line-through;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.discount-amount {
+    color: var(--success-foreground) !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.final-total {
+    color: var(--tg-primary) !important;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0;
+}
