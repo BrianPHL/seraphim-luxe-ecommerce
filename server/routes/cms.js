@@ -54,10 +54,76 @@ router.get('/banners', async (req, res) => {
     } catch (err) {
 
         console.error('cms route GET /banners endpoint error: ', err);
-        res.status(500).json({ success: false, error: 'Failed to fetc h banners' });
+        res.status(500).json({ success: false, error: 'Failed to fetch banners' });
     
     }
 
+});
+
+router.get('/promotions', async (req, res) => {
+
+    const connection = await pool.getConnection();
+    
+    try {
+        await connection.beginTransaction();
+        
+        // Get current local time as a string in MySQL datetime format
+        const now = new Date();
+        const localDateTime = now.getFullYear() + '-' + 
+            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(now.getDate()).padStart(2, '0') + ' ' + 
+            String(now.getHours()).padStart(2, '0') + ':' + 
+            String(now.getMinutes()).padStart(2, '0') + ':' + 
+            String(now.getSeconds()).padStart(2, '0');
+        
+        // Update expired promotions to inactive using string comparison
+        await connection.query(`
+            UPDATE cms_promotions 
+            SET is_active = 0, modified_at = NOW() 
+            WHERE is_active = 1 AND end_date < ?
+        `, [localDateTime]);
+
+        // Then fetch all promotions with their products
+        const [promotions] = await connection.query(`
+            SELECT
+                p.id, p.title, p.discount, p.start_date, p.end_date, p.is_active, p.created_at, p.modified_at,
+                JSON_ARRAYAGG(
+                    CASE 
+                        WHEN pr.id IS NOT NULL 
+                        THEN JSON_OBJECT(
+                            'id', pr.id,
+                            'label', pr.label,
+                            'price', pr.price,
+                            'image_url', pr.image_url
+                        )
+                        ELSE NULL
+                    END
+                ) as products
+            FROM
+                cms_promotions p
+            LEFT JOIN products_promotions pp ON p.id = pp.promotion_id
+            LEFT JOIN products pr ON pp.product_id = pr.id
+            GROUP BY p.id, p.title, p.discount, p.start_date, p.end_date, p.is_active, p.created_at, p.modified_at
+            ORDER BY p.id ASC
+        `);
+
+        await connection.commit();
+
+        // Parse the products JSON for each promotion
+        const formattedPromotions = promotions.map(promotion => ({
+            ...promotion,
+            products: promotion.products ? promotion.products.filter(p => p !== null) : []
+        }));
+
+        res.json({ success: true, promotions: formattedPromotions });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error('cms route GET /promotions endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch promotions' });
+    } finally {
+        connection.release();
+    }
 });
 
 router.get('/:page_slug', async (req, res) => {
@@ -76,6 +142,47 @@ router.get('/:page_slug', async (req, res) => {
     } catch (error) {
         console.error('Error fetching static page:', error);
         res.status(500).json({ error: 'Failed to fetch page' });
+    }
+});
+
+router.post('/promotions/create', async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        await connection.beginTransaction();
+
+        const { title, discount, start_date, end_date, is_active, product_ids = [] } = req.body; 
+
+        const [result] = await connection.query(`
+            INSERT INTO
+                cms_promotions (title, discount, start_date, end_date, is_active)
+            VALUES
+                (?, ?, ?, ?, ?)
+        `, [title, discount, start_date, end_date, is_active]);
+
+        if (result.affectedRows === 0) {
+            throw new Error('Promotion failed to be added');
+        }
+
+        const promotionId = result.insertId;
+
+        if (product_ids && product_ids.length > 0) {
+            const productValues = product_ids.map(productId => [promotionId, productId]);
+            await connection.query(`
+                INSERT INTO products_promotions (promotion_id, product_id)
+                VALUES ?
+            `, [productValues]);
+        }
+
+        await connection.commit();
+        res.json({ success: true });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error('cms route POST /promotions/create/ endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to add promotion' });
+    } finally {
+        connection.release();
     }
 });
 
@@ -140,6 +247,82 @@ router.put('/banners/modify/:page', async (req, res) => {
 
 });
 
+router.put('/promotions/modify/:id', async (req, res) => {
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const { id } = req.params;
+        const { title, discount, start_date, end_date, is_active, product_ids = [] } = req.body; 
+
+        const [result] = await connection.query(`
+            UPDATE
+                cms_promotions
+            SET
+                title = ?, discount = ?, start_date = ?, end_date = ?, is_active = ?, modified_at = NOW()
+            WHERE
+                id = ?
+        `, [title, discount, start_date, end_date, is_active, id]);
+
+        if (result.affectedRows === 0) {
+            throw new Error('Promotion to modify not found');
+        }
+
+        await connection.query('DELETE FROM products_promotions WHERE promotion_id = ?', [id]);
+
+        if (product_ids && product_ids.length > 0) {
+            const productValues = product_ids.map(productId => [id, productId]);
+            await connection.query(`
+                INSERT INTO products_promotions (promotion_id, product_id)
+                VALUES ?
+            `, [productValues]);
+        }
+
+        await connection.commit();
+        res.json({ success: true });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error('cms route PUT /promotions/modify/:id endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to modify promotion' });
+    } finally {
+        connection.release();
+    }
+});
+
+router.put('/promotions/:id/toggle-availability/:state', async (req, res) => {
+
+    try {
+
+        const { id, state } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                UPDATE
+                    cms_promotions
+                SET
+                    is_active = ?, modified_at = NOW()
+                WHERE
+                    id = ?
+            `,
+            [ state, id ]
+        );
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ success: false, error: 'Promotion to toggle availability not found' });
+
+        res.json({ success: true });
+
+    } catch (err) {
+
+        console.error('cms route PUT /promotions/:id/toggle-availability/:state endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to toggle promotion\'s availability' });
+    
+    }
+
+});
+
 router.put('/banners/reset/:page', async (req, res) => {
 
     try {
@@ -173,6 +356,34 @@ router.put('/banners/reset/:page', async (req, res) => {
 
 });
 
+router.delete('/promotions/remove/:id', async (req, res) => {
 
+    try {
+
+        const { id } = req.params;
+
+        const [ result ] = await pool.query(
+            `
+                DELETE FROM
+                    cms_promotions
+                WHERE
+                    id = ?
+            `,
+            [ id ]
+        );
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ success: false, error: 'Promotion to remove not found' });
+
+        res.json({ success: true });
+
+    } catch (err) {
+
+        console.error('cms route PUT /promotions/remove/:id endpoint error: ', err);
+        res.status(500).json({ success: false, error: 'Failed to remove promotion' });
+    
+    }
+
+});
 
 export default router;
