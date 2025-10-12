@@ -66,8 +66,7 @@ router.get('/promotions', async (req, res) => {
     
     try {
         await connection.beginTransaction();
-        
-        // Get current local time as a string in MySQL datetime format
+
         const now = new Date();
         const localDateTime = now.getFullYear() + '-' + 
             String(now.getMonth() + 1).padStart(2, '0') + '-' + 
@@ -75,30 +74,24 @@ router.get('/promotions', async (req, res) => {
             String(now.getHours()).padStart(2, '0') + ':' + 
             String(now.getMinutes()).padStart(2, '0') + ':' + 
             String(now.getSeconds()).padStart(2, '0');
-        
-        // Update expired promotions to inactive using string comparison
+
         await connection.query(`
             UPDATE cms_promotions 
             SET is_active = 0, modified_at = NOW() 
             WHERE is_active = 1 AND end_date < ?
         `, [localDateTime]);
 
-        // Then fetch all promotions with their products
         const [promotions] = await connection.query(`
             SELECT
                 p.id, p.title, p.discount, p.start_date, p.end_date, p.is_active, p.created_at, p.modified_at,
-                JSON_ARRAYAGG(
+                GROUP_CONCAT(
                     CASE 
                         WHEN pr.id IS NOT NULL 
-                        THEN JSON_OBJECT(
-                            'id', pr.id,
-                            'label', pr.label,
-                            'price', pr.price,
-                            'image_url', pr.image_url
-                        )
+                        THEN CONCAT(pr.id, '|', pr.label, '|', pr.price, '|', pr.image_url)
                         ELSE NULL
                     END
-                ) as products
+                    SEPARATOR ';;'
+                ) as product_data
             FROM
                 cms_promotions p
             LEFT JOIN products_promotions pp ON p.id = pp.promotion_id
@@ -109,11 +102,24 @@ router.get('/promotions', async (req, res) => {
 
         await connection.commit();
 
-        // Parse the products JSON for each promotion
-        const formattedPromotions = promotions.map(promotion => ({
-            ...promotion,
-            products: promotion.products ? promotion.products.filter(p => p !== null) : []
-        }));
+        const formattedPromotions = promotions.map(promotion => {
+            let products = [];
+            if (promotion.product_data) {
+                const productEntries = promotion.product_data.split(';;');
+                products = productEntries
+                    .filter(entry => entry && entry !== 'NULL')
+                    .map(entry => {
+                        const [id, label, price, image_url] = entry.split('|');
+                        return { id: parseInt(id), label, price: parseFloat(price), image_url };
+                    });
+            }
+            
+            const { product_data, ...promotionWithoutProductData } = promotion;
+            return {
+                ...promotionWithoutProductData,
+                products
+            };
+        });
 
         res.json({ success: true, promotions: formattedPromotions });
 
