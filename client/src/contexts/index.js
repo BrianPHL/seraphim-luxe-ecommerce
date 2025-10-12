@@ -14,3 +14,4 @@ export { useSettings, SettingsProvider } from './Settings';
 export { useCMS, CMSProvider } from './CMS';
 export { useNotifications, NotificationsProvider } from './Notifications';
 export { useBanners, BannersProvider } from './Banners';
+export { usePromotions, PromotionsProvider } from './Promotions';
