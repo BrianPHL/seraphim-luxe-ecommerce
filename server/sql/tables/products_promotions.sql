@@ -7,16 +7,16 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE TABLE IF NOT EXISTS `cms_promotions` (
+CREATE TABLE IF NOT EXISTS `products_promotions` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `discount` decimal(5,2) NOT NULL,
-  `start_date` datetime NOT NULL,
-  `end_date` datetime NOT NULL,
-  `is_active` tinyint NOT NULL DEFAULT (1),
-  `created_at` timestamp NOT NULL DEFAULT (now()),
-  `modified_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  `promotion_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `promotions_products_unique_key` (`promotion_id`,`product_id`),
+  KEY `products_promotions_products_product_id_fkey` (`product_id`),
+  KEY `promotions_products_index_key` (`promotion_id`,`product_id`),
+  CONSTRAINT `products_promotions_cms_promotions_promotion_id_fkey` FOREIGN KEY (`promotion_id`) REFERENCES `cms_promotions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `products_promotions_products_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
