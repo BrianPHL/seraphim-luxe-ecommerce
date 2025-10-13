@@ -525,28 +525,6 @@
     border-color: var(--accent-base);
 }
 
-input[type="text"] {
-    width: 100%;
-    border-radius: 0.5rem;
-    border: 1.5px solid var(--bg-outline);
-    padding: 0.7rem;
-    font-size: 1rem;
-    background: var(--bg-secondary);
-    color: var(--tg-primary);
-    transition: border-color 0.2s;
-    margin-bottom: 0.2rem;
-}
-
-input[type="text"]:focus {
-    outline: none;
-    border-color: var(--accent-base);
-}
-
-input[type="text"].input-error {
-    border-color: var(--error-foreground, #e57373);
-    background: #fff0f0;
-}
-
 .input-error {
     border-color: var(--error-foreground, #e57373) !important;
     background: #fff0f0;
