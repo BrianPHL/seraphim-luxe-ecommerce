@@ -17,7 +17,7 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
     const { promotions } = usePromotions();
     const { setDirectCheckout } = useCheckout();
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
-    const { user } = useAuth();
+    const { user, setIsPopupOpen } = useAuth();
     const { showToast } = useToast();
     const { getCategoryById, getActiveSubcategories } = useCategories();
     const navigate = useNavigate();
@@ -45,6 +45,17 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
         
             return promotion.products.some(product => parseInt(product.id) === parseInt(id));
         });
+    };
+
+    const requireAuth = (action) => {
+        
+        if (!user) {
+            setIsPopupOpen(true);
+            return;
+        }
+
+        action();
+
     };
 
     const activePromotion = getActivePromotion();
@@ -305,9 +316,10 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                     <Button
                         type='icon'
                         icon={isInWishlist(id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}
-                        disabled={!user}
                         action={() => {
-                            isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id)
+                            requireAuth(() => {
+                                isInWishlist(id) ? removeFromWishlist(id) : addToWishlist(id)
+                            });
                         }}
                     />
                 </div>
@@ -319,10 +331,11 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                         type='secondary'
                         label='Buy now'
                         externalStyles={styles.checkout}
-                        disabled={isOutOfStock || !user}
                         action={() => {
-                            setModalType('checkout');
-                            setModalOpen(true);
+                            requireAuth(() => {
+                                setModalType('checkout');
+                                setModalOpen(true);
+                            });
                         }}
                     />
                     <Button
@@ -334,10 +347,11 @@ const ProductCard = ({ id, category_id, subcategory_id, category, subcategory, i
                         type='icon-outlined'
                         icon='fa-solid fa-cart-plus'
                         externalStyles={styles.cart}
-                        disabled={isOutOfStock || !user}
                         action={() => {
-                            setModalType('cart');
-                            setModalOpen(true);
+                            requireAuth(() => {
+                                setModalType('cart');
+                                setModalOpen(true);
+                            });
                         }}
                     />
                 </div>
