@@ -373,7 +373,7 @@ const ProductReviews = ({
                         <h4 className={styles['form-title']}>Write a Review</h4>
                         {productName && <p className={styles['product-name']}>for {productName}</p>}
                     </div>
-                    <form onSubmit={handleSubmitReview}>
+                    <form>
                         <div className={styles['form-group']}>
                             <label className={styles['form-label']}>
                                 Rating <span className={styles['required']}>*</span>
@@ -428,13 +428,12 @@ const ProductReviews = ({
                         </div>
                         <div className={styles['form-actions']}>
                             <Button type="secondary" label="Cancel" action={handleCloseReviewModal} disabled={loading} />
-                            <button
-                                type="submit"
-                                className={styles['submit-btn']}
-                                disabled={loading}
-                            >
-                                {loading ? 'Submitting...' : 'Submit Review'}
-                            </button>
+                            <Button
+                                type='primary'
+                                disabled={ loading }
+                                label={ loading ? 'Submitting...' : 'Submit Review' }
+                                action={ handleSubmitReview }
+                            />
                         </div>
                     </form>
                 </div>
