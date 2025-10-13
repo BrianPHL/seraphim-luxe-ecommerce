@@ -26,7 +26,7 @@ const ProductPage = () => {
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const { products } = useProducts();
     const { promotions } = usePromotions();
-    const { user } = useAuth();
+    const { user, setIsPopupOpen } = useAuth();
     const { addToCart } = useCart();
     const { setDirectCheckout } = useCheckout();
     const { showToast } = useToast();
@@ -245,14 +245,6 @@ const ProductPage = () => {
         return product?.image_url ? [product.image_url] : [];
     };
 
-    const requireAuth = (action) => {
-        if (!user) {
-            showToast('You must be signed in to perform this action!', 'error');
-            return;
-        }
-        action();
-    };
-
     // Event handlers
     const handleQuantityChange = (newValue) => {
         setProductQuantity(newValue);
@@ -326,6 +318,17 @@ const ProductPage = () => {
     
     // Generate list of image URLs
     const imageUrls = product ? getProductImageUrls(product) : [];
+
+    const requireAuth = (action) => {
+        
+        if (!user) {
+            setIsPopupOpen(true);
+            return;
+        }
+
+        action();
+
+    };
 
     // Loading state
     if (loading) {
@@ -469,11 +472,10 @@ const ProductPage = () => {
                                 icon='fa-solid fa-credit-card'
                                 iconPosition='left'
                                 externalStyles={styles['checkout']}
-                                disabled={isOutOfStock || !user}
-                                action={() => {
+                                action={ () => requireAuth(() => {
                                     setModalType('checkout');
                                     setModalOpen(true);
-                                }}
+                                })}
                             />
                             <Button
                                 type='primary'
@@ -481,19 +483,17 @@ const ProductPage = () => {
                                 icon='fa-solid fa-cart-plus'
                                 iconPosition='left'
                                 externalStyles={styles['cart']}
-                                disabled={isOutOfStock || !user}
-                                action={() => {
+                                action={ () => requireAuth(() => {
                                     setModalType('cart');
                                     setModalOpen(true);
-                                }}
+                                })}
                             />
                             <Button
                                 type='icon-outlined'
                                 icon={isInWishlist(product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}
-                                disabled={!user}
-                                action={() => {
+                                action={ () => requireAuth(() => {
                                     isInWishlist(product_id) ? removeFromWishlist(product_id) : addToWishlist(product_id);
-                                }}
+                                })}
                             />
                         </div>
                     </div>
