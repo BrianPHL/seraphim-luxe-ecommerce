@@ -1,8 +1,9 @@
 import { useOAuth } from '@hooks';
 import { performOperationWithTimeout, TIMEOUTS } from '@utils';
 import { Button } from '@components';
+import styles from './GoogleLoginButton.module.css';
 
-const GoogleLoginButton = ({ type, ...props }) => {
+const GoogleLoginButton = ({ type }) => {
 
     const { signInThruGoogleSSO } = useOAuth();
     const handleGoogleLogin = async () => {
@@ -50,12 +51,10 @@ const GoogleLoginButton = ({ type, ...props }) => {
     };
 
     return (
-        <Button
-            type='secondary'
-            label='Sign in with Google'
-            action={ handleGoogleLogin }
-            { ...props }
-        />
+        <button type='button' onClick={ handleGoogleLogin } className={ styles['button'] }>
+            <img src="https://res.cloudinary.com/dfvy7i4uc/image/upload/google-icon_qmyhrv.webp" alt="Google icon" />
+            Sign in with Google
+        </button>
     );
 
 }
