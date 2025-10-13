@@ -14,6 +14,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
     const [ isInitializing, setIsInitializing ] = useState(true);
     const [ isUpdatingAvatar, setIsUpdatingAvatar ] = useState(false);
     const [ isRemovingAvatar, setIsRemovingAvatar ] = useState(false);
+    const [ isPopupOpen, setIsPopupOpen ] = useState(false);
     const [ userCount, setUserCount ] = useState(0);
     const [ otpModalData, setOtpModalData ] = useState({
         show: false,
@@ -819,6 +820,8 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             isLoading: isInitializing,
             isUpdatingAvatar,
             isRemovingAvatar,
+            isPopupOpen,
+            setIsPopupOpen,
             otpModalData,
             handleOTPSuccess,
             hideOTP,

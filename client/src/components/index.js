@@ -18,4 +18,5 @@ export { default as OTPModal } from "./OTPModal";
 export { default as Counter } from "./Counter";
 export { default as ProductReviews } from "./ProductReviews";
 export { default as InboxPopup } from "./InboxPopup";
+export { default as AuthPopup } from "./AuthPopup";
 export { default as Banner } from "./Banner";

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-router';
-import { Header, Footer, OTPModal, InboxPopup } from '@components';
+import { Header, Footer, OTPModal, InboxPopup, AuthPopup } from '@components';
 import { useAuth, useTheme } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
@@ -226,6 +226,7 @@ const App = () => {
             />
 
             <InboxPopup />
+            <AuthPopup />
 
         </>
       );

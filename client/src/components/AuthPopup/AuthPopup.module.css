@@ -1,0 +1,136 @@
+@import url('../../index.css');
+
+.wrapper {
+	background-color: rgba(0, 0, 0, 0.5);
+    place-content: center;
+    position: fixed;
+    z-index: 999;
+    height: 100vh;
+    width: 100vw;
+    bottom: 0;
+    left: 0;
+}
+
+.wrapper[data-open=false] {
+    display: none;
+}
+
+.wrapper[data-open=true] {
+    display: grid;
+}
+
+.modal {
+    background-color: var(--bg-secondary);
+    flex-direction: column;
+    border-radius: 0.5rem;
+    display: flex;
+    padding: 2rem;
+    border: 1px solid var(--bg-outline);
+    width: 25rem;
+    gap: 2rem;
+}
+
+.modal-header {
+    justify-content: space-between;
+    align-items: center;
+    display: flex;
+}
+
+.modal-header h3 {
+	font-weight: 500;
+	font-size: 0.875rem;
+	color: var(--tg-primary);
+}
+
+.modal-form {
+    flex-direction: column;
+    flex-shrink: 0;
+    align-self: flex-start;
+    display: flex;
+    width: 100%;
+    gap: 2rem;
+}
+
+.banner-wrapper {
+    min-width: 0;
+    display: flex;
+    flex: 1;
+}
+
+.inputs-container {
+    flex-direction: column;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+}
+
+.ctas-container {
+    flex-direction: column;
+    align-items: center;
+    align-self: stretch;
+    display: flex;
+    gap: 1rem;
+    & > button {
+        padding: 0.75rem 1.25rem;
+        align-self: stretch;
+    }
+    & > p {
+        font-weight: 400;
+        font-size: 0.875rem;
+        color: var(--tg-secondary);
+        & > a {
+            text-decoration: underline;
+            font-weight: 400;
+            transition: 0.25s ease all;
+            color: var(--tg-secondary);
+            &:hover {
+                cursor: pointer;
+                color: var(--accent-base);
+            }
+        }
+    }
+}
+
+.input-wrapper {
+    justify-content: center;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    display: flex;
+    gap: 0.5rem;
+    & > label {
+        font-weight: 500;
+        font-size: 0.75rem;
+        color: var(--tg-primary);
+    }
+}
+
+.error {
+    border-radius: 0.25rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--error-foreground);
+    display: flex;
+    gap: 1rem;
+    & > p {
+        font-weight: 500;
+        font-size: 0.75rem;
+        color: var(--tg-primary);
+    }
+    & > i {
+        color: var(--error-foreground);
+    }
+}
+
+@media only screen and (max-width: 450px) {
+
+    .wrapper {
+        padding: 1rem;
+    }
+    
+    .modal {
+        width: 100%;
+        padding: 0.5rem;
+    }
+
+}
