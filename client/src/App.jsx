@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-router';
-import { Header, Footer, OTPModal, InboxPopup, AuthPopup } from '@components';
+import { Header, Footer, OTPModal, InboxPopup, AuthPopup, GeminiAIChatbot } from '@components';
 import { useAuth, useTheme } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
@@ -65,6 +65,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Home />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -73,6 +74,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <AboutUs />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -81,6 +83,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <ContactUs />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -89,6 +92,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <FAQs />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -97,6 +101,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <PrivacyPolicy />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -105,6 +110,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <CollectionsStore />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -113,6 +119,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <CollectionsProductPage />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -137,6 +144,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Profile />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -145,6 +153,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Orders />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -153,6 +162,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Cart />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -161,6 +171,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Wishlist />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -169,6 +180,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <Checkout />
+                            <GeminiAIChatbot />
                         <Footer />
                     </ProtectedRoute>
                 } />
@@ -189,6 +201,7 @@ const App = () => {
                     <ProtectedRoute>
                         <Header />
                             <AdminLayout />
+                            <GeminiAIChatbot />
                     </ProtectedRoute>
                 }>
                    <Route path="dashboard" element={<AdminDashboard />} />

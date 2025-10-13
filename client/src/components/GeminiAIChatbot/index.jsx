@@ -1,0 +1,178 @@
+import { useState, useEffect } from 'react';
+import { Button, InputField } from '@components';
+import { useAuth, useToast, useGeminiAI } from '@contexts';
+import styles from './GeminiAIChatbot.module.css';
+
+const GeminiAIChatbot = () => {
+
+    const [ isOpen, setIsOpen ] = useState(false);
+    const [ message, setMessage ] = useState('');
+    const [ localChatHistory, setLocalChatHistory ] = useState([]);
+
+    const { user, setIsPopupOpen } = useAuth();
+    const { showToast } = useToast();
+    const { isLoading, chatHistory, fetchChatHistory, sendGeminiAICustomerChat, sendGeminiAIAdminChat } = useGeminiAI();
+
+    const requireAuth = (action) => {
+        
+        if (!user) {
+            setIsPopupOpen(true);
+            return;
+        }
+
+        action();
+
+    };
+
+    const handleWrapperClick = (e) => {
+        if (e.target === e.currentTarget) {
+            setIsOpen(false);
+        }
+    };
+
+    const addUserMessageToChat = (userMessage) => {
+        const userChatEntry = {
+            id: Date.now(),
+            message_type: 'user',
+            message: userMessage,
+            created_at: new Date().toISOString()
+        };
+        
+        setLocalChatHistory(prev => [...prev, userChatEntry]);
+    };
+
+    const addAIResponseToChat = (aiResponse) => {
+        const aiChatEntry = {
+            id: Date.now(),
+            message_type: 'ai',
+            message: aiResponse,
+            created_at: new Date().toISOString()
+        };
+        
+        setLocalChatHistory(prev => [...prev, aiChatEntry]);
+    };
+
+    const handleSubmitChatToGeminiAI = async () => {
+
+        try {
+
+            if (!user) return;
+
+            const userMessage = message.trim();
+            setMessage('');
+
+            addUserMessageToChat(userMessage);
+
+            const result = user.role === 'customer'
+                ? await sendGeminiAICustomerChat(message)
+                : await sendGeminiAIAdminChat(message)
+
+            if (result?.data) {
+                addAIResponseToChat(result.data);
+            }
+
+            setTimeout(() => {
+                fetchChatHistory();
+            }, 500);
+
+        } catch(err) {
+
+            console.error('GeminiAIChatbot component handleSubmitChatToGeminiAI function error: ', err);
+            showToast('An error occured when processing your Chatbot request. Please try again later.', 'error');
+
+            setLocalChatHistory(prev => prev.slice(0, -1));
+
+        }
+
+    };
+
+    useEffect(() => {
+        setLocalChatHistory(chatHistory);
+    }, [chatHistory]);
+
+    useEffect(() => {
+        if (isOpen && user) {
+            fetchChatHistory();
+        }
+    }, [isOpen, user, fetchChatHistory]);
+
+    return (
+        <>
+            <div className={ styles['wrapper'] } data-open={ isOpen } onClick={ handleWrapperClick }>
+                <div className={ styles['chat'] }>
+                    <div className={ styles['chat-header'] }>
+                        <h3>Seraphim Luxe Chatbot</h3>
+                        <Button
+                            type='icon'
+                            icon='fa solid fa-times'
+                            action={ () => setIsOpen(false) }
+                        />
+                    </div>
+                    <div className={ styles['chat-body'] }>
+                        <div className={ styles['chat-body-upper'] }>
+                            {
+                                localChatHistory.length > 0 ? (
+                                    localChatHistory.map((chat) => {
+                                        return (
+                                            <p key={ chat.id } className={ styles['message'] } data-role={chat.message_type}>
+                                                <span className={ styles['message-label'] }>
+                                                    { chat.message_type === 'user' ? 'You' : 'Agent'}
+                                                </span>
+                                                { chat.message }
+                                            </p>
+                                        );
+                                    })
+                                ) : (
+                                    <div className={ styles['placeholder'] }>
+                                        <h2 className={ styles['placeholder-title'] }>Seraphim Luxe AI</h2>
+                                        <p className={ styles['placeholder-body'] }>
+                                            {
+                                                user && user.role === 'customer'
+                                                ? 'Unlock exclusive shopping tips, get instant answers, and discover the perfect products just for you!'
+                                                : 'Streamline your workflow, access business insights, and manage store operations faster!'
+                                            }
+                                        </p>
+                                    </div>
+                                )
+
+                            }
+                            {
+                                isLoading && (
+                                    <p className={ styles['message'] } data-role="ai">
+                                        <span className={ styles['message-label'] }>Agent</span>
+                                        <em>Typing...</em>
+                                    </p>
+                                )
+                            }
+                        </div>
+                        <div className={ styles['chat-body-lower'] }>
+                            <InputField
+                                value={ message }
+                                onChange={event => setMessage(event.target.value)}
+                                hint='Ask anything...'
+                                type='text'
+                                isSubmittable={ false }
+                            />
+                            <Button
+                                type='icon-outlined'
+                                icon='fa-solid fa-paper-plane'
+                                disabled={ !message || isLoading }
+                                action={ handleSubmitChatToGeminiAI }
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <Button
+                type='secondary'
+                label='Ask our AI'
+                iconPosition='left'
+                icon='fa-solid fa-headset'
+                action={ () => requireAuth(() => setIsOpen(true)) }
+                externalStyles={ styles['button'] }
+            />
+        </>
+    );
+};
+
+export default GeminiAIChatbot;

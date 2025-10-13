@@ -1,0 +1,135 @@
+@import url('../../index.css');
+
+.wrapper {
+	background-color: rgba(0, 0, 0, 0.5);
+    place-content: center;
+    position: fixed;
+    z-index: 999;
+    height: 100vh;
+    width: 100vw;
+    bottom: 0;
+    left: 0;
+}
+
+.wrapper[data-open=false] {
+    display: none;
+}
+
+.wrapper[data-open=true] {
+    display: grid;
+}
+
+.chat {
+    background-color: var(--bg-secondary);
+    flex-direction: column;
+    border-radius: 0.25rem;
+    display: flex;
+    padding: 2rem;
+    border: 1px solid var(--bg-outline);
+    width: 40rem;
+    gap: 2rem;
+}
+
+.chat-header {
+    justify-content: space-between;
+    align-items: center;
+    display: flex;
+}
+
+.chat-header h3 {
+	font-weight: 500;
+	font-size: 0.875rem;
+	color: var(--tg-primary);
+}
+
+.chat-body {
+    flex-direction: column;
+    flex-shrink: 0;
+    align-self: flex-start;
+    display: flex;
+    width: 100%;
+    gap: 2rem;
+}
+
+.chat-body-upper {
+    flex-direction: column;
+    border-radius: 0.25rem;
+    overflow-y: auto;
+    display: flex;
+    padding: 1rem;
+    border: 1px solid var(--bg-outline);
+    height: 50vh;
+    gap: 1rem;
+}
+
+.chat-body-upper .message {
+    border-radius: 0.25rem;
+    font-weight: 600;
+    align-items: center;
+    font-size: 1rem;
+    display: flex;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--bg-outline);
+    width: 75%;
+    color: var(--tg-primary);
+    gap: 0.5rem;
+}
+
+.chat-body-upper .message[data-role='agent'] {
+    align-self: flex-start;
+}
+
+.chat-body-upper .message[data-role='user'] {
+    background-color: var(--bg-outline);
+    flex-direction: row-reverse;
+    align-self: flex-end;
+}
+
+.chat-body-upper .message-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--tg-secondary);
+}
+
+.chat-body-upper .placeholder {
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    display: flex;
+    height: 100%;
+    gap: 0.5rem;
+}
+
+.chat-body-upper .placeholder .placeholder-title {
+    color: var(--tg-primary);
+}
+
+.chat-body-upper .placeholder .placeholder-body {
+    color: var(--tg-secondary);
+}
+
+.chat-body-lower {
+    display: flex;
+    gap: 1rem;
+}
+
+.button {
+    background: linear-gradient(135deg, var(--accent-base), var(--accent-hovered));
+    font-size: 1rem;
+    position: fixed;
+    z-index: 8;
+    bottom: 2rem;
+    right: 2rem;
+    color: white;
+    gap: 1rem;
+}
+
+.button:hover {
+    background: linear-gradient(270deg, var(--accent-base), var(--accent-hovered));
+    color: white;
+}
+
+.button > i {
+    font-size: 1.5rem;
+}
