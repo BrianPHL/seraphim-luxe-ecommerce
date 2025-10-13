@@ -19,6 +19,7 @@ import {
   BannersProvider,
   AuditTrailProvider,
   PromotionsProvider,
+  GeminiAIProvider,
   useAuditTrail
 } from '@contexts';
 import App from './App';
@@ -75,51 +76,53 @@ const SettingsWithAuditWrapper = ({ children }) => {
 };
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BrowserRouter>
-      <ThemeProvider>
-        <DropdownProvider>
-          <ToastProvider>
-            <AuditTrailProvider>
-              <AuthWithAuditWrapper>
-                <NotificationsProvider>
-                  <CMSProvider>
-                    <PromotionsProvider>
-                      <BannersProvider>
-                        <SettingsProvider>
-                          <SettingsWithAuditWrapper>
-                            <CategoriesProvider>
-                              <ProductsProvider>
-                                <OrdersProvider>
-                                  <WishlistProvider>
-                                    <WishlistWithAuditWrapper>
-                                      <CartProvider>
-                                        <CartWithAuditWrapper>
-                                          <CheckoutProvider>
-                                            <CheckoutWithAuditWrapper>
-                                              <StocksProvider>
-                                                <App />
-                                              </StocksProvider>
-                                            </CheckoutWithAuditWrapper>
-                                          </CheckoutProvider>
-                                        </CartWithAuditWrapper>
-                                      </CartProvider>
-                                    </WishlistWithAuditWrapper>
-                                  </WishlistProvider>
-                                </OrdersProvider>
-                              </ProductsProvider>
-                            </CategoriesProvider>
-                          </SettingsWithAuditWrapper>
-                        </SettingsProvider>
-                      </BannersProvider>
-                    </PromotionsProvider>
-                  </CMSProvider>
-                </NotificationsProvider>
-              </AuthWithAuditWrapper>
-            </AuditTrailProvider>
-          </ToastProvider>
-        </DropdownProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  </StrictMode>,
+	<StrictMode>
+		<BrowserRouter>
+    		<ThemeProvider>
+        		<DropdownProvider>
+          			<ToastProvider>
+            			<AuditTrailProvider>
+              				<AuthWithAuditWrapper>
+                				<NotificationsProvider>
+                  					<CMSProvider>
+                    					<PromotionsProvider>
+                      						<BannersProvider>
+                        						<SettingsProvider>
+                          							<SettingsWithAuditWrapper>
+                            							<CategoriesProvider>
+                              								<ProductsProvider>
+                              									<OrdersProvider>
+                              										<WishlistProvider>
+                              								    		<WishlistWithAuditWrapper>
+                              												<CartProvider>
+                              								        			<CartWithAuditWrapper>
+                              								            			<CheckoutProvider>
+                              								              				<CheckoutWithAuditWrapper>
+                              								                				<StocksProvider>
+                              								                  					<GeminiAIProvider>
+                                                  													<App />
+                                                												</GeminiAIProvider>
+                                              												</StocksProvider>
+                                            											</CheckoutWithAuditWrapper>
+                                          											</CheckoutProvider>
+                                        										</CartWithAuditWrapper>
+                                      										</CartProvider>
+                                    									</WishlistWithAuditWrapper>
+                                  									</WishlistProvider>
+                                								</OrdersProvider>
+                              								</ProductsProvider>
+                            							</CategoriesProvider>
+                          							</SettingsWithAuditWrapper>
+                        						</SettingsProvider>
+                      						</BannersProvider>
+                    					</PromotionsProvider>
+                  					</CMSProvider>
+                				</NotificationsProvider>
+              				</AuthWithAuditWrapper>
+            			</AuditTrailProvider>
+          			</ToastProvider>
+        		</DropdownProvider>
+      		</ThemeProvider>
+    	</BrowserRouter>
+	</StrictMode>,
 );
