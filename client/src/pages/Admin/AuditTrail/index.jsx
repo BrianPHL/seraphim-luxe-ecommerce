@@ -53,6 +53,10 @@ const AuditTrail = () => {
     const getFilteredActionTypes = () => {
         return getActionTypesByRole(selectedUserRole);
     };
+
+    useEffect(() => {
+        fetchStats();
+    }, []);    
     
     // Load audit logs on mount and when filters change
     useEffect(() => {
@@ -164,7 +168,6 @@ const AuditTrail = () => {
             'subcategory_id': 'Subcategory',
             'description': 'Description',
             'stock_quantity': 'Stock Quantity',
-            'stock_threshold': 'Stock Threshold',
             'is_featured': 'Featured Status',
             'image_url': 'Image URL'
         };
@@ -180,8 +183,6 @@ const AuditTrail = () => {
             case 'is_featured':
                 return value ? 'Yes' : 'No';
             case 'stock_quantity':
-            case 'stock_threshold':
-                return `${value} units`;
             default:
                 return value.toString();
         }
@@ -189,37 +190,42 @@ const AuditTrail = () => {
 
     const getActionIcon = (actionType) => {
         const iconMap = {
-            'auth_signin': 'fa-solid fa-sign-in-alt',
+            'auth_signin': 'fa-solid fa-right-to-bracket',           
             'auth_signup': 'fa-solid fa-user-plus',
-            'auth_signout': 'fa-solid fa-sign-out-alt',
+            'auth_signout': 'fa-solid fa-right-from-bracket',       
             'auth_password_change': 'fa-solid fa-key', 
-            'profile_update': 'fa-solid fa-user-edit',
+            'profile_update': 'fa-solid fa-user-pen',               
             'profile_preferences_update': 'fa-solid fa-cog', 
-            'cart_add': 'fa-solid fa-shopping-cart',
-            'cart_remove': 'fa-solid fa-cart-minus',
+            'cart_add': 'fa-solid fa-cart-plus',                     
+            'cart_remove': 'fa-solid fa-cart-arrow-down',          
             'cart_update': 'fa-solid fa-cart-arrow-down',
             'wishlist_add': 'fa-solid fa-heart',
-            'wishlist_remove': 'fa-solid fa-heart-broken',
-            'order_create': 'fa-solid fa-shopping-bag',
-            'order_update': 'fa-solid fa-edit',
-            'order_cancel': 'fa-solid fa-times-circle',
-            'admin_product_create': 'fa-solid fa-plus-circle',
-            'admin_product_update': 'fa-solid fa-edit',
+            'wishlist_remove': 'fa-solid fa-heart-crack',           
+            'order_create': 'fa-solid fa-bag-shopping',             
+            'order_update': 'fa-solid fa-pen-to-square',             
+            'order_cancel': 'fa-solid fa-xmark-circle',             
+            'admin_product_create': 'fa-solid fa-circle-plus',       
+            'admin_product_update': 'fa-solid fa-pen-to-square',   
             'admin_product_delete': 'fa-solid fa-trash',
             'admin_category_create': 'fa-solid fa-folder-plus',
-            'admin_category_update': 'fa-solid fa-folder-edit',
+            'admin_category_update': 'fa-solid fa-pen-to-square',  
             'admin_category_delete': 'fa-solid fa-folder-minus',
-            'admin_stock_update': 'fa-solid fa-boxes',
-            'admin_stock_restock': 'fa-solid fa-truck-loading',
-            'admin_settings_update': 'fa-solid fa-cog',
+            'admin_stock_update': 'fa-solid fa-boxes-stacked',      
+            'admin_settings_update': 'fa-solid fa-gear',            
             'admin_account_create': 'fa-solid fa-user-plus',
-            'admin_account_update': 'fa-solid fa-user-edit',
+            'admin_account_update': 'fa-solid fa-user-pen',         
             'admin_account_suspend': 'fa-solid fa-user-lock',
             'order_invoice_print': 'fa-solid fa-print',
             'order_invoice_report_print': 'fa-solid fa-print',
-            'admin_account_remove': 'fa-solid fa-user-minus'
+            'admin_account_remove': 'fa-solid fa-user-minus',
+            'customer_account_remove': 'fa-solid fa-user-minus',
+            'admin_promotion_create': 'fa-solid fa-bullhorn',         
+            'admin_promotion_update': 'fa-solid fa-pen-to-square',    
+            'admin_promotion_delete': 'fa-solid fa-trash',        
+            'admin_promotion_toggle': 'fa-solid fa-toggle-on',     
+            'admin_cms_page_update': 'fa-solid fa-file-lines'
         };
-        return iconMap[actionType] || 'fa-solid fa-info-circle';
+        return iconMap[actionType] || actionType || 'Unknown Action';
     };
 
     const getActionColor = (actionType) => {
@@ -376,7 +382,7 @@ const AuditTrail = () => {
                         <div className={styles['table-header']}>
                             <div className={styles['table-cell']}>Action</div>
                             <div className={styles['table-cell']}>User</div>
-                            <div className={styles['table-cell']}>Resource</div>
+                            {/* <div className={styles['table-cell']}>Resource</div> */}
                             <div className={styles['table-cell']}>Date & Time</div>
                             <div className={styles['table-cell']}>Actions</div>
                         </div>
@@ -504,13 +510,13 @@ const AuditTrail = () => {
                                             })()}
                                         </div>
                                     </div>
-                                    <div className={styles['table-cell']}>
+                                    {/* <div className={styles['table-cell']}>
                                         {log.resource_type && (
                                             <span className={styles['resource']}>
                                                 {log.resource_type} #{log.resource_id}
                                             </span>
                                         )}
-                                    </div>
+                                    </div> */}
                                     <div className={styles['table-cell']}>
                                         {formatDateTime(log.created_at)}
                                     </div>
@@ -566,14 +572,14 @@ const AuditTrail = () => {
                                         {formatDateTime(selectedLog.created_at)}
                                     </span>
                                 </div>
-                                {selectedLog.resource_type && (
+                                {/* {selectedLog.resource_type && (
                                     <div className={styles['detail-item']}>
                                         <span className={styles['detail-label']}>Resource:</span>
                                         <span className={styles['detail-value']}>
                                             {selectedLog.resource_type} #{selectedLog.resource_id}
                                         </span>
                                     </div>
-                                )}
+                                )} */}
                             </div>
                         </div>
 
@@ -658,10 +664,10 @@ const AuditTrail = () => {
                                         })()}
                                     </span>
                                 </div>
-                                <div className={styles['detail-item']}>
+                                {/* <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>IP Address:</span>
                                     <span className={styles['detail-value']}>{selectedLog.ip_address}</span>
-                                </div>
+                                </div> */}
                                 <div className={styles['detail-item']}>
                                     <span className={styles['detail-label']}>User Agent:</span>
                                     <span className={styles['detail-value']}>{selectedLog.user_agent}</span>
