@@ -1,7 +1,5 @@
 import pool from "../apis/db.js";
 import express from 'express';
-import { AuditLogger } from '../utils/audit-trail.js';
-import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
