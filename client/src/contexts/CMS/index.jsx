@@ -1,11 +1,14 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { fetchWithTimeout } from '@utils';
+import { useAuth, useAuditTrail } from '@contexts';
 import CMSContext from "./context";
 
 export const CMSProvider = ({ children }) => {
     const [pages, setPages] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { user } = useAuth();
+    const { logAdminCMSPageUpdate } = useAuditTrail();
 
     const defaultContent = {
         home: "FEATURED_TITLE: Featured Products\n\n" +
@@ -140,6 +143,9 @@ export const CMSProvider = ({ children }) => {
 
     const updatePage = async (pageSlug, content, title) => {
         try {
+
+            const oldContent = pages[pageSlug];
+
             const response = await fetchWithTimeout(`/api/cms/${pageSlug}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -151,6 +157,22 @@ export const CMSProvider = ({ children }) => {
 
             if (!response.ok) {
                 throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+
+            if (logAdminCMSPageUpdate && user) {
+                await logAdminCMSPageUpdate(
+                    pageSlug,
+                    oldContent,
+                    content,
+                    title,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             const updatedPages = { ...pages, [pageSlug]: content };

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import CategoriesContext from './context';
 import { useToast } from '../Toast';
+import { useAuth, useAuditTrail } from '@contexts';
 
 export const CategoriesProvider = ({ children }) => {
     
@@ -8,6 +9,8 @@ export const CategoriesProvider = ({ children }) => {
     const [ subcategories, setSubcategories ] = useState({});
     const [ loading, setLoading ] = useState(false);
     const { showToast } = useToast();
+    const { user } = useAuth();
+    const { logAdminCategoryCreate, logAdminCategoryUpdate, logAdminCategoryDelete } = useAuditTrail();
 
     const fetchCategories = async () => {
         try {
@@ -77,6 +80,25 @@ export const CategoriesProvider = ({ children }) => {
                 throw new Error(result.error || 'Failed to create category');
             }
 
+            if (logAdminCategoryCreate && user) {
+                await logAdminCategoryCreate(
+                    result.id,
+                    {
+                        name: categoryData.name,
+                        description: categoryData.description,
+                        sort_order: categoryData.sort_order,
+                        is_active: categoryData.is_active ?? true
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
             showToast(result.message, 'success');
             await fetchCategories();
             return result;
@@ -100,6 +122,27 @@ export const CategoriesProvider = ({ children }) => {
                 throw new Error(result.error || 'Failed to create subcategory');
             }
 
+            if (logAdminCategoryCreate && user) {
+                await logAdminCategoryCreate(
+                    result.id,
+                    {
+                        category_id: categoryId,
+                        name: subcategoryData.name,
+                        description: subcategoryData.description,
+                        sort_order: subcategoryData.sort_order,
+                        is_active: subcategoryData.is_active ?? true,
+                        type: 'subcategory'
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
             showToast(result.message, 'success');
             await fetchCategories();
             await fetchSubcategories(categoryId);
@@ -112,6 +155,9 @@ export const CategoriesProvider = ({ children }) => {
 
     const updateCategory = async (categoryId, categoryData) => {
         try {
+
+            const oldCategory = categories.find(cat => cat.id === categoryId);
+
             const response = await fetch(`/api/categories/${categoryId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -122,6 +168,31 @@ export const CategoriesProvider = ({ children }) => {
 
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to update category');
+            }
+
+            if (logAdminCategoryUpdate && user && oldCategory) {
+                await logAdminCategoryUpdate(
+                    categoryId,
+                    {
+                        name: oldCategory.name,
+                        description: oldCategory.description,
+                        sort_order: oldCategory.sort_order,
+                        is_active: oldCategory.is_active
+                    },
+                    {
+                        name: categoryData.name,
+                        description: categoryData.description,
+                        sort_order: categoryData.sort_order,
+                        is_active: categoryData.is_active
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             showToast(result.message, 'success');
@@ -135,6 +206,11 @@ export const CategoriesProvider = ({ children }) => {
 
     const updateSubcategory = async (subcategoryId, subcategoryData) => {
         try {
+
+            const oldSubcategory = Object.values(subcategories)
+                .flat()
+                .find(sub => sub.id === subcategoryId);
+
             const response = await fetch(`/api/categories/subcategories/${subcategoryId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -145,6 +221,35 @@ export const CategoriesProvider = ({ children }) => {
 
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to update subcategory');
+            }
+
+            if (logAdminCategoryUpdate && user && oldSubcategory) {
+                await logAdminCategoryUpdate(
+                    subcategoryId,
+                    {
+                        category_id: oldSubcategory.category_id,
+                        name: oldSubcategory.name,
+                        description: oldSubcategory.description,
+                        sort_order: oldSubcategory.sort_order,
+                        is_active: oldSubcategory.is_active,
+                        type: 'subcategory'
+                    },
+                    {
+                        category_id: subcategoryData.category_id,
+                        name: subcategoryData.name,
+                        description: subcategoryData.description,
+                        sort_order: subcategoryData.sort_order,
+                        is_active: subcategoryData.is_active,
+                        type: 'subcategory'
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             showToast(result.message, 'success');
@@ -158,6 +263,9 @@ export const CategoriesProvider = ({ children }) => {
 
     const deleteCategory = async (categoryId) => {
         try {
+
+            const categoryToDelete = categories.find(cat => cat.id === categoryId);
+
             const response = await fetch(`/api/categories/${categoryId}`, {
                 method: 'DELETE'
             });
@@ -166,6 +274,26 @@ export const CategoriesProvider = ({ children }) => {
 
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to delete category');
+            }
+
+            if (logAdminCategoryDelete && user && categoryToDelete) {
+                await logAdminCategoryDelete(
+                    categoryId,
+                    {
+                        name: categoryToDelete.name,
+                        description: categoryToDelete.description,
+                        sort_order: categoryToDelete.sort_order,
+                        is_active: categoryToDelete.is_active,
+                        product_count: categoryToDelete.product_count || 0
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             showToast(result.message, 'success');
@@ -179,6 +307,11 @@ export const CategoriesProvider = ({ children }) => {
 
     const deleteSubcategory = async (subcategoryId) => {
         try {
+
+            const subcategoryToDelete = Object.values(subcategories)
+                .flat()
+                .find(sub => sub.id === subcategoryId);
+
             const response = await fetch(`/api/categories/subcategories/${subcategoryId}`, {
                 method: 'DELETE'
             });
@@ -187,6 +320,28 @@ export const CategoriesProvider = ({ children }) => {
 
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to delete subcategory');
+            }
+
+            if (logAdminCategoryDelete && user && subcategoryToDelete) {
+                await logAdminCategoryDelete(
+                    subcategoryId,
+                    {
+                        category_id: subcategoryToDelete.category_id,
+                        name: subcategoryToDelete.name,
+                        description: subcategoryToDelete.description,
+                        sort_order: subcategoryToDelete.sort_order,
+                        is_active: subcategoryToDelete.is_active,
+                        product_count: subcategoryToDelete.product_count || 0,
+                        type: 'subcategory'
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             showToast(result.message, 'success');

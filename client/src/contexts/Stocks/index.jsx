@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import StocksContext from "./context";
-import { useAuth, useToast, useProducts } from '@contexts';
+import { useAuth, useToast, useProducts, useAuditTrail } from '@contexts';
 
 export const StocksProvider = ({ children }) => {
     const [ lowStockProducts, setLowStockProducts ] = useState([]);
@@ -10,6 +10,7 @@ export const StocksProvider = ({ children }) => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const { products, refreshProducts } = useProducts();
+    const { logAdminStockUpdate } = useAuditTrail();
 
     useEffect(() => {
         if (products && products.length > 0) {
@@ -27,7 +28,14 @@ export const StocksProvider = ({ children }) => {
         }
         
         try {
+
             setIsLoading(true);
+
+            const currentProduct = products.find(p => (p.id || p.product_id) === productId);
+            const oldStock = currentProduct?.stock_quantity || 0;
+            const oldThreshold = currentProduct?.stock_threshold || 0;
+            const productName = currentProduct?.label || `Product #${productId}`;
+
             const response = await fetch('/api/stocks/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -44,6 +52,26 @@ export const StocksProvider = ({ children }) => {
             
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to add stock');
+            }
+
+            const newStock = oldStock + quantityChange;
+
+            if (logAdminStockUpdate) {
+                await logAdminStockUpdate(
+                    productId,
+                    productName,
+                    oldStock,
+                    newStock,
+                    quantityChange,
+                    notes,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             await refreshProducts();

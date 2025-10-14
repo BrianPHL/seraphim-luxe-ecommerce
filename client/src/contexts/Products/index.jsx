@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect, useCallback } from "react";
 import ProductsContext from "./context";
-import { useToast } from '@contexts';
+import { useToast, useAuditTrail, useAuth } from '@contexts';
 import { fetchWithTimeout } from "@utils";
 
 export const ProductsProvider = ({ children }) => {
@@ -10,7 +10,8 @@ export const ProductsProvider = ({ children }) => {
     const [ error, setError ] = useState(null);
     const [ lastFetched, setLastFetched ] = useState(null);
     const { showToast } = useToast();
-
+    const { logAdminProductCreate, logAdminProductUpdate, logAdminProductDelete } = useAuditTrail();
+    const { user } = useAuth();
     const fetchProducts = async () => {
 
         try {
@@ -56,6 +57,8 @@ export const ProductsProvider = ({ children }) => {
         try {
 
             setLoading(true);
+
+            const currentProduct = products.find(p => p.id === productId);
             
             const response = await fetch(`/api/products/${ productId }`, {
                 method: 'DELETE',
@@ -67,6 +70,16 @@ export const ProductsProvider = ({ children }) => {
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to delete product');
+            }
+
+            if (logAdminProductDelete && currentProduct && user) {
+                await logAdminProductDelete(productId, currentProduct, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
             }
             
             showToast('Product successfully deleted', 'success');
@@ -92,9 +105,21 @@ export const ProductsProvider = ({ children }) => {
                 },
                 body: JSON.stringify(productData)
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to create product');
+            }
+
+            const newProduct = await response.json();
+
+            if (logAdminProductCreate && user) {
+                await logAdminProductCreate(newProduct.id, productData, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
             }
 
             await fetchProducts(true);
@@ -114,6 +139,8 @@ export const ProductsProvider = ({ children }) => {
         
         try {
             setLoading(true);
+
+            const currentProduct = products.find(p => p.id === productId);
             
             const response = await fetch(`/api/products/${ productId }`, {
                 method: 'PUT',
@@ -122,10 +149,21 @@ export const ProductsProvider = ({ children }) => {
                 },
                 body: JSON.stringify(productData)
             });
-            const data = await response.json();
 
             if (!response.ok) {
                 throw new Error('Failed to update product data!');
+            }
+                        
+            const data = await response.json();
+
+            if (logAdminProductUpdate && currentProduct && user) {
+                await logAdminProductUpdate(productId, currentProduct, productData, {
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    role: user.role
+                });
             }
 
             await fetchProducts(true);
@@ -149,6 +187,8 @@ export const ProductsProvider = ({ children }) => {
         
         try {
             setLoading(true);
+
+            const currentProduct = products.find(p => p.id === productId);
             
             const response = await fetch(`/api/products/${ productId }/feature/${ isFeatured }`, {
                 method: 'PUT',
@@ -156,10 +196,26 @@ export const ProductsProvider = ({ children }) => {
                     'Content-Type': 'application/json'
                 }
             });
-            const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(`Failed to ${ isFeatured ? 'feature' : 'un-feature' } product!`);
+            }
+
+            const data = await response.json();
+
+            if (logAdminProductUpdate && currentProduct && user) {
+                await logAdminProductUpdate(
+                    productId, 
+                    currentProduct, 
+                    { ...currentProduct, is_featured: isFeatured },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
             }
 
             await fetchProducts(true);

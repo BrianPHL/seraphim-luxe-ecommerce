@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useAuditTrail } from '@contexts';
 import { fetchWithTimeout } from "@utils";
 import PromotionsContext from './context';
 
@@ -9,6 +9,7 @@ export const PromotionsProvider = ({ children }) => {
     const { showToast } = useToast();
     const [ promotions, setPromotions ] = useState([]);
     const [ loading, setLoading ] = useState(true);
+    const { logAdminPromotionCreate, logAdminPromotionUpdate, logAdminPromotionDelete, logAdminPromotionToggle } = useAuditTrail();
 
     const fetchPromotions = useCallback(async () => {
 
@@ -53,7 +54,24 @@ export const PromotionsProvider = ({ children }) => {
             if (!response.ok)
                 throw new Error("Failed to add promotion");
 
+            const newPromotion = await response.json();
+
             await fetchPromotions();
+
+            if (logAdminPromotionCreate && user) {
+                await logAdminPromotionCreate(
+                    newPromotion.id,
+                    data,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
             showToast('Promotion updated successfully!', 'success');
             return true;
 
@@ -75,6 +93,8 @@ export const PromotionsProvider = ({ children }) => {
 
             setLoading(true);
 
+            const oldPromotion = promotions.find(promotion => promotion.id === id);
+
             const response = await fetchWithTimeout(`/api/cms/promotions/modify/${ id }`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -85,6 +105,22 @@ export const PromotionsProvider = ({ children }) => {
                 throw new Error("Failed to modify promotion");
 
             await fetchPromotions();
+
+            if (logAdminPromotionUpdate) {
+                await logAdminPromotionUpdate(
+                    id,
+                    oldPromotion,
+                    data,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
             showToast('Promotion updated successfully!', 'success');
             return true;
 
@@ -106,6 +142,9 @@ export const PromotionsProvider = ({ children }) => {
 
             setLoading(true);
 
+            const promotion = promotions.find(p => p.id === id);
+            const promotionName = promotion?.name || promotion?.title || promotion?.code || 'Unknown Promotion';
+
             const response = await fetchWithTimeout(`/api/cms/promotions/${ id }/toggle-availability/${ state }`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' }
@@ -115,6 +154,22 @@ export const PromotionsProvider = ({ children }) => {
                 throw new Error("Failed to toggle availability of promotion");
 
             await fetchPromotions();
+
+            if (logAdminPromotionToggle) {
+                await logAdminPromotionToggle(
+                    id,
+                    promotionName,
+                    state,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
             showToast(`Promotion ${ state === 1 ? 'activated' : 'deactivated' } successfully!`, 'success');
             return true;
 
@@ -136,6 +191,8 @@ export const PromotionsProvider = ({ children }) => {
 
             setLoading(true);
 
+            const promotionToDelete = promotions.find(p => p.id === id);
+
             const response = await fetchWithTimeout(`/api/cms/promotions/remove/${ id }`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
@@ -145,6 +202,21 @@ export const PromotionsProvider = ({ children }) => {
                 throw new Error("Failed to remove promotion");
 
             await fetchPromotions();
+
+            if (logAdminPromotionDelete && promotionToDelete) {
+                await logAdminPromotionDelete(
+                    id,
+                    promotionToDelete,
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
             showToast('Promotion deleted successfully!', 'success');
             return true;
 
