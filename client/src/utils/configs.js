@@ -779,19 +779,26 @@ export const ADMIN_ACTION_TYPES = [
     'admin_category_update',
     'admin_category_delete',
     'admin_stock_update',
-    'admin_stock_restock',
     'admin_settings_update',
     'admin_account_create',
     'admin_account_update',
     'admin_account_suspend',
     'admin_account_remove',
+    'order_update',
     'order_invoice_print',
     'order_invoice_report_print',
     'auth_signin',
     'auth_signout',
     'auth_password_change',
     'profile_update',
-    'profile_preferences_update'
+    'profile_preferences_update',
+    'account_suspension',
+    'account_deletion',
+    'admin_promotion_create',
+    'admin_promotion_update',
+    'admin_promotion_delete',
+    'admin_promotion_toggle',
+    'admin_cms_page_update'
 ];
 
 export const CUSTOMER_ACTION_TYPES = [
@@ -808,7 +815,6 @@ export const CUSTOMER_ACTION_TYPES = [
     'wishlist_add',
     'wishlist_remove',
     'order_create',
-    'order_update',
     'order_cancel',
     'customer_account_remove'
 ];
@@ -848,7 +854,6 @@ export const ACTION_TYPE_LABELS = {
     'admin_category_update': 'Update Category',
     'admin_category_delete': 'Delete Category',
     'admin_stock_update': 'Update Stock',
-    'admin_stock_restock': 'Restock Inventory', 
     'admin_settings_update': 'Update Settings',
     'admin_account_create': 'Admin Created An Account',
     'admin_account_update': 'Admin Updated An Account',
@@ -857,5 +862,10 @@ export const ACTION_TYPE_LABELS = {
     'order_invoice_report_print': 'Print Invoice Report',
     'admin_account_remove': 'Account Removed',
     'customer_account_remove': 'Account Removed',
+    'admin_promotion_create': 'Create Promotion',
+    'admin_promotion_update': 'Update Promotion',
+    'admin_promotion_delete': 'Delete Promotion',
+    'admin_promotion_toggle': 'Toggle Promotion Availability',
+    'admin_cms_page_update': 'Update CMS Page'
 };
 

@@ -17,24 +17,21 @@ export const AuditTrailProvider = ({ children, user }) => {
         user_role: ''
     });
 
-    // Fetch audit logs from server
     const fetchAuditLogs = async (options = {}) => {
         try {
             setLoading(true);
             
             const queryParams = new URLSearchParams();
             
-            // Add pagination and search options
             queryParams.append('page', options.page || 1);
             queryParams.append('limit', options.limit || 10000);
             if (options.search) queryParams.append('search', options.search);
             
-            // Add existing filters only if they have values
             if (filters.action_type) queryParams.append('action_type', filters.action_type);
             if (filters.start_date) queryParams.append('start_date', filters.start_date);
             if (filters.end_date) queryParams.append('end_date', filters.end_date);
             if (filters.user_id) queryParams.append('user_id', filters.user_id);
-            if (filters.user_role) queryParams.append('user_role', filters.user_role); // Add this
+            if (filters.user_role) queryParams.append('user_role', filters.user_role); 
 
             const response = await fetch(`/api/audit-trail?${queryParams}`);
             if (!response.ok) throw new Error('Failed to fetch audit logs');
@@ -44,7 +41,6 @@ export const AuditTrailProvider = ({ children, user }) => {
             if (options.page === 1 || !options.page) {
                 setAuditLogs(data.logs || data);
             } else {
-                // For pagination, append to existing logs
                 setAuditLogs(prev => [...prev, ...(data.logs || data)]);
             }
             
@@ -58,7 +54,6 @@ export const AuditTrailProvider = ({ children, user }) => {
         }
     };
 
-    // Fetch audit statistics
     const fetchStats = async () => {
         try {
             const response = await fetch('/api/audit-trail/stats');
@@ -73,13 +68,13 @@ export const AuditTrailProvider = ({ children, user }) => {
         }
     };
 
-    // Helper function to add log entry to UI immediately
     const addLogEntry = (logData) => {
         const newLog = {
             id: Date.now(),
             ...logData,
             created_at: new Date().toISOString(),
             timestamp: new Date().toISOString(),
+            user_id: logData.user_id || user?.id,
             first_name: logData.first_name || user?.first_name || 'Unknown',
             last_name: logData.last_name || user?.last_name || 'User',
             email: logData.email || user?.email || 'unknown@email.com',
@@ -90,41 +85,28 @@ export const AuditTrailProvider = ({ children, user }) => {
         setAuditLogs(prev => [newLog, ...prev]);
     };
 
-    // Log different types of actions (client-side logging + server sync)
     const logAction = async (logData) => {
         try {
-            // Immediately add to UI for real-time feedback
-            addLogEntry({
+            const auditData = {
                 user_id: logData.user_id || user?.id,
                 first_name: logData.first_name || user?.first_name || 'Unknown',
-                last_name: logData.last_name || user?.last_name || 'User',
+                last_name: logData.last_name || user?.last_name || 'User', 
                 email: logData.email || user?.email || 'unknown@email.com',
                 role: logData.role || user?.role || 'user',
                 action_type: logData.action_type,
                 resource_type: logData.resource_type || null,
                 resource_id: logData.resource_id || null,
                 details: logData.details || '',
-                old_values: logData.old_values ? JSON.stringify(logData.old_values) : null,
-                new_values: logData.new_values ? JSON.stringify(logData.new_values) : null
-            });
+                old_values: logData.old_values || null,
+                new_values: logData.new_values || null
+            };
 
-            // Send to server for persistence
+            addLogEntry(auditData);
+
             const response = await fetch('/api/audit-trail/log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: logData.user_id || user?.id,
-                    first_name: logData.first_name || user?.first_name,
-                    last_name: logData.last_name || user?.last_name,
-                    email: logData.email || user?.email,
-                    role: logData.role || user?.role,
-                    action_type: logData.action_type,
-                    resource_type: logData.resource_type || null,
-                    resource_id: logData.resource_id || null,
-                    details: logData.details || '',
-                    old_values: logData.old_values || null,
-                    new_values: logData.new_values || null
-                })
+                body: JSON.stringify(auditData)
             });
 
             if (!response.ok) {
@@ -138,7 +120,6 @@ export const AuditTrailProvider = ({ children, user }) => {
         }
     };
 
-    // Specific logging methods
     const logSignUp = (details = 'User signed up ', userData, userInfo = {}) => {
         return logAction({
             action_type: 'auth_signup',
@@ -170,13 +151,25 @@ export const AuditTrailProvider = ({ children, user }) => {
     };
 
     const logCustomerAccountDelete = (userId, userData, userInfo = {}) => {
+        const safeUserData = {
+            email: userData?.email || userInfo?.email || 'unknown@email.com',
+            first_name: userData?.first_name || userInfo?.first_name || 'Unknown',
+            last_name: userData?.last_name || userInfo?.last_name || 'User',
+            role: userData?.role || userInfo?.role || 'customer',
+            ...userData
+        };
+
         return logAction({
             action_type: 'customer_account_remove',
             resource_type: 'account',
             resource_id: userId,
-            old_values: userData,
-            details: `Customer deleted their own account (${userData.email})`,
-            ...userInfo
+            old_values: safeUserData,
+            details: `Customer deleted their own account (${safeUserData.email})`,
+            user_id: userId,
+            first_name: safeUserData.first_name,
+            last_name: safeUserData.last_name,
+            email: safeUserData.email,
+            role: safeUserData.role
         });
     };
 
@@ -287,14 +280,15 @@ export const AuditTrailProvider = ({ children, user }) => {
         });
     };
 
-    const logOrderUpdate = (orderId, oldValues, newValues) => {
+    const logOrderUpdate = (orderId, oldValues, newValues, userInfo = {}) => {
         return logAction({
             action_type: 'order_update',
             resource_type: 'order',
             resource_id: orderId,
             old_values: oldValues,
             new_values: newValues,
-            details: `Order #${orderId} updated`
+            details: `Order #${oldValues.order_number || orderId} status updated from ${oldValues.status} to ${newValues.status}`,
+            ...userInfo
         });
     };
 
@@ -307,35 +301,37 @@ export const AuditTrailProvider = ({ children, user }) => {
         });
     };
 
-    // Admin actions
-    const logAdminProductCreate = (productId, productData) => {
+    const logAdminProductCreate = (productId, productData, userInfo = {}) => {
         return logAction({
             action_type: 'admin_product_create',
             resource_type: 'product',
             resource_id: productId,
             new_values: productData,
-            details: `Product ${productData.label || productId} created`
+            details: `Product ${productData.label || productId} created`,
+            ...userInfo
         });
     };
 
-    const logAdminProductUpdate = (productId, oldValues, newValues) => {
+    const logAdminProductUpdate = (productId, oldValues, newValues, userInfo = {}) => {
         return logAction({
             action_type: 'admin_product_update',
             resource_type: 'product',
             resource_id: productId,
             old_values: oldValues,
             new_values: newValues,
-            details: 'Product updated by admin'
+            details: 'Product updated by admin',
+            ...userInfo
         });
     };
 
-    const logAdminProductDelete = (productId, productData) => {
+    const logAdminProductDelete = (productId, productData, userInfo = {}) => {
         return logAction({
             action_type: 'admin_product_delete',
             resource_type: 'product',
             resource_id: productId,
             old_values: productData,
-            details: `Product ${productData.label || productId} deleted`
+            details: `Product ${productData.label || productId} deleted`,
+            ...userInfo
         });
     };
 
@@ -363,36 +359,186 @@ export const AuditTrailProvider = ({ children, user }) => {
     };
 
     const logAdminAccountDelete = (targetUserId, userData, userInfo = {}) => {
+        const safeUserData = {
+            email: userData?.email || 'unknown@email.com',
+            first_name: userData?.first_name || 'Unknown',
+            last_name: userData?.last_name || 'User', 
+            role: userData?.role || 'customer',
+            phone_number: userData?.phone_number,
+            ...userData
+        };
+
         return logAction({
             action_type: 'admin_account_remove',
             resource_type: 'account',
             resource_id: targetUserId,
-            old_values: userData,
-            details: `Account deleted for ${userData.email || 'unknown user'}`,
+            old_values: {
+                ...safeUserData,
+                deleted_user_name: `${safeUserData.first_name} ${safeUserData.last_name}`,
+                deleted_user_email: safeUserData.email,
+                deleted_user_role: safeUserData.role
+            },
+            details: `Account deleted for ${safeUserData.email} (${safeUserData.first_name} ${safeUserData.last_name})`,
+            user_id: userInfo.user_id || user?.id,
+            first_name: userInfo.first_name || user?.first_name,
+            last_name: userInfo.last_name || user?.last_name,
+            email: userInfo.email || user?.email,
+            role: userInfo.role || user?.role
+        });
+    };
+
+    // Stock Logs
+    const logAdminStockUpdate = (productId, productName, oldStock, newStock, quantityChange, notes, userInfo = {}) => {
+        return logAction({
+            action_type: 'admin_stock_update',
+            resource_type: 'product',
+            resource_id: productId,
+            old_values: { 
+                stock_quantity: oldStock,
+                product_name: productName
+            },
+            new_values: { 
+                stock_quantity: newStock,
+                quantity_change: quantityChange,
+                product_name: productName,
+                notes: notes || null
+            },
+            details: `Stock updated for ${productName}: ${oldStock} → ${newStock} (${quantityChange > 0 ? '+' : ''}${quantityChange})${notes ? ` - ${notes}` : ''}`,
             ...userInfo
         });
     };
 
-    const logInvoicePrint = (orderId, orderData) => {
+    // Invoice logs
+    const logInvoicePrint = (orderId, orderData, userInfo = {}) => {
         return logAction({
             action_type: 'order_invoice_print',
             resource_type: 'order',
             resource_id: orderId,
             new_values: orderData,
-            details: `Invoice printed for order #${orderData.order_number || orderId}`
+            details: `Invoice printed for order #${orderData.order_number || orderId} (Customer: ${orderData.customer_name})`,
+            ...userInfo
         });
     };
 
-    const logInvoiceReportPrint = (reportData) => {
+    const logInvoiceReportPrint = (reportData, userInfo = {}) => {
         return logAction({
             action_type: 'order_invoice_report_print',
             resource_type: 'order',
             new_values: reportData,
-            details: `Invoice report printed for ${reportData.order_count} orders (${reportData.date_range}) - Total Revenue: ₱${reportData.total_revenue}`
+            details: `Invoice report printed for ${reportData.order_count} orders (${reportData.date_range}) - Total Revenue: ₱${reportData.total_revenue}`,
+            ...userInfo
         });
     };
 
-    // Update filters
+    // Category Logs
+    const logAdminCategoryCreate = (categoryId, categoryData, userInfo = {}) => {
+        const email = userInfo.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_category_create',
+            resource_type: 'category',
+            resource_id: categoryId,
+            new_values: categoryData,
+            details: categoryData.type === 'subcategory'
+                ? `Subcategory "${categoryData.name}" created by ${email}`
+                : `Category "${categoryData.name}" created by ${email}`,
+            ...userInfo
+        });
+    };
+
+    const logAdminCategoryUpdate = (categoryId, oldValues, newValues, userInfo = {}) => {
+        const email = userInfo.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_category_update',
+            resource_type: 'category',
+            resource_id: categoryId,
+            old_values: oldValues,
+            new_values: newValues,
+            details: newValues.type === 'subcategory'
+                ? `Subcategory "${newValues.name}" updated by ${email}`
+                : `Category "${newValues.name}" updated by ${email}`,
+            ...userInfo
+        });
+    };
+
+    const logAdminCategoryDelete = (categoryId, categoryData, userInfo = {}) => {
+        const email = userInfo.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_category_delete',
+            resource_type: 'category',
+            resource_id: categoryId,
+            old_values: categoryData,
+            details: categoryData.type === 'subcategory'
+                ? `Subcategory "${categoryData.name}" deleted by ${email}`
+                : `Category "${categoryData.name}" deleted by ${email}`,
+            ...userInfo
+        });
+    };
+
+    // Promotion Logs
+    const logAdminPromotionCreate = (promotionId, promotionData, userInfo = {}) => {
+        const email = userInfo.email || user?.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_promotion_create',
+            resource_type: 'promotion',
+            resource_id: promotionId,
+            new_values: promotionData,
+            details: `Promotion "${promotionData.name || promotionData.title || promotionData.code}" created by ${email}`,
+            ...userInfo
+        });
+    };
+
+    const logAdminPromotionUpdate = (promotionId, oldValues, newValues, userInfo = {}) => {
+        const email = userInfo.email || user?.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_promotion_update',
+            resource_type: 'promotion',
+            resource_id: promotionId,
+            old_values: oldValues,
+            new_values: newValues,
+            details: `Promotion "${newValues.name || newValues.title || newValues.code}" updated by ${email}`,
+            ...userInfo
+        });
+    };
+
+    const logAdminPromotionDelete = (promotionId, promotionData, userInfo = {}) => {
+        const email = userInfo.email || user?.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_promotion_delete',
+            resource_type: 'promotion',
+            resource_id: promotionId,
+            old_values: promotionData,
+            details: `Promotion "${promotionData.name || promotionData.title || promotionData.code}" deleted by ${email}`,
+            ...userInfo
+        });
+    };
+
+    const logAdminPromotionToggle = (promotionId, promotionName, newState, userInfo = {}) => {
+        const email = userInfo.email || user?.email || 'unknown@email.com';
+        const status = newState === 1 ? 'activated' : 'deactivated';
+        return logAction({
+            action_type: 'admin_promotion_toggle',
+            resource_type: 'promotion',
+            resource_id: promotionId,
+            new_values: { availability: newState, name: promotionName },
+            details: `Promotion "${promotionName}" ${status} by ${email}`,
+            ...userInfo
+        });
+    };
+
+    // CMS Logs
+    const logAdminCMSPageUpdate = (pageSlug, oldContent, newContent, pageTitle, userInfo = {}) => {
+        const email = userInfo.email || user?.email || 'unknown@email.com';
+        return logAction({
+            action_type: 'admin_cms_page_update',
+            resource_type: 'cms_page',
+            resource_id: pageSlug,
+            old_values: { content: oldContent, title: pageTitle },
+            new_values: { content: newContent, title: pageTitle },
+            details: `CMS page "${pageTitle || pageSlug}" updated by ${email}`,
+            ...userInfo
+        });
+    };
+
     const updateFilters = (newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
     };
@@ -407,15 +553,13 @@ export const AuditTrailProvider = ({ children, user }) => {
         });
     };
 
-    // Auto-refresh logs periodically if user is admin
     useEffect(() => {
         if (user?.role === 'admin') {
             fetchStats();
             
-            // Refresh every 30 seconds for admin
             const interval = setInterval(() => {
                 fetchStats();
-            }, 1000);
+            }, 500);
 
             return () => clearInterval(interval);
         }
@@ -423,20 +567,17 @@ export const AuditTrailProvider = ({ children, user }) => {
 
     return (
         <AuditTrailContext.Provider value={{
-            // State
             auditLogs,
             loading,
             stats,
             filters,
 
-            // Actions
             fetchAuditLogs,
             fetchStats,
             updateFilters,
             clearFilters,
             addLogEntry,
 
-            // Logging methods
             logAction,
             logSignUp,
             logSignIn,
@@ -455,15 +596,25 @@ export const AuditTrailProvider = ({ children, user }) => {
             logOrderUpdate,
             logOrderCancel,
 
-            // Admin logging methods
             logAdminProductCreate,
             logAdminProductUpdate,
             logAdminProductDelete,
             logAdminAccountCreate,
             logAdminAccountUpdate,
             logAdminAccountDelete,
+            logAdminStockUpdate,
             logInvoicePrint,
-            logInvoiceReportPrint
+            logInvoiceReportPrint,
+            logAdminCategoryCreate,
+            logAdminCategoryUpdate,
+            logAdminCategoryDelete,
+
+            logAdminPromotionCreate,
+            logAdminPromotionUpdate,
+            logAdminPromotionDelete,
+            logAdminPromotionToggle,
+        
+            logAdminCMSPageUpdate
         }}>
             { children }
         </AuditTrailContext.Provider>

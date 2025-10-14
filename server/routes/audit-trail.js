@@ -20,7 +20,6 @@ router.get('/', async (req, res) => {
         let whereConditions = [];
         let params = [];
 
-        // Build WHERE conditions
         if (user_id) {
             whereConditions.push('at.user_id = ?');
             params.push(user_id);
@@ -47,14 +46,13 @@ router.get('/', async (req, res) => {
         }
 
         if (search) {
-            whereConditions.push('(a.email LIKE ? OR a.first_name LIKE ? OR a.last_name LIKE ? OR at.details LIKE ?)');
+            whereConditions.push('(COALESCE(at.email, a.email) LIKE ? OR COALESCE(at.first_name, a.first_name) LIKE ? OR COALESCE(at.last_name, a.last_name) LIKE ? OR at.details LIKE ?)');
             const searchTerm = `%${search}%`;
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-        // Get total count
         const countQuery = `
             SELECT COUNT(*) as total
             FROM audit_trail at
@@ -65,14 +63,13 @@ router.get('/', async (req, res) => {
         const [countResult] = await db.query(countQuery, params);
         const totalItems = countResult[0].total;
 
-        // Get audit trail data
         const dataQuery = `
             SELECT 
                 at.*,
-                a.email,
-                a.first_name,
-                a.last_name,
-                a.role
+                COALESCE(at.email, a.email) as email,
+                COALESCE(at.first_name, a.first_name) as first_name,
+                COALESCE(at.last_name, a.last_name) as last_name,
+                COALESCE(at.role, a.role) as role
             FROM audit_trail at
             LEFT JOIN accounts a ON at.user_id = a.id
             ${whereClause}
@@ -99,11 +96,14 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Create audit log entry
 router.post('/log', async (req, res) => {
     try {
         const {
             user_id,
+            first_name,
+            last_name,
+            email,
+            role,
             action_type,
             resource_type,
             resource_id,
@@ -112,28 +112,28 @@ router.post('/log', async (req, res) => {
             details
         } = req.body;
 
-        const ip_address = req.ip || req.connection.remoteAddress;
         const user_agent = req.get('User-Agent');
-        const session_id = req.session?.id;
 
         const query = `
             INSERT INTO audit_trail (
-                user_id, action_type, resource_type, resource_id,
-                old_values, new_values, ip_address, user_agent,
-                session_id, details
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                user_id, first_name, last_name, email, role,
+                action_type, resource_type, resource_id,
+                old_values, new_values, user_agent, details
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
             user_id || null,
+            first_name || null,
+            last_name || null,
+            email || null,
+            role || null,
             action_type,
             resource_type || null,
             resource_id || null,
             old_values ? JSON.stringify(old_values) : null,
             new_values ? JSON.stringify(new_values) : null,
-            ip_address,
             user_agent,
-            session_id || null,
             details || null
         ];
 
@@ -146,7 +146,6 @@ router.post('/log', async (req, res) => {
     }
 });
 
-// Get audit statistics
 router.get('/stats', async (req, res) => {
     try {
         const statsQuery = `
@@ -162,7 +161,6 @@ router.get('/stats', async (req, res) => {
 
         const [stats] = await db.query(statsQuery);
         
-        // Get recent activities count
         const recentQuery = `
             SELECT COUNT(*) as count
             FROM audit_trail 
