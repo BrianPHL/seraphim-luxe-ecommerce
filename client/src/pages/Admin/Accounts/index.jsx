@@ -316,9 +316,14 @@ const Accounts = () => {
                                 {selectedAccount.last_login && (
                                     <p><strong>Last Login:</strong> {formatDate(selectedAccount.last_login)}</p>
                                 )}
-                                {selectedAccount.is_suspended && (
-                                    <p><strong>Status:</strong> <span style={{color: 'var(--error-foreground)'}}>Suspended</span></p>
+                                <p>
+                                <strong>Status:</strong>{' '}
+                                {selectedAccount.is_suspended === 1 ? (
+                                    <span style={{ color: 'var(--error-foreground)' }}>Suspended</span>
+                                ) : (
+                                    <span style={{ color: 'var(--success-foreground)' }}>Active</span>
                                 )}
+                                </p>
                             </span>
                         </div>
                     )}
