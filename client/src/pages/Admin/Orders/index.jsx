@@ -25,7 +25,19 @@ const Orders = () => {
     const querySearch = searchParams.get('search') || '';
 
     const { user } = useAuth();
-    const { recentOrders, fetchRecentOrders, processRefund, getOrderItems, loading } = useOrders();
+    
+    const { 
+        recentOrders, 
+        fetchRecentOrders, 
+        updateOrderStatus,
+        processRefund, 
+        getOrderItems, 
+        printInvoice,
+        printInvoiceReport,
+        formatDate,
+        loading 
+    } = useOrders();
+
     const { showToast } = useToast();
 
     const {
@@ -170,64 +182,23 @@ const Orders = () => {
 
     const handleConfirmStatusUpdate = async (newStatus) => {
         if (!selectedOrder) return;
-        try {
-            const response = await fetch(`/api/orders/${selectedOrder.id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    status: newStatus,
-                    notes: statusUpdateNotes,
-                    admin_id: user.account_id
-                }),
-            });
-            if (response.ok) {
-                await fetchRecentOrders();
-                setIsModalOpen(false);
-                setStatusUpdateNotes('');
-                showToast(`Order status updated to ${newStatus} successfully!`, 'success');
-            } else {
-                const errorData = await response.json();
-                showToast(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
-            }
-        } catch (error) {
-            showToast('Network error occurred while updating status', 'error');
+        
+        const success = await updateOrderStatus(selectedOrder.id, newStatus, statusUpdateNotes);
+        if (success) {
+            setIsModalOpen(false);
+            setStatusUpdateNotes('');
         }
     };
 
     const handlePrintInvoice = async (order) => {
-        let orderWithItems = order;
-        if (!order.items || order.items.length === 0) {
-            const items = await getOrderItems(order.id);
-            orderWithItems = { ...order, items: items || [] };
+        const orderWithItems = await printInvoice(order);
+        if (orderWithItems) {
+            const printWindow = window.open('', '_blank');
+            const invoiceHTML = generateInvoiceHTML(orderWithItems);
+            printWindow.document.write(invoiceHTML);
+            printWindow.document.close();
+            printWindow.print();
         }
-
-        // Log the invoice print action
-        try {
-            await fetch('/api/orders/invoice-print', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    admin_id: user.id,
-                    order_id: order.id,
-                    order_data: {
-                        order_number: order.order_number || `ORD-${order.id}`,
-                        customer_name: `${order.first_name} ${order.last_name}`,
-                        total_amount: order.total_amount
-                    },
-                    type: 'single'
-                })
-            });
-        } catch (auditError) {
-            console.error('Error logging invoice print audit:', auditError);
-        }
-                
-        const printWindow = window.open('', '_blank');
-        const invoiceHTML = generateInvoiceHTML(orderWithItems);
-        printWindow.document.write(invoiceHTML);
-        printWindow.document.close();
-        printWindow.print();
     };
 
     const handlePrintPackingSlip = (order) => {
@@ -348,7 +319,9 @@ const Orders = () => {
                 <p><strong>Order Number:</strong> ${order.order_number || order.order_id}</p>
                 <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
                 <p><strong>Ship To:</strong> ${order.first_name} ${order.last_name}</p>
-                <p><strong>Address:</strong> ${order.shipping_address || 'N/A'}</p>
+                <p><strong>Address:</strong> ${ order.shipping_street
+                                    ? `${order.shipping_street}, ${order.shipping_city}, ${order.shipping_province}, ${order.shipping_postal_code}`
+                                    : 'N/A' }</p>
             </div>
             <table class="table">
                 <thead>
@@ -377,94 +350,29 @@ const Orders = () => {
     ];
 
     const getOrdersInDateRange = (startDate, endDate) => {
-        if (!startDate && !endDate) return recentOrders || [];
+        if (!recentOrders) return [];
         
-        return (recentOrders || []).filter(order => {
+        return recentOrders.filter(order => {
             const orderDate = new Date(order.created_at);
-            const start = startDate ? new Date(startDate) : new Date('1900-01-01');
-            const end = endDate ? new Date(endDate) : new Date();
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(endDate) : null;
             
-            end.setHours(23, 59, 59, 999);
+            if (start && end) {
+                return orderDate >= start && orderDate <= end;
+            } else if (start) {
+                return orderDate >= start;
+            } else if (end) {
+                return orderDate <= end;
+            }
             
-            return orderDate >= start && orderDate <= end;
+            return true; // Return all orders if no date range specified
         });
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
+    const generateCombinedInvoiceHTML = (ordersWithItems, dateRangeText) => {
+        const totalRevenue = ordersWithItems.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
         
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return 'N/A';
-            
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return date.toLocaleDateString('en-PH', options);
-        } catch (error) {
-            console.error('Date formatting error:', error);
-            return 'N/A';
-        }
-    };
-
-    const handlePrintInvoicesRange = async (startDate, endDate) => {
-        const ordersInRange = getOrdersInDateRange(startDate, endDate);
-        
-        if (ordersInRange.length === 0) {
-            showToast('No orders found in the selected date range.', 'info');
-            return;
-        }
-
-        const dateRangeText = startDate && endDate 
-            ? `${formatDate(startDate)} to ${formatDate(endDate)}`
-            : startDate 
-            ? `From ${formatDate(startDate)}`
-            : endDate 
-            ? `Until ${formatDate(endDate)}`
-            : 'All Orders';
-
-        const ordersWithItems = await Promise.all(
-            ordersInRange.map(async (order) => {
-                if (!order.items || order.items.length === 0) {
-                    try {
-                        const items = await getOrderItems(order.id);
-                        return { ...order, items: items || [] };
-                    } catch (error) {
-                        console.error('Failed to load items for order:', order.id);
-                        return { ...order, items: [] };
-                    }
-                }
-                return order;
-            })
-        );
-
-        // Calculate total revenue
-        const totalRevenue = ordersWithItems.reduce((sum, order) => 
-            sum + parseFloat(order.total_amount || 0), 0
-        );
-
-        // Log the invoice report print action
-        try {
-            await fetch('/api/orders/invoice-print', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    admin_id: user.id,
-                    order_data: {
-                        order_count: ordersWithItems.length,
-                        date_range: dateRangeText,
-                        total_revenue: totalRevenue.toFixed(2),
-                        start_date: startDate,
-                        end_date: endDate
-                    },
-                    type: 'report'
-                })
-            });
-        } catch (auditError) {
-            console.error('Error logging invoice report print audit:', auditError);
-        }
-
-        const combinedHTML = `
+        return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -626,9 +534,7 @@ const Orders = () => {
                             <div class="label">Total Orders</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₱${ordersWithItems.reduce((sum, order) => 
-                                sum + parseFloat(order.total_amount || 0), 0
-                            ).toLocaleString('en-PH', {
+                            <div class="value">₱${totalRevenue.toLocaleString('en-PH', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             })}</div>
@@ -642,6 +548,7 @@ const Orders = () => {
                         </div>
                     </div>
                 </div>
+                
                 ${ordersWithItems.map(order => `
                     <div class="invoice">
                         <div class="invoice-header">
@@ -721,14 +628,45 @@ const Orders = () => {
             </body>
             </html>
         `;
+    };
 
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(combinedHTML);
-        printWindow.document.close();
-        printWindow.print();
+    const handlePrintInvoicesRange = async (startDate, endDate) => {
+        const ordersInRange = getOrdersInDateRange(startDate, endDate);
         
-        showToast(`Generated invoice report for ${ordersWithItems.length} orders`, 'success');
-        setShowPrintModal(false);
+        if (ordersInRange.length === 0) {
+            showToast('No orders found in the selected date range.', 'info');
+            return;
+        }
+
+        // Load items for all orders
+        const ordersWithItems = await Promise.all(
+            ordersInRange.map(async (order) => {
+                if (!order.items || order.items.length === 0) {
+                    try {
+                        const items = await getOrderItems(order.id);
+                        return { ...order, items: items || [] };
+                    } catch (error) {
+                        console.error('Failed to load items for order:', order.id);
+                        return { ...order, items: [] };
+                    }
+                }
+                return order;
+            })
+        );
+
+        const reportResult = await printInvoiceReport(startDate, endDate, ordersWithItems);
+        if (reportResult) {
+            const { ordersWithItems: processedOrders, dateRangeText } = reportResult;
+            
+            const combinedHTML = generateCombinedInvoiceHTML(processedOrders, dateRangeText);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(combinedHTML);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showToast(`Generated invoice report for ${processedOrders.length} orders`, 'success');
+            setShowPrintModal(false);
+        }
     };
 
     if (loading) {

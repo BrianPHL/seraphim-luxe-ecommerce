@@ -1,5 +1,5 @@
 import { useContext, useState, useRef, useEffect } from "react";
-import { useAuth, useToast, useProducts } from '@contexts';
+import { useAuth, useToast, useProducts, useAuditTrail } from '@contexts';
 import OrdersContext from "./context";
 
 export const OrdersProvider = ({ children }) => {
@@ -20,6 +20,7 @@ export const OrdersProvider = ({ children }) => {
     const { refreshProducts } = useProducts();
     const { showToast } = useToast();
     const orderCounter = useRef(1);
+    const { logOrderUpdate, logInvoicePrint, logInvoiceReportPrint } = useAuditTrail();
 
     const fetchOrders = async () => {
         if (!user) return;
@@ -80,6 +81,168 @@ export const OrdersProvider = ({ children }) => {
         } catch (error) {
             console.error('Error fetching recent orders:', error);
             return [];
+        }
+    };
+
+    const updateOrderStatus = async (orderId, newStatus, notes = '') => {
+        if (!user || user.role !== 'admin') {
+            showToast('Unauthorized to update order status', 'error');
+            return false;
+        }
+
+        try {
+            setLoading(true);
+
+            const currentOrder = recentOrders.find(order => order.id === orderId);
+            if (!currentOrder) {
+                throw new Error('Order not found');
+            }
+
+            const response = await fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: newStatus,
+                    notes,
+                    admin_id: user.account_id || user.id
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update order status');
+            }
+
+            if (logOrderUpdate) {
+                await logOrderUpdate(
+                    orderId,
+                    {
+                        status: currentOrder.status,
+                        order_number: currentOrder.order_number,
+                        customer_name: `${currentOrder.first_name} ${currentOrder.last_name}`,
+                        customer_email: currentOrder.email
+                    },
+                    {
+                        status: newStatus,
+                        order_number: currentOrder.order_number,
+                        customer_name: `${currentOrder.first_name} ${currentOrder.last_name}`,
+                        customer_email: currentOrder.email,
+                        admin_notes: notes
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
+            await fetchRecentOrders();
+            showToast(`Order status updated to ${newStatus} successfully!`, 'success');
+            return true;
+
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            showToast(error.message, 'error');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const printInvoice = async (order) => {
+        if (!user || user.role !== 'admin') {
+            showToast('Unauthorized to print invoices', 'error');
+            return false;
+        }
+
+        try {
+
+            let orderWithItems = order;
+            if (!order.items || order.items.length === 0) {
+                const items = await getOrderItems(order.id);
+                orderWithItems = { ...order, items: items || [] };
+            }
+
+            if (logInvoicePrint) {
+                await logInvoicePrint(
+                    order.id,
+                    {
+                        order_number: order.order_number || `ORD-${order.id}`,
+                        customer_name: `${order.first_name} ${order.last_name}`,
+                        customer_email: order.email,
+                        total_amount: order.total_amount,
+                        items_count: orderWithItems.items?.length || 0
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
+            return orderWithItems;
+
+        } catch (error) {
+            console.error('Error printing invoice:', error);
+            showToast('Failed to print invoice', 'error');
+            return false;
+        }
+    };
+
+    const printInvoiceReport = async (startDate, endDate, ordersInRange) => {
+        if (!user || user.role !== 'admin') {
+            showToast('Unauthorized to print invoice reports', 'error');
+            return false;
+        }
+
+        try {
+            const dateRangeText = startDate && endDate 
+                ? `${formatDate(startDate)} to ${formatDate(endDate)}`
+                : startDate 
+                ? `From ${formatDate(startDate)}`
+                : endDate 
+                ? `Until ${formatDate(endDate)}`
+                : 'All Orders';
+
+            const totalRevenue = ordersInRange.reduce((sum, order) => 
+                sum + parseFloat(order.total_amount || 0), 0
+            );
+
+            if (logInvoiceReportPrint) {
+                await logInvoiceReportPrint(
+                    {
+                        order_count: ordersInRange.length,
+                        date_range: dateRangeText,
+                        total_revenue: totalRevenue.toFixed(2),
+                        start_date: startDate,
+                        end_date: endDate
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
+            return {
+                ordersWithItems: ordersInRange,
+                dateRangeText,
+                totalRevenue
+            };
+
+        } catch (error) {
+            console.error('Error printing invoice report:', error);
+            showToast('Failed to print invoice report', 'error');
+            return false;
         }
     };
 
@@ -219,6 +382,21 @@ export const OrdersProvider = ({ children }) => {
         }
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'N/A';
+            
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-PH', options);
+        } catch (error) {
+            console.error('Date formatting error:', error);
+            return 'N/A';
+        }
+    };
+
     useEffect(() => {
         if (user?.account_id) {
             fetchOrders();
@@ -238,7 +416,11 @@ export const OrdersProvider = ({ children }) => {
             getOrderById,
             getOrderItems,
             trackOrder,
-            refreshOrders: fetchOrders
+            refreshOrders: fetchOrders,
+            updateOrderStatus,
+            printInvoice,
+            printInvoiceReport,
+            formatDate
         }}>
             { children }
         </OrdersContext.Provider>
