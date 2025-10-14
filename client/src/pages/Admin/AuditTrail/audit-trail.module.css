@@ -44,7 +44,6 @@
     width: 100%;
 }
 
-/* Overview */
 .overview {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -78,7 +77,6 @@
     font-weight: 600;
 }
 
-/* Filters Section */
 .filters {
     display: flex;
     flex-wrap: wrap;
@@ -132,7 +130,6 @@
     background: var(--surface-secondary, var(--bg-hover));
 }
 
-/* Table */
 .table {
     background: var(--surface-primary, var(--bg-primary));
     border: 1px solid var(--border-color, var(--bg-outline));
@@ -152,7 +149,7 @@
 .table-header,
 .table-row {
     display: grid;
-    grid-template-columns: 1.7fr 2.5fr 1.2fr 1.6fr 1fr;
+    grid-template-columns: 1.5fr 2.5fr 1.6fr 1fr; 
     background: var(--surface-secondary, var(--bg-secondary));
     border-bottom: 1px solid var(--border-color, var(--bg-outline));
     width: 100%;
@@ -184,7 +181,6 @@
     background: var(--surface-secondary, var(--bg-secondary));
 }
 
-/* Action Badge */
 .action-info {
     display: flex;
     align-items: center;
@@ -217,7 +213,6 @@
     color: var(--text-secondary, var(--tg-hint));
 }
 
-/* User Info */
 .user-info {
     display: flex;
     flex-direction: column;
@@ -262,7 +257,6 @@
     font-size: 12px;
 }
 
-/* Modal Details */
 .log-details {
     max-height: 70vh;
     overflow-y: auto;
@@ -270,6 +264,7 @@
 }
 
 .detail-section {
+    color: var(--text-primary, var(--tg-primary));
     margin-bottom: 25px;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color, var(--bg-outline));
@@ -282,8 +277,9 @@
 
 .detail-section h4 {
     margin: 0 0 15px 0;
-    color: var(--text-primary, var(--tg-primary));
+    color: var(--tg-primary);
     font-size: 16px;
+    font-weight: 500;
 }
 
 .detail-section h5 {
@@ -332,7 +328,6 @@
     max-height: 200px;
 }
 
-/* Empty State */
 .empty-state,
 .empty-table {
     display: flex;
