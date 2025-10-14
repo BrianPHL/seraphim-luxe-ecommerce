@@ -65,7 +65,6 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
                 message: `${ products[product_id].label } was added to your wishlist.`
             });
 
-            // Log wishlist add action
             if (logWishlistAdd) {
                 const product = products[product_id];
                 await logWishlistAdd(
@@ -122,7 +121,6 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
                 fetchWishlistItems();
             }
 
-            // Log wishlist remove action
             if (logWishlistRemove && removedItem) {
                 await logWishlistRemove(
                     parsedProductId,

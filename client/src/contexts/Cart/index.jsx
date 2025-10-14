@@ -72,7 +72,6 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
                 message: `${ item.label } was added to your cart.`
             });
 
-            // Log cart add action
             if (logCartAdd) {
                 await logCartAdd(
                 item.product_id,
@@ -149,7 +148,6 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
             const product = cartItems.find(item => item.product_id === product_id);
             const oldQuantity = product?.quantity || 0;
 
-            // Log cart update action
             if (logCartUpdate && product) {
                 await logCartUpdate(
                     product_id,
@@ -199,7 +197,6 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
                 message: `${ cartItem[0].label } was removed from your cart.`
             });
 
-            // Log cart remove action
             if (logCartRemove && cartItem) {
                 await logCartRemove(
                     product_id,

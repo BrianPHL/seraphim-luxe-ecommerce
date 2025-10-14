@@ -34,7 +34,6 @@ export const SettingsProvider = ({ children, auditLoggers = {} }) => {
                 const updatedSettings = result.settings || result;
                 setSettings(updatedSettings);
 
-                // Log the preferences update with user info
                 if (logProfilePreferences) {
                     await logProfilePreferences(
                         oldSettings,

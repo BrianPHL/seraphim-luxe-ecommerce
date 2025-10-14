@@ -129,10 +129,9 @@ export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
             .map(item => products[item.product_id]?.label || products[item.product_id]?.name || `Product #${item.product_id}`)
             .join(', ');
 
-            // Log order creation
             if (logOrderCreate && data?.order_number) {
                 await logOrderCreate(
-                    data.order_id, // or data.order_id if that's your primary key
+                    data.order_id, 
                     {
                         order_number: data.order_number,
                         total_amount: data.total_amount,
