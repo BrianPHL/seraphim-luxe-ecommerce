@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button, InputField } from '@components';
 import { useAuth, useToast, useGeminiAI } from '@contexts';
 import styles from './GeminiAIChatbot.module.css';
@@ -8,7 +8,9 @@ const GeminiAIChatbot = () => {
     const [ isOpen, setIsOpen ] = useState(false);
     const [ message, setMessage ] = useState('');
     const [ localChatHistory, setLocalChatHistory ] = useState([]);
+    const [ isTyping, setIsTyping ] = useState(false);
 
+    const chatBodyRef = useRef(null);
     const { user, setIsPopupOpen } = useAuth();
     const { showToast } = useToast();
     const { isLoading, chatHistory, fetchChatHistory, sendGeminiAICustomerChat, sendGeminiAIAdminChat } = useGeminiAI();
@@ -30,6 +32,12 @@ const GeminiAIChatbot = () => {
         }
     };
 
+    const scrollToBottom = () => {
+        if (chatBodyRef.current) {
+            chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+        }
+    };
+
     const addUserMessageToChat = (userMessage) => {
         const userChatEntry = {
             id: Date.now(),
@@ -39,6 +47,7 @@ const GeminiAIChatbot = () => {
         };
         
         setLocalChatHistory(prev => [...prev, userChatEntry]);
+        setTimeout(scrollToBottom, 100);
     };
 
     const addAIResponseToChat = (aiResponse) => {
@@ -50,6 +59,7 @@ const GeminiAIChatbot = () => {
         };
         
         setLocalChatHistory(prev => [...prev, aiChatEntry]);
+        setTimeout(scrollToBottom, 100);
     };
 
     const handleSubmitChatToGeminiAI = async () => {
@@ -63,9 +73,13 @@ const GeminiAIChatbot = () => {
 
             addUserMessageToChat(userMessage);
 
+            setIsTyping(true);
+
             const result = user.role === 'customer'
-                ? await sendGeminiAICustomerChat(message)
-                : await sendGeminiAIAdminChat(message)
+                ? await sendGeminiAICustomerChat(userMessage)
+                : await sendGeminiAIAdminChat(userMessage);
+
+            setIsTyping(false);
 
             if (result?.data) {
                 addAIResponseToChat(result.data);
@@ -80,6 +94,7 @@ const GeminiAIChatbot = () => {
             console.error('GeminiAIChatbot component handleSubmitChatToGeminiAI function error: ', err);
             showToast('An error occured when processing your Chatbot request. Please try again later.', 'error');
 
+            setIsTyping(false);
             setLocalChatHistory(prev => prev.slice(0, -1));
 
         }
@@ -96,6 +111,10 @@ const GeminiAIChatbot = () => {
         }
     }, [isOpen, user, fetchChatHistory]);
 
+    useEffect(() => {
+        scrollToBottom();
+    }, [localChatHistory, isTyping]);
+
     return (
         <>
             <div className={ styles['wrapper'] } data-open={ isOpen } onClick={ handleWrapperClick }>
@@ -109,19 +128,29 @@ const GeminiAIChatbot = () => {
                         />
                     </div>
                     <div className={ styles['chat-body'] }>
-                        <div className={ styles['chat-body-upper'] }>
+                        <div className={ styles['chat-body-upper'] } ref={chatBodyRef}>
                             {
                                 localChatHistory.length > 0 ? (
-                                    localChatHistory.map((chat) => {
-                                        return (
-                                            <p key={ chat.id } className={ styles['message'] } data-role={chat.message_type}>
-                                                <span className={ styles['message-label'] }>
-                                                    { chat.message_type === 'user' ? 'You' : 'Agent'}
-                                                </span>
-                                                { chat.message }
-                                            </p>
-                                        );
-                                    })
+                                    <>
+                                        {localChatHistory.map((chat) => {
+                                            return (
+                                                <p key={ chat.id } className={ styles['message'] } data-role={chat.message_type}>
+                                                    <span className={ styles['message-label'] }>
+                                                        { chat.message_type === 'user' ? 'You' : 'Agent'}
+                                                    </span>
+                                                    { chat.message }
+                                                </p>
+                                            );
+                                        })}
+                                        {
+                                            (isLoading || isTyping) && (
+                                                <p className={ styles['message'] } data-role="ai">
+                                                    <span className={ styles['message-label'] }>Agent</span>
+                                                    <em>Typing...</em>
+                                                </p>
+                                            )
+                                        }
+                                    </>
                                 ) : (
                                     <div className={ styles['placeholder'] }>
                                         <h2 className={ styles['placeholder-title'] }>Seraphim Luxe AI</h2>
@@ -136,14 +165,6 @@ const GeminiAIChatbot = () => {
                                 )
 
                             }
-                            {
-                                isLoading && (
-                                    <p className={ styles['message'] } data-role="ai">
-                                        <span className={ styles['message-label'] }>Agent</span>
-                                        <em>Typing...</em>
-                                    </p>
-                                )
-                            }
                         </div>
                         <div className={ styles['chat-body-lower'] }>
                             <InputField
@@ -156,7 +177,7 @@ const GeminiAIChatbot = () => {
                             <Button
                                 type='icon-outlined'
                                 icon='fa-solid fa-paper-plane'
-                                disabled={ !message || isLoading }
+                                disabled={ !message || isLoading || isTyping }
                                 action={ handleSubmitChatToGeminiAI }
                             />
                         </div>
