@@ -11,9 +11,11 @@ const FilterSidebar = () => {
         min: searchParams.get('price_min') || '',
         max: searchParams.get('price_max') || ''
     });
+z
     const [selectedAttributes, setSelectedAttributes] = useState({
-        colors: searchParams.get('colors')?.split(',').filter(Boolean) || []
+    metal_types: searchParams.get('metal_types')?.split(',').filter(Boolean) || []
     });
+
     const [availableSubcategories, setAvailableSubcategories] = useState([]);
     const [localCategories, setLocalCategories] = useState([]);
     
@@ -25,8 +27,9 @@ const FilterSidebar = () => {
         getActiveSubcategories(selectedCategoryId) : [];
     
     const availableColors = [
-        { id: 'Gold', label: 'Gold' },
-        { id: 'Silver', label: 'Silver' }
+        { id: '1', label: 'Gold', value: 1 },
+        { id: '0', label: 'Silver', value: 0 },
+        { id: '2', label: 'Mixed Metals', value: 2 }
     ];
 
     const refreshData = useCallback(async () => {
@@ -84,14 +87,14 @@ const FilterSidebar = () => {
     }, [refreshData]);
 
     useEffect(() => {
-        setPriceRange({
-            min: searchParams.get('price_min') || '',
-            max: searchParams.get('price_max') || ''
-        });
-        
-        setSelectedAttributes({
-            colors: searchParams.get('colors')?.split(',').filter(Boolean) || []
-        });
+    setPriceRange({
+        min: searchParams.get('price_min') || '',
+        max: searchParams.get('price_max') || ''
+    });
+    
+    setSelectedAttributes({
+        metal_types: searchParams.get('metal_types')?.split(',').filter(Boolean) || []
+    });
     }, [searchParams]);
     
     const applyFilters = () => {
@@ -103,9 +106,9 @@ const FilterSidebar = () => {
         if (priceRange.max) params.set('price_max', priceRange.max);
         else params.delete('price_max');
         
-        if (selectedAttributes.colors.length > 0) 
-            params.set('colors', selectedAttributes.colors.join(','));
-        else params.delete('colors');
+        if (selectedAttributes.metal_types.length > 0) 
+            params.set('metal_types', selectedAttributes.metal_types.join(','));
+        else params.delete('metal_types');
         
         params.set('page', '1');
         setSearchParams(params);
@@ -117,12 +120,12 @@ const FilterSidebar = () => {
         params.delete('subcategory_id');
         params.delete('price_min');
         params.delete('price_max');
-        params.delete('colors');
+        params.delete('metal_types'); 
         params.set('page', '1');
         setSearchParams(params);
         
         setPriceRange({ min: '', max: '' });
-        setSelectedAttributes({ colors: [] });
+        setSelectedAttributes({ metal_types: [] });
     };
     
     const handleCategoryChange = (categoryId) => {
@@ -232,7 +235,7 @@ const FilterSidebar = () => {
     
     const getActiveFilterCount = () => {
         let count = 0;
-    
+
         if (searchParams.get('category_id')) count++;
         
         const selectedSubcategoryIds = searchParams.get('subcategory_id')?.split(',').filter(Boolean) || [];
@@ -254,7 +257,7 @@ const FilterSidebar = () => {
         }
         
         if (searchParams.get('price_min') || searchParams.get('price_max')) count++;
-        count += selectedAttributes.colors.length;
+        count += selectedAttributes.metal_types.length; 
         
         return count;
     };
@@ -345,20 +348,20 @@ const FilterSidebar = () => {
                 </div>
             </div>
             
-            <div className={styles['filter-section']}>
+           <div className={styles['filter-section']}>
                 <h3>Metal</h3>
                 <div className={styles['attribute-list']}>
-                    {availableColors.map(color => (
+                    {availableColors.map(metal => (
                         <div 
-                            key={color.id}
-                            className={`${styles['attribute-item']} ${selectedAttributes.colors.includes(color.id) ? styles['selected'] : ''}`}
-                            onClick={() => toggleAttribute('colors', color.id)}
-                            data-color={color.id}
+                            key={metal.id}
+                            className={`${styles['attribute-item']} ${selectedAttributes.metal_types.includes(metal.id) ? styles['selected'] : ''}`}
+                            onClick={() => toggleAttribute('metal_types', metal.id)}
+                            data-metal={metal.id}
                         >
                             <span className={styles['checkbox']}>
-                                {selectedAttributes.colors.includes(color.id) && <i className="fa-solid fa-check"></i>}
+                                {selectedAttributes.metal_types.includes(metal.id) && <i className="fa-solid fa-check"></i>}
                             </span>
-                            {color.label}
+                            {metal.label}
                         </div>
                     ))}
                 </div>

@@ -20,8 +20,7 @@ const Store = () => {
     const querySubcategoryId = searchParams.get('subcategory_id') || '';
     const queryPriceMin = searchParams.get('price_min') || '';
     const queryPriceMax = searchParams.get('price_max') || '';
-    const queryColors = searchParams.get('colors')?.split(',') || [];
-    const queryJewelryTypes = searchParams.get('jewelry_types')?.split(',').filter(Boolean) || [];
+    const queryMetalTypes = searchParams.get('metal_types')?.split(',').filter(Boolean) || [];
     const ITEMS_PER_PAGE = 10;
     
     const getCategoryDisplayName = (categoryId) => {
@@ -43,7 +42,7 @@ const Store = () => {
     };
 
     const filteredProducts = useMemo(() => {
-        if (!products || products.length === 0) return [];
+        if (!products) return [];
         
         let filtered = [...products];
 
@@ -72,32 +71,15 @@ const Store = () => {
             );
         }
         
-        if (queryColors.length > 0) {
-            filtered = filtered.filter(product => 
-                queryColors.some(color => 
-                    product.attributes?.colors?.includes(color) || 
-                    product.color === color
-                )
-            );
+        if (queryMetalTypes.length > 0) {
+            filtered = filtered.filter(product => {
+                return queryMetalTypes.includes(product.metal_type?.toString());
+            });
         }
 
-        if (queryJewelryTypes.length > 0 && !querySubcategoryId) {
+        if (queryMetalTypes.length > 0) {
             filtered = filtered.filter(product => {
-                const productSubcategoryName = getSubcategoryDisplayName(product.subcategory_id);
-                
-                if (!productSubcategoryName || productSubcategoryName === 'Unknown') {
-                    return false;
-                }
-                
-                return queryJewelryTypes.some(typeId => {
-                    const typeName = typeId.replace(/-/g, ' ');
-                    const subcategoryLower = productSubcategoryName.toLowerCase();
-                    const typeNameLower = typeName.toLowerCase();   
-                    
-                    return subcategoryLower === typeNameLower || 
-                           subcategoryLower.includes(typeNameLower) ||
-                           typeNameLower.includes(subcategoryLower);
-                });
+                return queryMetalTypes.includes(product.metal_type?.toString());
             });
         }
 
@@ -108,8 +90,7 @@ const Store = () => {
         querySubcategoryId, 
         queryPriceMin, 
         queryPriceMax, 
-        queryColors, 
-        queryJewelryTypes
+        queryMetalTypes,
     ]);
 
     const {
@@ -143,7 +124,7 @@ const Store = () => {
         }
     }, [querySort, sortValue, onSortChange]);
     
-    const updateSearchParams = ({ page, sort, search, category_id, subcategory_id, price_min, price_max, colors, jewelry_types }) => {
+    const updateSearchParams = ({ page, sort, search, category_id, subcategory_id, price_min, price_max, metal_types }) => {
         const params = new URLSearchParams(searchParams);
 
         if (page !== undefined) params.set('page', page);
@@ -153,8 +134,7 @@ const Store = () => {
         if (subcategory_id !== undefined) params.set('subcategory_id', subcategory_id);
         if (price_min !== undefined) params.set('price_min', price_min);
         if (price_max !== undefined) params.set('price_max', price_max);
-        if (colors !== undefined) params.set('colors', colors);
-        if (jewelry_types !== undefined) params.set('jewelry_types', jewelry_types);
+        if (metal_types !== undefined) params.set('metal_types', metal_types);
 
         setSearchParams(params);
     };
