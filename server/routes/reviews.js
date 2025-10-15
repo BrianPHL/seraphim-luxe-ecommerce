@@ -38,15 +38,20 @@ router.get('/:productId', async (req, res) => {
 // Add a review
 router.post('/', async (req, res) => {
     const { product_id, user_id, rating, review_text, review_title } = req.body;
-    if (!product_id || !user_id || !rating || !review_text) {
+    if (!product_id || !user_id || !rating) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
     if (typeof rating !== 'number' || rating < 1 || rating > 5) {
         return res.status(400).json({ error: 'Invalid rating' });
     }
-    if (typeof review_text !== 'string' || review_text.length < 10 || review_text.length > 2000) {
-        return res.status(400).json({ error: 'Review text must be 10-2000 characters' });
+
+    if (review_text && review_text.length > 2000) {
+        return res.status(400).json({ error: 'Review text must be less than 2000 characters' });
     }
+    if (review_title && review_title.length > 100) {
+        return res.status(400).json({ error: 'Review title must be less than 100 characters' });
+    }
+
     await pool.query(
         'INSERT INTO product_reviews (product_id, user_id, rating, review_text, review_title) VALUES (?, ?, ?, ?, ?)',
         [product_id, user_id, rating, review_text, review_title]
@@ -69,7 +74,6 @@ router.post('/helpful', async (req, res) => {
             return res.json({ success: false, alreadyVoted: true });
         }
 
-        // Use a transaction to ensure both operations complete
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -112,7 +116,6 @@ router.put('/:reviewId', async (req, res) => {
         return res.status(400).json({ error: 'Review text must be 10-2000 characters' });
     }
 
-    // Only allow the review owner to edit
     const [rows] = await pool.query(
         'SELECT user_id FROM product_reviews WHERE id = ?',
         [reviewId]

@@ -82,7 +82,6 @@ const ProductReviews = ({
     const validateForm = () => {
         const newErrors = {};
         if (formData.rating === 0) newErrors.rating = 'Please select a rating';
-        if (formData.review_text.length < 10) newErrors.review_text = 'Review must be at least 10 characters long';
         if (formData.review_text.length > 2000) newErrors.review_text = 'Review must be less than 2000 characters';
         if (formData.review_title.length > 100) newErrors.review_title = 'Title must be less than 100 characters';
         setFormErrors(newErrors);
@@ -414,11 +413,11 @@ const ProductReviews = ({
                         </div>
                         <div className={styles['form-group']}>
                             <label className={styles['form-label']}>
-                                Your Review <span className={styles['required']}>*</span>
+                                Your Review {}
                             </label>
                             <textarea
                                 className={`${styles['review-textarea']} ${formErrors.review_text ? styles['input-error'] : ''}`}
-                                placeholder="Share your experience with this product..."
+                                placeholder="Share your experience with this product... (Optional)"
                                 value={formData.review_text}
                                 onChange={(e) => handleInputChange('review_text', e.target.value)}
                                 rows={6}
