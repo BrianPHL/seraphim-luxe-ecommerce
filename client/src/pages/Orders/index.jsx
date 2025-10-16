@@ -2,15 +2,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Anchor, ReturnButton, Modal, Banner } from '@components';
 import styles from './Orders.module.css';
-import { useToast, useAuth, useSettings, useBanners } from '@contexts';
+import { useToast, useAuth, useSettings, useBanners, useOrders } from '@contexts';
 
 const Orders = () => {
     const { showToast } = useToast();
     const { settings, convertPrice, formatPrice } = useSettings();
     const { banners } = useBanners();
+    const { cancelOrder } = useOrders();
     const [orders, setOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false); 
+    const [cancelReason, setCancelReason] = useState(''); 
+    const [otherReason, setOtherReason] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('current');
     const [convertedOrders, setConvertedOrders] = useState([]);
@@ -343,12 +347,61 @@ const Orders = () => {
     const displayOrders = convertedOrders.length > 0 ? convertedOrders : orders;
 
     const currentOrders = displayOrders.filter(order => 
-        !['delivered', 'completed'].includes(order.status.toLowerCase())
+        !['delivered', 'completed', 'cancelled'].includes(order.status.toLowerCase())
     );
     
     const pastOrders = displayOrders.filter(order => 
-        ['delivered', 'completed'].includes(order.status.toLowerCase())
+        ['delivered', 'completed', 'cancelled'].includes(order.status.toLowerCase())
     );
+
+    const handleCancelOrder = (order) => {
+        setSelectedOrder(order);
+        setCancelModalOpen(true);
+        setCancelReason('');
+    };
+
+    const confirmCancelOrder = async () => {
+        
+        const reason = cancelReason === 'Other' ? otherReason : cancelReason || 'Cancelled by customer';
+
+        if (!selectedOrder) return;
+
+        const success = await cancelOrder(
+            selectedOrder.id || selectedOrder.order_id, 
+            cancelReason || 'Cancelled by customer'
+        );
+
+        if (success) {
+            setCancelModalOpen(false);
+            setSelectedOrder(null);
+            setCancelReason('');
+            
+            // Refresh orders list
+            const fetchOrders = async () => {
+                try {
+                    const response = await fetch(`/api/orders/${user.id}`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        setOrders(data);
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh orders:', error);
+                }
+            };
+            
+            fetchOrders();
+        }
+    };
+
+    // Function to check if order can be cancelled
+    const canCancelOrder = (order) => {
+        const cancelableStatuses = ['pending', 'processing'];
+        return cancelableStatuses.includes(order.status?.toLowerCase());
+    };
 
     if (loading) {
         return (
@@ -476,6 +529,15 @@ const Orders = () => {
                                                     iconPosition='left'
                                                     action={() => handleViewDetails(order)}
                                                 />
+                                                {canCancelOrder(order) && (
+                                                    <Button
+                                                        type='secondary'
+                                                        label='Cancel Order'
+                                                        icon='fa-solid fa-times'
+                                                        iconPosition='left'
+                                                        action={() => handleCancelOrder(order)}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -766,6 +828,18 @@ const Orders = () => {
                                 type='secondary'
                                 action={() => setModalOpen(false)}
                             />
+                            {canCancelOrder(selectedOrder) && (
+                                <Button
+                                    label='Cancel Order'
+                                    type='tertiary'
+                                    icon='fa-solid fa-times'
+                                    iconPosition='left'
+                                    action={() => {
+                                        setModalOpen(false);
+                                        handleCancelOrder(selectedOrder);
+                                    }}
+                                />
+                            )}
                             {selectedOrder.status?.toLowerCase() === 'delivered' && (
                                 <>
                                     <Button
@@ -804,7 +878,85 @@ const Orders = () => {
                         </div>
                     </div>
                 </Modal>
+                
             )}
+            {/* Add Cancel Order Confirmation Modal */}
+            <Modal
+                label="Cancel Order"
+                isOpen={cancelModalOpen}
+                onClose={() => setCancelModalOpen(false)}
+                size="medium"
+            >
+                <div className={styles['cancel-modal-content']}>
+                    <div className={styles['cancel-warning']}>
+                        <i className="fa-solid fa-exclamation-triangle"></i>
+                        <p>Are you sure you want to cancel this order?</p>
+                    </div>
+                    
+                    {selectedOrder && (
+                        <div className={styles['order-summary']}>
+                            <h4>Order #{selectedOrder.order_number || 'N/A'}</h4>
+                            <p>Total: {safeFormatPrice(selectedOrder.displayTotalAmount || selectedOrder.total_amount)}</p>
+                            <p>Status: {selectedOrder.status}</p>
+                        </div>
+                    )}
+                    
+                    <div className={styles['cancel-reason']}>
+                        <label htmlFor="cancelReason">Reason for cancellation (optional):</label>
+                        <select
+                            id="cancelReason"
+                            value={cancelReason}
+                            onChange={(e) => {
+                                setCancelReason(e.target.value);
+                                if (e.target.value !== 'Other') setOtherReason('');
+                            }}
+                        >
+                            <option value="">Select a reason</option>
+                            <option value="Changed my mind">Changed my mind</option>
+                            <option value="Found better price elsewhere">Found better price elsewhere</option>
+                            <option value="No longer need the item">No longer need the item</option>
+                            <option value="Ordered by mistake">Ordered by mistake</option>
+                            <option value="Delivery time too long">Delivery time too long</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        
+                        {cancelReason === 'Other' && (
+                            <textarea
+                                placeholder="Please specify your reason..."
+                                value={otherReason}
+                                onChange={(e) => setOtherReason(e.target.value)}
+                                rows={3}
+                            />
+                        )}
+                    </div>
+
+                    <div className={styles['cancellation-note']}>
+                        <p>Please note:</p>
+                        <ul>
+                            <li>Your payment will be refunded within 3-5 business days</li>
+                            <li>Once cancelled, this order cannot be restored</li>
+                            <li>Items will be returned to inventory</li>
+                        </ul>
+                    </div>
+
+                    <div className={styles['modal-actions']}>
+                        <Button
+                            label='Keep Order'
+                            type='secondary'
+                            action={() => setCancelModalOpen(false)}
+                        />
+                        <Button
+                            label='Cancel Order'
+                            type='primary'
+                            icon='fa-solid fa-times'
+                            iconPosition='left'
+                            action={confirmCancelOrder}
+                            externalStyles={styles['cancel-button']}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
         </>
     );
 };

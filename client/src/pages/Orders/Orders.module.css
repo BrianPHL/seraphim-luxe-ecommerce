@@ -699,6 +699,113 @@
     border-top: 1px solid var(--bg-outline);
 }
 
+.cancel-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.cancel-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--error-background);
+    border-radius: 8px;
+    color: var(--error-foreground);
+}
+
+.cancel-warning i {
+    font-size: 1.25rem;
+    color: var(--error-foreground);
+}
+
+.order-summary {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 4px solid var(--error-foreground);
+}
+
+.order-summary h4 {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--tg-primary);
+    font-weight: 800;
+}
+
+.order-summary p {
+    margin: 0.25rem 0;
+    color: var(--tg-secondary);
+}
+
+.cancel-reason {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cancel-reason-list{
+    background: var(--bg-secondary);
+}
+
+.cancel-reason label {
+    font-weight: 600;
+    color: var(--tg-primary);
+}
+
+.cancel-reason select,
+.cancel-reason textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--bg-outline);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--bg-primary);
+    color: var(--tg-primary);
+}
+
+.cancel-reason textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.cancellation-note {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-base);
+}
+
+.cancellation-note p {
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+    color: var(--tg-primary);
+}
+
+.cancellation-note ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: var(--accent-base);
+}
+
+.cancellation-note li {
+    color: var(--tg-secondary);
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 100;
+}
+
+.cancel-button {
+    background-color: var(--error-background);
+    color: var(--error-foreground);
+}
+
+.cancel-button:hover {
+    background-color: var(--error-hover);
+    color: var(--error-foreground);
+}
+
 @media only screen and (max-width: 1575px) {
     .wrapper {
         padding: 12rem 8rem 6rem 8rem;

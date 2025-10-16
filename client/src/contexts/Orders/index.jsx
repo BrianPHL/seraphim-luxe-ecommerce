@@ -84,6 +84,93 @@ export const OrdersProvider = ({ children }) => {
         }
     };
 
+    const cancelOrder = async (orderId, reason = 'Cancelled by customer') => {
+        if (!user) {
+            showToast('Please log in to cancel orders', 'error');
+            return false;
+        }
+
+        try {
+            setLoading(true);
+
+            let currentOrder = orders.find(order => order.id === orderId || order.order_id === orderId);
+
+            if (!currentOrder) {
+                currentOrder = await getOrderById(orderId);
+                if (!currentOrder) {
+                    throw new Error('Order not found');
+                }
+            }
+
+            // Check if order can be cancelled (only pending/processing)
+            if (!['pending', 'processing'].includes(currentOrder.status.toLowerCase())) {
+                throw new Error(`Cannot cancel order with status: ${currentOrder.status}`);
+            }
+
+            const response = await fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: 'cancelled',
+                    notes: reason,
+                    cancelled_by: 'customer',
+                    cancellation_reason: reason,
+                    account_id: user.id
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to cancel order');
+            }
+
+            setOrders(prev => 
+                prev.map(order => 
+                    (order.id === orderId || order.order_id === orderId)
+                        ? { ...order, status: 'cancelled' } 
+                        : order
+                )
+            );
+
+            if (logOrderUpdate) {
+                await logOrderUpdate(
+                    orderId,
+                    {
+                        status: currentOrder.status,
+                        order_number: currentOrder.order_number,
+                        customer_name: `${currentOrder.first_name || user.first_name} ${currentOrder.last_name || user.last_name}`,
+                        customer_email: currentOrder.email || user.email
+                    },
+                    {
+                        status: 'cancelled',
+                        order_number: currentOrder.order_number,
+                        customer_name: `${currentOrder.first_name || user.first_name} ${currentOrder.last_name || user.last_name}`,
+                        customer_email: currentOrder.email || user.email,
+                        cancellation_reason: reason,
+                        cancelled_by: 'customer'
+                    },
+                    {
+                        user_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        email: user.email,
+                        role: user.role
+                    }
+                );
+            }
+
+            showToast('Order cancelled successfully', 'success');
+            return true;
+
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            showToast(error.message, 'error');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const updateOrderStatus = async (orderId, newStatus, notes = '') => {
         if (!user || user.role !== 'admin') {
             showToast('Unauthorized to update order status', 'error');
@@ -407,6 +494,7 @@ export const OrdersProvider = ({ children }) => {
         <OrdersContext.Provider value={{ 
             orders,
             recentOrders,
+            cancelOrder,
             pendingOrdersCount,
             orderStats,
             loading,
