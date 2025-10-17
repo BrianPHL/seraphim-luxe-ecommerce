@@ -11,7 +11,7 @@ const FilterSidebar = () => {
         min: searchParams.get('price_min') || '',
         max: searchParams.get('price_max') || ''
     });
-z
+    
     const [selectedAttributes, setSelectedAttributes] = useState({
     metal_types: searchParams.get('metal_types')?.split(',').filter(Boolean) || []
     });
