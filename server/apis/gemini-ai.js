@@ -17,7 +17,10 @@ const geminiAI = async (context, message, userType) => {
             contents: prompt
         });
 
-        return response.text;
+        // const result = await setTimeout(() => 'response.text', 1500);
+
+        return result;
+
 
     } catch (err) {
 

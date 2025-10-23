@@ -742,8 +742,6 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
 
     const fetchUsers = async () => {
 
-        if (!user && user.role !== 'admin') return;
-
         try {
             
             const response = await fetchWithTimeout('/api/accounts/', {

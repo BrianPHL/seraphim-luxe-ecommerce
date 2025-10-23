@@ -5,14 +5,14 @@ import { fetchWithTimeout } from "@utils";
 
 export const GeminiAIProvider = ({ children }) => {
 
-    const { user } = useAuth();
-    const { products } = useProducts();
-    const { cartItems } = useCart();
-    const { wishlistItems } = useWishlist();
-    const { orders, orderStats } = useOrders();
-    const { promotions } = usePromotions();
-    const { auditLogs } = useAuditTrail();
-    const { categories } = useCategories();
+    const { user, fetchUsers } = useAuth();
+    const { products, refreshProducts } = useProducts();
+    const { cartItems, refreshCart } = useCart();
+    const { wishlistItems, fetchWishlistItems } = useWishlist();
+    const { orders, refreshOrders, orderStats } = useOrders();
+    const { promotions, fetchPromotions } = usePromotions();
+    const { auditLogs, fetchAuditLogs } = useAuditTrail();
+    const { categories, fetchCategories, fetchHierarchy } = useCategories();
 
     const [ isLoading, setIsLoading ] = useState(false);
     const [ chatHistory, setChatHistory ] = useState([]);
@@ -43,6 +43,47 @@ export const GeminiAIProvider = ({ children }) => {
         }
 
     }, [ user ]);
+
+    const refreshContextData = useCallback(async (type = 'customer') => {
+
+        try {
+
+            setIsLoading(true);
+
+            let refreshPromises = [];
+
+            if (type === 'customer') {
+                refreshPromises.push(
+                    refreshProducts(),
+                    fetchCart(),
+                    fetchWishlist(),
+                    fetchOrders(),
+                    fetchPromotions(),
+                    fetchCategories(),
+                    fetchAuditLogs()
+                );
+            } else if (type === 'admin') {
+                refreshPromises.push(
+                    refreshProducts(),
+                    fetchOrders(),
+                    fetchOrderStats(),
+                    fetchPromotions(),
+                    fetchCategories(),
+                    fetchHierarchy(),
+                    fetchAuditLogs()
+                );
+            }
+
+            await Promise.all(refreshPromises);
+
+        } catch (err) {
+            console.error('GeminiAI context refreshContextData function error: ', err);
+            throw new Error(`Failed to refresh data: ${err.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+
+    }, [ refreshProducts, fetchCart, fetchWishlist, fetchOrders, fetchOrderStats, fetchPromotions, fetchCategories, fetchHierarchy, fetchAuditLogs ]);
 
     const aggregateCustomerContext = useCallback(() => {
         try {
@@ -75,7 +116,7 @@ export const GeminiAIProvider = ({ children }) => {
                 userType: 'customer'
             };
         }
-    }, [user, cartItems, wishlistItems, orders, products, categories, promotions, auditLogs]);
+    }, [ user, cartItems, wishlistItems, orders, products, categories, promotions, auditLogs ]);
 
     const sendGeminiAICustomerChat = async (message) => {
 
@@ -107,6 +148,7 @@ export const GeminiAIProvider = ({ children }) => {
         } catch (err) {
 
             console.error('GeminiAI context sendGeminiAICustomerChat function error: ', err);
+            throw err;
 
         } finally { setIsLoading(false) }
 
@@ -175,6 +217,7 @@ export const GeminiAIProvider = ({ children }) => {
         } catch (err) {
 
             console.error('GeminiAI context sendGeminiAIAdminChat function error: ', err);
+            throw err;
 
         } finally { setIsLoading(false) }
 
