@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Products.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
-import { useProducts, useToast, useStocks, useCategories } from '@contexts';
+import { useProducts, useToast, useStocks, useCategories, useAnalytics } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { PRODUCT_FILTER_CONFIG } from '@utils';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -22,6 +26,18 @@ const Products = () => {
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
+    const [analyticsModalOpen, setAnalyticsModalOpen] = useState(false);
+    
+    const { 
+        fetchProductAnalytics,         
+        getProductAnalyticsData,
+        chartOptions,
+        isLoading: analyticsLoading,    
+        error: analyticsError           
+    } = useAnalytics();
+
+    const [analyticsProduct, setAnalyticsProduct] = useState(null);
+
     const [formData, setFormData] = useState({
         label: '',
         price: '',
@@ -63,6 +79,7 @@ const Products = () => {
     } = usePagination(filteredProducts, ITEMS_PER_PAGE, queryPage);
 
     const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+    const [selectedTimeRange, setSelectedTimeRange] = useState('All Time');
 
     useEffect(() => {
         const loadCategories = async () => {
@@ -170,6 +187,17 @@ const Products = () => {
         setImagePreview(null);
         setModalType('add');
         setIsModalOpen(true);
+    };
+
+    const handleOpenAnalyticsModal = async (product, timeRange = 'All Time') => {
+        setAnalyticsProduct(product);
+        setSelectedTimeRange(timeRange);
+        const productId = product.id || product.product_id;
+
+        const days = timeRange === 'Last Week' ? 7 : timeRange === 'Last Month' ? 30 : null;
+        const chartData = await fetchProductAnalytics(productId, days);
+
+        setAnalyticsModalOpen(true);
     };
 
     const handleOpenEditModal = (product) => {
@@ -453,6 +481,11 @@ const Products = () => {
                                     <div className={styles['table-cell']}>
                                         <Button
                                             type="icon"
+                                            icon="fa-solid fa-chart-simple"
+                                            action={() => handleOpenAnalyticsModal(product)}
+                                        />
+                                        <Button
+                                            type="icon"
                                             icon="fa-solid fa-pen"
                                             action={() => handleOpenEditModal(product)}
                                         />
@@ -643,6 +676,68 @@ const Products = () => {
                             />
                         </div>
                     </>
+                )}
+            </Modal>
+
+            <Modal
+                isOpen={analyticsModalOpen}
+                onClose={() => setAnalyticsModalOpen(false)}
+                label={`Sales Analytics: ${analyticsProduct?.label || ''}`}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3>Filter by Time Range:</h3>
+                    <Button
+                        id="time-range-dropdown"
+                        type="secondary"
+                        label={`Time Range: ${selectedTimeRange}`}
+                        dropdownPosition="right"
+                        options={[
+                            {
+                                label: 'Last Week',
+                                action: async () => {
+                                    await handleOpenAnalyticsModal(analyticsProduct, 'Last Week');
+                                },
+                            },
+                            {
+                                label: 'Last Month',
+                                action: async () => {
+                                    await handleOpenAnalyticsModal(analyticsProduct, 'Last Month');
+                                },
+                            },
+                            {
+                                label: 'All Time',
+                                action: async () => {
+                                    await handleOpenAnalyticsModal(analyticsProduct, 'All Time');
+                                },
+                            },
+                        ]}
+                    />
+                </div>
+
+                {analyticsLoading ? (
+                    <div style={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                        <span style={{ marginLeft: '10px' }}>Loading analytics...</span>
+                    </div>
+                ) : analyticsError ? (
+                    <div style={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <i className="fa-solid fa-exclamation-triangle" style={{ color: '#dc3545', fontSize: '2rem' }}></i>
+                            <p>Error loading analytics: {analyticsError}</p>
+                            <button onClick={() => handleOpenAnalyticsModal(analyticsProduct, selectedTimeRange)}>
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                ) : analyticsProduct ? (
+                    <div style={{ minHeight: 300 }}>
+                        <Line
+                            data={getProductAnalyticsData(analyticsProduct.id || analyticsProduct.product_id) || { labels: [], datasets: [] }}
+                            options={chartOptions}
+                        />
+                    </div>
+                ) : (
+                    <p>Loading analytics...</p>
                 )}
             </Modal>
         </div>

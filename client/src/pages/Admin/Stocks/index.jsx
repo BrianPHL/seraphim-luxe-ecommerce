@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Stocks.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
-import { useStocks, useProducts, useAuth, useToast } from '@contexts';
+import { useStocks, useProducts, useAuth, useToast, useAnalytics } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { LOW_STOCK_FILTER_CONFIG, STOCKS_FILTER_CONFIG } from '@utils';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -23,11 +27,26 @@ const Stocks = () => {
     const [quantityToAdd, setQuantityToAdd] = useState(1);
     const [newThreshold, setNewThreshold] = useState('');
     const [notes, setNotes] = useState('');
+    const [selectedReportLabel, setSelectedReportLabel] = useState('All Reports');
     
     const { stockHistory, lowStockProducts, addStock, fetchStockHistory, isLoading } = useStocks();
     const { products } = useProducts();
-    const { user } = useAuth();
     const { showToast } = useToast();
+
+    const {
+        chartType,
+        selectedReports,
+        setSelectedReports,
+        chartOptions,
+        shouldShowReport,
+        generateAnalyticsData,
+        generateStocksAnalyticsData,
+        analyticsData,
+        stockLevelTrendsData,
+        categoryStockData,
+        reorderAnalysisData
+    } = useAnalytics();
+
 
     const {
         data: filteredLowStockProducts,
@@ -62,42 +81,6 @@ const Stocks = () => {
         handlePageChange: handleHistoryPageChange,
         resetPagination: resetHistoryPagination,
     } = usePagination(filteredStockHistory, ITEMS_PER_PAGE, queryHistoryPage);
-
-    useEffect(() => {
-        if (lowStockSearchValue !== queryLowStockSearch) {
-            handleLowStockSearchChange(queryLowStockSearch);
-        }
-    }, [queryLowStockSearch]);
-
-    useEffect(() => {
-        if (lowStockSortValue !== queryLowStockSort) {
-            handleLowStockSortChange(queryLowStockSort);
-        }
-    }, [queryLowStockSort]);
-
-    useEffect(() => {
-        if (lowStockCurrentPage !== queryLowStockPage) {
-            handleLowStockPageChange(queryLowStockPage);
-        }
-    }, [queryLowStockPage]);
-
-    useEffect(() => {
-        if (historySearchValue !== queryHistorySearch) {
-            handleHistorySearchChange(queryHistorySearch);
-        }
-    }, [queryHistorySearch]);
-
-    useEffect(() => {
-        if (historySortValue !== queryHistorySort) {
-            handleHistorySortChange(queryHistorySort);
-        }
-    }, [queryHistorySort]);
-
-    useEffect(() => {
-        if (historyCurrentPage !== queryHistoryPage) {
-            handleHistoryPageChange(queryHistoryPage);
-        }
-    }, [queryHistoryPage]);
 
     const updateSearchParams = ({ lowStockPage, lowStockSort, lowStockSearch, historyPage, historySort, historySearch }) => {
         const params = new URLSearchParams(searchParams);
@@ -197,6 +180,53 @@ const Stocks = () => {
         }
     };
 
+    // Generate stocks analytics when stock data changes
+    useEffect(() => {
+        if (products && products.length > 0) {
+            generateAnalyticsData(products, lowStockProducts);
+            generateStocksAnalyticsData(products, lowStockProducts, stockHistory);
+        } else {
+            generateAnalyticsData([], []);
+            generateStocksAnalyticsData([], [], []);
+        }
+    }, [products, lowStockProducts, stockHistory, generateAnalyticsData, generateStocksAnalyticsData]);
+
+    useEffect(() => {
+        if (lowStockSearchValue !== queryLowStockSearch) {
+            handleLowStockSearchChange(queryLowStockSearch);
+        }
+    }, [queryLowStockSearch]);
+
+    useEffect(() => {
+        if (lowStockSortValue !== queryLowStockSort) {
+            handleLowStockSortChange(queryLowStockSort);
+        }
+    }, [queryLowStockSort]);
+
+    useEffect(() => {
+        if (lowStockCurrentPage !== queryLowStockPage) {
+            handleLowStockPageChange(queryLowStockPage);
+        }
+    }, [queryLowStockPage]);
+
+    useEffect(() => {
+        if (historySearchValue !== queryHistorySearch) {
+            handleHistorySearchChange(queryHistorySearch);
+        }
+    }, [queryHistorySearch]);
+
+    useEffect(() => {
+        if (historySortValue !== queryHistorySort) {
+            handleHistorySortChange(queryHistorySort);
+        }
+    }, [queryHistorySort]);
+
+    useEffect(() => {
+        if (historyCurrentPage !== queryHistoryPage) {
+            handleHistoryPageChange(queryHistoryPage);
+        }
+    }, [queryHistoryPage]);
+
     return (
         <div className={styles['wrapper']}>
             <div className={styles['section']}>
@@ -226,6 +256,131 @@ const Stocks = () => {
                     </div>
                 </div>
             </div>
+
+            <div className={styles['divider-horizontal']}></div>
+
+            <div className={styles['section']}>
+                <div className={styles['section-header']}>
+                    <h2>Stock Analytics</h2>
+                    <div className={styles['chart-controls']}>
+                        <Button
+                            id='stocks-report-dropdown'
+                            type='secondary'
+                            label={`Report: ${selectedReportLabel}`}
+                            icon='fa-solid fa-chart-column'
+                            dropdownPosition='right'
+                            options={[
+                                {
+                                    label: 'All Reports',
+                                    action: () => {
+                                        setSelectedReports(['all']);
+                                        setSelectedReportLabel('All Reports');
+                                    }
+                                },
+                                {
+                                    label: 'Stock Level Trends',
+                                    action: () => {
+                                        setSelectedReports(['levels']);
+                                        setSelectedReportLabel('Stock Level Trends');
+                                    }
+                                },
+                                {
+                                    label: 'Category Stock Analysis',
+                                    action: () => {
+                                        setSelectedReports(['categories']);
+                                        setSelectedReportLabel('Category Stock Analysis');
+                                    }
+                                },
+                                {
+                                    label: 'Reorder Analysis',
+                                    action: () => {
+                                        setSelectedReports(['reorder']);
+                                        setSelectedReportLabel('Reorder Analysis');
+                                    }
+                                },
+                                {
+                                    label: 'Quick Statistics',
+                                    action: () => {
+                                        setSelectedReports(['statistics']);
+                                        setSelectedReportLabel('Quick Statistics');
+                                    }
+                                }
+                            ]}
+                        />
+                        <Button
+                            type='secondary'
+                            label={`Chart Type: ${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`}
+                            icon='fa-solid fa-chart-line'
+                            disabled={true}
+                        />
+                    </div>
+                </div>
+                
+                <div className={styles['analytics-container']}>
+                    {shouldShowReport('levels') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Stock Level Trends (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={stockLevelTrendsData && stockLevelTrendsData.labels ? stockLevelTrendsData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('categories') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Category Stock Analysis (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={categoryStockData && categoryStockData.labels ? categoryStockData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('reorder') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Reorder Analysis (Last 6 Months)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={reorderAnalysisData && reorderAnalysisData.labels ? reorderAnalysisData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>  
+                        </div>
+                    )}
+
+                    {shouldShowReport('statistics') && (
+                        <div className={`${styles['analytics-card']} ${styles['stats-card']}`}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Quick Statistics</h3>
+                            </div>
+                            <div className={styles['quick-stats']}>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.stockLevels.reduce((sum, item) => sum + item.inStock, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total In Stock Items (7 days avg)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.stockLevels.reduce((sum, item) => sum + item.lowStock, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total Low Stock Items (7 days avg)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.stockLevels.reduce((sum, item) => sum + item.outOfStock, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total Out of Stock Items (7 days avg)</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className={styles['divider-horizontal']}></div>
 
             <div className={styles['section']}>
                 <div className={styles['section-header']}>

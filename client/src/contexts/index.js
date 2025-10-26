@@ -16,3 +16,5 @@ export { useNotifications, NotificationsProvider } from './Notifications';
 export { useBanners, BannersProvider } from './Banners';
 export { usePromotions, PromotionsProvider } from './Promotions';
 export { useGeminiAI, GeminiAIProvider } from './GeminiAI';
+export { AnalyticsProvider, useAnalytics } from './Analytics';
+

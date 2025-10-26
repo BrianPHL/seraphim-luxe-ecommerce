@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-router';
 import { Header, Footer, OTPModal, InboxPopup, AuthPopup, GeminiAIChatbot } from '@components';
-import { useAuth, useTheme } from '@contexts';
+import { useAuth, useTheme, AnalyticsProvider } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
@@ -200,10 +200,13 @@ const App = () => {
                 <Route path="/admin/*" element={
                     <ProtectedRoute>
                         <Header />
+                        <AnalyticsProvider>
                             <AdminLayout />
                             <GeminiAIChatbot />
+                        </AnalyticsProvider>
                     </ProtectedRoute>
                 }>
+                   <Route index element={<AdminDashboard />} />
                    <Route path="dashboard" element={<AdminDashboard />} />
                    <Route path="orders" element={<AdminOrders />} />
                    <Route path="products" element={<AdminProducts />} />
