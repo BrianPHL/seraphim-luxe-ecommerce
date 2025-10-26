@@ -65,6 +65,16 @@ const CheckoutWithAuditWrapper = ({ children }) => {
   );
 };
 
+const OrdersWithAuditWrapper = ({ children }) => {
+  const auditLoggers = useAuditTrail();
+
+  return (
+    <OrdersProvider auditLoggers={auditLoggers}>
+      { children }
+    </OrdersProvider>
+  );
+};
+
 const SettingsWithAuditWrapper = ({ children }) => {
   const auditLoggers = useAuditTrail();
 
@@ -92,23 +102,25 @@ createRoot(document.getElementById('root')).render(
                             							<CategoriesProvider>
                               								<ProductsProvider>
                               									<OrdersProvider>
-                              										<WishlistProvider>
-                              								    		<WishlistWithAuditWrapper>
-                              												<CartProvider>
-                              								        			<CartWithAuditWrapper>
-                              								            			<CheckoutProvider>
-                              								              				<CheckoutWithAuditWrapper>
-                              								                				<StocksProvider>
-                              								                  					<GeminiAIProvider>
-                                                  													<App />
-                                                												</GeminiAIProvider>
-                                              												</StocksProvider>
-                                            											</CheckoutWithAuditWrapper>
-                                          											</CheckoutProvider>
-                                        										</CartWithAuditWrapper>
-                                      										</CartProvider>
-                                    									</WishlistWithAuditWrapper>
-                                  									</WishlistProvider>
+                                                  					<OrdersWithAuditWrapper>
+                              										    <WishlistProvider>
+                              								    	    	<WishlistWithAuditWrapper>
+                              										    		<CartProvider>
+                              								            			<CartWithAuditWrapper>
+                              								                			<CheckoutProvider>
+                              								                  				<CheckoutWithAuditWrapper>
+                              								                    				<StocksProvider>
+                              								                      					<GeminiAIProvider>
+                                                  					    								<App />
+                                                					    							</GeminiAIProvider>
+                                              						    						</StocksProvider>
+                                            						    					</CheckoutWithAuditWrapper>
+                                          							    				</CheckoutProvider>
+                                        							    			</CartWithAuditWrapper>
+                                      								    		</CartProvider>
+                                    								    	</WishlistWithAuditWrapper>
+                                  									    </WishlistProvider>
+                                                                    </OrdersWithAuditWrapper>
                                 								</OrdersProvider>
                               								</ProductsProvider>
                             							</CategoriesProvider>

@@ -28,10 +28,12 @@ export const PromotionsProvider = ({ children }) => {
             const data = await response.json();
 
             setPromotions(data.promotions || []);
+            return data.promotions || [];
 
         } catch (err) {
 
             console.error("Promotions context fetchPromotions function error: ", err);
+            return [];
 
         } finally {
             setLoading(false);

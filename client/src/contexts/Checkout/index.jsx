@@ -57,9 +57,12 @@ export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
             const data = await response.json();
             setOrders(data);
 
+            return data || [];
+
         } catch (err) {
             console.error("Failed to fetch orders:", err);
             showToast("Failed to load orders", "error");
+            return [];
         } finally {
             setLoading(false);
         }

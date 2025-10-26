@@ -23,12 +23,13 @@ export const OrdersProvider = ({ children }) => {
     const { logOrderUpdate, logInvoicePrint, logInvoiceReportPrint } = useAuditTrail();
 
     const fetchOrders = async () => {
+
         if (!user) return;
 
         try {
             setLoading(true);
-            
-            const response = await fetch(`/api/orders/${user.account_id}`, {
+
+            const response = await fetch(`/api/orders`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -39,9 +40,11 @@ export const OrdersProvider = ({ children }) => {
             }
             
             setOrders(data || []);
+            return data || [];
         } catch (err) {
             console.error("Failed to fetch orders:", err);
             showToast(`Failed to load your orders: ${err.message}`, "error");
+            return [];
         } finally {
             setLoading(false);
         }
@@ -492,7 +495,7 @@ export const OrdersProvider = ({ children }) => {
 
     return (
         <OrdersContext.Provider value={{ 
-            orders,
+            allOrders: orders,
             recentOrders,
             cancelOrder,
             pendingOrdersCount,
@@ -504,7 +507,7 @@ export const OrdersProvider = ({ children }) => {
             getOrderById,
             getOrderItems,
             trackOrder,
-            refreshOrders: fetchOrders,
+            fetchAllOrders: fetchOrders,
             updateOrderStatus,
             printInvoice,
             printInvoiceReport,
