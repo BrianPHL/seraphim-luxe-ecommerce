@@ -101,6 +101,15 @@ const GeminiAIChatbot = () => {
 
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            setIsOpen(false);
+        } else if (e.key === 'Enter' && !e.shiftKey && message) {
+            e.preventDefault();
+            handleSubmitChatToGeminiAI();
+        }
+    };
+
     useEffect(() => {
         setLocalChatHistory(chatHistory);
     }, [chatHistory]);
@@ -114,6 +123,13 @@ const GeminiAIChatbot = () => {
     useEffect(() => {
         scrollToBottom();
     }, [localChatHistory, isTyping]);
+
+    useEffect(() => {
+        if (isOpen) {
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+        }
+    }, [isOpen, message, isLoading, isTyping]);
 
     return (
         <>
