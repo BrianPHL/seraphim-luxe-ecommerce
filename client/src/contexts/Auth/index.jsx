@@ -361,6 +361,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
                 email: user.email,
                 phone_number: user.phone_number,
                 address: user.address,
+                gender: user.gender === 'undisclosed' ? 'Prefer not to say' : user.gender
             };
         
             const data = await apiRequest(`/api/accounts/${ !personalInfo.id ? user.id : personalInfo.id }/personal-info`, {
@@ -377,7 +378,8 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
                     name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
                     email: user.email,
                     role: user.role,
-                    phone_number: user.phone_number
+                    phone_number: user.phone_number,
+                    gender: user.gender === 'undisclosed' ? 'Prefer not to say' : user.gender
                 });
             }
 
