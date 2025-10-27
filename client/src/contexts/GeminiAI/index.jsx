@@ -70,7 +70,7 @@ export const GeminiAIProvider = ({ children }) => {
             const freshAuditLogs = auditLogsResult?.logs || [];
 
             const contextBlob = [
-                `USER_INFORMATION: ${user?.name || 'Guest'} (${user?.email || 'N/A'}) | Role: ${user?.role || 'customer'} | Currency: ${user?.currency || 'PHP'}`,
+                `USER_INFORMATION: ${ user?.name || 'Guest' } (${ user?.email || 'N/A' }) | Role: ${ user?.role || 'customer' } | Currency: ${ user?.currency || 'PHP' } | Gender: ${ user?.gender === 'undisclosed' ? 'Prefer not to say' : user?.gender }`,
                 `CART: ${freshCart?.length || 0} items - ${freshCart?.slice(0, 5)?.map(item => `${item.label}(qty:${item.quantity})`).join(', ') || 'Empty'}`,
                 `WISHLIST: ${freshWishlist?.length || 0} items - ${freshWishlist?.slice(0, 10)?.map(item => item.label).join(', ') || 'Empty'}`,
                 `ORDERS: ${freshOrders?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status})`).join(' | ') || 'None'}`,
