@@ -451,7 +451,8 @@
     display: flex;
     gap: 1rem;
     & > .modal-warn {
-        background-color: var(--error-foreground);
+        background-color: var(--error-background);
+        color: var(--error-foreground);
         &:hover {
             background-color: var(--error-hover);
         }
