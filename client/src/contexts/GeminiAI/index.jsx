@@ -18,6 +18,42 @@ export const GeminiAIProvider = ({ children }) => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [ chatHistory, setChatHistory ] = useState([]);
 
+    const WEBSITE_KNOWLEDGE = {
+        navigation: {
+            'check order status': '/orders - You can check your order status by going to the Orders page in your profile menu',
+            'view cart': '/cart - Your shopping cart is accessible from the cart icon in the header or by visiting /cart',
+            'wishlist': '/wishlist - Access your saved items at /wishlist or click the heart icon in the header',
+            'profile settings': '/profile - Manage your account settings, addresses, and preferences at /profile',
+            'collections': '/collections - Browse all products at /collections',
+            'contact us': '/contact-us - Reach out to our support team at /contact-us',
+            'about us': '/about-us - Learn more about Seraphim Luxe at /about-us',
+            'faqs': '/faqs - Find answers to common questions at /faqs',
+            'privacy policy': '/privacy-policy - Read our privacy policy at /privacy-policy'
+        },
+        orderTracking: {
+            steps: [
+                '1. Go to your Profile by clicking your avatar in the header',
+                '2. Navigate to the Orders section',
+                '3. View all your orders with their current status',
+                '4. Click on an order to see detailed tracking information',
+                '5. Order statuses include: Pending, Processing, Shipped, Delivered, Cancelled'
+            ],
+            statusMeanings: {
+                'pending': 'Your order has been received and is awaiting processing',
+                'processing': 'Your order is being prepared for shipment',
+                'shipped': 'Your order has been shipped and is on its way',
+                'delivered': 'Your order has been successfully delivered',
+                'cancelled': 'Your order has been cancelled',
+                'returned': 'Your order has been returned',
+                'refunded': 'Your order has been refunded'
+            }
+        },
+        paymentMethods: ['Cash on Delivery', 'PayPal', 'Bank Transfer', 'Credit Card'],
+        shippingInfo: 'We ship within the Philippines. Shipping costs and delivery times vary by location.',
+        returnPolicy: 'Items can be returned within 30 days of delivery in original condition.',
+        supportContact: 'For urgent matters, contact us at support@seraphimluxe.com or visit /contact-us'
+    };
+
     const fetchChatHistory = useCallback(async () => {
 
         if (!user) return;
@@ -79,7 +115,14 @@ export const GeminiAIProvider = ({ children }) => {
                 `ACTIVE_PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off)`).join(' | ') || 'None'}`,
                 `RECENT_ACTIVITY: ${freshAuditLogs?.filter(log => log.user_id === Number(user?.id))?.slice(0, 15)?.map(log => `${log.action_type}:${log.details?.substring(0, 30) || ''}`).join(' | ') || 'No activity'}`,
                 `ALL_PRODUCTS: ${freshProducts?.map(p => `${p.label}(₱${p.price},stock:${p.stock_quantity},sold:${p.orders_count || 0})`).join(' | ') || 'None'}`,
-                `LOW_STOCK: ${freshProducts?.filter(p => p.stock_quantity <= p.stock_threshold)?.slice(0, 5)?.map(p => `${p.label}(${p.stock_quantity} left)`).join(' | ') || 'None'}`
+                `LOW_STOCK: ${freshProducts?.filter(p => p.stock_quantity <= p.stock_threshold)?.slice(0, 5)?.map(p => `${p.label}(${p.stock_quantity} left)`).join(' | ') || 'None'}`,
+                `WEBSITE_NAVIGATION: ${Object.entries(WEBSITE_KNOWLEDGE.navigation).map(([key, value]) => `${key}: ${value}`).join(' | ')}`,
+                `ORDER_TRACKING_STEPS: ${WEBSITE_KNOWLEDGE.orderTracking.steps.join(' → ')}`,
+                `ORDER_STATUS_MEANINGS: ${Object.entries(WEBSITE_KNOWLEDGE.orderTracking.statusMeanings).map(([status, meaning]) => `${status}: ${meaning}`).join(' | ')}`,
+                `PAYMENT_METHODS: ${WEBSITE_KNOWLEDGE.paymentMethods.join(', ')}`,
+                `SHIPPING_INFO: ${WEBSITE_KNOWLEDGE.shippingInfo}`,
+                `RETURN_POLICY: ${WEBSITE_KNOWLEDGE.returnPolicy}`,
+                `SUPPORT_CONTACT: ${WEBSITE_KNOWLEDGE.supportContact}`
 
             ].join(' || ');
 
