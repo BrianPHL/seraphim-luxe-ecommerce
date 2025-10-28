@@ -48,20 +48,26 @@
     align-self: flex-start;
     display: flex;
     width: 100%;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .chat-body-upper {
     flex-direction: column;
     border-radius: 0.25rem;
-    overflow-y: auto;
     display: flex;
-    padding: 0.5rem;
-    border: 1px solid var(--bg-outline);
     height: 50vh;
-    padding-bottom: 3.25rem;
+    border: 1px solid var(--bg-outline);
     width: 100%;
-    gap: 1rem;
+    gap: 0rem;
+}
+
+.chat-body-upper .messages {
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
 }
 
 .chat-body-upper .message {
@@ -77,11 +83,11 @@
     gap: 0.5rem;
 }
 
-.chat-body-upper .message[data-role='agent'] {
+.messages .message[data-role='chatbot'] {
     align-self: flex-start;
 }
 
-.chat-body-upper .message[data-role='user'] {
+.messages .message[data-role='user'] {
     background-color: var(--bg-outline);
     flex-direction: row-reverse;
     align-self: flex-end;
@@ -111,39 +117,55 @@
     color: var(--tg-secondary);
 }
 
-.chat-body-lower {
+.chat-options {
     display: flex;
-    gap: 1rem;
-}
-
-.chat-predefined_questions {
-    overflow-x: scroll;
-    position: fixed;
-    display: flex;
-    z-index: 9999;
-    height: auto;
-    bottom: 15.75rem;
-    width: 36.5rem;
+    width: 100%;
     gap: 0.5rem;
 }
 
-.chat-predefined_questions-item {
-    background-color: var(--bg-outline);
+.chat-options-switch_btn {
+    background-color: var(--accent-base);
     border-radius: 0.25rem;
     flex-shrink: 0;
+    font-weight: 600;
     transition: 0.25s ease all;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     z-index: 9999;
-    padding: 0.5rem 0.75rem;
-    color: var(--tg-primary);
-    opacity: 0.9;
+    padding: 0 0.75rem;
+    height: 2rem;
+    color: var(--bg-primary);
     border: 1px solid var(--accent-base);
 }
 
-.chat-predefined_questions-item:hover {
-    background-color: var(--accent-base);
-    cursor: pointer;
+.chat-options-switch_btn:hover {
+    background-color: var(--accent-hovered);
+    color: var(--accent-base);
+}
+
+.chat-options-predefined_questions {
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+    overflow-x: auto;
+}
+
+.chat-options-predefined_question {
+    background-color: var(--bg-outline);
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    z-index: 9999;
+    padding: 0 0.75rem;
+    height: 2rem;
+    border: 1px solid var(--accent-base);
     color: var(--tg-primary);
+}
+
+.chat-body-lower {
+    display: flex;
+    gap: 1rem;
 }
 
 .button {

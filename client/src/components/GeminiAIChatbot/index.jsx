@@ -144,48 +144,73 @@ const GeminiAIChatbot = () => {
                         />
                     </div>
                     <div className={ styles['chat-body'] }>
-                        <div className={ styles['chat-body-upper'] } ref={chatBodyRef}>
+                        <div className={ styles['chat-body-upper'] } ref={ chatBodyRef }>
                             <>
-                            {
-                                localChatHistory.length > 0 ? (
-                                    <>
-                                        {localChatHistory.map((chat) => {
-                                            return (
-                                                <p key={ chat.id } className={ styles['message'] } data-role={chat.message_type}>
-                                                    <span className={ styles['message-label'] }>
-                                                        { chat.message_type === 'user' ? 'You' : 'Agent'}
-                                                    </span>
-                                                    { chat.message }
-                                                </p>
-                                            );
-                                        })}
-                                        {
-                                            (isLoading || isTyping) && (
-                                                <p className={ styles['message'] } data-role="ai">
-                                                    <span className={ styles['message-label'] }>Agent</span>
-                                                    <em>Typing...</em>
-                                                </p>
-                                            )
-                                        }
-                                    </>
-                                ) : (
-                                    <div className={ styles['placeholder'] }>
-                                        <h2 className={ styles['placeholder-title'] }>Seraphim Luxe AI</h2>
-                                        <p className={ styles['placeholder-body'] }>
+                                {
+                                    localChatHistory.length > 0 ? (
+                                        <div className={ styles['messages'] }>
+                                            { localChatHistory.map((chat) => {
+                                                return (
+                                                    <p key={ chat.id } className={ styles['message'] } data-role={chat.message_type}>
+                                                        <span className={ styles['message-label'] }>
+                                                            { chat.message_type === 'user' ? 'You' : 'Agent'}
+                                                        </span>
+                                                        { chat.message }
+                                                    </p>
+                                                );
+                                            })}
                                             {
-                                                user && user.role === 'customer'
-                                                ? 'Unlock exclusive shopping tips, get instant answers, and discover the perfect products just for you!'
-                                                : 'Streamline your workflow, access business insights, and manage store operations faster!'
+                                                (isLoading || isTyping) && (
+                                                    <p className={ styles['message'] } data-role="ai">
+                                                        <span className={ styles['message-label'] }>Agent</span>
+                                                        <em>Typing...</em>
+                                                    </p>
+                                                )
                                             }
-                                        </p>
+                                        </div>
+                                    ) : (
+                                        <div className={ styles['placeholder'] }>
+                                            <h2 className={ styles['placeholder-title'] }>Seraphim Luxe AI</h2>
+                                            <p className={ styles['placeholder-body'] }>
+                                                {
+                                                    user && user.role === 'customer'
+                                                    ? 'Unlock exclusive shopping tips, get instant answers, and discover the perfect products just for you!'
+                                                    : 'Streamline your workflow, access business insights, and manage store operations faster!'
+                                                }
+                                            </p>
+                                        </div>
+                                    )
+                                }
+                                <div className={ styles['chat-options'] }>
+                                    <div className={ styles['chat-options-predefined_questions'] }>
+                                        <Button
+                                            type='secondary'
+                                            label='What products do you recommend for me?'
+                                            action={ () => {} }
+                                            externalStyles={ styles['chat-options-predefined_question'] }
+                                        />
+                                        <Button
+                                            type='secondary'
+                                            label='What are your newest arrivals?'
+                                            action={ () => {} }
+                                            externalStyles={ styles['chat-options-predefined_question'] }
+                                        />
+                                        <Button
+                                            type='secondary'
+                                            label='Which items are your best sellers?'
+                                            action={ () => {} }
+                                            externalStyles={ styles['chat-options-predefined_question'] }
+                                        />
                                     </div>
-                                )
-                            }
-                            <div className={ styles['chat-predefined_questions'] }>
-                                <button className={ styles['chat-predefined_questions-item'] }>What products do you recommend for me?</button>
-                                <button className={ styles['chat-predefined_questions-item'] }>What are your newest arrivals?</button>
-                                <button className={ styles['chat-predefined_questions-item'] }>Which items are your best sellers?</button>
-                            </div>
+                                    <Button
+                                        type='primary'
+                                        icon='fa solid fa-headset'
+                                        label='Talk to our live agent'
+                                        iconPosition='left'
+                                        action={ () => setIsPopupOpen(false) }
+                                        externalStyles={ styles['chat-options-switch_btn'] }
+                                    />
+                                </div>
                             </>
                         </div>
                         <div className={ styles['chat-body-lower'] }>
