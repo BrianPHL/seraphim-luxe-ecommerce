@@ -9,11 +9,12 @@ const GeminiAIChatbot = () => {
     const [ message, setMessage ] = useState('');
     const [ localChatHistory, setLocalChatHistory ] = useState([]);
     const [ isTyping, setIsTyping ] = useState(false);
+    const [ chatbotState, setChatbotState ] = useState('seraphim-ai'); // seraphim-ai or live-agent
 
     const chatBodyRef = useRef(null);
     const { user, setIsPopupOpen } = useAuth();
     const { showToast } = useToast();
-    const { isLoading, chatHistory, predefinedQuestions, fetchChatHistory, sendGeminiAICustomerChat, sendGeminiAIAdminChat } = useGeminiAI();
+    const { isLoading, chatHistory, fetchPredefinedQuestions, predefinedQuestions, fetchChatHistory, sendGeminiAICustomerChat, sendGeminiAIAdminChat } = useGeminiAI();
 
     const requireAuth = (action) => {
         
@@ -23,6 +24,14 @@ const GeminiAIChatbot = () => {
         }
 
         action();
+
+    };
+
+    const switchChatbotState = () => {
+
+        (chatbotState === 'seraphim-ai')
+        ? setChatbotState('live-agent')
+        : setChatbotState('seraphim-ai')
 
     };
 
@@ -110,6 +119,11 @@ const GeminiAIChatbot = () => {
         }
     };
 
+    const handlePredefinedQuestionClick = (questionText) => {
+        setMessage(questionText);
+        handleSubmitChatToGeminiAI();
+    };
+
     useEffect(() => {
         setLocalChatHistory(chatHistory);
     }, [chatHistory]);
@@ -117,8 +131,9 @@ const GeminiAIChatbot = () => {
     useEffect(() => {
         if (isOpen && user) {
             fetchChatHistory();
+            fetchPredefinedQuestions();
         }
-    }, [isOpen, user, fetchChatHistory]);
+    }, [ isOpen, user, fetchChatHistory, fetchPredefinedQuestions ]);
 
     useEffect(() => {
         scrollToBottom();
@@ -183,31 +198,36 @@ const GeminiAIChatbot = () => {
                                 }
                                 <div className={ styles['chat-options'] }>
                                     <div className={ styles['chat-options-predefined_questions'] }>
-                                        <Button
-                                            type='secondary'
-                                            label='What products do you recommend for me?'
-                                            action={ () => {} }
-                                            externalStyles={ styles['chat-options-predefined_question'] }
-                                        />
-                                        <Button
-                                            type='secondary'
-                                            label='What are your newest arrivals?'
-                                            action={ () => {} }
-                                            externalStyles={ styles['chat-options-predefined_question'] }
-                                        />
-                                        <Button
-                                            type='secondary'
-                                            label='Which items are your best sellers?'
-                                            action={ () => {} }
-                                            externalStyles={ styles['chat-options-predefined_question'] }
-                                        />
+                                        { predefinedQuestions.length > 0 ? (
+                                            <>
+                                                { predefinedQuestions.map((question) => {
+                                                    return (
+                                                        <Button
+                                                            key={ question.id }
+                                                            type='secondary'
+                                                            label={ question.question }
+                                                            action={ () => handlePredefinedQuestionClick(question.question) }
+                                                            externalStyles={ styles['chat-options-predefined_question'] }
+                                                        />
+                                                    );
+                                                })}
+                                            </>
+                                        ) : (
+                                            <Button
+                                                type='secondary'
+                                                label='Unable to load predefined questions.'
+                                                action={ () => {} }
+                                                disabled={ true }
+                                                externalStyles={ styles['chat-options-predefined_question-placeholder'] }
+                                            />
+                                        )}
                                     </div>
                                     <Button
                                         type='primary'
-                                        icon='fa solid fa-headset'
-                                        label='Talk to our live agent'
+                                        icon='fa solid fa-headset' 
+                                        label={ chatbotState === 'seraphim-ai' ? 'Switch to Seraphim AI' : chatbotState === 'live-agent' ? 'Switch to Live Agent' : null }
                                         iconPosition='left'
-                                        action={ () => setIsPopupOpen(false) }
+                                        action={ () => switchChatbotState() }
                                         externalStyles={ styles['chat-options-switch_btn'] }
                                     />
                                 </div>
@@ -217,7 +237,7 @@ const GeminiAIChatbot = () => {
                             <InputField
                                 value={ message }
                                 onChange={event => setMessage(event.target.value)}
-                                hint='Ask anything...'
+                                hint={ chatbotState === 'seraphim-ai' ? 'Ask our personalized Seraphim Luxe AI...' : chatbotState === 'live-agent' ? 'Ask our live agent...' : null }
                                 type='text'
                                 isSubmittable={ false }
                             />

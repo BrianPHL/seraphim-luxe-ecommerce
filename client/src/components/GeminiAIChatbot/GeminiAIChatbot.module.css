@@ -164,6 +164,21 @@
     color: var(--tg-primary);
 }
 
+.chat-options-predefined_question-placeholder {
+    background-color: var(--bg-outline);
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    z-index: 9999;
+    width: 100%;
+    padding: 0 0.75rem;
+    height: 2rem;
+    border: 1px solid var(--accent-base);
+    color: var(--tg-primary);
+}
+
 .chat-body-lower {
     display: flex;
     gap: 1rem;

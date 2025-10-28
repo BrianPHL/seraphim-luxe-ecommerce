@@ -83,32 +83,70 @@ export const GeminiAIProvider = ({ children }) => {
 
     }, [ user ]);
 
+    const selectWeightedRandomQuestions = (questions, count = 3) => {
+
+        if (!questions || questions.length === 0) return [];
+        if (questions.length <= count) return questions;
+
+        const weightMap = {
+            1: 5,
+            2: 3,
+            3: 1
+        };
+
+        const weightedPool = [];
+        questions.forEach(question => {
+            const weight = weightMap[question.priority_level] || 1;
+            for (let i = 0; i < weight; i++) {
+                weightedPool.push(question);
+            }
+        });
+
+        const selected = [];
+        const selectedIds = new Set();
+
+        while (selected.length < count && selected.length < questions.length) {
+            const randomIndex = Math.floor(Math.random() * weightedPool.length);
+            const candidate = weightedPool[randomIndex];
+
+            if (!selectedIds.has(candidate.id)) {
+                selected.push(candidate);
+                selectedIds.add(candidate.id);
+            }
+        }
+
+        return selected.sort((a, b) => a.priority_level - b.priority_level);
+    };
+
     const fetchPredefinedQuestions = useCallback(async () => {
 
         if (!user) return;
 
         try {
-            
-            const response = await fetchWithTimeout(`/api/gemini-ai/predefined_questions`, {
+
+            const scope = user.role === 'admin' ? 'admin' : 'customer';
+
+            const response = await fetchWithTimeout(`/api/gemini-ai/predefined-questions?scope=${scope}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
 
             if (!response.ok)
-                throw new Error("Failed to fetch chatbot predefined questions");
+                throw new Error("Failed to fetch predefined questions");
 
             const result = await response.json();
+            const selectedQuestions = selectWeightedRandomQuestions(result.data || [], 3);
 
-            setPredefinedQuestions(result || []);
+            setPredefinedQuestions(selectedQuestions);
 
         } catch (err) {
 
-            console.error("Notifications context fetchPredefinedQuestions function error: ", err);
-            showToast('Failed to fetch chatbot predefined questions!', 'error')
-            
+            console.error("GeminiAI context fetchPredefinedQuestions function error: ", err);
+            setPredefinedQuestions([]);
+
         }
 
-    });
+    }, [ user ]);
 
     const aggregateCustomerContext = useCallback(async () => {
 
@@ -315,6 +353,7 @@ export const GeminiAIProvider = ({ children }) => {
             isLoading,
             chatHistory,
             predefinedQuestions,
+            fetchPredefinedQuestions,
             fetchChatHistory,
             sendGeminiAICustomerChat,
             sendGeminiAIAdminChat

@@ -4,22 +4,39 @@ import geminiAI from "../apis/gemini-ai.js";
 
 const router = express.Router();
 
-router.get('/predefined_questions', async (req, res) => {
-
+router.get('/predefined-questions', async (req, res) => {
+    
     try {
 
-        const [ rows ] = await pool.query(
-            `
-                SELECT *
-                FROM chatbot_predefined_questions
-            `
-        );
+        const { scope } = req.query;
 
-        res.status(200).json(rows || []);
+        if (!scope || !['customer', 'admin'].includes(scope)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid scope parameter. Must be "customer" or "admin".'
+            });
+        }
+
+        const query = `
+            SELECT id, question, scope, priority_level, created_at
+            FROM chatbot_predefined_questions
+            WHERE scope = ?
+            ORDER BY priority_level ASC, created_at DESC
+        `;
+
+        const [questions] = await pool.query(query, [scope]);
+
+        return res.status(200).json({
+            success: true,
+            data: questions
+        });
 
     } catch (err) {
-        console.error('gemini-ai route GET /predefined_questions endpoint error:', err);
-        res.status(500).json({ error: err });
+        console.error('Gemini AI predefined questions fetch error:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch predefined questions'
+        });
     }
 
 });
@@ -88,7 +105,7 @@ router.post('/:user_id/:user_type', async (req, res) => {
                 (user_id, session_id, user_type, message_type, message, context_blob)
                 VALUES (?, ?, ?, ?, ?, ?)
             `,
-            [ user_id, session_id, user_type, 'chatbot', AIResponse, context.contextBlob ]
+            [ user_id, session_id, user_type, 'seraphim-ai', AIResponse, context.contextBlob ]
         );
 
         await connection.commit();
