@@ -96,7 +96,7 @@ export const GeminiAIProvider = ({ children }) => {
                 fetchCategories(),
                 fetchAuditLogs({ limit: 100 })
             ]);
-    
+
             const freshProducts = productsResult || products;
             const freshCart = cartResult || cartItems;
             const freshWishlist = wishlistResult || wishlistItems;
@@ -110,6 +110,7 @@ export const GeminiAIProvider = ({ children }) => {
                 `CART: ${freshCart?.length || 0} items - ${freshCart?.slice(0, 5)?.map(item => `${item.label}(qty:${item.quantity})`).join(', ') || 'Empty'}`,
                 `WISHLIST: ${freshWishlist?.length || 0} items - ${freshWishlist?.slice(0, 10)?.map(item => item.label).join(', ') || 'Empty'}`,
                 `ORDERS: ${freshOrders?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status})`).join(' | ') || 'None'}`,
+                `ORDER_STATUS_BREAKDOWN: Pending:${freshOrders?.filter(o => o.status === 'pending').length || 0} | Processing:${freshOrders?.filter(o => o.status === 'processing').length || 0} | Shipped:${freshOrders?.filter(o => o.status === 'shipped').length || 0} | Delivered:${freshOrders?.filter(o => o.status === 'delivered').length || 0} | Cancelled:${freshOrders?.filter(o => o.status === 'cancelled').length || 0}`,
                 `FEATURED_PRODUCTS: ${freshProducts?.filter(p => p.is_featured)?.slice(0, 8)?.map(p => `${p.label}(₱${p.price},stock:${p.stock_quantity})`).join(' | ') || 'None'}`,
                 `CATEGORIES: ${freshCategories?.filter(c => c.is_active)?.map(c => c.name).join(', ') || 'None'}`,
                 `ACTIVE_PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off)`).join(' | ') || 'None'}`,
@@ -201,14 +202,25 @@ export const GeminiAIProvider = ({ children }) => {
 
                 `ALL_ORDERS: ${freshOrders?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status},${order.payment_method})`).join(' | ') || 'None'}`,
                 `RECENT_ORDERS: ${freshOrders?.slice(0, 15)?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status},${order.payment_method})`).join(' | ') || 'None'}`,
+                `PENDING_ORDERS: ${freshOrders?.filter(o => o.status === 'pending')?.slice(0, 10)?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.payment_method})`).join(' | ') || 'None'}`,
+                `PROCESSING_ORDERS: ${freshOrders?.filter(o => o.status === 'processing')?.slice(0, 10)?.map(order => `Order#${order.order_number}(₱${order.total_amount})`).join(' | ') || 'None'}`,
+                `ORDER_STATUS_BREAKDOWN: Pending:${freshOrders?.filter(o => o.status === 'pending').length || 0} | Processing:${freshOrders?.filter(o => o.status === 'processing').length || 0} | Shipped:${freshOrders?.filter(o => o.status === 'shipped').length || 0} | Delivered:${freshOrders?.filter(o => o.status === 'delivered').length || 0} | Cancelled:${freshOrders?.filter(o => o.status === 'cancelled').length || 0}`,
                 `TOP_PRODUCTS: ${freshProducts?.sort((a, b) => (b.orders_count || 0) - (a.orders_count || 0))?.slice(0, 10)?.map(p => `${p.label}(sold:${p.orders_count || 0},₱${parseFloat(p.total_revenue || 0).toFixed(2)})`).join(' | ') || 'None'}`,
                 `LOW_STOCK_ALERTS: ${freshProducts?.filter(p => p.stock_status === 'low_stock' || p.stock_quantity <= p.stock_threshold)?.map(p => `${p.label}(${p.stock_quantity}/${p.stock_threshold})`).join(' | ') || 'None'}`,
+                `NEEDS_RESTOCKING: ${freshProducts?.filter(p => p.stock_quantity === 0 || p.stock_quantity <= (p.stock_threshold * 0.5))?.map(p => `${p.label}(${p.stock_quantity} left, threshold:${p.stock_threshold})`).join(' | ') || 'None'}`,
                 `ALL_PRODUCTS: ${freshProducts?.map(p => `${p.label}(₱${p.price},stock:${p.stock_quantity},sold:${p.orders_count || 0},views:${p.views_count || 0})`).join(' | ') || 'None'}`,
                 `RECENT_ADMIN_ACTIVITY: ${freshAuditLogs?.filter(log => log.action_type?.includes('admin_'))?.slice(0, 20)?.map(log => `${log.action_type}:${log.details?.substring(0, 40) || ''}`).join(' | ') || 'No admin activity'}`,
                 `USER_ACTIVITY: ${freshAuditLogs?.slice(0, 30)?.map(log => `${log.user_id || 'Guest'}:${log.action_type}:${log.resource_type || ''}`).join(' | ') || 'No activity'}`,
                 `ACTIVE_PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off,products:${p.products?.length || 0})`).join(' | ') || 'None'}`,
                 `CATEGORIES: ${freshCategories?.map(c => `${c.name}(active:${c.is_active})`).join(', ') || 'None'}`,
-                `REVENUE_DATA: Total:₱${freshProducts?.reduce((sum, p) => sum + (parseFloat(p.total_revenue) || 0), 0).toFixed(2) || '0.00'} | Top Revenue:${freshProducts?.sort((a, b) => (parseFloat(b.total_revenue) || 0) - (parseFloat(a.total_revenue) || 0))?.slice(0, 5)?.map(p => `${p.label}:₱${parseFloat(p.total_revenue || 0).toFixed(2)}`).join(',') || 'None'}`
+                `CATEGORY_PERFORMANCE: ${freshCategories?.map(cat => {
+                    const catProducts = freshProducts?.filter(p => p.category_id === cat.id);
+                    const revenue = catProducts?.reduce((sum, p) => sum + parseFloat(p.total_revenue || 0), 0);
+                    const totalSold = catProducts?.reduce((sum, p) => sum + (p.orders_count || 0), 0);
+                    return `${cat.name}(products:${catProducts?.length || 0},sold:${totalSold},revenue:₱${revenue.toFixed(2)})`;
+                }).join(' | ') || 'None'}`,
+                `REVENUE_DATA: Total:₱${freshProducts?.reduce((sum, p) => sum + (parseFloat(p.total_revenue) || 0), 0).toFixed(2) || '0.00'} | Top Revenue:${freshProducts?.sort((a, b) => (parseFloat(b.total_revenue) || 0) - (parseFloat(a.total_revenue) || 0))?.slice(0, 5)?.map(p => `${p.label}:₱${parseFloat(p.total_revenue || 0).toFixed(2)}`).join(',') || 'None'}`,
+                `TODAYS_METRICS: Orders:${freshOrders?.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString())?.length || 0} | Revenue:₱${freshOrders?.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString())?.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0).toFixed(2)}`
 
             ].join(' || ');
 
