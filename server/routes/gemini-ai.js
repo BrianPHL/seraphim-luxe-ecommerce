@@ -4,6 +4,26 @@ import geminiAI from "../apis/gemini-ai.js";
 
 const router = express.Router();
 
+router.get('/predefined_questions', async (req, res) => {
+
+    try {
+
+        const [ rows ] = await pool.query(
+            `
+                SELECT *
+                FROM chatbot_predefined_questions
+            `
+        );
+
+        res.status(200).json(rows || []);
+
+    } catch (err) {
+        console.error('gemini-ai route GET /predefined_questions endpoint error:', err);
+        res.status(500).json({ error: err });
+    }
+
+});
+
 router.get('/history/:user_id', async (req, res) => {
     try {
         const { user_id } = req.params;

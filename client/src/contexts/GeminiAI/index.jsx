@@ -1,10 +1,11 @@
 import { useContext, useState, useCallback, useEffect } from "react";
-import { useAuth, useProducts, useCart, useWishlist, useOrders, usePromotions, useAuditTrail, useCategories, useCheckout } from '@contexts';
+import { useAuth, useProducts, useCart, useWishlist, useOrders, usePromotions, useAuditTrail, useCategories, useCheckout, useToast } from '@contexts';
 import GeminiAIContext from "./context";
 import { fetchWithTimeout } from "@utils";
 
 export const GeminiAIProvider = ({ children }) => {
 
+    const { showToast } = useToast();
     const { user, fetchUsers } = useAuth();
     const { products, refreshProducts } = useProducts();
     const { cartItems, refreshCart } = useCart();
@@ -17,6 +18,7 @@ export const GeminiAIProvider = ({ children }) => {
 
     const [ isLoading, setIsLoading ] = useState(false);
     const [ chatHistory, setChatHistory ] = useState([]);
+    const [ predefinedQuestions, setPredefinedQuestions ] = useState([]);
 
     const WEBSITE_KNOWLEDGE = {
         navigation: {
@@ -75,11 +77,38 @@ export const GeminiAIProvider = ({ children }) => {
         } catch (err) {
 
             console.error("Notifications context fetchNotifications function error: ", err);
-            showToast('Failed to retrieve notifications!', 'error')
+            showToast('Failed to fetch chatbot chat history!', 'error')
             
         }
 
     }, [ user ]);
+
+    const fetchPredefinedQuestions = useCallback(async () => {
+
+        if (!user) return;
+
+        try {
+            
+            const response = await fetchWithTimeout(`/api/gemini-ai/predefined_questions`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to fetch chatbot predefined questions");
+
+            const result = await response.json();
+
+            setPredefinedQuestions(result || []);
+
+        } catch (err) {
+
+            console.error("Notifications context fetchPredefinedQuestions function error: ", err);
+            showToast('Failed to fetch chatbot predefined questions!', 'error')
+            
+        }
+
+    });
 
     const aggregateCustomerContext = useCallback(async () => {
 
@@ -278,12 +307,14 @@ export const GeminiAIProvider = ({ children }) => {
 
     useEffect(() => {
         fetchChatHistory();
-    }, [ user ])
+        fetchPredefinedQuestions();
+    }, [ user ]);
 
     return (
         <GeminiAIContext.Provider value={{
             isLoading,
             chatHistory,
+            predefinedQuestions,
             fetchChatHistory,
             sendGeminiAICustomerChat,
             sendGeminiAIAdminChat

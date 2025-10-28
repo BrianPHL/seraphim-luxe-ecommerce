@@ -13,7 +13,7 @@ const GeminiAIChatbot = () => {
     const chatBodyRef = useRef(null);
     const { user, setIsPopupOpen } = useAuth();
     const { showToast } = useToast();
-    const { isLoading, chatHistory, fetchChatHistory, sendGeminiAICustomerChat, sendGeminiAIAdminChat } = useGeminiAI();
+    const { isLoading, chatHistory, predefinedQuestions, fetchChatHistory, sendGeminiAICustomerChat, sendGeminiAIAdminChat } = useGeminiAI();
 
     const requireAuth = (action) => {
         
