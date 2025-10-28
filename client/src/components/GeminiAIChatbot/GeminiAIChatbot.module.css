@@ -24,10 +24,10 @@
     flex-direction: column;
     border-radius: 0.25rem;
     display: flex;
-    padding: 2rem;
+    padding: 1rem;
     border: 1px solid var(--bg-outline);
     width: 40rem;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .chat-header {
@@ -56,9 +56,11 @@
     border-radius: 0.25rem;
     overflow-y: auto;
     display: flex;
-    padding: 1rem;
+    padding: 0.5rem;
     border: 1px solid var(--bg-outline);
     height: 50vh;
+    padding-bottom: 3.25rem;
+    width: 100%;
     gap: 1rem;
 }
 
@@ -114,6 +116,36 @@
     gap: 1rem;
 }
 
+.chat-predefined_questions {
+    overflow-x: scroll;
+    position: fixed;
+    display: flex;
+    z-index: 9999;
+    height: auto;
+    bottom: 15.75rem;
+    width: 36.5rem;
+    gap: 0.5rem;
+}
+
+.chat-predefined_questions-item {
+    background-color: var(--bg-outline);
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    transition: 0.25s ease all;
+    font-size: 0.75rem;
+    z-index: 9999;
+    padding: 0.5rem 0.75rem;
+    color: var(--tg-primary);
+    opacity: 0.9;
+    border: 1px solid var(--accent-base);
+}
+
+.chat-predefined_questions-item:hover {
+    background-color: var(--accent-base);
+    cursor: pointer;
+    color: var(--tg-primary);
+}
+
 .button {
     background: linear-gradient(135deg, var(--accent-base), var(--accent-hovered));
     font-size: 1rem;
@@ -132,4 +164,16 @@
 
 .button > i {
     font-size: 1.5rem;
+}
+
+@media only screen and (max-width: 700px) {
+    .wrapper {
+        padding: 1rem;
+    }
+    .chat {
+        width: 100%;
+    }
+    .chat-body-upper {
+        height: 60vh;
+    }
 }

@@ -12,12 +12,12 @@ const geminiAI = async (context, message, userType) => {
 
         const prompt = userType === 'admin' ? buildAdminPrompt(context, message) : buildCustomerPrompt(context, message);
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-lite',
-            contents: prompt
-        });
+        // const response = await ai.models.generateContent({
+        //     model: 'gemini-2.0-flash-lite',
+        //     contents: prompt
+        // });
 
-        // const result = await setTimeout(() => 'response.text', 1500);
+        const result = await setTimeout(() => 'response.text', 1500);
 
         return result;
 

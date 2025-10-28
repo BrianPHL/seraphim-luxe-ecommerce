@@ -145,6 +145,7 @@ const GeminiAIChatbot = () => {
                     </div>
                     <div className={ styles['chat-body'] }>
                         <div className={ styles['chat-body-upper'] } ref={chatBodyRef}>
+                            <>
                             {
                                 localChatHistory.length > 0 ? (
                                     <>
@@ -179,8 +180,13 @@ const GeminiAIChatbot = () => {
                                         </p>
                                     </div>
                                 )
-
                             }
+                            <div className={ styles['chat-predefined_questions'] }>
+                                <button className={ styles['chat-predefined_questions-item'] }>What products do you recommend for me?</button>
+                                <button className={ styles['chat-predefined_questions-item'] }>What are your newest arrivals?</button>
+                                <button className={ styles['chat-predefined_questions-item'] }>Which items are your best sellers?</button>
+                            </div>
+                            </>
                         </div>
                         <div className={ styles['chat-body-lower'] }>
                             <InputField
