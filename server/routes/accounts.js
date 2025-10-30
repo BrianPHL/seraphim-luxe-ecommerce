@@ -262,11 +262,6 @@ router.put('/:account_id/personal-info', async (req, res) => {
     }
 });
 
-        
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-});
-
 router.put('/:account_id/suspend', async (req, res) => {
     
     try {
