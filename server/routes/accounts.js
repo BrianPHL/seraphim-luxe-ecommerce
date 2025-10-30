@@ -211,26 +211,39 @@ router.put('/:account_id/:address_id/address', async (req, res) => {
 });
 
 router.put('/:account_id/personal-info', async (req, res) => {
+
     try {
+
         const { account_id } = req.params;
         const { first_name, last_name, email, phone_number } = req.body;
         const name = `${ first_name } ${ last_name }`;
 
-        if (email) {
-            const [ existingEmail ] = await pool.query(
-                `
-                    SELECT id
-                    FROM accounts 
-                    WHERE email = ? AND id != ?
-                `,
-                [email, account_id]
-            );
-            
-            if (existingEmail.length > 0) {
-                return res.status(409).json({ 
-                    error: 'Email already in use by another account' 
-                });
-            }
+        const [ currentAccount ] = await pool.query(
+            `
+                SELECT email
+                FROM accounts 
+                WHERE id = ?
+            `,
+            [ account_id ]
+        );
+
+        const [ existingEmail ] = await pool.query(
+            `
+                SELECT COUNT(*) AS count
+                FROM accounts
+                WHERE email = ? AND NOT id = ?
+            `,
+            [ email, account_id ]
+        );
+
+        if (currentAccount.length <= 0) {
+            return res.status(404).json({ error: 'Account not found' });
+        }
+
+        if (existingEmail[0].count > 0) {
+            return res.status(409).json({ 
+                error: 'Email already in use by another account' 
+            });
         }
         
         const [ result ] = await pool.query(
@@ -239,10 +252,10 @@ router.put('/:account_id/personal-info', async (req, res) => {
                 SET name = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?
                 WHERE id = ?
             `,
-            [name, first_name, last_name, email, phone_number, account_id]
+            [ name, first_name, last_name, email, phone_number, account_id ]
         );
         
-        if (result.affectedRows === 0) {
+        if (result.affectedRows <= 0) {
             return res.status(404).json({ error: 'Account not found' });
         }
         
@@ -256,36 +269,12 @@ router.put('/:account_id/personal-info', async (req, res) => {
         );
         
         res.json(user[0]);
+        
     } catch (err) {
-        console.error('Error updating personal info:', err);
+        console.error("Accounts route PUT /:account_id/personal-info endpoint error: ", err);
         res.status(500).json({ error: err.message });
     }
-});
 
-router.put('/:account_id/password', async (req, res) => {
-    try {
-        const { account_id } = req.params;
-        const { password } = req.body;
-        
-        const [result] = await pool.query(
-            `
-                UPDATE accounts 
-                SET password = ?
-                WHERE id = ?
-            `,
-            [password, account_id]
-        );
-        
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Account not found' });
-        }
-        
-        res.json({ message: 'Password updated successfully' });
-
-    } catch (err) {
-        console.error('Error updating password:', err);
-        res.status(500).json({ error: err.message });
-    }
 });
 
 router.put('/:account_id/suspend', async (req, res) => {
