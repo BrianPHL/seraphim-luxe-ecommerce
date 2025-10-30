@@ -4,7 +4,7 @@ import express from 'express';
 import multer from "multer";
 import fs from "fs";
 import { sendEmail } from "../apis/resend.js";
-import { createEmailChangedEmail } from "../utils/email.js";
+import { createEmailChangedEmail, createPasswordChangedEmail } from "../utils/email.js";
 
 const router = express.Router();
 const upload = multer({
@@ -266,7 +266,7 @@ router.put('/:account_id/personal-info', async (req, res) => {
             const modifiedEmailResult = await sendEmail({
                 from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
                 to: [ currentAccount[0].email, email ],
-                subject: `Changed Email Address for ${ fullName } | Seraphim Luxe`,
+                subject: `Changed Email Address | Seraphim Luxe`,
                 html: createEmailChangedEmail(fullName, currentAccount[0].email, email)
             });
             if (modifiedEmailResult.err)
@@ -434,6 +434,32 @@ router.post('/:account_id/avatar', upload.single('avatar'), async (req, res) => 
 
         console.error('Error uploading avatar:', err);
         if (req.file?.path) fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: err.message });
+
+    }
+
+});
+
+router.post('/notify-password-reset', async (req, res) => {
+
+    try {
+
+        const { name, email } = req.body;
+
+        const modifiedPasswordResult = await sendEmail({
+            from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+            to: email,
+            subject: `Password Changed | Seraphim Luxe`,
+            html: createPasswordChangedEmail(name, email)
+        });
+        if (modifiedPasswordResult.err)
+            throw new Error(modifiedPasswordResult.err);
+
+        res.sendStatus(200);
+
+    } catch (err) {
+
+        console.error('Accounts route POST /notify-password-reset endpoint error: ', err);
         res.status(500).json({ error: err.message });
 
     }

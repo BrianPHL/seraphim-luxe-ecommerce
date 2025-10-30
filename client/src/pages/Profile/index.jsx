@@ -520,8 +520,10 @@ const Profile = ({}) => {
 
         try {
 
+            const fullName = user?.first_name + ' ' + user?.last_name;
+            const email = user?.email;
             const { newPassword, confirmNewPassword } = passwordInfo;
-            const result = await changePassword(newPassword, queryToken);
+            const result = await changePassword(fullName, email, newPassword, queryToken);
 
             if (result?.error) {
                 showToast(`Failed to update password: ${ result.error }`, 'error');

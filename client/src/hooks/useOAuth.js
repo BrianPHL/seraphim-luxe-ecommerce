@@ -116,14 +116,39 @@ const useOAuth = () => {
             return result;
 
         },
-        changePassword: async (newPassword, token) => {
+        changePassword: async (name, email, newPassword, token) => {
 
-            const result = authClient.resetPassword({
-                newPassword: newPassword,
-                token: token
-            });
-            
-            return result;
+            try {
+
+                const result = authClient.resetPassword({
+                    newPassword: newPassword,
+                    token: token
+                });
+
+                if (result?.error)
+                    return result;
+
+                const emailResponse = await fetchWithTimeout(`/api/accounts/notify-password-reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email
+                    })
+                });
+
+                if (!emailResponse.ok) {
+                    throw new Error(data.error || 'Failed to notify user of changed password');
+                }
+
+                return result;
+
+            } catch (err) {
+
+                console.error("useOAuth hook changePassword function error: ", err);
+                throw err;
+
+            }
             
         },
         resetPassword: (email, otp, password) => {
