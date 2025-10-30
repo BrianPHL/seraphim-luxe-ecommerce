@@ -22,6 +22,7 @@ import auditTrailRoutes from './routes/audit-trail.js'
 import reviewsRouter from './routes/reviews.js';
 import sseRouter from './routes/sse.js';
 import geminiAIRouter from './routes/gemini-ai.js';
+import liveChatRouter from './routes/live-chat.js';
 
 dotenv.config();
 
@@ -78,6 +79,7 @@ app.use('/api/audit-trail', auditTrailRoutes);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/gemini-ai', geminiAIRouter);
+app.use('/api/live-chat', liveChatRouter);
 
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);
