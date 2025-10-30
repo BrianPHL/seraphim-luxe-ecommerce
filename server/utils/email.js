@@ -270,3 +270,46 @@ export const createOrderRefundedEmail = (name, orderNumber, refundAmount, refund
         </div>
     `;
 };
+
+export const createEmailChangedEmail = (name, oldEmail, newEmail) => {
+    return `
+        <div style="background: #f6f1ea; font-family: 'Lora', serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(180, 140, 90, 0.08); border: 1px solid #e5d4c0;">
+            <h2 style="color: #a67c52; font-size: 2em; margin-bottom: 8px; font-family: 'Lora', serif;">Email Address Changed</h2>
+            <p style="color: #7c5a3a; font-size: 1.1em;">Hi <strong>${name}</strong>,</p>
+            <p style="color: #7c5a3a; font-size: 1.05em;">
+                This email confirms that your email address has been successfully updated for your Seraphim Luxe account.
+            </p>
+            <div style="background: #fff8f0; border: 2px solid #e5d4c0; padding: 24px; border-radius: 12px; margin: 24px 0;">
+                <h3 style="color: #a67c52; margin-bottom: 16px; font-size: 1.3em;">Change Details</h3>
+                <p style="color: #7c5a3a; margin: 8px 0;"><strong>Change Date:</strong> ${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                <p style="color: #7c5a3a; margin: 8px 0;"><strong>Previous Email:</strong> ${oldEmail}</p>
+                <p style="color: #7c5a3a; margin: 8px 0;"><strong>New Email:</strong> ${newEmail}</p>
+            </div>
+            <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                <p style="color: #2e7d32; margin: 0; font-weight: 600;">
+                    ✓ Important Information
+                </p>
+                <p style="color: #7c5a3a; margin: 8px 0 0 0;">
+                    Future communications will be sent to <strong>${newEmail}</strong>. Please use this email address for signing in.
+                </p>
+            </div>
+            <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                <p style="color: #e65100; margin: 0; font-weight: 600;">
+                    ⚠️ If you did not make this change
+                </p>
+                <p style="color: #7c5a3a; margin: 8px 0 0 0;">
+                    Please contact our support team immediately at <strong>support@seraphimluxe.com</strong> to secure your account.
+                </p>
+            </div>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${getBaseURL('client')}/profile" style="background: #a67c52; color: #fff; padding: 16px 32px; border-radius: 8px; font-size: 1.2em; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 1px 4px rgba(166,124,82,0.10); border: none;">
+                    Go to My Profile
+                </a>
+            </div>
+            <p style="text-align: center; color: #b08d57; font-size: 14px;">
+                This notification has been sent to both your old and new email addresses for security purposes.<br>
+                Thank you for keeping your account information up to date!
+            </p>
+        </div>
+    `;
+};

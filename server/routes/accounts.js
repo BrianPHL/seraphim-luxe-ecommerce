@@ -3,6 +3,8 @@ import pool from "../apis/db.js";
 import express from 'express';
 import multer from "multer";
 import fs from "fs";
+import { sendEmail } from "../apis/resend.js";
+import { createEmailChangedEmail } from "../utils/email.js";
 
 const router = express.Router();
 const upload = multer({
@@ -257,6 +259,18 @@ router.put('/:account_id/personal-info', async (req, res) => {
         
         if (result.affectedRows <= 0) {
             return res.status(404).json({ error: 'Account not found' });
+        }
+
+        if (email !== currentAccount[0].email) {
+            const fullName = first_name + ' ' + last_name;
+            const modifiedEmailResult = await sendEmail({
+                from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                to: [ currentAccount[0].email, email ],
+                subject: `Changed Email Address for ${ fullName } | Seraphim Luxe`,
+                html: createEmailChangedEmail(fullName, currentAccount[0].email, email)
+            });
+            if (modifiedEmailResult.err)
+                throw new Error(modifiedEmailResult.err);
         }
         
         const [user] = await pool.query(
