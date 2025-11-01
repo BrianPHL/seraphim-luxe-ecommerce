@@ -155,18 +155,6 @@ router.get('/:order_id/items', async (req, res) => {
 });
 
 router.put('/:order_id/status', async (req, res) => {
-
-    function getCurrentDateTime() {
-        const now = new Date();
-        return now.toLocaleString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-    };
     
     const connection = await pool.getConnection();
     
@@ -213,74 +201,13 @@ router.put('/:order_id/status', async (req, res) => {
             WHERE id = ?
         `, [status, notes, notes, notes, admin_id, orderId]);
 
-        switch(status) {
-
-            case "processing":
-
-                const processingResult = await sendEmail({
-                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-                    to: accountRows[0].email,
-                    subject: `Order Processing | Seraphim Luxe`,
-                    html: createOrderProcessingEmail(accountRows[0].name, currentOrder[0].order_number)
-                });
-                if (processingResult.err)
-                    throw new Error(processingResult.err);
-            
-                break;
-
-            case "shipped":
-
-                const shippedResult = await sendEmail({
-                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-                    to: accountRows[0].email,
-                    subject: `Order Shipped | Seraphim Luxe`,
-                    html: createOrderShippedEmail(accountRows[0].name, currentOrder[0].order_number)
-                });
-                if (shippedResult.err)
-                    throw new Error(shippedResult.err);
-                break;
-
-            case "delivered":
-
-                const deliveredResult = await sendEmail({
-                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-                    to: accountRows[0].email,
-                    subject: `Order Delivered | Seraphim Luxe`,
-                    html: createOrderDeliveredEmail(accountRows[0].name, currentOrder[0].order_number, getCurrentDateTime())
-                });
-                if (deliveredResult.err)
-                    throw new Error(deliveredResult.err);
-                break;
-
-            case "cancelled":
-                const cancelledResult = await sendEmail({
-                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-                    to: accountRows[0].email,
-                    subject: `Order Cancelled | Seraphim Luxe`,
-                    html: createOrderCancelledEmail(accountRows[0].name, currentOrder[0].order_number, notes || 'No reason provided.')
-                });
-                if (cancelledResult.err)
-                    throw new Error(cancelledResult.err);
-                break;
-
-            case "returned":
-
-                const returnedResult = await sendEmail({
-                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-                    to: accountRows[0].email,
-                    subject: `Order Returned | Seraphim Luxe`,
-                    html: createOrderReturnedEmail(accountRows[0].name, currentOrder[0].order_number, notes || 'No reason provided.')
-                });
-                if (returnedResult.err)
-                    throw new Error(returnedResult.err);
-                break;
-            default:
-                throw new Error("Invalid status passed: ", status);
-        }
-
         pingUser(accountRows[0].id, {
-            type: status,
-            order_number: currentOrder[0].order_number
+            type: 'order_update',
+            action: `order_${ status }`,
+            order_number: currentOrder[0].order_number,
+            additional_details: {
+                notes: notes ?? 'No notes provided.'
+            }
         });
 
         await connection.commit();
@@ -350,13 +277,6 @@ router.post('/', async (req, res) => {
             }
         }
 
-        const { _, err } = await sendEmail({
-            from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-            to: userResult[0].email,
-            subject: `Order Pending | Seraphim Luxe`,
-            html: createOrderPendingEmail(userResult[0].name, orderNumber, parsedTotalAmount)
-        });
-
         await connection.commit();
 
         res.status(201).json({ 
@@ -371,6 +291,122 @@ router.post('/', async (req, res) => {
     } finally {
         connection.release();
     }
+});
+
+router.post('/notify-order-update', async (req, res) => {
+
+    const { status, email, name, order_number, additional_details } = req.body;
+
+    const getCurrentDateTime = () => {
+        const now = new Date();
+        return now.toLocaleString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    try {
+
+        switch(status) {
+
+            case "pending":
+
+                const pendingResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Pending | Seraphim Luxe`,
+                    html: createOrderPendingEmail(name, order_number, additional_details.amount)
+                });
+                if (pendingResult.err)
+                    throw new Error(pendingResult.err);
+                break;
+
+            case "processing":
+
+                const processingResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Processing | Seraphim Luxe`,
+                    html: createOrderProcessingEmail(name, order_number)
+                });
+                if (processingResult.err)
+                    throw new Error(processingResult.err);
+                break;
+
+            case "shipped":
+
+                const shippedResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Shipped | Seraphim Luxe`,
+                    html: createOrderShippedEmail(name, order_number)
+                });
+                if (shippedResult.err)
+                    throw new Error(shippedResult.err);
+                break;
+
+            case "delivered":
+
+                const deliveredResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Delivered | Seraphim Luxe`,
+                    html: createOrderDeliveredEmail(name, order_number, getCurrentDateTime())
+                });
+                if (deliveredResult.err)
+                    throw new Error(deliveredResult.err);
+                break;
+
+            case "cancelled":
+                const cancelledResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Cancelled | Seraphim Luxe`,
+                    html: createOrderCancelledEmail(name, order_number, additional_details.notes || 'No reason provided.')
+                });
+                if (cancelledResult.err)
+                    throw new Error(cancelledResult.err);
+                break;
+
+            case "returned":
+
+                const returnedResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Returned | Seraphim Luxe`,
+                    html: createOrderReturnedEmail(name, order_number, additional_details.notes || 'No reason provided.')
+                });
+                if (returnedResult.err)
+                    throw new Error(returnedResult.err);
+                break;
+
+            case "refunded":
+
+                const refundedResult = await sendEmail({
+                    from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                    to: email,
+                    subject: `Order Refunded | Seraphim Luxe`,
+                    html: createOrderRefundedEmail(email, name, order_number, additional_details.amount, additional_details.payment_method)
+                });
+                if (refundedResult.err)
+                    throw new Error(refundedResult.err);
+                break;
+
+            default:
+                throw new Error("Invalid status passed: ", status);
+        }
+
+        res.sendStatus(200);
+
+    } catch (err) {
+        console.error('orders route POST /notify-order-update endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+
 });
 
 router.post('/:order_id/refund', async (req, res) => {
@@ -403,10 +439,10 @@ router.post('/:order_id/refund', async (req, res) => {
 
         const [ orderRefundsResult ] = await connection.query(`
             INSERT INTO order_refunds 
-            (order_id, refund_amount, reason, reason_description, refund_method, notes, processed_by, processed_at, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'completed')
+            (order_id, refund_amount, reason, refund_method, notes, processed_by, processed_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), 'completed')
         `,
-        [ orderId, amount, reason, notes, currentOrder[0].payment_method, notes, admin_id ]);
+        [ orderId, amount, reason, currentOrder[0].payment_method, notes, admin_id ]);
 
         await connection.query(`
             UPDATE orders 
@@ -418,20 +454,25 @@ router.post('/:order_id/refund', async (req, res) => {
         `,
         [ amount, reason, admin_id, orderId ]);
 
-        const { _, err } = await sendEmail({
-            from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-            to: accountRows[0].email,
-            subject: `Order Refund #(${ currentOrder[0].order_number }) | Seraphim Luxe`,
-            html: createOrderRefundedEmail(accountRows[0].email, accountRows[0].name, currentOrder[0].order_number, amount, currentOrder[0].payment_method)
-        });
-        if (err)
-            throw new Error(err);
+        // const { _, err } = await sendEmail({
+        //     from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+        //     to: accountRows[0].email,
+        //     subject: `Order Refund #(${ currentOrder[0].order_number }) | Seraphim Luxe`,
+        //     html: createOrderRefundedEmail(accountRows[0].email, accountRows[0].name, currentOrder[0].order_number, amount, currentOrder[0].payment_method)
+        // });
+        // if (err)
+        //     throw new Error(err);
 
         await connection.commit();
 
-        pingUser(accountRows[0].id, {
-            type: 'refunded',
-            order_number: currentOrder[0].order_number
+        pingUser(currentOrder[0].account_id, {
+            type: 'order_update',
+            action: 'order_refunded',
+            order_number: currentOrder[0].order_number,
+            additional_details: {
+                amount: amount ?? 'No amount provided.',
+                payment_method: currentOrder[0].payment_method ?? 'No payment method provided.'
+            }
         });
         
         res.json({ 

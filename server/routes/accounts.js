@@ -27,6 +27,26 @@ router.get('/', async (req, res) => {
 
 });
 
+router.get('/admins', async (req, res) => {
+    
+    try {
+        const [admins] = await pool.query(
+            `
+                SELECT id, name, email 
+                FROM accounts 
+                WHERE role = 'admin' AND is_active = 1
+            `
+        );
+
+        res.json(admins);
+
+    } catch (err) {
+        console.error('Error fetching admins:', err);
+        res.status(500).json({ error: err.message });
+    }
+
+});
+
 router.get('/count', async (req, res) => {
     try {
         const [result] = await pool.query('SELECT COUNT(*) as count FROM accounts');
