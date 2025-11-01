@@ -403,10 +403,10 @@ router.post('/:order_id/refund', async (req, res) => {
 
         const [ orderRefundsResult ] = await connection.query(`
             INSERT INTO order_refunds 
-            (order_id, refund_amount, reason, reason_description, refund_method, notes, processed_by, processed_at, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'completed')
+            (order_id, refund_amount, reason, refund_method, notes, processed_by, processed_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), 'completed')
         `,
-        [ orderId, amount, reason, notes, currentOrder[0].payment_method, notes, admin_id ]);
+        [ orderId, amount, reason, currentOrder[0].payment_method, notes, admin_id ]);
 
         await connection.query(`
             UPDATE orders 
