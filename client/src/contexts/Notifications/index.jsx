@@ -12,6 +12,18 @@ export const NotificationsProvider = ({ children }) => {
     const [ unreadCount, setUnreadCount ] = useState(0);
     const [ sseConnected, setSseConnected ] = useState(false);
 
+    const [ notificationPreferences, setNotificationPreferences ] = useState({
+        cart_updates: true,
+        wishlist_updates: true,
+        order_updates: true,
+        account_security: true,
+        admin_new_orders: true,
+        admin_customer_messages: true,
+        admin_low_stock_alerts: true
+    });
+    const [ hasNotificationChanges, setHasNotificationChanges ] = useState(false);
+    const [ loadingNotifications, setLoadingNotifications ] = useState(false);
+
     const fetchNotifications = useCallback(async () => {
 
         if (!user) return;
@@ -45,6 +57,85 @@ export const NotificationsProvider = ({ children }) => {
         setUnreadCount(unreadCount);
 
     }, [ notifications ])
+
+    const fetchNotificationPreferences = useCallback(async () => {
+
+        if (!user) return;
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/preferences/${ user.id }`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to fetch notification preferences!");
+
+            const data = await response.json();
+
+            if (data.preferences) {
+                setNotificationPreferences(data.preferences);
+            }
+
+        } catch (err) {
+
+            console.error("Notifications context fetchNotificationPreferences function error: ", err);
+            
+        }
+
+    }, [ user ]);
+
+    const updateNotificationPreferences = async (preferences) => {
+
+        if (!user) return;
+
+        setLoadingNotifications(true);
+
+        try {
+
+            const response = await fetchWithTimeout(`/api/notifications/preferences/${ user.id }`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(preferences)
+            });
+
+            if (!response.ok)
+                throw new Error("Failed to update notification preferences!");
+
+            showToast('Notification preferences updated!', 'success');
+            setHasNotificationChanges(false);
+            
+            // Refresh preferences from server
+            await fetchNotificationPreferences();
+
+        } catch (err) {
+
+            console.error("Notifications context updateNotificationPreferences function error: ", err);
+            showToast('Failed to update notification preferences!', 'error');
+
+        } finally {
+            setLoadingNotifications(false);
+        }
+
+    };
+
+    const handleNotificationToggle = (preference) => {
+        setNotificationPreferences(prev => ({
+            ...prev,
+            [preference]: !prev[preference]
+        }));
+        setHasNotificationChanges(true);
+    };
+
+    const handleSaveNotifications = async () => {
+        await updateNotificationPreferences(notificationPreferences);
+    };
+
+    const handleResetNotifications = async () => {
+        await fetchNotificationPreferences();
+        setHasNotificationChanges(false);
+    };
 
     const readAllNotifications = async () => {
 
@@ -157,32 +248,261 @@ export const NotificationsProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     type: data.type,
+                    action: data.action,
                     title: data.title,
-                    message: data.message
+                    message: data.message,
+                    metadata: data.metadata || null
                 })
             });
 
             if (!response.ok)
-                throw new Error("Failed to set new notification!");
+                throw new Error("Failed to create notification!");
 
             await fetchNotifications();
 
         } catch (err) {
 
             console.error("Notifications context setNotification function error: ", err);
-            showToast('Failed to set new notification!', 'error')
             
         }
 
-    }, [ user ]);
+    }, [ user, fetchNotifications ]);
+
+    const notifyCartAction = useCallback(async ({ action, productName }) => { // * DONE
+        if (!notificationPreferences.cart_updates) return;
+
+        const actions = {
+            add_to_cart: {
+                title: 'Item Added to Cart',
+                message: `${productName} has been added to your cart.`
+            },
+            remove_from_cart: {
+                title: 'Item Removed from Cart',
+                message: `${productName} has been removed from your cart.`
+            }
+        };
+
+        await setNotification({
+            type: 'cart',
+            action: action,
+            title: actions[action].title,
+            message: actions[action].message,
+            metadata: { product_name: productName }
+        });
+    }, [notificationPreferences.cart_updates, setNotification]);
+
+    const notifyWishlistAction = useCallback(async ({ action, productName }) => { // * DONE
+        if (!notificationPreferences.wishlist_updates) return;
+
+        const actions = {
+            add_to_wishlist: {
+                title: 'Item Added to Wishlist',
+                message: `${productName} has been added to your wishlist.`
+            },
+            remove_from_wishlist: {
+                title: 'Item Removed from Wishlist',
+                message: `${productName} has been removed from your wishlist.`
+            }
+        };
+
+        await setNotification({
+            type: 'wishlist',
+            action: action,
+            title: actions[action].title,
+            message: actions[action].message,
+            metadata: { product_name: productName }
+        });
+    }, [notificationPreferences.wishlist_updates, setNotification]);
+
+    const notifyOrderUpdate = useCallback(async ({ action, orderNumber, additionalDetails = {} }) => { // * DONE
+        
+        if (!notificationPreferences.order_updates) return;
+
+        const actions = {
+            order_pending: {
+                title: 'Order Received',
+                message: `Your order #${ orderNumber } has been received and is pending confirmation.`
+            },
+            order_processing: {
+                title: 'Order Processing',
+                message: `Your order #${ orderNumber } is now being processed.`
+            },
+            order_shipped: {
+                title: 'Order Shipped',
+                message: `Your order #${ orderNumber } has been shipped and is on its way!`
+            },
+            order_delivered: {
+                title: 'Order Delivered',
+                message: `Your order #${ orderNumber } has been delivered successfully.`
+            },
+            order_cancelled: {
+                title: 'Order Cancelled',
+                message: `Your order #${ orderNumber } has been cancelled.`
+            },
+            order_returned: {
+                title: 'Order Returned',
+                message: `Your order #${ orderNumber } has been marked as returned.`
+            },
+            order_refunded: {
+                title: 'Order Refunded',
+                message: `Your order #${ orderNumber } has been refunded.`
+            }
+        };
+
+        await setNotification({
+            type: 'orders',
+            action: action,
+            title: actions[action].title,
+            message: actions[action].message,
+            metadata: { order_number: orderNumber }
+        });
+
+        try {
+
+            await fetchWithTimeout('/api/orders/notify-order-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: action.split('_')[1],
+                    email: user?.email,
+                    name: user?.first_name + ' ' + user?.last_name,
+                    order_number: orderNumber,
+                    additional_details: additionalDetails
+                })
+            });
+
+        } catch (err) {
+            console.error('Failed to send order update email notification:', err);
+        }
+
+    }, [notificationPreferences.order_updates, setNotification]);
+
+    const notifyAccountChange = useCallback(async (action, additionalData = {}) => {
+    
+        if (!notificationPreferences.account_security) return;
+
+        const actions = {
+            email_changed: {
+                title: 'Email Address Changed',
+                message: 'Your email address has been successfully updated.',
+            },
+            password_changed: {
+                title: 'Password Changed',
+                message: 'Your password has been successfully updated.'
+            }
+        };
+
+        await setNotification({
+            type: 'account',
+            action: action,
+            title: actions[action].title,
+            message: actions[action].message
+        });
+
+        try {
+            if (action === 'password_changed' && additionalData.name && additionalData.email) {
+                await fetchWithTimeout('/api/accounts/notify-password-reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: additionalData.name,
+                        email: additionalData.email
+                    })
+                });
+            }
+
+            if (action === 'email_changed' && additionalData.name && additionalData.oldEmail && additionalData.newEmail) {
+                await fetchWithTimeout('/api/accounts/notify-email-change', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: additionalData.name,
+                        oldEmail: additionalData.oldEmail,
+                        newEmail: additionalData.newEmail
+                    })
+                });
+            }
+        } catch (err) {
+            console.error('Failed to send account change email notification:', err);
+        }
+
+    }, [notificationPreferences.account_security, setNotification]);
+
+    // Admin notification helpers
+    const notifyAdminNewOrder = useCallback(async (orderNumber, customerName, totalAmount) => {
+        // Get all admin users
+        try {
+            const response = await fetchWithTimeout('/api/accounts/admins', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) return;
+
+            const admins = await response.json();
+
+            // Create notification for each admin
+            for (const admin of admins) {
+                await fetchWithTimeout(`/api/notifications/${admin.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'admin_orders',
+                        action: 'new_order',
+                        title: 'New Order Received',
+                        message: `New order #${orderNumber} from ${customerName} (₱${totalAmount})`,
+                        metadata: { order_number: orderNumber, customer_name: customerName, total_amount: totalAmount }
+                    })
+                });
+            }
+
+        } catch (err) {
+            console.error('Notify admin new order error:', err);
+        }
+    }, []);
+
+    const notifyAdminLowStock = useCallback(async (productName, currentStock, threshold) => {
+        // Get all admin users
+        try {
+            const response = await fetchWithTimeout('/api/accounts/admins', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) return;
+
+            const admins = await response.json();
+
+            // Create notification for each admin
+            for (const admin of admins) {
+                await fetchWithTimeout(`/api/notifications/${admin.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'admin_inventory',
+                        action: 'low_stock',
+                        title: 'Low Stock Alert',
+                        message: `${productName} is running low (${currentStock}/${threshold} remaining)`,
+                        metadata: { product_name: productName, current_stock: currentStock, threshold: threshold }
+                    })
+                });
+            }
+
+        } catch (err) {
+            console.error('Notify admin low stock error:', err);
+        }
+    }, []);
 
     useEffect(() => {
-        fetchNotifications()
-    }, [ user ]);
+        if (user) {
+            fetchNotifications();
+            fetchNotificationPreferences();
+        }
+    }, [ user, fetchNotifications, fetchNotificationPreferences ]);
 
     useEffect(() => {
         fetchUnreadCount()
-    }, [ notifications ]);
+    }, [ notifications, fetchUnreadCount ]);
 
     useEffect(() => {
 
@@ -196,61 +516,24 @@ export const NotificationsProvider = ({ children }) => {
 
             const data = JSON.parse(event.data);
             const status = data?.type;
-            const orderNumber = data?.order_number;
 
             if (!status || status === 'connected') return;
 
-            switch (status) {
-                case 'processing':
-                    setNotification({
-                        type: 'orders',
-                        title: 'Order Processing',
-                        message: `Your order ${ data.order_number } is now processing.`
-                    });
-                    break;
+            if (data.type === 'order_update') {
+                notifyOrderUpdate({
+                    action: data.action,
+                    orderNumber: data.order_number,
+                    additionalDetails: data.additionalDetails
+                });
+            }
+            
+            // Handle admin notifications
+            if (data.type === 'new_order' && user.role === 'admin') {
+                fetchNotifications();
+            }
 
-                case 'shipped':
-                    setNotification({
-                        type: 'orders',
-                        title: 'Order Shipped',
-                        message: `Your order ${ data.order_number } is now shipped.`
-                    });
-                    break;
-
-                case 'delivered':
-                    setNotification({
-                        type: 'orders',
-                        title: 'Order Delivered',
-                        message: `Your order ${ data.order_number } is now delivered.`
-                    });
-                    break;
-
-                case 'cancelled':
-                    setNotification({
-                        type: 'orders',
-                        title: 'Order Cancelled',
-                        message: `Your order ${ data.order_number } is now cancelled.`
-                    });
-                    break;
-
-                case 'returned':
-                    setNotification({
-                        type: 'orders',
-                        title: 'Order Returned',
-                        message: `Your order ${ data.order_number } is now returned.`
-                    });
-                    break;
-                    
-                case 'refunded':
-                    setNotification({
-                        type: 'orders',
-                        title: 'Order Refunded',
-                        message: `Your order ${ data.order_number } is now refunded.`
-                    });
-                    break;
-                    
-                default:
-                    console.error('Invalid status value passed from server!');
+            if (data.type === 'low_stock' && user.role === 'admin') {
+                fetchNotifications();
             }
 
         };
@@ -265,7 +548,7 @@ export const NotificationsProvider = ({ children }) => {
             setSseConnected(false); 
         };
 
-    }, [ user ]);
+    }, [ user, notifyOrderUpdate ]);
 
     return (
         <NotificationsContext.Provider value={{
@@ -275,6 +558,11 @@ export const NotificationsProvider = ({ children }) => {
             isInboxOpen,
             unreadCount,
             sseConnected,
+            
+            // Notification preferences
+            notificationPreferences,
+            hasNotificationChanges,
+            loadingNotifications,
 
         // * Exposed functions
             fetchNotifications,
@@ -283,7 +571,24 @@ export const NotificationsProvider = ({ children }) => {
             clearAllNotifications,
             clearSpecificNotification,
             setNotification,
-            setIsInboxOpen
+            setIsInboxOpen,
+            
+            // Notification preferences functions
+            fetchNotificationPreferences,
+            updateNotificationPreferences,
+            handleNotificationToggle,
+            handleSaveNotifications,
+            handleResetNotifications,
+
+            // Customer notification helpers
+            notifyCartAction,
+            notifyWishlistAction,
+            notifyOrderUpdate,
+            notifyAccountChange,
+
+            // Admin notification helpers
+            notifyAdminNewOrder,
+            notifyAdminLowStock
 
         }}>
             { children }
