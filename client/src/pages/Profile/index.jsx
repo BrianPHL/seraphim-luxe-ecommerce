@@ -1224,9 +1224,9 @@ const Profile = ({}) => {
                         <section className={ styles['info-notifications'] }>
                             <div className={ styles['settings-section-header'] }>
                                 <h2>Notification Preferences</h2>
-                                <p>Manage your email and notification preferences</p>
+                                <p>Manage your in-app and email notification preferences</p>
                             </div>
-
+                                                        
                             <div className={ styles['notifications-grid'] }>
                                 {!isAdmin && (
                                     <div className={ styles['notification-category'] }>
@@ -1236,7 +1236,7 @@ const Profile = ({}) => {
                                             <div className={ styles['notification-header'] }>
                                                 <div className={ styles['notification-info'] }>
                                                     <h4>Cart Updates</h4>
-                                                    <p>Notifications when items are added or removed from cart</p>
+                                                    <p>In-app Notifications when items are added or removed from cart</p>
                                                 </div>
                                                 <div className={ styles['toggle-container'] }>
                                                     <label className={ styles['toggle-switch'] }>
@@ -1261,7 +1261,7 @@ const Profile = ({}) => {
                                             <div className={ styles['notification-header'] }>
                                                 <div className={ styles['notification-info'] }>
                                                     <h4>Wishlist Updates</h4>
-                                                    <p>Notifications when items are added or removed from wishlist</p>
+                                                    <p>In-app Notifications when items are added or removed from wishlist</p>
                                                 </div>
                                                 <div className={ styles['toggle-container'] }>
                                                     <label className={ styles['toggle-switch'] }>
@@ -1283,7 +1283,7 @@ const Profile = ({}) => {
                                         </div>
                                     </div>
                                 )}
-
+                        
                                 {!isAdmin && (
                                     <div className={ styles['notification-category'] }>
                                         <h3 className={ styles['category-title'] }>Orders & Transactions</h3>
@@ -1292,7 +1292,7 @@ const Profile = ({}) => {
                                             <div className={ styles['notification-header'] }>
                                                 <div className={ styles['notification-info'] }>
                                                     <h4>Order Status Updates</h4>
-                                                    <p>Get notified about order status changes</p>
+                                                    <p>Get in-app notifications about order status changes</p>
                                                 </div>
                                                 <div className={ styles['toggle-container'] }>
                                                     <label className={ styles['toggle-switch'] }>
@@ -1312,9 +1312,35 @@ const Profile = ({}) => {
                                                 </span>
                                             </div>
                                         </div>
+                                
+                                        {/* Email notification toggle for orders */}
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Order Email Notifications</h4>
+                                                    <p>Receive email updates for order status changes</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences?.email_order_updates ?? true}
+                                                            onChange={() => handleNotificationToggle('email_order_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences?.email_order_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences?.email_order_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
-
+                        
                                 {isAdmin && (
                                     <div className={ styles['notification-category'] }>
                                         <h3 className={ styles['category-title'] }>Admin Notifications</h3>
@@ -1323,7 +1349,7 @@ const Profile = ({}) => {
                                             <div className={ styles['notification-header'] }>
                                                 <div className={ styles['notification-info'] }>
                                                     <h4>New Orders</h4>
-                                                    <p>Get notified when customers place new orders</p>
+                                                    <p>Get in-app notifications when customers place new orders</p>
                                                 </div>
                                                 <div className={ styles['toggle-container'] }>
                                                     <label className={ styles['toggle-switch'] }>
@@ -1348,7 +1374,7 @@ const Profile = ({}) => {
                                             <div className={ styles['notification-header'] }>
                                                 <div className={ styles['notification-info'] }>
                                                     <h4>Customer Messages</h4>
-                                                    <p>Notifications for new customer support messages</p>
+                                                    <p>In-app notifications for new customer support messages</p>
                                                 </div>
                                                 <div className={ styles['toggle-container'] }>
                                                     <label className={ styles['toggle-switch'] }>
@@ -1373,7 +1399,7 @@ const Profile = ({}) => {
                                             <div className={ styles['notification-header'] }>
                                                 <div className={ styles['notification-info'] }>
                                                     <h4>Low Stock Alerts</h4>
-                                                    <p>Get alerts when product inventory is running low</p>
+                                                    <p>Get in-app alerts when product inventory is running low</p>
                                                 </div>
                                                 <div className={ styles['toggle-container'] }>
                                                     <label className={ styles['toggle-switch'] }>
@@ -1395,7 +1421,7 @@ const Profile = ({}) => {
                                         </div>
                                     </div>
                                 )}
-
+                        
                                 <div className={ styles['notification-category'] }>
                                     <h3 className={ styles['category-title'] }>Security & Account</h3>
                             
@@ -1403,7 +1429,7 @@ const Profile = ({}) => {
                                         <div className={ styles['notification-header'] }>
                                             <div className={ styles['notification-info'] }>
                                                 <h4>Account Security</h4>
-                                                <p>Critical alerts about account changes and security</p>
+                                                <p>Critical in-app alerts about account changes and security</p>
                                             </div>
                                             <div className={ styles['toggle-container'] }>
                                                 <label className={ styles['toggle-switch'] }>
@@ -1411,6 +1437,32 @@ const Profile = ({}) => {
                                                         type="checkbox"
                                                         checked={notificationPreferences.account_security}
                                                         onChange={() => handleNotificationToggle('account_security')}
+                                                        disabled={true}
+                                                    />
+                                                    <span className={ styles['toggle-slider'] }></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className={ styles['notification-status'] }>
+                                            <span className={`${styles['status-badge']} ${styles['enabled']}`}>
+                                                Always Enabled
+                                            </span>
+                                            <span className={ styles['required-badge'] }>Required</span>
+                                        </div>
+                                    </div>
+                            
+                                    <div className={ styles['notification-card'] }>
+                                        <div className={ styles['notification-header'] }>
+                                            <div className={ styles['notification-info'] }>
+                                                <h4>Account Security Emails</h4>
+                                                <p>Receive emails for password and email changes</p>
+                                            </div>
+                                            <div className={ styles['toggle-container'] }>
+                                                <label className={ styles['toggle-switch'] }>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={notificationPreferences?.email_account_security ?? true}
+                                                        onChange={() => handleNotificationToggle('email_account_security')}
                                                         disabled={true}
                                                     />
                                                     <span className={ styles['toggle-slider'] }></span>

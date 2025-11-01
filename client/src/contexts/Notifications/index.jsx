@@ -19,7 +19,9 @@ export const NotificationsProvider = ({ children }) => {
         account_security: true,
         admin_new_orders: true,
         admin_customer_messages: true,
-        admin_low_stock_alerts: true
+        admin_low_stock_alerts: true,
+        email_order_updates: true,
+        email_account_security: true
     });
     const [ hasNotificationChanges, setHasNotificationChanges ] = useState(false);
     const [ loadingNotifications, setLoadingNotifications ] = useState(false);
@@ -314,9 +316,11 @@ export const NotificationsProvider = ({ children }) => {
         });
     }, [notificationPreferences.wishlist_updates, setNotification]);
 
-    const notifyOrderUpdate = useCallback(async ({ action, orderNumber, additionalDetails = {} }) => { // * DONE
-        
-        if (!notificationPreferences.order_updates) return;
+    const notifyOrderUpdate = useCallback(async ({ action, orderNumber, additionalDetails = {} }) => {
+
+        if (!notificationPreferences.order_updates) {
+            return;
+        }
 
         const actions = {
             order_pending: {
@@ -349,33 +353,38 @@ export const NotificationsProvider = ({ children }) => {
             }
         };
 
-        await setNotification({
-            type: 'orders',
-            action: action,
-            title: actions[action].title,
-            message: actions[action].message,
-            metadata: { order_number: orderNumber }
-        });
-
         try {
 
-            await fetchWithTimeout('/api/orders/notify-order-update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    status: action.split('_')[1],
-                    email: user?.email,
-                    name: user?.first_name + ' ' + user?.last_name,
-                    order_number: orderNumber,
-                    additional_details: additionalDetails
-                })
+            await setNotification({
+                type: 'orders',
+                action: action,
+                title: actions[action].title,
+                message: actions[action].message,
+                metadata: { order_number: orderNumber }
             });
 
-        } catch (err) {
-            console.error('Failed to send order update email notification:', err);
-        }
+            if (notificationPreferences.email_order_updates) {
+                try {
+                    await fetchWithTimeout('/api/orders/notify-order-update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            status: action.split('_')[1],
+                            email: user?.email,
+                            name: user?.first_name + ' ' + user?.last_name,
+                            order_number: orderNumber,
+                            additional_details: additionalDetails
+                        })
+                    });
 
-    }, [notificationPreferences.order_updates, setNotification]);
+                } catch (emailErr) {
+                    console.error('Failed to send order update email notification:', emailErr);
+                }
+            }
+        } catch (err) {
+            console.error('notifyOrderUpdate error:', err);
+        }
+    }, [notificationPreferences.order_updates, notificationPreferences.email_order_updates, setNotification]);
 
     const notifyAccountChange = useCallback(async (action, additionalData = {}) => {
     

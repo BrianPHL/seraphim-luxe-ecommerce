@@ -229,11 +229,9 @@ router.get('/preferences/:account_id', async (req, res) => {
             await pool.query(
                 `
                     INSERT INTO notification_preferences
-                    (
-                        account_id, cart_updates, wishlist_updates, order_updates, account_security, admin_new_orders, admin_customer_messages,
-                        admin_low_stock_alerts
-                    )
-                    VALUES (?, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+                    (account_id, cart_updates, wishlist_updates, order_updates, account_security, admin_new_orders, 
+                     admin_customer_messages, admin_low_stock_alerts, email_order_updates, email_account_security)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 [ account_id ]
             );
@@ -255,6 +253,8 @@ router.get('/preferences/:account_id', async (req, res) => {
             wishlist_updates: !!prefs.wishlist_updates,
             order_updates: !!prefs.order_updates,
             account_security: !!prefs.account_security,
+            email_order_updates: !!prefs.email_order_updates,
+            email_account_security: !!prefs.email_account_security,
             ...(isAdmin && {
                 admin_new_orders: !!prefs.admin_new_orders,
                 admin_customer_messages: !!prefs.admin_customer_messages,
@@ -292,7 +292,9 @@ router.put('/preferences/:account_id', async (req, res) => {
                     account_security = ?,
                     admin_new_orders = ?,
                     admin_customer_messages = ?,
-                    admin_low_stock_alerts = ?
+                    admin_low_stock_alerts = ?,
+                    email_order_updates = ?,
+                    email_account_security = ?
                 WHERE account_id = ?
             `,
             [
@@ -303,6 +305,8 @@ router.put('/preferences/:account_id', async (req, res) => {
                 preferences.admin_new_orders ?? true,
                 preferences.admin_customer_messages ?? true,
                 preferences.admin_low_stock_alerts ?? true,
+                preferences.email_order_updates ?? true,
+                preferences.email_account_security ?? true,
                 account_id
             ]
         );
@@ -311,9 +315,12 @@ router.put('/preferences/:account_id', async (req, res) => {
             await pool.query(
                 `
                     INSERT INTO notification_preferences
-                    (account_id, cart_updates, wishlist_updates, order_updates, account_security, admin_new_orders, 
-                     admin_customer_messages, admin_low_stock_alerts)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (
+                        account_id, cart_updates, wishlist_updates, order_updates, account_security, 
+                        admin_new_orders, admin_customer_messages, admin_low_stock_alerts, 
+                        email_order_updates, email_account_security
+                    )
+                    VALUES (?, 1, 1, 1, 1, 1, 1, 1, 1, 1)
                 `,
                 [
                     account_id,
@@ -323,7 +330,9 @@ router.put('/preferences/:account_id', async (req, res) => {
                     preferences.account_security ?? true,
                     preferences.admin_new_orders ?? true,
                     preferences.admin_customer_messages ?? true,
-                    preferences.admin_low_stock_alerts ?? true
+                    preferences.admin_low_stock_alerts ?? true,
+                    preferences.email_order_updates ?? true,
+                    preferences.email_account_security ?? true
                 ]
             );
         }
