@@ -254,6 +254,14 @@ router.post('/', async (req, res) => {
 
         const orderId = result.insertId;
 
+        const [admins] = await pool.query(
+            `
+                SELECT id, name, email 
+                FROM accounts 
+                WHERE role = 'admin' AND NOT is_suspended
+            `
+        );
+
         if (items && items.length > 0) {
             for (const item of items) {
                 await connection.query(`
@@ -272,18 +280,32 @@ router.post('/', async (req, res) => {
                         WHERE id = ?
                     `,
                     [ item.quantity, item.price, item.product_id ]
-                )
+                );
+
+                const [productCheck] = await connection.query(
+                    'SELECT label, stock_quantity, stock_threshold FROM products WHERE id = ?',
+                    [item.product_id]
+                );
+
+                if (productCheck.length > 0) {
+                    const product = productCheck[0];
+                    if (product.stock_quantity <= product.stock_threshold) {
+                        for (const admin of admins) {
+                            pingUser(admin.id, {
+                                type: 'low_stock',
+                                product_name: product.label,
+                                additional_details: {
+                                    admin_id: admin.id,
+                                    current_stock: product.stock_quantity,
+                                    threshold: product.stock_threshold
+                                }
+                            });
+                        }
+                    }
+                }
 
             }
         }
-
-        const [admins] = await pool.query(
-            `
-                SELECT id, name, email 
-                FROM accounts 
-                WHERE role = 'admin' AND NOT is_suspended
-            `
-        );
 
         await connection.commit();
 

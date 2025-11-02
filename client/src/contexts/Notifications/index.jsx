@@ -440,6 +440,8 @@ export const NotificationsProvider = ({ children }) => {
 
     const notifyAdminNewOrder = useCallback(async ({ orderNumber, additionalDetails }) => {
 
+        if (!notificationPreferences.admin_new_orders) return;
+
         try {
 
             await setNotification({
@@ -457,37 +459,25 @@ export const NotificationsProvider = ({ children }) => {
 
     }, [ notificationPreferences.admin_new_orders, setNotification ]);
 
-    const notifyAdminLowStock = useCallback(async (productName, currentStock, threshold) => {
-        // Get all admin users
+    const notifyAdminLowStock = useCallback(async ({ productName, additionalDetails = {} }) => {
+        
+        if (!notificationPreferences.admin_low_stock_alerts) return;
+        
         try {
-            const response = await fetchWithTimeout('/api/accounts/admins', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+
+            await setNotification({
+                admin_id: additionalDetails.admin_id,
+                type: 'admin_inventory',
+                action: 'low_stock',
+                title: 'Low Stock Alert',
+                message: `${productName} is running low (${additionalDetails.current_stock}/${additionalDetails.threshold} remaining)`,
+                metadata: { product_name: productName, current_stock: additionalDetails.current_stock, threshold: additionalDetails.threshold }
             });
-
-            if (!response.ok) return;
-
-            const admins = await response.json();
-
-            // Create notification for each admin
-            for (const admin of admins) {
-                await fetchWithTimeout(`/api/notifications/${admin.id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'admin_inventory',
-                        action: 'low_stock',
-                        title: 'Low Stock Alert',
-                        message: `${productName} is running low (${currentStock}/${threshold} remaining)`,
-                        metadata: { product_name: productName, current_stock: currentStock, threshold: threshold }
-                    })
-                });
-            }
 
         } catch (err) {
             console.error('Notify admin low stock error:', err);
         }
-    }, []);
+    }, [ notificationPreferences.admin_low_stock_alerts, setNotification ]);
 
     useEffect(() => {
         if (user) {
@@ -531,7 +521,10 @@ export const NotificationsProvider = ({ children }) => {
             }
 
             if (data.type === 'low_stock' && user.role === 'admin') {
-                fetchNotifications();
+                notifyAdminLowStock({
+                    productName: data.product_name,
+                    additionalDetails: data.additional_details
+                });
             }
 
         };
