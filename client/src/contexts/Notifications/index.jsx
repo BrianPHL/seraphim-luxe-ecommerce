@@ -532,7 +532,7 @@ export const NotificationsProvider = ({ children }) => {
                 notifyOrderUpdate({
                     action: data.action,
                     orderNumber: data.order_number,
-                    additionalDetails: data.additionalDetails
+                    additionalDetails: data.additional_details
                 });
             }
             
