@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useAuth, useToast } from '@contexts';
 import { fetchWithTimeout } from "@utils";
 import NotificationsContext from "./context";
+import { admin } from "better-auth/plugins";
 
 export const NotificationsProvider = ({ children }) => {
 
@@ -241,11 +242,11 @@ export const NotificationsProvider = ({ children }) => {
 
     const setNotification = useCallback(async (data) => {
 
-        if (!user) return;
+        if (!user && !data.admin_id) return;
 
         try {
 
-            const response = await fetchWithTimeout(`/api/notifications/${ user.id }`, {
+            const response = await fetchWithTimeout(`/api/notifications/${ user.id ?? data.admin_id }`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -437,38 +438,24 @@ export const NotificationsProvider = ({ children }) => {
 
     }, [notificationPreferences.account_security, setNotification]);
 
-    // Admin notification helpers
-    const notifyAdminNewOrder = useCallback(async (orderNumber, customerName, totalAmount) => {
-        // Get all admin users
+    const notifyAdminNewOrder = useCallback(async ({ orderNumber, additionalDetails }) => {
+
         try {
-            const response = await fetchWithTimeout('/api/accounts/admins', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+
+            await setNotification({
+                admin_id: additionalDetails.admin_id,
+                type: 'admin_orders',
+                action: 'new_order',
+                title: 'New Order Received',
+                message: `New order #${ orderNumber } from ${ additionalDetails.customer_name } (₱${ additionalDetails.total_amount })`,
+                metadata: { order_number: orderNumber, customer_name: additionalDetails.customer_name, total_amount: additionalDetails.total_amount }
             });
 
-            if (!response.ok) return;
-
-            const admins = await response.json();
-
-            // Create notification for each admin
-            for (const admin of admins) {
-                await fetchWithTimeout(`/api/notifications/${admin.id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'admin_orders',
-                        action: 'new_order',
-                        title: 'New Order Received',
-                        message: `New order #${orderNumber} from ${customerName} (₱${totalAmount})`,
-                        metadata: { order_number: orderNumber, customer_name: customerName, total_amount: totalAmount }
-                    })
-                });
-            }
-
         } catch (err) {
-            console.error('Notify admin new order error:', err);
+            console.error('Notifications context notifyAdminNewOrder function error: ', err);
         }
-    }, []);
+
+    }, [ notificationPreferences.admin_new_orders, setNotification ]);
 
     const notifyAdminLowStock = useCallback(async (productName, currentStock, threshold) => {
         // Get all admin users
@@ -535,10 +522,12 @@ export const NotificationsProvider = ({ children }) => {
                     additionalDetails: data.additional_details
                 });
             }
-            
-            // Handle admin notifications
+
             if (data.type === 'new_order' && user.role === 'admin') {
-                fetchNotifications();
+                notifyAdminNewOrder({
+                    orderNumber: data.order_number,
+                    additionalDetails: data.additional_details
+                });
             }
 
             if (data.type === 'low_stock' && user.role === 'admin') {

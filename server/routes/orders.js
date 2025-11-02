@@ -277,7 +277,27 @@ router.post('/', async (req, res) => {
             }
         }
 
+        const [admins] = await pool.query(
+            `
+                SELECT id, name, email 
+                FROM accounts 
+                WHERE role = 'admin' AND NOT is_suspended
+            `
+        );
+
         await connection.commit();
+
+        for (const admin of admins) {
+            pingUser(admin.id, {
+                type: 'new_order',
+                order_number: orderNumber,
+                additional_details: {
+                    admin_id: admin.id,
+                    customer_name: userResult[0].name,
+                    total_amount: parsedTotalAmount
+                }
+            });
+        }
 
         res.status(201).json({ 
             order_id: orderId,
@@ -453,15 +473,6 @@ router.post('/:order_id/refund', async (req, res) => {
             WHERE id = ?
         `,
         [ amount, reason, admin_id, orderId ]);
-
-        // const { _, err } = await sendEmail({
-        //     from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
-        //     to: accountRows[0].email,
-        //     subject: `Order Refund #(${ currentOrder[0].order_number }) | Seraphim Luxe`,
-        //     html: createOrderRefundedEmail(accountRows[0].email, accountRows[0].name, currentOrder[0].order_number, amount, currentOrder[0].payment_method)
-        // });
-        // if (err)
-        //     throw new Error(err);
 
         await connection.commit();
 
