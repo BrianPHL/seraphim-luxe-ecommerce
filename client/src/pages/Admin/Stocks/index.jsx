@@ -654,29 +654,6 @@ const Stocks = () => {
                                 )}
                             </div>
 
-                <div className={styles['inputs-container']}>
-                    <div className={styles['input-wrapper']}>
-                        <label>Quantity to Add/Remove</label>
-                        <InputField
-                            type="number"
-                            name="quantityToAdd"
-                            hint="Use negative values to remove stock"
-                            value={quantityToAdd}
-                            onChange={(name, value) => setQuantityToAdd(parseInt(value) || 0)}
-                            isSubmittable={false}
-                        />
-                    </div>
-                    
-                    <div className={styles['input-wrapper']}>
-                        <label>New Stock Threshold (Optional)</label>
-                        <InputField
-                            type="number"
-                            name="newThreshold"
-                            hint="Leave empty to keep current threshold"
-                            value={newThreshold}
-                            onChange={(name, value) => setNewThreshold(value)}
-                            isSubmittable={false}
-                        />
                             {filteredProducts && filteredProducts.length > 0 ? (
                                 <div className={styles.productGrid}>
                                     {filteredProducts.map((product) => (
@@ -743,6 +720,19 @@ const Stocks = () => {
                             />
                         </div>
 
+                        <div className={styles['inputs-container']}>
+                            <div className={styles['input-wrapper']}>
+                                <label>Quantity to Add/Remove</label>
+                                <input
+                                    type="number"
+                                    name="quantityToAdd"
+                                    placeholder="Use negative values to remove stock"
+                                    value={quantityToAdd}
+                                    onChange={(e) => setQuantityToAdd(parseInt(e.target.value) || 0)}
+                                    className={styles['input-unnested']}
+                                />
+                            </div>
+                            
                             <div className={styles['input-wrapper']}>
                                 <label>New Stock Threshold (Optional)</label>
                                 <input
