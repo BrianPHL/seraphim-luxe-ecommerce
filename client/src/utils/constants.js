@@ -26,6 +26,7 @@ export const ERROR_MESSAGES = {
     'TYPE_DOES_NOT_MATCH_ROLE_CUSTOMER': 'Please sign into the appropriate platforms. You can\'t sign in as an admin here.',
     'TYPE_DOES_NOT_MATCH_ROLE_ADMIN': 'Please sign into the appropriate platforms. You can\'t sign in as a customer here.',
     'ACCOUNT_CURRENTLY_SUSPENDED': 'Your account had been suspended by an administrator. Please try again later or send us a message at support@seraphimluxe.store.',
+    'ACCOUNT_VERIFICATION_FAILED': 'Account verification failed. Please try signing in again or contact support if the issue persists.',
 
     // Better Auth Session Error Codes
     'SESSION_NOT_FOUND': 'Your session has expired. Please sign in again.',
