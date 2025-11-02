@@ -3,6 +3,8 @@ import pool from "../apis/db.js";
 import express from 'express';
 import multer from "multer";
 import fs from "fs";
+import { sendEmail } from "../apis/resend.js";
+import { createEmailChangedEmail, createPasswordChangedEmail } from "../utils/email.js";
 
 const router = express.Router();
 const upload = multer({
@@ -211,26 +213,39 @@ router.put('/:account_id/:address_id/address', async (req, res) => {
 });
 
 router.put('/:account_id/personal-info', async (req, res) => {
+
     try {
+
         const { account_id } = req.params;
         const { first_name, last_name, email, phone_number } = req.body;
         const name = `${ first_name } ${ last_name }`;
 
-        if (email) {
-            const [ existingEmail ] = await pool.query(
-                `
-                    SELECT id
-                    FROM accounts 
-                    WHERE email = ? AND id != ?
-                `,
-                [email, account_id]
-            );
-            
-            if (existingEmail.length > 0) {
-                return res.status(409).json({ 
-                    error: 'Email already in use by another account' 
-                });
-            }
+        const [ currentAccount ] = await pool.query(
+            `
+                SELECT email
+                FROM accounts 
+                WHERE id = ?
+            `,
+            [ account_id ]
+        );
+
+        const [ existingEmail ] = await pool.query(
+            `
+                SELECT COUNT(*) AS count
+                FROM accounts
+                WHERE email = ? AND NOT id = ?
+            `,
+            [ email, account_id ]
+        );
+
+        if (currentAccount.length <= 0) {
+            return res.status(404).json({ error: 'Account not found' });
+        }
+
+        if (existingEmail[0].count > 0) {
+            return res.status(409).json({ 
+                error: 'Email already in use by another account' 
+            });
         }
         
         const [ result ] = await pool.query(
@@ -239,11 +254,23 @@ router.put('/:account_id/personal-info', async (req, res) => {
                 SET name = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?
                 WHERE id = ?
             `,
-            [name, first_name, last_name, email, phone_number, account_id]
+            [ name, first_name, last_name, email, phone_number, account_id ]
         );
         
-        if (result.affectedRows === 0) {
+        if (result.affectedRows <= 0) {
             return res.status(404).json({ error: 'Account not found' });
+        }
+
+        if (email !== currentAccount[0].email) {
+            const fullName = first_name + ' ' + last_name;
+            const modifiedEmailResult = await sendEmail({
+                from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+                to: [ currentAccount[0].email, email ],
+                subject: `Changed Email Address | Seraphim Luxe`,
+                html: createEmailChangedEmail(fullName, currentAccount[0].email, email)
+            });
+            if (modifiedEmailResult.err)
+                throw new Error(modifiedEmailResult.err);
         }
         
         const [user] = await pool.query(
@@ -256,10 +283,12 @@ router.put('/:account_id/personal-info', async (req, res) => {
         );
         
         res.json(user[0]);
+        
     } catch (err) {
-        console.error('Error updating personal info:', err);
+        console.error("Accounts route PUT /:account_id/personal-info endpoint error: ", err);
         res.status(500).json({ error: err.message });
     }
+
 });
 
 router.put('/:account_id/suspend', async (req, res) => {
@@ -405,6 +434,32 @@ router.post('/:account_id/avatar', upload.single('avatar'), async (req, res) => 
 
         console.error('Error uploading avatar:', err);
         if (req.file?.path) fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: err.message });
+
+    }
+
+});
+
+router.post('/notify-password-reset', async (req, res) => {
+
+    try {
+
+        const { name, email } = req.body;
+
+        const modifiedPasswordResult = await sendEmail({
+            from: 'Seraphim Luxe <noreply@seraphimluxe.store>',
+            to: email,
+            subject: `Password Changed | Seraphim Luxe`,
+            html: createPasswordChangedEmail(name, email)
+        });
+        if (modifiedPasswordResult.err)
+            throw new Error(modifiedPasswordResult.err);
+
+        res.sendStatus(200);
+
+    } catch (err) {
+
+        console.error('Accounts route POST /notify-password-reset endpoint error: ', err);
         res.status(500).json({ error: err.message });
 
     }

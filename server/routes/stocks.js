@@ -1,5 +1,6 @@
 import express from 'express';
 import pool from '../apis/db.js';
+import { pingUser } from "../utils/sse.js";
 
 const router = express.Router();
 
@@ -168,6 +169,22 @@ router.post('/add',  async (req, res) => {
                 admin_id
             ]
         );
+
+        if (newQuantity <= finalThreshold) {
+            // Get all admins
+            const [admins] = await connection.query(
+                'SELECT id FROM accounts WHERE role = "admin" AND NOT is_suspended'
+            );
+
+            for (const admin of admins) {
+                pingUser(admin.id, {
+                    type: 'low_stock',
+                    product_name: currentProduct[0].label,
+                    current_stock: newQuantity,
+                    threshold: finalThreshold
+                });
+            }
+        }
         
         await connection.commit();
         

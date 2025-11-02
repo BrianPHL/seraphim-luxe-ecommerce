@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { InputField, Button, Anchor, ReturnButton, Accordion, Modal, Dropdown, Banner } from '@components';
-import { useToast, useAuth, useSettings, useBanners } from '@contexts';
+import { useToast, useAuth, useSettings, useBanners, useNotifications } from '@contexts';
 import { useOAuth } from '@hooks';
 import { getErrorMessage } from '@utils';
 import styles from './Profile.module.css';
@@ -14,6 +14,15 @@ const Profile = ({}) => {
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
     const { banners } = useBanners();
     const { showToast } = useToast();
+    const { 
+        notificationPreferences, 
+        hasNotificationChanges, 
+        loadingNotifications,
+        handleNotificationToggle,
+        handleSaveNotifications,
+        handleResetNotifications,
+        notifyAccountChange
+    } = useNotifications();
     const [ searchParams, setSearchParams ] = useSearchParams();
     const [ avatarFile, setAvatarFile ] = useState(null);
     const [ avatarPreview, setAvatarPreview ] = useState(null);
@@ -458,12 +467,26 @@ const Profile = ({}) => {
     }
 
     const updatePersonalInfo = async () => {
+        
+        const emailChanged = personalInfo.email !== user.email;
+        const oldEmail = user.email;
+        const newEmail = personalInfo.email;
+        const fullName = `${personalInfo.first_name} ${personalInfo.last_name}`;
         const result = await updatePersonalInfoAPI(personalInfo);
 
         if (result?.error) {
             showToast(`Failed to update personal info: ${result.error}`, 'error');
         } else {
             showToast('Personal information updated successfully', 'success');
+
+            if (emailChanged) {
+                await notifyAccountChange('email_changed', {
+                    name: fullName,
+                    oldEmail: oldEmail,
+                    newEmail: newEmail
+                });
+            }
+            
             setIsPersonalInfoChanged(false);
         }
     };
@@ -520,6 +543,8 @@ const Profile = ({}) => {
 
         try {
 
+            const fullName = user?.first_name + ' ' + user?.last_name;
+            const email = user?.email;
             const { newPassword, confirmNewPassword } = passwordInfo;
             const result = await changePassword(newPassword, queryToken);
 
@@ -527,6 +552,12 @@ const Profile = ({}) => {
                 showToast(`Failed to update password: ${ result.error }`, 'error');
             } else {
                 showToast('Password updated successfully', 'success');
+                
+                await notifyAccountChange('password_changed', {
+                    name: fullName,
+                    email: email
+                });
+
                 setPasswordInfo({ newPassword: '', confirmNewPassword: '' });
                 setIsPasswordInfoChanged(false);
                 setDoPasswordsMatch(true);
@@ -1187,6 +1218,283 @@ const Profile = ({}) => {
                                 />
                             </div>
                         </section>
+
+                        <div className={ styles['divider-horizontal'] }></div>
+
+                        <section className={ styles['info-notifications'] }>
+                            <div className={ styles['settings-section-header'] }>
+                                <h2>Notification Preferences</h2>
+                                <p>Manage your in-app and email notification preferences</p>
+                            </div>
+                                                        
+                            <div className={ styles['notifications-grid'] }>
+                                {!isAdmin && (
+                                    <div className={ styles['notification-category'] }>
+                                        <h3 className={ styles['category-title'] }>Shopping Activity</h3>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Cart Updates</h4>
+                                                    <p>In-app Notifications when items are added or removed from cart</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.cart_updates}
+                                                            onChange={() => handleNotificationToggle('cart_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.cart_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.cart_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Wishlist Updates</h4>
+                                                    <p>In-app Notifications when items are added or removed from wishlist</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.wishlist_updates}
+                                                            onChange={() => handleNotificationToggle('wishlist_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.wishlist_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.wishlist_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                        
+                                {!isAdmin && (
+                                    <div className={ styles['notification-category'] }>
+                                        <h3 className={ styles['category-title'] }>Orders & Transactions</h3>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Order Status Updates</h4>
+                                                    <p>Get in-app notifications about order status changes</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.order_updates}
+                                                            onChange={() => handleNotificationToggle('order_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.order_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.order_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        {/* Email notification toggle for orders */}
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Order Email Notifications</h4>
+                                                    <p>Receive email updates for order status changes</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences?.email_order_updates ?? true}
+                                                            onChange={() => handleNotificationToggle('email_order_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences?.email_order_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences?.email_order_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                        
+                                {isAdmin && (
+                                    <div className={ styles['notification-category'] }>
+                                        <h3 className={ styles['category-title'] }>Admin Notifications</h3>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>New Orders</h4>
+                                                    <p>Get in-app notifications when customers place new orders</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.admin_new_orders}
+                                                            onChange={() => handleNotificationToggle('admin_new_orders')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.admin_new_orders ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.admin_new_orders ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Customer Messages</h4>
+                                                    <p>In-app notifications for new customer support messages</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.admin_customer_messages}
+                                                            onChange={() => handleNotificationToggle('admin_customer_messages')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.admin_customer_messages ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.admin_customer_messages ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Low Stock Alerts</h4>
+                                                    <p>Get in-app alerts when product inventory is running low</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.admin_low_stock_alerts}
+                                                            onChange={() => handleNotificationToggle('admin_low_stock_alerts')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.admin_low_stock_alerts ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.admin_low_stock_alerts ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                        
+                                <div className={ styles['notification-category'] }>
+                                    <h3 className={ styles['category-title'] }>Security & Account</h3>
+                            
+                                    <div className={ styles['notification-card'] }>
+                                        <div className={ styles['notification-header'] }>
+                                            <div className={ styles['notification-info'] }>
+                                                <h4>Account Security</h4>
+                                                <p>Critical in-app alerts about account changes and security</p>
+                                            </div>
+                                            <div className={ styles['toggle-container'] }>
+                                                <label className={ styles['toggle-switch'] }>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={notificationPreferences.account_security}
+                                                        onChange={() => handleNotificationToggle('account_security')}
+                                                        disabled={true}
+                                                    />
+                                                    <span className={ styles['toggle-slider'] }></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className={ styles['notification-status'] }>
+                                            <span className={`${styles['status-badge']} ${styles['enabled']}`}>
+                                                Always Enabled
+                                            </span>
+                                            <span className={ styles['required-badge'] }>Required</span>
+                                        </div>
+                                    </div>
+                            
+                                    <div className={ styles['notification-card'] }>
+                                        <div className={ styles['notification-header'] }>
+                                            <div className={ styles['notification-info'] }>
+                                                <h4>Account Security Emails</h4>
+                                                <p>Receive emails for password and email changes</p>
+                                            </div>
+                                            <div className={ styles['toggle-container'] }>
+                                                <label className={ styles['toggle-switch'] }>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={notificationPreferences?.email_account_security ?? true}
+                                                        onChange={() => handleNotificationToggle('email_account_security')}
+                                                        disabled={true}
+                                                    />
+                                                    <span className={ styles['toggle-slider'] }></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className={ styles['notification-status'] }>
+                                            <span className={`${styles['status-badge']} ${styles['enabled']}`}>
+                                                Always Enabled
+                                            </span>
+                                            <span className={ styles['required-badge'] }>Required</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={ styles['notification-actions'] }>
+                                <Button
+                                    type="secondary"
+                                    label="Reset Changes"
+                                    action={handleResetNotifications}
+                                    disabled={!hasNotificationChanges || loadingNotifications}
+                                />
+                                <Button
+                                    type="primary"
+                                    label={loadingNotifications ? 'Saving...' : 'Save Preferences'}
+                                    action={handleSaveNotifications}
+                                    disabled={!hasNotificationChanges || loadingNotifications}
+                                />
+                            </div>
+                        </section>
+
                         <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-danger'] }>
                             <h2>Danger Zone</h2>

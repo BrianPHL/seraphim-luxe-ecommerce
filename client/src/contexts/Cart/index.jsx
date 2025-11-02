@@ -9,7 +9,7 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
     const [ loading, setLoading ] = useState(false);
     const { user } = useAuth();
     const { showToast } = useToast();
-    const { setNotification } = useNotifications();
+    const { notifyCartAction } = useNotifications();
     const { logCartAdd, logCartRemove, logCartUpdate } = auditLoggers;
 
     const fetchCartItems = async () => {
@@ -66,10 +66,9 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
                 })
             });
 
-            await setNotification({
-                type: 'cart',
-                title: 'Item added to cart',
-                message: `${ item.label } was added to your cart.`
+            await notifyCartAction({
+                action: "add_to_cart",
+                productName: item.label
             });
 
             if (logCartAdd) {
@@ -190,11 +189,10 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });
-            
-            await setNotification({
-                type: 'cart',
-                title: 'Item removed from cart',
-                message: `${ cartItem[0].label } was removed from your cart.`
+
+            await notifyCartAction({
+                action: "remove_from_cart",
+                productName: cartItem[0].label
             });
 
             if (logCartRemove && cartItem) {
