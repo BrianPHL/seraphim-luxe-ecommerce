@@ -28,6 +28,7 @@ const Stocks = () => {
     const [newThreshold, setNewThreshold] = useState('');
     const [notes, setNotes] = useState('');
     const [selectedReportLabel, setSelectedReportLabel] = useState('All Reports');
+    const [productSearchQuery, setProductSearchQuery] = useState('');
     
     const { stockHistory, lowStockProducts, addStock, fetchStockHistory, isLoading } = useStocks();
     const { products } = useProducts();
@@ -152,11 +153,33 @@ const Stocks = () => {
         updateSearchParams({ historySearch: '', historyPage: 1 });
     };
 
+    const getFilteredProducts = () => {
+        if (!products) return [];
+        
+        if (!productSearchQuery.trim()) {
+            return products;
+        }
+        
+        const query = productSearchQuery.toLowerCase().trim();
+        
+        return products.filter(product => 
+            product.label.toLowerCase().includes(query) ||
+            product.price.toString().includes(query) ||
+            (product.category && product.category.toLowerCase().includes(query)) ||
+            (product.subcategory && product.subcategory.toLowerCase().includes(query))
+        );
+    };
+
+    const resetProductSearch = () => {
+        setProductSearchQuery('');
+    };
+
     const handleOpenAddStockModal = (product = null) => {
         setSelectedProduct(product);
         setQuantityToAdd(1);
         setNewThreshold(product ? product.stock_threshold : '');
         setNotes('');
+        resetProductSearch();
         setIsModalOpen(true);
     };
 
@@ -177,8 +200,11 @@ const Stocks = () => {
             setQuantityToAdd(1);
             setNewThreshold('');
             setNotes('');
+            resetProductSearch();
         }
     };
+
+    const filteredProducts = getFilteredProducts();
 
     // Generate stocks analytics when stock data changes
     useEffect(() => {
@@ -592,85 +618,161 @@ const Stocks = () => {
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    resetProductSearch();
+                }}
                 label="Add Stock"
             >
-                {selectedProduct ? (
-                    <div className={styles['modal-infos']}>
-                        <h3>{selectedProduct.label}</h3>
-                        <span>
-                            <p>Current Stock: {selectedProduct.stock_quantity}</p>
-                            <p>Stock Threshold: {selectedProduct.stock_threshold}</p>
-                        </span>
+                {!selectedProduct ? (
+                    <div className={styles.inputGroup}>
+                        <label>Select Product</label>
+                        <div className={styles.productSelector}>
+                            {/* Product Search Input */}
+                            <div className={styles.productSearchContainer}>
+                                <div className={styles.searchInputWrapper}>
+                                    <i className="fa-solid fa-search"></i>
+                                    <input
+                                        type="text"
+                                        placeholder="Search products by name, price, or category..."
+                                        value={productSearchQuery}
+                                        onChange={(e) => setProductSearchQuery(e.target.value)}
+                                        className={styles.productSearchInput}
+                                    />
+                                    {productSearchQuery && (
+                                        <Button
+                                            type='icon'
+                                            icon='fa-solid fa-times'
+                                            action={() => setProductSearchQuery('')}
+                                        />
+                                    )}
+                                </div>
+                                {productSearchQuery && (
+                                    <div className={styles.searchInfo}>
+                                        Showing {filteredProducts.length} of {products?.length || 0} products
+                                    </div>
+                                )}
+                            </div>
+
+                            {filteredProducts && filteredProducts.length > 0 ? (
+                                <div className={styles.productGrid}>
+                                    {filteredProducts.map((product) => (
+                                        <div 
+                                            key={product.id || product.product_id} 
+                                            className={styles.productOption}
+                                            onClick={() => setSelectedProduct(product)}
+                                        >
+                                            <div className={styles.productLabel}>
+                                                <img
+                                                    src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}.webp`}
+                                                    alt={product.label}
+                                                    className={styles.productImage}
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://res.cloudinary.com/dfvy7i4uc/image/upload/placeholder_vcj6hz.webp';
+                                                    }}
+                                                />
+                                                <div className={styles.productInfo}>
+                                                    <span className={styles.productName}>{product.label}</span>
+                                                    <span className={styles.productPrice}>₱{product.price}</span>
+                                                    <span className={styles.productStock}>
+                                                        Stock: {product.stock_quantity} / Threshold: {product.stock_threshold}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : productSearchQuery ? (
+                                <div className={styles.noProductsFound}>
+                                    <p>No products found matching "{productSearchQuery}"</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setProductSearchQuery('')}
+                                        className={styles.clearSearchLink}
+                                    >
+                                        Clear search
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className={styles.noProductsSelected}>
+                                    No products available
+                                </p>
+                            )}
+                        </div>
                     </div>
                 ) : (
-                    <div className={styles['input-wrapper']}>
-                        <label>Select Product</label>
-                        <select 
-                            value={selectedProduct?.id || selectedProduct?.product_id || ''} 
-                            onChange={(e) => {
-                                const product = products.find(p => (p.id || p.product_id).toString() === e.target.value);
-                                setSelectedProduct(product);
-                            }}
-                        >
-                            <option value="">Choose a product...</option>
-                            {products?.map(product => (
-                                <option key={product.id || product.product_id} value={product.id || product.product_id}>
-                                    {product.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <>
+                        <div className={styles['modal-infos']}>
+                            <h3>{selectedProduct.label}</h3>
+                            <span>
+                                <p>Current Stock: {selectedProduct.stock_quantity}</p>
+                                <p>Stock Threshold: {selectedProduct.stock_threshold}</p>
+                            </span>
+                            <Button
+                                type="secondary"
+                                label="Change Product"
+                                action={() => {
+                                    setSelectedProduct(null);
+                                    setQuantityToAdd(1);
+                                    setNewThreshold('');
+                                    setNotes('');
+                                }}
+                            />
+                        </div>
+
+                        <div className={styles['inputs-container']}>
+                            <div className={styles['input-wrapper']}>
+                                <label>Quantity to Add/Remove</label>
+                                <input
+                                    type="number"
+                                    name="quantityToAdd"
+                                    placeholder="Use negative values to remove stock"
+                                    value={quantityToAdd}
+                                    onChange={(e) => setQuantityToAdd(parseInt(e.target.value) || 0)}
+                                    className={styles['input-unnested']}
+                                />
+                            </div>
+                            
+                            <div className={styles['input-wrapper']}>
+                                <label>New Stock Threshold (Optional)</label>
+                                <input
+                                    type="number"
+                                    name="newThreshold"
+                                    placeholder="Leave empty to keep current threshold"
+                                    value={newThreshold}
+                                    onChange={(e) => setNewThreshold(e.target.value)}
+                                    className={styles['input-unnested']}
+                                />
+                            </div>
+
+                            <div className={styles['input-wrapper']}>
+                                <label>Notes</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Add notes about this stock change..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles['modal-ctas']}>
+                            <Button
+                                type="secondary"
+                                label="Cancel"
+                                action={() => {
+                                    setIsModalOpen(false);
+                                    resetProductSearch();
+                                }}
+                            />
+                            <Button
+                                type="primary"
+                                label="Update Stock"
+                                action={handleAddStock}
+                                disabled={!selectedProduct}
+                            />
+                        </div>
+                    </>
                 )}
-
-                <div className={styles['inputs-container']}>
-                    <div className={styles['input-wrapper']}>
-                        <label>Quantity to Add/Remove</label>
-                        <InputField
-                            type="number"
-                            name="quantityToAdd"
-                            hint="Use negative values to remove stock"
-                            value={quantityToAdd}
-                            onChange={(name, value) => setQuantityToAdd(parseInt(value) || 0)}
-                            isSubmittable={false}
-                        />
-                    </div>
-                    
-                    <div className={styles['input-wrapper']}>
-                        <label>New Stock Threshold (Optional)</label>
-                        <InputField
-                            type="number"
-                            name="newThreshold"
-                            hint="Leave empty to keep current threshold"
-                            value={newThreshold}
-                            onChange={(name, value) => setNewThreshold(value)}
-                            isSubmittable={false}
-                        />
-                    </div>
-
-                    <div className={styles['input-wrapper']}>
-                        <label>Notes</label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Add notes about this stock change..."
-                        />
-                    </div>
-                </div>
-
-                <div className={styles['modal-ctas']}>
-                    <Button
-                        type="secondary"
-                        label="Cancel"
-                        action={() => setIsModalOpen(false)}
-                    />
-                    <Button
-                        type="primary"
-                        label="Update Stock"
-                        action={handleAddStock}
-                        disabled={!selectedProduct}
-                    />
-                </div>
             </Modal>
         </div>
     );

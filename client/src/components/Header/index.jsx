@@ -98,8 +98,6 @@ const Header = () => {
                                                 </span>
                                             ) : null }
                                         </div>
-                                        
-                                        {/* Keep existing cart structure */}
                                         <div 
                                             className={ styles['indicator-wrapper'] }
                                             onClick={ () => navigate('/cart')  }
@@ -126,11 +124,33 @@ const Header = () => {
                             </div>
                         </>
                     ) : user.role === 'admin' && (
-                        <Button
-                            type="icon"
-                            action={ () => toggleTheme()  }
-                            icon={ theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun' }
-                        />
+                        <>
+                            <div
+                                className={ styles['indicator-wrapper'] }
+                                role="button"
+                                tabIndex={ 0 }
+                                onClick={ () => setIsInboxOpen(true) }
+                                data-inbox-button="true"
+                            >
+                                <Button
+                                    type="icon"
+                                    icon='fa-solid fa-inbox'
+                                    externalStyles={ styles['indicator-btn'] }
+                                    action={ () => {} }
+                                    data-inbox-button="true"
+                                />
+                                { unreadCount > 0 ? (
+                                    <span className={ styles['indicator-badge'] }>
+                                        { unreadCount }
+                                    </span>
+                                ) : null }
+                            </div>
+                            <Button
+                                type="icon"
+                                action={ () => toggleTheme()  }
+                                icon={ theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun' }
+                            />
+                        </>
                     )}
 
                     { user ? (
@@ -332,11 +352,33 @@ const Header = () => {
                                     </div>
                                 </>
                             ) : null }
-                            <Button
-                                type="icon"
-                                action={ () => toggleTheme()  }
-                                icon={ theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun' }
-                            />
+                            <>
+                                <div
+                                    className={ styles['indicator-wrapper'] }
+                                    role="button"
+                                    tabIndex={ 0 }
+                                    onClick={ () => setIsInboxOpen(true) }
+                                    data-inbox-button="true"
+                                >
+                                    <Button
+                                        type="icon"
+                                        icon='fa-solid fa-inbox'
+                                        externalStyles={ styles['indicator-btn'] }
+                                        action={ () => {} }
+                                        data-inbox-button="true"
+                                    />
+                                    { unreadCount > 0 ? (
+                                        <span className={ styles['indicator-badge'] }>
+                                            { unreadCount }
+                                        </span>
+                                    ) : null }
+                                </div>
+                                <Button
+                                    type="icon"
+                                    action={ () => toggleTheme()  }
+                                    icon={ theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun' }
+                                />
+                            </>
                         </div>
                     </div>
                 </div>

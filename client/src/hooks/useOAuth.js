@@ -118,12 +118,21 @@ const useOAuth = () => {
         },
         changePassword: async (newPassword, token) => {
 
-            const result = authClient.resetPassword({
-                newPassword: newPassword,
-                token: token
-            });
-            
-            return result;
+            try {
+
+                const result = await authClient.resetPassword({
+                    newPassword: newPassword,
+                    token: token
+                });
+
+                return result;
+
+            } catch (err) {
+
+                console.error("useOAuth hook changePassword function error: ", err);
+                throw err;
+
+            }
             
         },
         resetPassword: (email, otp, password) => {

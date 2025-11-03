@@ -194,19 +194,20 @@
     width: 100%;
 }
 
-@media only screen and (max-width: 1575px) {
+/* 1575, 1320, 1230 */
+@media only screen and (max-width: 1690px) { 
 
     .desktop-header { padding: 2rem 8rem; }
 
 }
 
-@media only screen and (max-width: 1320px) {
+@media only screen and (max-width: 1430px) {
 
     .desktop-header { padding: 2rem 4rem; }
 
 }
 
-@media only screen and (max-width: 1230px) {
+@media only screen and (max-width: 1300px) {
 
     .desktop-header { display: none; }
     .drawer { display: flex; }
@@ -214,7 +215,7 @@
 
 }
 
-@media only screen and (min-width: 1230px) {
+@media only screen and (min-width: 1300px) {
 
     .desktop-header { display: flex; }
     .drawer { display: none; }

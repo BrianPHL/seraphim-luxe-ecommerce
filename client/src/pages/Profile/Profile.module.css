@@ -1049,19 +1049,19 @@
 
 }
 
-@media only screen and (max-width: 1575px) {
+@media only screen and (max-width: 1690px) {
 
     .wrapper { padding: 12rem 8rem 6rem 8rem; }
 
 }
 
-@media only screen and (max-width: 1320px) {
+@media only screen and (max-width: 1430px) {
 
     .wrapper { padding: 8rem 4rem 4rem 4rem; }
 
 }
 
-@media only screen and (max-width: 1230px) {
+@media only screen and (max-width: 1300px) {
 
     .wrapper { padding: 14rem 2rem 2rem 2rem; }
 
@@ -1093,5 +1093,242 @@
 
     .input-wrapper-horizontal {
         flex-direction: column;
+    }
+}
+
+/* Add these at the end of your existing CSS file */
+
+.info-notifications {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.settings-section-header {
+    margin-bottom: 1.5rem;
+}
+
+.settings-section-header h2 {
+    color: var(--tg-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.settings-section-header p {
+    color: var(--tg-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.notifications-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.notification-category {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.category-title {
+    color: var(--tg-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-base);
+}
+
+.notification-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--bg-outline);
+    border-radius: 8px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.notification-card:hover {
+    border-color: var(--accent-base);
+    box-shadow: 0 2px 8px rgba(166, 124, 82, 0.1);
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.notification-info h4 {
+    color: var(--tg-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.notification-info p {
+    color: var(--tg-secondary);
+    font-size: 0.8125rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-outline);
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--accent-base);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.notification-status {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.enabled {
+    background-color: var(--success-foreground);
+    color: var(--bg-secondary);
+}
+
+.status-badge.disabled {
+    background-color: var(--error-background);
+    color: var(--error-foreground);
+}
+
+.required-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: var(--bg-hover);
+    color: var(--accent-base);
+}
+
+.notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--bg-outline);
+    margin-top: 1rem;
+}
+
+.validation-error-banner {
+    border-radius: 0.25rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--error-foreground);
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.validation-error-banner > i {
+    color: var(--error-foreground);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.validation-error-banner > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.validation-error-banner p {
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--tg-primary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+@media (max-width: 1024px) {
+    .notifications-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .notification-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .notification-card {
+        padding: 1rem;
+    }
+    
+    .notification-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .toggle-container {
+        align-self: flex-start;
     }
 }
