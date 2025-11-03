@@ -17,6 +17,7 @@
     display: flex;
     padding: 1rem;
     border: 0;
+    border-top: 1px solid var(--bg-outline);
     width: 100%;
     color: var(--tg-primary);
     &:hover {
@@ -32,11 +33,19 @@
 }
 
 .content {
+    transition: max-height 0.3s ease, opacity 0.3s ease;
     list-style: none;
     overflow: hidden;
     padding: 0;
     margin: 0;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.content-child > *:first-child {
+    border-top: 1px solid var(--bg-outline);
+}
+
+.content-child > *:not(:last-child) {
+    border-bottom: 1px solid var(--bg-outline);
 }
 
 .content-active {
