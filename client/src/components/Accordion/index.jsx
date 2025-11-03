@@ -34,9 +34,9 @@ const Accordion = ({ label, options, externalStyles, onLinkClick, children, isOp
                         />
                     </li>
                 ))}
-                { !options && children.map((child, index) => (
-                    <li key={ index } className={ styles['content-child'] }>{ child }</li>
-                )) }
+                {!options && children && (
+                    <li className={ styles['content-child'] }>{children}</li>
+                )}
             </ul>
         </div>
     );
