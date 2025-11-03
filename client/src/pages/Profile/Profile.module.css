@@ -1277,6 +1277,37 @@
     margin-top: 1rem;
 }
 
+.validation-error-banner {
+    border-radius: 0.25rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--error-foreground);
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.validation-error-banner > i {
+    color: var(--error-foreground);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.validation-error-banner > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.validation-error-banner p {
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--tg-primary);
+    margin: 0;
+    line-height: 1.4;
+}
+
 @media (max-width: 1024px) {
     .notifications-grid {
         grid-template-columns: 1fr;

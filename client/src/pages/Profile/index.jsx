@@ -98,6 +98,9 @@ const Profile = ({}) => {
         is_default_shipping: false,
     });
 
+    const [ addNewAddressValidationErrors, setAddNewAddressValidationErrors ] = useState({});
+    const [ editAddressValidationErrors, setEditAddressValidationErrors ] = useState({});
+
     const toggleDropdown = (dropdownName) => {
         setDropdownStates(prev => ({
             ...prev,
@@ -383,16 +386,19 @@ const Profile = ({}) => {
     };
 
     const handleAddNewAddressSubmit = async () => {
+        // Validate first
+        if (!validateAddNewAddress()) {
+            showToast('Please fix the errors before submitting', 'error');
+            return;
+        }
         
         try {
-
             const result = await addAddress(addNewAddressFormData);
-
             await getAddressBook();
             
             showToast('Address added successfully!', 'success');
             setIsModalOpen(false);
-
+            setAddNewAddressValidationErrors({}); // Clear errors
         } catch (err) {
             console.error("Profile page handleAddNewAddressSubmit function error: ", err);
             showToast('Failed to add the address! An error had occured.', 'error');
@@ -402,16 +408,19 @@ const Profile = ({}) => {
     };
 
     const handleEditAddressSubmit = async () => {
+        // Validate first
+        if (!validateEditAddress()) {
+            showToast('Please fix the errors before submitting', 'error');
+            return;
+        }
         
         try {
-
             const result = await updateAddress(editAddressFormData);
-
             await getAddressBook();
             
             showToast('Address modified successfully!', 'success');
             setIsModalOpen(false);
-
+            setEditAddressValidationErrors({}); // Clear errors
         } catch (err) {
             console.error("Profile page handleEditAddressSubmit function error: ", err);
             showToast('Failed to modify the address! An error had occured.', 'error');
@@ -436,7 +445,7 @@ const Profile = ({}) => {
 
         }
 
-    }
+    };
     const resetAddNewAddressFormData = () => {
         setAddNewAddressFormData({
             full_name: user.name,
@@ -690,6 +699,111 @@ const Profile = ({}) => {
             setIsPasswordSet(true);
 
     };
+
+    // Validate Add New Address Form
+const validateAddNewAddress = () => {
+    const errors = {};
+    
+    // Full name validation
+    if (!addNewAddressFormData.full_name.trim()) {
+        errors.full_name = 'Full name is required';
+    } else if (addNewAddressFormData.full_name.trim().length < 3) {
+        errors.full_name = 'Full name must be at least 3 characters';
+    }
+    
+    // Phone validation (Philippine format: 10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    const cleanPhone = addNewAddressFormData.phone_number.replace(/\s/g, '').replace(/^\+63/, '').replace(/^0/, '');
+    if (!phoneRegex.test(cleanPhone)) {
+        errors.phone_number = 'Please enter a valid 10-digit phone number';
+    }
+    
+    // Province validation
+    if (!addNewAddressFormData.province.trim()) {
+        errors.province = 'Province is required';
+    } else if (addNewAddressFormData.province.trim().length < 3) {
+        errors.province = 'Province must be at least 3 characters';
+    }
+    
+    // City validation
+    if (!addNewAddressFormData.city.trim()) {
+        errors.city = 'City is required';
+    } else if (addNewAddressFormData.city.trim().length < 3) {
+        errors.city = 'City must be at least 3 characters';
+    }
+    
+    // Barangay validation
+    if (!addNewAddressFormData.barangay.trim()) {
+        errors.barangay = 'Barangay is required';
+    } else if (addNewAddressFormData.barangay.trim().length < 3) {
+        errors.barangay = 'Barangay must be at least 3 characters';
+    }
+    
+    // Street address validation
+    if (!addNewAddressFormData.street_address.trim()) {
+        errors.street_address = 'Street address is required';
+    } else if (addNewAddressFormData.street_address.trim().length < 5) {
+        errors.street_address = 'Street address must be at least 5 characters';
+    }
+    
+    // Postal code validation (Philippine format: 4 digits)
+    const postalRegex = /^\d{4}$/;
+    if (!postalRegex.test(addNewAddressFormData.postal_code)) {
+        errors.postal_code = 'Postal code must be exactly 4 digits';
+    }
+    
+    setAddNewAddressValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+};
+
+// Validate Edit Address Form
+const validateEditAddress = () => {
+    const errors = {};
+    
+    if (!editAddressFormData.full_name.trim()) {
+        errors.full_name = 'Full name is required';
+    } else if (editAddressFormData.full_name.trim().length < 3) {
+        errors.full_name = 'Full name must be at least 3 characters';
+    }
+    
+    const phoneRegex = /^[0-9]{10}$/;
+    const cleanPhone = editAddressFormData.phone_number.replace(/\s/g, '').replace(/^\+63/, '').replace(/^0/, '');
+    if (!phoneRegex.test(cleanPhone)) {
+        errors.phone_number = 'Please enter a valid 10-digit phone number';
+    }
+    
+    if (!editAddressFormData.province.trim()) {
+        errors.province = 'Province is required';
+    } else if (editAddressFormData.province.trim().length < 3) {
+        errors.province = 'Province must be at least 3 characters';
+    }
+    
+    if (!editAddressFormData.city.trim()) {
+        errors.city = 'City is required';
+    } else if (editAddressFormData.city.trim().length < 3) {
+        errors.city = 'City must be at least 3 characters';
+    }
+    
+    if (!editAddressFormData.barangay.trim()) {
+        errors.barangay = 'Barangay is required';
+    } else if (editAddressFormData.barangay.trim().length < 3) {
+        errors.barangay = 'Barangay must be at least 3 characters';
+    }
+    
+    if (!editAddressFormData.street_address.trim()) {
+        errors.street_address = 'Street address is required';
+    } else if (editAddressFormData.street_address.trim().length < 5) {
+        errors.street_address = 'Street address must be at least 5 characters';
+    }
+    
+    const postalRegex = /^\d{4}$/;
+    if (!postalRegex.test(editAddressFormData.postal_code)) {
+        errors.postal_code = 'Postal code must be exactly 4 digits';
+    }
+    
+    setEditAddressValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+};
 
     useEffect(() => {
 
@@ -968,14 +1082,15 @@ const Profile = ({}) => {
                                                                 label: 'Credit Card',
                                                                 action: () => handlePlatformSettingsChange('preferred_payment_method', 'credit_card')
                                                             }] : []),
-                                                            ...customPaymentMethods
-                                                                .filter(method => method.enabled)
-                                                                .map(method => ({
-                                                                    label: method.label,
-                                                                    action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
-                                                                }))
-                                                        ]}
-                                                    />
+                                                                ...customPaymentMethods
+                                                                    .filter(method => method.enabled)
+                                                                    .map(method => ({
+                                                                        label: method.label,
+                                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
+                                                                    }))
+                                                            ]}
+                                                        />
+
                                                 </div>
                                             </div>
                                         </div>
@@ -1021,6 +1136,7 @@ const Profile = ({}) => {
                                             label="Add new address"
                                             action={ () => {
                                                 resetAddNewAddressFormData();
+                                                setAddNewAddressValidationErrors({}); // ← Add this
                                                 setModalType('add-new-address-modal');
                                                 setIsModalOpen(true);
                                             }}
@@ -1056,17 +1172,17 @@ const Profile = ({}) => {
                                                                 </div>
                                                             </div>
                                                             <div className={styles['address-tags']}>
-                                                                    {(addressBook.defaults?.default_billing_address === address.id ||
-                                                                    addressBook.defaults?.default_shipping_address === address.id) && (
-                                                                    <div className={styles['address-tags']}>
-                                                                        {addressBook.defaults?.default_billing_address === address.id && (
-                                                                        <span className={styles['address-tag']}>Default Billing</span>
-                                                                        )}
-                                                                        {addressBook.defaults?.default_shipping_address === address.id && (
-                                                                        <span className={styles['address-tag']}>Default Shipping</span>
-                                                                        )}
-                                                                    </div>
+                                                                {(addressBook.defaults?.default_billing_address === address.id ||
+                                                                addressBook.defaults?.default_shipping_address === address.id) && (
+                                                                <div className={styles['address-tags']}>
+                                                                    {addressBook.defaults?.default_billing_address === address.id && (
+                                                                    <span className={styles['address-tag']}>Default Billing</span>
                                                                     )}
+                                                                    {addressBook.defaults?.default_shipping_address === address.id && (
+                                                                    <span className={styles['address-tag']}>Default Shipping</span>
+                                                                    )}
+                                                                </div>
+                                                                )}
                                                             </div>
                                                         </div>
 
@@ -1088,6 +1204,7 @@ const Profile = ({}) => {
                                                                             is_default_billing: address.id === addressBook.defaults?.default_billing_address,
                                                                             is_default_shipping: address.id === addressBook.defaults?.default_shipping_address,
                                                                         });
+                                                                        setEditAddressValidationErrors({}); // ← Add this
                                                                         setModalType('edit-address-modal');
                                                                         setIsModalOpen(true);
                                                                     }}
@@ -1886,9 +2003,15 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            ) : modalType === 'delete-account-confirmation' && (
+            ) : modalType === 'delete-account-confirmation' ? (
                 <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your account</strong>. This will remove all your data including profile information, reservation history, and saved preferences. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
+                    <p className={ styles['modal-info'] }>
+                        You are about to <strong>permanently delete your account</strong>. 
+                        {isAdmin 
+                            ? " This will remove all your data including profile information and admin privileges."
+                            : " This will remove all your data including profile information, reservation history, and saved preferences."
+                        } This action cannot be reversed. Are you absolutely sure you want to proceed?
+                    </p>
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
@@ -1908,34 +2031,45 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            )}
+            ) : null}
 
             <Modal
                 isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
                 onClose={ () => setIsModalOpen(false) }
                 label={ 'Add new address' }
             >
-
                 <div className={ styles['notice'] }>
                     <i className='fa-solid fa-triangle-exclamation'></i>
                     <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
                 </div>
 
+                {/* Display validation errors in banner */}
+                {Object.keys(addNewAddressValidationErrors).length > 0 && (
+                    <div className={ styles['validation-error-banner'] }>
+                        <i className='fa-solid fa-circle-exclamation'></i>
+                        <div>
+                            {Object.values(addNewAddressValidationErrors).map((error, index) => (
+                                <p key={index}>{error}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className={ styles['inputs-container'] }>
 
-                    <div className={ styles['input-wrapper-horizontal'] }>
+                                <div className={ styles['input-wrapper-horizontal'] }>
 
-                        <div className={styles['input-wrapper']}>
-                            <label>Full name</label>
-                            <InputField
-                                name="full_name"
-                                hint="Your full name..."
-                                value={ addNewAddressFormData.full_name }
-                                onChange={ handleAddNewAddressFormInputChange }
-                                isSubmittable={ false }
-                                type="text"
-                            />
-                        </div>
+                    <div className={styles['input-wrapper']}>
+                        <label>Full name</label>
+                        <InputField
+                            name="full_name"
+                            hint="Your full name..."
+                            value={ addNewAddressFormData.full_name }
+                            onChange={ handleAddNewAddressFormInputChange }
+                            isSubmittable={ false }
+                            type="text"
+                        />
+                    </div>
 
                         <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
                             <label>Phone number</label>
@@ -2074,11 +2208,22 @@ const Profile = ({}) => {
                 onClose={ () => setIsModalOpen(false) }
                 label={ 'Edit address' }
             >
-
                 <div className={ styles['notice'] }>
                     <i className='fa-solid fa-triangle-exclamation'></i>
                     <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
                 </div>
+
+                {/* Display validation errors in banner */}
+                {Object.keys(editAddressValidationErrors).length > 0 && (
+                    <div className={ styles['validation-error-banner'] }>
+                        <i className='fa-solid fa-circle-exclamation'></i>
+                        <div>
+                            {Object.values(editAddressValidationErrors).map((error, index) => (
+                                <p key={index}>{error}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className={ styles['inputs-container'] }>
 
@@ -2251,379 +2396,6 @@ const Profile = ({}) => {
                     />
                 </div>
             </Modal>
-            {modalType === 'delete-account-confirmation' && (
-                <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>
-                        You are about to <strong>permanently delete your account</strong>. 
-                        {isAdmin 
-                            ? " This will remove all your data including profile information and admin privileges."
-                            : " This will remove all your data including profile information, reservation history, and saved preferences."
-                        } This action cannot be reversed. Are you absolutely sure you want to proceed?
-                    </p>
-                    <div className={ styles['modal-ctas'] }>
-                        <Button
-                            label='Confirm'
-                            type='secondary'
-                            action={ () => {
-                                setIsModalOpen(false);
-                                remove(user?.id);
-                            }}
-                        />
-                        <Button
-                            label='Cancel'
-                            type='primary'
-                            action={ () => {
-                                setModalType('');
-                                setIsModalOpen(false);
-                            }}
-                        />
-                    </div>
-                </Modal>
-            )}
-            {!isAdmin && (
-                <>
-                    <Modal
-                        isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
-                        onClose={ () => setIsModalOpen(false) }
-                        label={ 'Add new address' }
-                    >
-                        <div className={ styles['notice'] }>
-                            <i className='fa-solid fa-triangle-exclamation'></i>
-                            <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
-                        </div>
-
-                        <div className={ styles['inputs-container'] }>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Full name</label>
-                                    <InputField
-                                        name="full_name"
-                                        hint="Your full name..."
-                                        value={ addNewAddressFormData.full_name }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
-                                    <label>Phone number</label>
-                                    <InputField
-                                        name="phone_number"
-                                        hint="Your phone number..."
-                                        value={ addNewAddressFormData.phone_number }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>Province</label>
-                                    <InputField
-                                        name="province"
-                                        hint="Your province..."
-                                        value={ addNewAddressFormData.province }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>City</label>
-                                    <InputField
-                                        name="city"
-                                        hint="Your city..."
-                                        value={ addNewAddressFormData.city }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-                                    
-                                <div className={styles['input-wrapper']}>
-                                    <label>Barangay</label>
-                                    <InputField
-                                        name="barangay"
-                                        hint="Your barangay..."
-                                        value={ addNewAddressFormData.barangay }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Street address</label>
-                                    <InputField
-                                        name="street_address"
-                                        hint="Your street address..."
-                                        value={ addNewAddressFormData.street_address }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
-                                    <label>Postal code</label>
-                                    <InputField
-                                        name="postal_code"
-                                        hint=" "
-                                        value={ addNewAddressFormData.postal_code }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_billing"
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default billing address
-                                </label>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_shipping"
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default shipping address
-                                </label>
-                            
-                        </div>
-                        
-                        <div className={ styles['modal-ctas'] }>
-                            <Button 
-                                type="secondary" 
-                                label="Cancel" 
-                                action={() => {
-                                    setIsModalOpen(false);
-                                    resetAddNewAddressFormData();
-                                }} 
-                            />
-                            <Button 
-                                type="primary" 
-                                label={ 'Add new address' } 
-                                action={ handleAddNewAddressSubmit }
-                                disabled={
-                                    !addNewAddressFormData.full_name ||
-                                    !addNewAddressFormData.province ||
-                                    !addNewAddressFormData.city ||
-                                    !addNewAddressFormData.barangay ||
-                                    !addNewAddressFormData.street_address ||
-                                    !addNewAddressFormData.phone_number ||
-                                    !addNewAddressFormData.postal_code
-                                }
-                            />
-                        </div>
-                    </Modal>
-
-                    <Modal
-                        isOpen={ isModalOpen && modalType === 'edit-address-modal' }
-                        onClose={ () => setIsModalOpen(false) }
-                        label={ 'Edit address' }
-                    >
-                        <div className={ styles['notice'] }>
-                            <i className='fa-solid fa-triangle-exclamation'></i>
-                            <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
-                        </div>
-
-                        <div className={ styles['inputs-container'] }>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Full name</label>
-                                    <InputField
-                                        name="full_name"
-                                        hint="Your full name..."
-                                        value={ editAddressFormData.full_name }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
-                                    <label>Phone number</label>
-                                    <InputField
-                                        name="phone_number"
-                                        hint="Your phone number..."
-                                        value={ editAddressFormData.phone_number }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>Province</label>
-                                    <InputField
-                                        name="province"
-                                        hint="Your province..."
-                                        value={ editAddressFormData.province }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>City</label>
-                                    <InputField
-                                        name="city"
-                                        hint="Your city..."
-                                        value={ editAddressFormData.city }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-                                    
-                                <div className={styles['input-wrapper']}>
-                                    <label>Barangay</label>
-                                    <InputField
-                                        name="barangay"
-                                        hint="Your barangay..."
-                                        value={ editAddressFormData.barangay }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Street address</label>
-                                    <InputField
-                                        name="street_address"
-                                        hint="Your street address..."
-                                        value={ editAddressFormData.street_address }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
-                                    <label>Postal code</label>
-                                    <InputField
-                                        name="postal_code"
-                                        hint=" "
-                                        value={ editAddressFormData.postal_code }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_billing"
-                                        checked={ editAddressFormData.is_default_billing }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default billing address
-                                </label>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_shipping"
-                                        checked={ editAddressFormData.is_default_shipping }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default shipping address
-                                </label>
-                            
-                        </div>
-                        
-                        <div className={ styles['modal-ctas'] }>
-                            <Button 
-                                type="secondary" 
-                                label="Cancel" 
-                                action={() => {
-                                    setIsModalOpen(false);
-                                    resetEditAddressFormData();
-                                }} 
-                            />
-                            <Button 
-                                type="primary" 
-                                label={ 'Update address' } 
-                                action={ handleEditAddressSubmit }
-                                disabled={
-                                    !editAddressFormData.full_name ||
-                                    !editAddressFormData.province ||
-                                    !editAddressFormData.city ||
-                                    !editAddressFormData.barangay ||
-                                    !editAddressFormData.street_address ||
-                                    !editAddressFormData.phone_number ||
-                                    !editAddressFormData.postal_code
-                                }
-                            />
-                        </div>
-                    </Modal>
-
-                    <Modal label='Delete Address Confirmation' isOpen={ isModalOpen && modalType === 'delete-address-confirmation' } onClose={ () => setIsModalOpen(false) }>
-                        <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your address</strong>. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
-                        <div className={ styles['modal-ctas'] }>
-                            <Button
-                                label='Confirm'
-                                type='secondary'
-                                action={ () => {
-                                    setIsModalOpen(false);
-                                    handleAddressRemoval();
-                                }}
-                            />
-                            <Button
-                                label='Cancel'
-                                type='primary'
-                                action={ () => {
-                                    setModalType('');
-                                    setIsModalOpen(false);
-                                }}
-                            />
-                        </div>
-                    </Modal>
-                </>
-            )}
-
         </>
     );
 };
