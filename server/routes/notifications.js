@@ -229,9 +229,8 @@ router.get('/preferences/:account_id', async (req, res) => {
             await pool.query(
                 `
                     INSERT INTO notification_preferences
-                    (account_id, cart_updates, wishlist_updates, order_updates, account_security, admin_new_orders, 
-                     admin_customer_messages, admin_low_stock_alerts, email_order_updates, email_account_security)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (account_id)
+                    VALUES (?)
                 `,
                 [ account_id ]
             );
