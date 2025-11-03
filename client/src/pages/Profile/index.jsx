@@ -368,21 +368,37 @@ const Profile = ({}) => {
     const handleAddNewAddressFormInputChange = (event) => {
 
         const { name, value, type, checked } = event.target;
-        setAddNewAddressFormData(prev => ({
-            ...prev,
+        const updatedData = {
+            ...addNewAddressFormData,
             [name]: type === 'checkbox' ? checked : value
-        }));
-
+        };
+        
+        setAddNewAddressFormData(updatedData);
+        
+        // Clear the specific field error when user starts typing
+        if (addNewAddressValidationErrors[name]) {
+            const newErrors = { ...addNewAddressValidationErrors };
+            delete newErrors[name];
+            setAddNewAddressValidationErrors(newErrors);
+        }
     };
 
     const handleEditAddressFormInputChange = (event) => {
 
         const { name, value, type, checked } = event.target;
-        setEditAddressFormData(prev => ({
-            ...prev,
+        const updatedData = {
+            ...editAddressFormData,
             [name]: type === 'checkbox' ? checked : value
-        }));
-
+        };
+        
+        setEditAddressFormData(updatedData);
+        
+        // Clear the specific field error when user starts typing
+        if (editAddressValidationErrors[name]) {
+            const newErrors = { ...editAddressValidationErrors };
+            delete newErrors[name];
+            setEditAddressValidationErrors(newErrors);
+        }
     };
 
     const handleAddNewAddressSubmit = async () => {
@@ -2197,7 +2213,8 @@ const validateEditAddress = () => {
                             !addNewAddressFormData.barangay ||
                             !addNewAddressFormData.street_address ||
                             !addNewAddressFormData.phone_number ||
-                            !addNewAddressFormData.postal_code
+                            !addNewAddressFormData.postal_code ||
+                            Object.keys(addNewAddressValidationErrors).length > 0
                         }
                     />
                 </div>
@@ -2369,7 +2386,8 @@ const validateEditAddress = () => {
                             !editAddressFormData.barangay ||
                             !editAddressFormData.street_address ||
                             !editAddressFormData.phone_number ||
-                            !editAddressFormData.postal_code
+                            !editAddressFormData.postal_code ||
+                            Object.keys(editAddressValidationErrors).length > 0
                         }
                     />
                 </div>
