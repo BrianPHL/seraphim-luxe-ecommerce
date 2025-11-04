@@ -24,6 +24,7 @@ import sseRouter from './routes/sse.js';
 import geminiAIRouter from './routes/gemini-ai.js';
 import liveChatRouter from './routes/live-chat.js';
 import analyticsRoutes from './routes/analytics.js';
+import supportTicketRouter from './routes/support-tickets.js';
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ app.use('/api/gemini-ai', geminiAIRouter);
 app.use('/api/live-chat', liveChatRouter);
 app.use('/api/stocks', stocksRouter);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/support-tickets', supportTicketRouter);
 
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);
