@@ -30,8 +30,8 @@ export const ProductsProvider = ({ children }) => {
 
             if (Array.isArray(data)) {
                 setProducts(data);
+                return data || [];
             } else {
-                
                 console.error('Products data is not an array:', data);
                 setProducts([]);
                 throw new Error('Invalid data format received');
@@ -43,6 +43,7 @@ export const ProductsProvider = ({ children }) => {
             showToast(`Failed to load products: ${err.message}`, 'error');
             setError(err.message);
             setProducts([]);
+            return [];
 
         } finally {
 

@@ -1,7 +1,7 @@
 @import url('../../index.css');
 
 .wrapper {
-	background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     place-content: center;
     position: fixed;
     z-index: 999;
@@ -24,10 +24,11 @@
     flex-direction: column;
     border-radius: 0.25rem;
     display: flex;
-    padding: 2rem;
+    padding: 1rem;
+    width: 50rem;
     border: 1px solid var(--bg-outline);
-    width: 40rem;
-    gap: 2rem;
+    gap: 1rem;
+    position: relative;
 }
 
 .chat-header {
@@ -37,9 +38,9 @@
 }
 
 .chat-header h3 {
-	font-weight: 500;
-	font-size: 0.875rem;
-	color: var(--tg-primary);
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--tg-primary);
 }
 
 .chat-body {
@@ -48,38 +49,49 @@
     align-self: flex-start;
     display: flex;
     width: 100%;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .chat-body-upper {
     flex-direction: column;
     border-radius: 0.25rem;
-    overflow-y: auto;
     display: flex;
-    padding: 1rem;
-    border: 1px solid var(--bg-outline);
     height: 50vh;
-    gap: 1rem;
+    border: 1px solid var(--bg-outline);
+    width: 100%;
+    gap: 0rem;
+    position: relative;
+}
+
+.chat-body-upper .messages {
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+    padding-bottom: 4rem;
 }
 
 .chat-body-upper .message {
     border-radius: 0.25rem;
     font-weight: 600;
     align-items: center;
-    font-size: 1rem;
+    font-size: 0.875rem;
     display: flex;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem;
     border: 1px solid var(--bg-outline);
     width: 75%;
     color: var(--tg-primary);
     gap: 0.5rem;
 }
 
-.chat-body-upper .message[data-role='agent'] {
+.messages .message[data-role='agent'] {
+    background-color: var(--bg-hover);
     align-self: flex-start;
 }
 
-.chat-body-upper .message[data-role='user'] {
+.messages .message[data-role='user'] {
     background-color: var(--bg-outline);
     flex-direction: row-reverse;
     align-self: flex-end;
@@ -99,6 +111,7 @@
     display: flex;
     height: 100%;
     gap: 0.5rem;
+    padding-bottom: 4rem;
 }
 
 .chat-body-upper .placeholder .placeholder-title {
@@ -107,6 +120,79 @@
 
 .chat-body-upper .placeholder .placeholder-body {
     color: var(--tg-secondary);
+}
+
+.chat-options {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--bg-outline);
+    padding: 0.5rem;
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+}
+
+.chat-options-switch_btn {
+    background-color: var(--accent-base);
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    z-index: 9999;
+    padding: 0 0.75rem;
+    height: 2rem;
+    color: var(--bg-primary);
+    border: 1px solid var(--accent-base);
+}
+
+.chat-options-switch_btn:hover {
+    background-color: var(--accent-hovered);
+    color: var(--accent-base);
+}
+
+.chat-options-predefined_questions {
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+    overflow-x: auto;
+}
+
+.chat-options-predefined_question {
+    background-color: var(--bg-outline);
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    z-index: 9999;
+    padding: 0 0.75rem;
+    height: 2rem;
+    border: 1px solid var(--accent-base);
+    color: var(--tg-primary);
+}
+
+.chat-options-predefined_question:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-options-predefined_question-placeholder {
+    background-color: var(--bg-outline);
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    font-weight: 600;
+    transition: 0.25s ease all;
+    font-size: 0.875rem;
+    z-index: 9999;
+    width: 100%;
+    padding: 0 0.75rem;
+    height: 2rem;
+    border: 1px solid var(--accent-base);
+    color: var(--tg-primary);
 }
 
 .chat-body-lower {
@@ -132,4 +218,19 @@
 
 .button > i {
     font-size: 1.5rem;
+}
+
+@media only screen and (max-width: 820px) {
+    .wrapper {
+        padding: 0.5rem;
+    }
+    .chat {
+        width: 100%;
+    }
+    .chat-options {
+        flex-direction: column;
+    }
+    .chat-body-upper {
+        height: 60vh;
+    }
 }

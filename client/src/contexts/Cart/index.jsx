@@ -22,17 +22,20 @@ export const CartProvider = ({ children, auditLoggers = {} }) => {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
-            const data = await response.json();
-
-            setCartItems(data || []);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to fetch cart items!');
             }
 
+            const data = await response.json();
+
+            setCartItems(data || []);
+            return data || [];
+
         } catch (err) {
             console.error("Failed to fetch cart items: ", err);
             showToast(`Failed to load your cart: ${ err } `, "error");
+            return [];
         } finally {
             setLoading(false);
         }

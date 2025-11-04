@@ -21,3 +21,4 @@ export { default as InboxPopup } from "./InboxPopup";
 export { default as AuthPopup } from "./AuthPopup";
 export { default as Banner } from "./Banner";
 export { default as GeminiAIChatbot } from "./GeminiAIChatbot";
+export { default as LiveChat } from "./LiveChat";

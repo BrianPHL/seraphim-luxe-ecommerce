@@ -17,7 +17,10 @@ const geminiAI = async (context, message, userType) => {
             contents: prompt
         });
 
+        // const result = await setTimeout(() => 'response.text', 1500);
+
         return response.text;
+
 
     } catch (err) {
 
@@ -46,17 +49,27 @@ const buildCustomerPrompt = (context, message) => {
         - Only reference ACTIVE_PROMOTIONS that are explicitly listed
         - Only mention CATEGORIES that are listed in the data
         - Use the customer's CART, WISHLIST, and RECENT_ORDERS for personalization
+        - Use WEBSITE_NAVIGATION data to guide customers to the correct pages
+        - Use ORDER_TRACKING_STEPS to explain how to check order status
+        - Use ORDER_STATUS_MEANINGS to explain what each order status means
+        - Reference PAYMENT_METHODS, SHIPPING_INFO, RETURN_POLICY when answering relevant questions
+
+        NAVIGATION ASSISTANCE:
+        - When asked "where can I check my order status", refer to the ORDER_TRACKING_STEPS
+        - When asked about pages/features, use the WEBSITE_NAVIGATION data
+        - Always provide the direct URL path (e.g., /orders, /cart, /profile)
 
         RESPONSE FORMAT:
         - Start with a personalized greeting using their name from USER_INFORMATION
-        - Recommend 1-3 specific products from the available inventory
+        - If asked about navigation, provide clear step-by-step instructions
+        - If asked about products, recommend 1-3 specific products from available inventory
         - Include exact product names, prices, and stock status
         - Mention any applicable promotions from ACTIVE_PROMOTIONS
         - Keep response to 3-4 sentences maximum
 
-        FORBIDDEN: Never invent, create, or suggest products not in the provided data. If no suitable products exist in the data, say "Based on our current inventory, I'd be happy to help you explore our available collection."
+        FORBIDDEN: Never invent, create, or suggest products not in the provided data. Never make up URLs or navigation paths not in WEBSITE_NAVIGATION. If no suitable products exist in the data, say "Based on our current inventory, I'd be happy to help you explore our available collection."
 
-        RESPOND ONLY WITH PRODUCTS FROM THE PROVIDED INVENTORY DATA.
+        RESPOND ONLY WITH PRODUCTS FROM THE PROVIDED INVENTORY DATA AND NAVIGATION INFORMATION FROM THE PROVIDED WEBSITE DATA.
     `;
 };
 

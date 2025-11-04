@@ -33,7 +33,8 @@ const Profile = ({}) => {
         first_name: '',
         last_name: '',
         email: '',
-        phone_number: ''
+        phone_number: '',
+        gender: ''
     });
     const [ addressInfo, setAddressInfo ] = useState({
         shipping_address: {
@@ -305,7 +306,7 @@ const Profile = ({}) => {
         const updatedInfo = { ...personalInfo, [ field ]: value };
         setPersonalInfo(updatedInfo);
 
-        const hasChanged = updatedInfo['first_name'] !== (user?.first_name || '') || updatedInfo['last_name'] !== (user?.last_name || '') || updatedInfo['email'] !== (user?.email || '') || updatedInfo['phone_number'] !== (user?.phone_number || '')
+        const hasChanged = updatedInfo['first_name'] !== (user?.first_name || '') || updatedInfo['last_name'] !== (user?.last_name || '') || updatedInfo['email'] !== (user?.email || '') || updatedInfo['phone_number'] !== (user?.phone_number || '') || updatedInfo['gender'] !== (user?.gender || '')
 
         setIsPersonalInfoChanged(hasChanged);
     };
@@ -596,10 +597,11 @@ const Profile = ({}) => {
     };
     const resetPersonalInfo = () => {
         setPersonalInfo({
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          email: user.email || '',
-          phone_number: user.phone_number || ''
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            email: user.email || '',
+            phone_number: user.phone_number || '',
+            gender: (user.gender === 'undisclosed' ? 'Prefer not to say' : user.gender) || ''
         });
         setIsPersonalInfoChanged(false);
     };
@@ -828,7 +830,8 @@ const validateEditAddress = () => {
                 first_name: user.first_name || '',
                 last_name: user.last_name || '',
                 email: user.email || '',
-                phone_number: user.phone_number || ''
+                phone_number: user.phone_number || '',
+                gender: (user.gender === 'undisclosed' ? 'Prefer not to say' : user.gender) || ''
             });
             setGeneralAddressInfo({
                 address: user.address || ''
@@ -990,17 +993,29 @@ const validateEditAddress = () => {
                                     </div>
                                     <div className={ styles['inputs-wrapper'] }>
                                         <div className={ styles['input-wrapper'] }>
-                                            <label htmlFor="email_address">
-                                                Email address
-                                            </label>
-                                            <InputField
-                                                hint='Your email address...'
-                                                type='text'
-                                                isSubmittable={ false }
-                                                value={ personalInfo['email'] }
-                                                onChange={ event => handlePersonalInfoChange('email', event['target']['value'] )}
-                                                error={ validationErrors['email'] }
-                                            />
+                                            <label htmlFor="currency">Preferred Currency</label>
+                                            <div className={ styles['dropdown-container'] }>
+                                                <Button
+                                                    id='gender'
+                                                    type='secondary'
+                                                    label={ `${ personalInfo['gender'] }` }
+                                                    dropdownPosition='right'
+                                                    options={[
+                                                        {
+                                                            label: 'Male',
+                                                            action: async () => handlePersonalInfoChange('gender', 'Male')
+                                                        },
+                                                        {
+                                                            label: 'Female',
+                                                            action: async () => handlePersonalInfoChange('gender', 'Female')
+                                                        },
+                                                        {
+                                                            label: 'Prefer not to say',
+                                                            action: async () => handlePersonalInfoChange('gender', 'Prefer not to say')
+                                                        },
+                                                    ]}
+                                                />
+                                            </div>
                                         </div>
                                         <div className={ styles['input-wrapper'] }>
                                             <label htmlFor="phone number">
@@ -1015,6 +1030,19 @@ const validateEditAddress = () => {
                                                 error={ validationErrors['phone_number'] }
                                             />
                                         </div>
+                                    </div>
+                                    <div className={ styles['input-wrapper'] }>
+                                        <label htmlFor="email_address">
+                                            Email address
+                                        </label>
+                                        <InputField
+                                            hint='Your email address...'
+                                            type='text'
+                                            isSubmittable={ false }
+                                            value={ personalInfo['email'] }
+                                            onChange={ event => handlePersonalInfoChange('email', event['target']['value'] )}
+                                            error={ validationErrors['email'] }
+                                        />
                                     </div>
                                 </div>
                                 <div className={ styles['info-personal-ctas'] }>

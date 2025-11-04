@@ -82,6 +82,11 @@ export const auth = betterAuth({
                 required: false,
                 defaultValue: ""
             },
+            gender: {
+                type: "string",
+                required: false,
+                defaultValue: ""
+            },
             address: {
                 type: "string",
                 required: false,

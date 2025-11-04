@@ -5,13 +5,23 @@ import styles from './AdminLayout.module.css';
 const AdminLayout = () => {
 
     const HEADER_TITLES = {
-        "/admin/dashboard": "Seraphim Luxe | Dashboard",
-        "/admin/products": "Seraphim Luxe | Product Management",
-        "/admin/stocks": "Seraphim Luxe | Stock Management",
-        "/admin/orders": "Seraphim Luxe | Order Management",
-        "/admin/categories": "Seraphim Luxe | Category Management",
-        "/admin/cms": "Seraphim Luxe | Content Management System",
-        "/admin/accounts": "Seraphim Luxe | Account Management"
+        "/admin/dashboard": "Dashboard",
+        
+        // System Administration
+        "/admin/settings": "System Administration | Settings and Configurations",
+        "/admin/audit-trail": "System Administration | Audit Trail",
+
+        // System Management
+        "/admin/accounts": "System Management | Accounts",
+        "/admin/orders": "System Management | Orders",
+        "/admin/products": "System Management | Products",
+        "/admin/stocks": "System Management | Stocks",
+        "/admin/categories": "System Management | Categories",
+
+        // Content & Engagement
+        "/admin/cms": "Content & Engagement | Content Management System",
+        "/admin/live-agent-chats": "Content & Engagement | Live Agent Chats",
+        "/admin/support-tickets": "Content & Engagement | Support Tickets"
     };
     const location = useLocation();
     const pathname = location['pathname'];
@@ -94,9 +104,15 @@ const AdminLayout = () => {
                         />
                         <Anchor
                             label="Live Agent Chats"
-                            link="/admin/chats"
+                            link="/admin/live-agent-chats"
                             isNested={ true }
-                            isActive={ pathname === '/admin/chats' }
+                            isActive={ pathname === '/admin/live-agent-chats' }
+                        />
+                        <Anchor
+                            label="Support Tickets"
+                            link="/admin/support-tickets"
+                            isNested={ true }
+                            isActive={ pathname === '/admin/support-tickets' }
                         />
                     </Accordion>
 

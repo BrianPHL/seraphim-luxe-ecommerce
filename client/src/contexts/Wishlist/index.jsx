@@ -24,9 +24,11 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
             const response = await fetch(`/api/wishlist/${user.id}`);
             const data = await response.json();
             setWishlistItems(Array.isArray(data) ? data : []);
+            return data || [];
         } catch (err) {
             console.error("Failed to fetch wishlist items: ", err);
             setWishlistItems([]);
+            return [];
         } finally {
             setLoading(false);
         }

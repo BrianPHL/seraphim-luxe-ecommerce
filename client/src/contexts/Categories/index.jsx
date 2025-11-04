@@ -18,7 +18,7 @@ export const CategoriesProvider = ({ children }) => {
             const response = await fetch('/api/categories');
             const data = await response.json();
             setCategories(data);
-            return data;
+            return data || [];
         } catch (error) {
             console.error('Error fetching categories:', error);
             showToast('Failed to load categories', 'error');
@@ -56,7 +56,7 @@ export const CategoriesProvider = ({ children }) => {
             });
             setSubcategories(subcategoryLookup);
             
-            return data;
+            return data || [];
         } catch (error) {
             console.error('Error fetching hierarchy:', error);
             showToast('Failed to load category hierarchy', 'error');

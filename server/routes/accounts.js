@@ -37,6 +37,39 @@ router.get('/count', async (req, res) => {
     }
 });
 
+router.get('/:account_id', async (req, res) => {
+    try {
+
+        const { account_id } = req.params;
+        const [ rows ] = await pool.query(
+            `
+                SELECT *
+                FROM
+                    accounts
+                WHERE
+                    id = ?
+            `,
+            [ account_id ]
+        );
+        
+        if (rows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Account not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: rows[0] 
+        });
+        
+    } catch (err) {
+        console.error('Accounts route GET /:account_id/ endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/:account_id/address', async (req, res) => {
 
     const { account_id } = req.params;
@@ -217,7 +250,7 @@ router.put('/:account_id/personal-info', async (req, res) => {
     try {
 
         const { account_id } = req.params;
-        const { first_name, last_name, email, phone_number } = req.body;
+        const { first_name, last_name, email, phone_number, gender } = req.body;
         const name = `${ first_name } ${ last_name }`;
 
         const [ currentAccount ] = await pool.query(
@@ -251,10 +284,10 @@ router.put('/:account_id/personal-info', async (req, res) => {
         const [ result ] = await pool.query(
             `
                 UPDATE accounts 
-                SET name = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?
+                SET name = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?, gender = ?
                 WHERE id = ?
             `,
-            [ name, first_name, last_name, email, phone_number, account_id ]
+            [name, first_name, last_name, email, phone_number, gender, account_id]
         );
         
         if (result.affectedRows <= 0) {
