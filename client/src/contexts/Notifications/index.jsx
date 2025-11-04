@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useSSE } from '@contexts';
 import { fetchWithTimeout } from "@utils";
 import NotificationsContext from "./context";
 import { admin } from "better-auth/plugins";
@@ -8,10 +8,10 @@ export const NotificationsProvider = ({ children }) => {
 
     const { user } = useAuth();
     const { showToast } = useToast();
+    const { subscribe, isConnected } = useSSE();
     const [ notifications, setNotifications ] = useState([]);
     const [ isInboxOpen, setIsInboxOpen ] = useState(false);
     const [ unreadCount, setUnreadCount ] = useState(0);
-    const [ sseConnected, setSseConnected ] = useState(false);
 
     const [ notificationPreferences, setNotificationPreferences ] = useState({
         cart_updates: true,
@@ -47,7 +47,7 @@ export const NotificationsProvider = ({ children }) => {
 
         } catch (err) {
 
-            console.error("Notifications context fetchNotifications function error: ", err);
+            console.error("[Notifications] fetchNotifications error: ", err);
             showToast('Failed to retrieve notifications!', 'error')
             
         }
@@ -83,7 +83,7 @@ export const NotificationsProvider = ({ children }) => {
 
         } catch (err) {
 
-            console.error("Notifications context fetchNotificationPreferences function error: ", err);
+            console.error("[Notifications] fetchNotificationPreferences error: ", err);
             
         }
 
@@ -114,7 +114,7 @@ export const NotificationsProvider = ({ children }) => {
 
         } catch (err) {
 
-            console.error("Notifications context updateNotificationPreferences function error: ", err);
+            console.error("[Notifications] updateNotificationPreferences error: ", err);
             showToast('Failed to update notification preferences!', 'error');
 
         } finally {
@@ -158,7 +158,7 @@ export const NotificationsProvider = ({ children }) => {
             
         } catch (err) {
 
-            console.error("Notifications context readAllNotifications function error: ", err);
+            console.error("[Notifications] readAllNotifications error: ", err);
             showToast('Failed to mark all notifications as read!', 'error')
             
         }
@@ -183,7 +183,7 @@ export const NotificationsProvider = ({ children }) => {
 
         } catch (err) {
 
-            console.error("Notifications context readSpecificNotification function error: ", err);
+            console.error("[Notifications] readSpecificNotification error: ", err);
             showToast('Failed to mark the notification as read!', 'error')
 
         }
@@ -208,7 +208,7 @@ export const NotificationsProvider = ({ children }) => {
             
         } catch (err) {
 
-            console.error("Notifications context clearAllNotifications function error: ", err);
+            console.error("[Notifications] clearAllNotifications error: ", err);
             showToast('Failed to clear all notifications!', 'error')
             
         }
@@ -233,7 +233,7 @@ export const NotificationsProvider = ({ children }) => {
             
         } catch (err) {
 
-            console.error("Notifications context clearSpecificNotification function error: ", err);
+            console.error("[Notifications] clearSpecificNotification error: ", err);
             showToast('Failed to clear the notification!', 'error')
             
         }
@@ -265,13 +265,13 @@ export const NotificationsProvider = ({ children }) => {
 
         } catch (err) {
 
-            console.error("Notifications context setNotification function error: ", err);
+            console.error("[Notifications] setNotification error: ", err);
             
         }
 
     }, [ user, fetchNotifications ]);
 
-    const notifyCartAction = useCallback(async ({ action, productName }) => { // * DONE
+    const notifyCartAction = useCallback(async ({ action, productName }) => {
         if (!notificationPreferences.cart_updates) return;
 
         const actions = {
@@ -294,7 +294,7 @@ export const NotificationsProvider = ({ children }) => {
         });
     }, [notificationPreferences.cart_updates, setNotification]);
 
-    const notifyWishlistAction = useCallback(async ({ action, productName }) => { // * DONE
+    const notifyWishlistAction = useCallback(async ({ action, productName }) => {
         if (!notificationPreferences.wishlist_updates) return;
 
         const actions = {
@@ -379,13 +379,13 @@ export const NotificationsProvider = ({ children }) => {
                     });
 
                 } catch (emailErr) {
-                    console.error('Failed to send order update email notification:', emailErr);
+                    console.error('[Notifications] Failed to send order update email:', emailErr);
                 }
             }
         } catch (err) {
-            console.error('notifyOrderUpdate error:', err);
+            console.error('[Notifications] notifyOrderUpdate error:', err);
         }
-    }, [notificationPreferences.order_updates, notificationPreferences.email_order_updates, setNotification]);
+    }, [notificationPreferences.order_updates, notificationPreferences.email_order_updates, setNotification, user]);
 
     const notifyAccountChange = useCallback(async (action, additionalData = {}) => {
     
@@ -433,7 +433,7 @@ export const NotificationsProvider = ({ children }) => {
                 });
             }
         } catch (err) {
-            console.error('Failed to send account change email notification:', err);
+            console.error('[Notifications] Failed to send account change email:', err);
         }
 
     }, [notificationPreferences.account_security, setNotification]);
@@ -454,7 +454,7 @@ export const NotificationsProvider = ({ children }) => {
             });
 
         } catch (err) {
-            console.error('Notifications context notifyAdminNewOrder function error: ', err);
+            console.error('[Notifications] notifyAdminNewOrder error:', err);
         }
 
     }, [ notificationPreferences.admin_new_orders, setNotification ]);
@@ -475,7 +475,7 @@ export const NotificationsProvider = ({ children }) => {
             });
 
         } catch (err) {
-            console.error('Notify admin low stock error:', err);
+            console.error('[Notifications] notifyAdminLowStock error:', err);
         }
     }, [ notificationPreferences.admin_low_stock_alerts, setNotification ]);
 
@@ -490,20 +490,14 @@ export const NotificationsProvider = ({ children }) => {
         fetchUnreadCount()
     }, [ notifications, fetchUnreadCount ]);
 
+    // SSE subscription for notifications - USE SSE CONTEXT INSTEAD OF CREATING NEW CONNECTION
     useEffect(() => {
-
         if (!user) return;
 
-        const eventSource = new EventSource(`/api/sse/${ user.id }`);
+        console.log('[Notifications] Subscribing to SSE notification events');
 
-        eventSource.onopen = () => setSseConnected(true);
-
-        eventSource.onmessage = (event) => {
-
-            const data = JSON.parse(event.data);
-            const status = data?.type;
-
-            if (!status || status === 'connected') return;
+        const unsubscribe = subscribe('notifications', (data) => {
+            console.log('[Notifications] Received SSE event:', data.type);
 
             if (data.type === 'order_update') {
                 notifyOrderUpdate({
@@ -526,20 +520,13 @@ export const NotificationsProvider = ({ children }) => {
                     additionalDetails: data.additional_details
                 });
             }
+        });
 
-        };
-
-        eventSource.onerror = (error) => {
-            console.error('SSE error:', error);
-            setSseConnected(false);
-        };
-        
         return () => {
-            eventSource.close();
-            setSseConnected(false); 
+            console.log('[Notifications] Unsubscribing from SSE notification events');
+            unsubscribe();
         };
-
-    }, [ user, notifyOrderUpdate ]);
+    }, [user?.id, user?.role]);
 
     return (
         <NotificationsContext.Provider value={{
@@ -548,7 +535,7 @@ export const NotificationsProvider = ({ children }) => {
             notifications,
             isInboxOpen,
             unreadCount,
-            sseConnected,
+            sseConnected: isConnected,
             
             // Notification preferences
             notificationPreferences,
