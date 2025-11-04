@@ -5,7 +5,7 @@ import { useAuth, useTheme } from '@contexts';
 import { ProtectedRoute } from '@routes';
 import { Home, SignIn, SignUp, AboutUs, Cart, Profile, Orders, Checkout, Wishlist, NotFound, ContactUs, FAQs, PrivacyPolicy } from '@pages';
 import { Store as CollectionsStore, ProductPage as CollectionsProductPage } from '@pages/Collections';
-import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS, AdminSettings, AdminAccounts, AdminAuditTrail } from '@pages/Admin';
+import { AdminLayout, AdminSignIn, AdminSignUp, AdminDashboard, AdminOrders, AdminProducts, AdminStocks, AdminCategories, AdminCMS, AdminSettings, AdminAccounts, AdminAuditTrail, AdminLiveAgentChats } from '@pages/Admin';
 
 const PAGE_TITLES = {
 	"/": "Seraphim Luxe | Style Without Boundaries",
@@ -26,7 +26,8 @@ const PAGE_TITLES = {
     "/admin/stocks": "Seraphim Luxe | Stock Management",
     "/admin/categories": "Seraphim Luxe | Category Management",
     "/admin/cms": "Seraphim Luxe | Content Management System",
-    "/admin/accounts": "Seraphim Luxe | Account Management"
+    "/admin/accounts": "Seraphim Luxe | Account Management",
+    "/admin/live-agent-chats": "Seraphim Luxe | Live Agent Chats"
 };
 
 const App = () => {
@@ -213,6 +214,7 @@ const App = () => {
                    <Route path="settings" element={<AdminSettings />} />
                    <Route path="accounts" element={<AdminAccounts />} />
                    <Route path="audit-trail" element={<AdminAuditTrail />} />
+                   <Route path="live-agent-chats" element={<AdminLiveAgentChats />} />
                 </Route>
 
                 <Route path="/admin/profile" element={
