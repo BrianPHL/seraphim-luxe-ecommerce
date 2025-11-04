@@ -11,3 +11,4 @@ export { default as AdminSettings } from './Settings';
 export { default as AdminAccounts } from './Accounts';
 export { default as AdminAuditTrail } from './AuditTrail';
 export { default as AdminLiveAgentChats } from './LiveAgentChats';
+export { default as AdminSupportTickets } from './SupportTickets';
