@@ -95,27 +95,51 @@ export const LiveChatProvider = ({ children }) => {
         }
     }, [user, showToast, fetchCustomerDetails]);
 
-    const fetchMessages = useCallback(async (roomId) => {
-        if (!user || !roomId) return [];
-
+    const fetchMessages = async (roomId) => {
         try {
-            const response = await fetchWithTimeout(`/api/live-chat/room/${roomId}/messages?user_id=${user.id}`, {
+            // Get customer_id from the room
+            const room = [...activeRooms, ...waitingRooms, ...closedRooms].find(r => r.id === roomId);
+            const customerId = room?.customer_id;
+        
+            if (!customerId) {
+                throw new Error('Customer ID not found');
+            }
+        
+            // Fetch unified messages (AI + Live Chat)
+            const response = await fetch(`/api/live-chat/room/${roomId}/unified-messages?user_id=${customerId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
-
+        
             if (!response.ok) throw new Error('Failed to fetch messages');
-
+        
             const result = await response.json();
-            setMessages(result.data || []);
-            return result.data || [];
-
-        } catch (err) {
-            console.error('[LiveChat] fetchMessages error:', err);
+            
+            // Merge AI and live messages, then sort by timestamp
+            const aiMsgs = result.data.aiMessages || [];
+            const liveMsgs = result.data.liveMessages || [];
+            
+            const allMessages = [
+                ...aiMsgs.map(msg => ({
+                    ...msg,
+                    source: 'ai',
+                    room_id: roomId,
+                    timestamp: new Date(msg.created_at).getTime()
+                })),
+                ...liveMsgs.map(msg => ({
+                    ...msg,
+                    source: 'live',
+                    timestamp: new Date(msg.created_at).getTime()
+                }))
+            ].sort((a, b) => a.timestamp - b.timestamp);
+        
+            setMessages(allMessages);
+        
+        } catch (error) {
+            console.error('Fetch messages error:', error);
             showToast('Failed to load messages', 'error');
-            return [];
         }
-    }, [user, showToast]);
+    };
 
     const claimRoom = async (roomId) => {
         if (!user) return { success: false, message: 'User not authenticated' };

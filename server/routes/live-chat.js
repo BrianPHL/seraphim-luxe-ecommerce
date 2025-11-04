@@ -128,6 +128,65 @@ router.get('/room/:room_id/messages', async (req, res) => {
     }
 });
 
+router.get('/room/:room_id/unified-messages', async (req, res) => {
+    try {
+        const { room_id } = req.params;
+        const { user_id } = req.query;
+
+        if (!room_id || !user_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Room ID and User ID are required'
+            });
+        }
+
+        const [rooms] = await pool.query(
+            'SELECT customer_id FROM live_chat_rooms WHERE id = ?',
+            [room_id]
+        );
+
+        if (rooms.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Chat room not found'
+            });
+        }
+
+        const customer_id = rooms[0].customer_id;
+
+        const [aiMessages] = await pool.query(
+            `SELECT id, message_type, message, created_at
+            FROM chatbot_sessions
+            WHERE user_id = ?
+            ORDER BY created_at ASC`,
+            [customer_id]
+        );
+
+        const [liveMessages] = await pool.query(
+            `SELECT id, sender_type, message, sender_id, is_read, created_at
+            FROM live_chat_messages
+            WHERE room_id = ?
+            ORDER BY created_at ASC`,
+            [room_id]
+        );
+
+        res.json({
+            success: true,
+            data: {
+                aiMessages: aiMessages,
+                liveMessages: liveMessages
+            }
+        });
+
+    } catch (error) {
+        console.error('Get unified messages error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve unified chat history'
+        });
+    }
+});
+
 router.post('/room/create', async (req, res) => {
     const connection = await pool.getConnection();
     

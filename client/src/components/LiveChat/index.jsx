@@ -272,18 +272,24 @@ const LiveChat = () => {
                         </div>
 
                         <div className={styles['chat-container']} ref={chatContainerRef}>
-                            {messages.map(msg => (
-                                <p 
-                                    key={msg.id} 
-                                    className={styles['chat-item']} 
-                                    data-role={msg.sender_type === 'customer' ? 'agent' : 'customer'}
-                                >
-                                    <span className={styles['chat-item-label']}>
-                                        {msg.sender_type === 'customer' ? 'Customer' : 'You'}
-                                    </span>
-                                    {msg.message}
-                                </p>
-                            ))}
+                            {messages.map(msg => {
+                                // CHANGED: AI messages should appear on the left (agent role)
+                                const isAI = msg.source === 'ai';
+                                const isCustomer = isAI ? msg.message_type === 'user' : msg.sender_type === 'customer';
+
+                                return (
+                                    <p 
+                                        key={`${msg.source || 'live'}-${msg.id}`}
+                                        className={styles['chat-item']} 
+                                        data-role={isCustomer ? 'customer' : 'agent'}
+                                    >
+                                        <span className={styles['chat-item-label']}>
+                                            {isCustomer ? 'Customer' : (isAI ? 'Seraphim AI' : 'You')}
+                                        </span>
+                                        {msg.message}
+                                    </p>
+                                );
+                            })}
                         </div>
 
                         <div className={styles['chat-controls']}>
