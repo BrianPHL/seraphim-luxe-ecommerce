@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useCMS, useBanners, useToast } from '@contexts';
-import { ReturnButton, Banner, Button } from '@components';
+import { useCMS, useBanners, useToast, useSupportTickets, useAuth } from '@contexts';
+import { ReturnButton, Banner, Button, SupportTicketChat } from '@components';
 import { getErrorMessage } from '@utils';
 import styles from './ContactUs.module.css';
 
@@ -8,6 +8,9 @@ const ContactUs = () => {
     const { fetchSpecificPage, loading: cmsLoading } = useCMS();
     const { banners } = useBanners();
     const { showToast } = useToast();
+    const { createTicket } = useSupportTickets();
+    const { user } = useAuth();
+    const [createdTicketId, setCreatedTicketId] = useState(null);
     const [contactContent, setContactContent] = useState('');
     const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
@@ -115,7 +118,7 @@ const ContactUs = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         try {
             if (!formData.name || !formData.email || !formData.subject || !formData.message) {
                 const errorMessage = getErrorMessage('FIELDS_REQUIRED');
@@ -124,9 +127,23 @@ const ContactUs = () => {
             }
 
             setError(null);
-            
-            showToast('Thank you for your message! We will get back to you soon.', 'success');
-            setFormData({ name: '', email: '', subject: '', message: '' });
+
+            const result = await createTicket({
+                customer_name: formData.name,
+                customer_email: formData.email,
+                subject: formData.subject,
+                message: formData.message,
+                priority: 'normal',
+                category: 'general'
+            });
+
+            if (result.success) {
+                showToast('Support ticket created! Continue the conversation below.', 'success');
+                setCreatedTicketId(result.data.ticket_id);
+                setFormData({ name: '', email: '', subject: '', message: '' });
+            } else {
+                throw new Error(result.message || 'Failed to create ticket');
+            }
 
         } catch (err) {
             console.error('ContactUs page handleSubmit function error:', err);
@@ -261,6 +278,11 @@ const ContactUs = () => {
                             disabled={!formData.name || !formData.email || !formData.subject || !formData.message}
                         />
                     </form>
+                    {createdTicketId && (
+                        <div className={styles['ticket-chat-section']}>
+                            <SupportTicketChat ticketId={createdTicketId} />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

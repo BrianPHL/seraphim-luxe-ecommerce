@@ -255,3 +255,8 @@
         padding: 1rem;
     }
 }
+
+.ticket-chat-section {
+    margin-top: 2rem;
+    width: 100%;
+}
