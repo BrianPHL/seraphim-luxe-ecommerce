@@ -35,6 +35,39 @@ router.get('/count', async (req, res) => {
     }
 });
 
+router.get('/:account_id', async (req, res) => {
+    try {
+
+        const { account_id } = req.params;
+        const [ rows ] = await pool.query(
+            `
+                SELECT *
+                FROM
+                    accounts
+                WHERE
+                    id = ?
+            `,
+            [ account_id ]
+        );
+        
+        if (rows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Account not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: rows[0] 
+        });
+        
+    } catch (err) {
+        console.error('Accounts route GET /:account_id/ endpoint error: ', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/:account_id/address', async (req, res) => {
 
     const { account_id } = req.params;
