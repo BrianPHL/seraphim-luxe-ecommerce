@@ -232,29 +232,6 @@ const GeminiAIChatbot = () => {
         }
     };
 
-    const endLiveChat = async () => {
-        if (!liveChatRoom) return;
-
-        try {
-            await fetch(`/api/live-chat/room/${liveChatRoom.id}/close`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: user.id })
-            });
-
-            setLiveChatRoom(null);
-            setLiveChatMessages([]);
-            setAgentStatus('waiting');
-            setChatbotState('seraphim-ai');
-            disconnectCalledRef.current = false;
-            
-            showToast('Chat session ended', 'info');
-
-        } catch (err) {
-            console.error('[GeminiChatbot] End live chat error:', err);
-        }
-    };
-
     const handleModalClose = async () => {
         if (chatbotState === 'live-agent' && liveChatRoom && isCustomer) {
             await disconnectFromLiveChat(liveChatRoom.id);
@@ -350,8 +327,15 @@ const GeminiAIChatbot = () => {
     };
 
     const handlePredefinedQuestionClick = (questionText) => {
-        setMessage(questionText);
-        setTimeout(() => handleSubmitChatToGeminiAI(), 100);
+        if (chatbotState === 'live-agent') {
+            // In live agent mode, send the question as a regular message
+            setMessage(questionText);
+            setTimeout(() => sendLiveChatMessage(), 100);
+        } else {
+            // In Seraphim AI mode, submit to Gemini
+            setMessage(questionText);
+            setTimeout(() => handleSubmitChatToGeminiAI(), 100);
+        }
     };
 
     useEffect(() => {
@@ -549,13 +533,13 @@ const GeminiAIChatbot = () => {
                                     hasMessages ? (
                                         <div className={ styles['messages'] }>
                                             { currentMessages.map((chat) => {
-                                                
+
                                                 const isUser = chatbotState === 'seraphim-ai' 
                                                     ? chat.message_type === 'user'
                                                     : chat.sender_type === 'customer';
-
+                                            
                                                 return (
-                                                    <p key={ chat.id } className={ styles['message'] } data-role={ isUser ? 'user' : 'ai' }>
+                                                    <p key={ chat.id } className={ styles['message'] } data-role={ isUser ? 'user' : 'agent' }>
                                                         <span className={ styles['message-label'] }>
                                                             { isUser ? 'You' : (chatbotState === 'live-agent' ? 'Agent' : 'AI')}
                                                         </span>
@@ -565,7 +549,7 @@ const GeminiAIChatbot = () => {
                                             })}
                                             {
                                                 (isLoading || isTyping) && chatbotState === 'seraphim-ai' && (
-                                                    <p className={ styles['message'] } data-role="ai">
+                                                    <p className={ styles['message'] } data-role="agent">
                                                         <span className={ styles['message-label'] }>AI</span>
                                                         <em>Typing...</em>
                                                     </p>
@@ -593,7 +577,7 @@ const GeminiAIChatbot = () => {
                                         </div>
                                     )
                                 }
-                                {chatbotState === 'seraphim-ai' && (
+                                {isCustomer && (
                                     <div className={ styles['chat-options'] }>
                                         <div className={ styles['chat-options-predefined_questions'] }>
                                             { predefinedQuestions.length > 0 ? (
@@ -606,6 +590,7 @@ const GeminiAIChatbot = () => {
                                                                 label={ question.question }
                                                                 action={ () => handlePredefinedQuestionClick(question.question) }
                                                                 externalStyles={ styles['chat-options-predefined_question'] }
+                                                                disabled={ chatbotState === 'live-agent' && (!liveChatRoom || agentStatus === 'waiting') }
                                                             />
                                                         );
                                                     })}
@@ -620,34 +605,12 @@ const GeminiAIChatbot = () => {
                                                 />
                                             )}
                                         </div>
-                                        {isCustomer && (
-                                            <Button
-                                                type='primary'
-                                                icon='fa solid fa-headset' 
-                                                label={liveChatRoom ? 'Return to Live Agent' : 'Switch to Live Agent'}
-                                                iconPosition='left'
-                                                action={ () => switchChatbotState() }
-                                                externalStyles={ styles['chat-options-switch_btn'] }
-                                            />
-                                        )}
-                                    </div>
-                                )}
-                                {chatbotState === 'live-agent' && isCustomer && (
-                                    <div className={ styles['chat-options'] }>
                                         <Button
                                             type='primary'
-                                            icon='fa solid fa-robot' 
-                                            label='Switch to Seraphim AI'
+                                            icon={chatbotState === 'seraphim-ai' ? 'fa solid fa-headset' : 'fa solid fa-robot'}
+                                            label={chatbotState === 'seraphim-ai' ? (liveChatRoom ? 'Return to Live Agent' : 'Switch to Live Agent') : 'Switch to Seraphim AI'}
                                             iconPosition='left'
                                             action={ () => switchChatbotState() }
-                                            externalStyles={ styles['chat-options-switch_btn'] }
-                                        />
-                                        <Button
-                                            type='secondary'
-                                            icon='fa solid fa-power-off' 
-                                            label='End Chat Session'
-                                            iconPosition='left'
-                                            action={ endLiveChat }
                                             externalStyles={ styles['chat-options-switch_btn'] }
                                         />
                                     </div>

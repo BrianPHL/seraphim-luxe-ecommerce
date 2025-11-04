@@ -1,7 +1,7 @@
 @import url('../../index.css');
 
 .wrapper {
-	background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     place-content: center;
     position: fixed;
     z-index: 999;
@@ -28,6 +28,7 @@
     width: 50rem;
     border: 1px solid var(--bg-outline);
     gap: 1rem;
+    position: relative;
 }
 
 .chat-header {
@@ -37,9 +38,9 @@
 }
 
 .chat-header h3 {
-	font-weight: 500;
-	font-size: 0.875rem;
-	color: var(--tg-primary);
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--tg-primary);
 }
 
 .chat-body {
@@ -59,6 +60,7 @@
     border: 1px solid var(--bg-outline);
     width: 100%;
     gap: 0rem;
+    position: relative;
 }
 
 .chat-body-upper .messages {
@@ -68,6 +70,7 @@
     display: flex;
     width: 100%;
     gap: 0.5rem;
+    padding-bottom: 4rem;
 }
 
 .chat-body-upper .message {
@@ -83,7 +86,8 @@
     gap: 0.5rem;
 }
 
-.messages .message[data-role='chatbot'] {
+.messages .message[data-role='agent'] {
+    background-color: var(--bg-hover);
     align-self: flex-start;
 }
 
@@ -107,6 +111,7 @@
     display: flex;
     height: 100%;
     gap: 0.5rem;
+    padding-bottom: 4rem;
 }
 
 .chat-body-upper .placeholder .placeholder-title {
@@ -118,6 +123,12 @@
 }
 
 .chat-options {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--bg-outline);
     padding: 0.5rem;
     display: flex;
     width: 100%;
@@ -162,6 +173,11 @@
     height: 2rem;
     border: 1px solid var(--accent-base);
     color: var(--tg-primary);
+}
+
+.chat-options-predefined_question:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .chat-options-predefined_question-placeholder {
