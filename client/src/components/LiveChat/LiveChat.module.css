@@ -172,6 +172,7 @@
 }
 
 .chat-item[data-role='agent'] {
+    background-color: var(--bg-hover);
     align-self: flex-start;
 }
 
@@ -187,20 +188,6 @@
     display: flex;
     gap: 1rem;
 }
-
-@media only screen and (max-width: 720px) {
-
-    .list {
-        width: 100%;
-    }
-
-    .wrapper {
-        flex-direction: column;
-    }
-
-}
-
-/* Add to the end of the file */
 
 .chat-placeholder {
     flex-direction: column;
@@ -231,4 +218,21 @@
     text-transform: uppercase;
     letter-spacing: 0.05rem;
     flex-shrink: 0;
+}
+
+@media only screen and (max-width: 720px) {
+
+    .list {
+        width: 100%;
+    }
+
+    .wrapper {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .chat {
+        height: 60vh;
+    }
+
 }
