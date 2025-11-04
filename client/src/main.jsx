@@ -20,8 +20,10 @@ import {
   AuditTrailProvider,
   PromotionsProvider,
   GeminiAIProvider,
-  useAuditTrail
+  LiveChatProvider,
   SSEProvider,
+  useAuditTrail,
+
 } from '@contexts';
 import App from './App';
 
