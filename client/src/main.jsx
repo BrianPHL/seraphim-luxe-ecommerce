@@ -22,6 +22,7 @@ import {
   GeminiAIProvider,
   LiveChatProvider,
   SSEProvider,
+  SupportTicketsProvider,
   useAuditTrail,
 
 } from '@contexts';
@@ -97,45 +98,47 @@ createRoot(document.getElementById('root')).render(
             <AuditTrailProvider>
               <AuthWithAuditWrapper>
                 <SSEProvider>
-                  <NotificationsProvider>
-                    <CMSProvider>
-                      <PromotionsProvider>
-                        <BannersProvider>
-                          <SettingsProvider>
-                            <SettingsWithAuditWrapper>
-                              <CategoriesProvider>
-                                <ProductsProvider>
-                                  <OrdersProvider>
-                                    <OrdersWithAuditWrapper>
-                                      <WishlistProvider>
-                                        <WishlistWithAuditWrapper>
-                                          <CartProvider>
-                                            <CartWithAuditWrapper>
-                                              <CheckoutProvider>
-                                                <CheckoutWithAuditWrapper>
-                                                  <StocksProvider>
-                                                    <GeminiAIProvider>
-                                                      <LiveChatProvider>
-                                                        <App />
-                                                      </LiveChatProvider>
-                                                    </GeminiAIProvider>
-                                                  </StocksProvider>
-                                                </CheckoutWithAuditWrapper>
-                                              </CheckoutProvider>
-                                            </CartWithAuditWrapper>
-                                          </CartProvider>
-                                        </WishlistWithAuditWrapper>
-                                      </WishlistProvider>
-                                    </OrdersWithAuditWrapper>
-                                  </OrdersProvider>
-                                </ProductsProvider>
-                              </CategoriesProvider>
-                            </SettingsWithAuditWrapper>
-                          </SettingsProvider>
-                        </BannersProvider>
-                      </PromotionsProvider>
-                    </CMSProvider>
-                  </NotificationsProvider>
+                  <SupportTicketsProvider>
+                    <NotificationsProvider>
+                      <CMSProvider>
+                        <PromotionsProvider>
+                          <BannersProvider>
+                            <SettingsProvider>
+                              <SettingsWithAuditWrapper>
+                                <CategoriesProvider>
+                                  <ProductsProvider>
+                                    <OrdersProvider>
+                                      <OrdersWithAuditWrapper>
+                                        <WishlistProvider>
+                                          <WishlistWithAuditWrapper>
+                                            <CartProvider>
+                                              <CartWithAuditWrapper>
+                                                <CheckoutProvider>
+                                                  <CheckoutWithAuditWrapper>
+                                                    <StocksProvider>
+                                                      <GeminiAIProvider>
+                                                        <LiveChatProvider>
+                                                          <App />
+                                                        </LiveChatProvider>
+                                                      </GeminiAIProvider>
+                                                    </StocksProvider>
+                                                  </CheckoutWithAuditWrapper>
+                                                </CheckoutProvider>
+                                              </CartWithAuditWrapper>
+                                            </CartProvider>
+                                          </WishlistWithAuditWrapper>
+                                        </WishlistProvider>
+                                      </OrdersWithAuditWrapper>
+                                    </OrdersProvider>
+                                  </ProductsProvider>
+                                </CategoriesProvider>
+                              </SettingsWithAuditWrapper>
+                            </SettingsProvider>
+                          </BannersProvider>
+                        </PromotionsProvider>
+                      </CMSProvider>
+                    </NotificationsProvider>
+                  </SupportTicketsProvider>
                 </SSEProvider>
               </AuthWithAuditWrapper>
             </AuditTrailProvider>
