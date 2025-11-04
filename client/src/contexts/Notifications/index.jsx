@@ -159,7 +159,7 @@ export const NotificationsProvider = ({ children }) => {
             fetchNotifications,
             markAsRead,
             markAllAsRead,
-            deleteNotification
+            deleteNotification,
             sseConnected,
             
             // Notification preferences
