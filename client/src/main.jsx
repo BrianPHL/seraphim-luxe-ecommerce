@@ -21,6 +21,7 @@ import {
   PromotionsProvider,
   GeminiAIProvider,
   useAuditTrail
+  SSEProvider,
 } from '@contexts';
 import App from './App';
 
@@ -86,55 +87,59 @@ const SettingsWithAuditWrapper = ({ children }) => {
 };
 
 createRoot(document.getElementById('root')).render(
-	<StrictMode>
-		<BrowserRouter>
-    		<ThemeProvider>
-        		<DropdownProvider>
-          			<ToastProvider>
-            			<AuditTrailProvider>
-              				<AuthWithAuditWrapper>
-                				<NotificationsProvider>
-                  					<CMSProvider>
-                    					<PromotionsProvider>
-                      						<BannersProvider>
-                        						<SettingsProvider>
-                          							<SettingsWithAuditWrapper>
-                            							<CategoriesProvider>
-                              								<ProductsProvider>
-                              									<OrdersProvider>
-                                                  					<OrdersWithAuditWrapper>
-                              										    <WishlistProvider>
-                              								    	    	<WishlistWithAuditWrapper>
-                              										    		<CartProvider>
-                              								            			<CartWithAuditWrapper>
-                              								                			<CheckoutProvider>
-                              								                  				<CheckoutWithAuditWrapper>
-                              								                    				<StocksProvider>
-                              								                      					<GeminiAIProvider>
-                                                  					    								<App />
-                                                					    							</GeminiAIProvider>
-                                              						    						</StocksProvider>
-                                            						    					</CheckoutWithAuditWrapper>
-                                          							    				</CheckoutProvider>
-                                        							    			</CartWithAuditWrapper>
-                                      								    		</CartProvider>
-                                    								    	</WishlistWithAuditWrapper>
-                                  									    </WishlistProvider>
-                                                                    </OrdersWithAuditWrapper>
-                                								</OrdersProvider>
-                              								</ProductsProvider>
-                            							</CategoriesProvider>
-                          							</SettingsWithAuditWrapper>
-                        						</SettingsProvider>
-                      						</BannersProvider>
-                    					</PromotionsProvider>
-                  					</CMSProvider>
-                				</NotificationsProvider>
-              				</AuthWithAuditWrapper>
-            			</AuditTrailProvider>
-          			</ToastProvider>
-        		</DropdownProvider>
-      		</ThemeProvider>
-    	</BrowserRouter>
-	</StrictMode>,
+  <StrictMode>
+    <BrowserRouter>
+      <ThemeProvider>
+        <DropdownProvider>
+          <ToastProvider>
+            <AuditTrailProvider>
+              <AuthWithAuditWrapper>
+                <SSEProvider>
+                  <NotificationsProvider>
+                    <CMSProvider>
+                      <PromotionsProvider>
+                        <BannersProvider>
+                          <SettingsProvider>
+                            <SettingsWithAuditWrapper>
+                              <CategoriesProvider>
+                                <ProductsProvider>
+                                  <OrdersProvider>
+                                    <OrdersWithAuditWrapper>
+                                      <WishlistProvider>
+                                        <WishlistWithAuditWrapper>
+                                          <CartProvider>
+                                            <CartWithAuditWrapper>
+                                              <CheckoutProvider>
+                                                <CheckoutWithAuditWrapper>
+                                                  <StocksProvider>
+                                                    <GeminiAIProvider>
+                                                      <LiveChatProvider>
+                                                        <App />
+                                                      </LiveChatProvider>
+                                                    </GeminiAIProvider>
+                                                  </StocksProvider>
+                                                </CheckoutWithAuditWrapper>
+                                              </CheckoutProvider>
+                                            </CartWithAuditWrapper>
+                                          </CartProvider>
+                                        </WishlistWithAuditWrapper>
+                                      </WishlistProvider>
+                                    </OrdersWithAuditWrapper>
+                                  </OrdersProvider>
+                                </ProductsProvider>
+                              </CategoriesProvider>
+                            </SettingsWithAuditWrapper>
+                          </SettingsProvider>
+                        </BannersProvider>
+                      </PromotionsProvider>
+                    </CMSProvider>
+                  </NotificationsProvider>
+                </SSEProvider>
+              </AuthWithAuditWrapper>
+            </AuditTrailProvider>
+          </ToastProvider>
+        </DropdownProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+    </StrictMode>,
 );
