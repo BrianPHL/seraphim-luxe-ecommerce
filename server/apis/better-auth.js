@@ -13,8 +13,7 @@ export const auth = betterAuth({
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
         cookieCache: {
-            enabled: true,
-            maxAge: 5 * 60 * 1000
+            enabled: false
         }
     },
     emailAndPassword: {
@@ -186,6 +185,33 @@ export const auth = betterAuth({
 
                         try {
 
+                            const [ oauthAccounts ] = await pool.query(
+                                `
+                                    SELECT oa.user_id, oa.oauth_account_id, a.email as linked_email
+                                    FROM oauth_accounts oa
+                                    JOIN accounts a ON oa.user_id = a.id
+                                    WHERE oa.provider_id = ? AND a.email = ?
+                                `,
+                                [ 'google', user?.email ]
+                            );
+
+                            console.log(oauthAccounts);
+
+                            console.log(user?.id);
+
+                            if (oauthAccounts.length > 0 && String(oauthAccounts[0].user_id) !== user?.id) {
+
+                                await ctx.context?.internalAdapter?.deleteSessions(user.id);
+
+                                const redirectURL = isAdminPlatform
+                                    ? `${ getBaseURL('client') }/admin/sign-in?error=ACCOUNT_VERIFICATION_FAILED`
+                                    : `${ getBaseURL('client') }/sign-in?error=ACCOUNT_VERIFICATION_FAILED`;
+                            
+                                ctx.redirect(redirectURL);
+                                return;
+                            }
+                                
+
                             if (user.is_suspended) {
                                 (user.role === 'admin')
                                 ? ctx.redirect(`${ getBaseURL('client') }/admin/sign-in?error=ACCOUNT_CURRENTLY_SUSPENDED`)
@@ -206,7 +232,9 @@ export const auth = betterAuth({
 
                                 ctx.redirect(redirectURL);
                                 return;
+
                             }
+                            
                         } catch (err) {
                             console.error("Auth betterAuth signIn hook error: ", err);
                         }

@@ -10,7 +10,7 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
     const { user } = useAuth();
     const { products } = useProducts();
     const { showToast } = useToast();
-    const { setNotification } = useNotifications();
+    const { notifyWishlistAction } = useNotifications();
     const { logWishlistAdd, logWishlistRemove } = auditLoggers;
 
     const fetchWishlistItems = async () => {
@@ -60,11 +60,11 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
                 throw new Error('Failed to add item to wishlist!');
 
             showToast(`${ products[product_id].label } successfully added to wishlist!`, 'success')
+
             await fetchWishlistItems();
-            await setNotification({
-                type: 'wishlist',
-                title: 'Item added to wishlist',
-                message: `${ products[product_id].label } was added to your wishlist.`
+            await notifyWishlistAction({
+                action: "add_to_wishlist",
+                productName: products[product_id].label
             });
 
             if (logWishlistAdd) {
@@ -112,11 +112,11 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
                 showToast('Item removed from wishlist!', 'success');
                 
             await fetchWishlistItems();
-            await setNotification({
-                type: 'wishlist',
-                title: 'Item removed from wishlist',
-                message: `${ removedItem.label } was removed from your wishlist.`
+            await notifyWishlistAction({
+                action: "remove_from_wishlist",
+                productName: removedItem.label
             });
+
                 
             } else {
                 showToast("Failed to remove item from wishlist", "error");

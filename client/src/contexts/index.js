@@ -18,3 +18,5 @@ export { usePromotions, PromotionsProvider } from './Promotions';
 export { useGeminiAI, GeminiAIProvider } from './GeminiAI';
 export { useLiveChat, LiveChatProvider } from './LiveChat';
 export { SSEProvider, useSSE } from './SSE';
+export { AnalyticsProvider, useAnalytics } from './Analytics';
+

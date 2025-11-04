@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Stocks.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
-import { useStocks, useProducts, useAuth, useToast } from '@contexts';
+import { useStocks, useProducts, useAuth, useToast, useAnalytics } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { LOW_STOCK_FILTER_CONFIG, STOCKS_FILTER_CONFIG } from '@utils';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -23,11 +27,27 @@ const Stocks = () => {
     const [quantityToAdd, setQuantityToAdd] = useState(1);
     const [newThreshold, setNewThreshold] = useState('');
     const [notes, setNotes] = useState('');
+    const [selectedReportLabel, setSelectedReportLabel] = useState('All Reports');
+    const [productSearchQuery, setProductSearchQuery] = useState('');
     
     const { stockHistory, lowStockProducts, addStock, fetchStockHistory, isLoading } = useStocks();
     const { products } = useProducts();
-    const { user } = useAuth();
     const { showToast } = useToast();
+
+    const {
+        chartType,
+        selectedReports,
+        setSelectedReports,
+        chartOptions,
+        shouldShowReport,
+        generateAnalyticsData,
+        generateStocksAnalyticsData,
+        analyticsData,
+        stockLevelTrendsData,
+        categoryStockData,
+        reorderAnalysisData
+    } = useAnalytics();
+
 
     const {
         data: filteredLowStockProducts,
@@ -62,42 +82,6 @@ const Stocks = () => {
         handlePageChange: handleHistoryPageChange,
         resetPagination: resetHistoryPagination,
     } = usePagination(filteredStockHistory, ITEMS_PER_PAGE, queryHistoryPage);
-
-    useEffect(() => {
-        if (lowStockSearchValue !== queryLowStockSearch) {
-            handleLowStockSearchChange(queryLowStockSearch);
-        }
-    }, [queryLowStockSearch]);
-
-    useEffect(() => {
-        if (lowStockSortValue !== queryLowStockSort) {
-            handleLowStockSortChange(queryLowStockSort);
-        }
-    }, [queryLowStockSort]);
-
-    useEffect(() => {
-        if (lowStockCurrentPage !== queryLowStockPage) {
-            handleLowStockPageChange(queryLowStockPage);
-        }
-    }, [queryLowStockPage]);
-
-    useEffect(() => {
-        if (historySearchValue !== queryHistorySearch) {
-            handleHistorySearchChange(queryHistorySearch);
-        }
-    }, [queryHistorySearch]);
-
-    useEffect(() => {
-        if (historySortValue !== queryHistorySort) {
-            handleHistorySortChange(queryHistorySort);
-        }
-    }, [queryHistorySort]);
-
-    useEffect(() => {
-        if (historyCurrentPage !== queryHistoryPage) {
-            handleHistoryPageChange(queryHistoryPage);
-        }
-    }, [queryHistoryPage]);
 
     const updateSearchParams = ({ lowStockPage, lowStockSort, lowStockSearch, historyPage, historySort, historySearch }) => {
         const params = new URLSearchParams(searchParams);
@@ -169,11 +153,33 @@ const Stocks = () => {
         updateSearchParams({ historySearch: '', historyPage: 1 });
     };
 
+    const getFilteredProducts = () => {
+        if (!products) return [];
+        
+        if (!productSearchQuery.trim()) {
+            return products;
+        }
+        
+        const query = productSearchQuery.toLowerCase().trim();
+        
+        return products.filter(product => 
+            product.label.toLowerCase().includes(query) ||
+            product.price.toString().includes(query) ||
+            (product.category && product.category.toLowerCase().includes(query)) ||
+            (product.subcategory && product.subcategory.toLowerCase().includes(query))
+        );
+    };
+
+    const resetProductSearch = () => {
+        setProductSearchQuery('');
+    };
+
     const handleOpenAddStockModal = (product = null) => {
         setSelectedProduct(product);
         setQuantityToAdd(1);
         setNewThreshold(product ? product.stock_threshold : '');
         setNotes('');
+        resetProductSearch();
         setIsModalOpen(true);
     };
 
@@ -194,8 +200,58 @@ const Stocks = () => {
             setQuantityToAdd(1);
             setNewThreshold('');
             setNotes('');
+            resetProductSearch();
         }
     };
+
+    const filteredProducts = getFilteredProducts();
+
+    // Generate stocks analytics when stock data changes
+    useEffect(() => {
+        if (products && products.length > 0) {
+            generateAnalyticsData(products, lowStockProducts);
+            generateStocksAnalyticsData(products, lowStockProducts, stockHistory);
+        } else {
+            generateAnalyticsData([], []);
+            generateStocksAnalyticsData([], [], []);
+        }
+    }, [products, lowStockProducts, stockHistory, generateAnalyticsData, generateStocksAnalyticsData]);
+
+    useEffect(() => {
+        if (lowStockSearchValue !== queryLowStockSearch) {
+            handleLowStockSearchChange(queryLowStockSearch);
+        }
+    }, [queryLowStockSearch]);
+
+    useEffect(() => {
+        if (lowStockSortValue !== queryLowStockSort) {
+            handleLowStockSortChange(queryLowStockSort);
+        }
+    }, [queryLowStockSort]);
+
+    useEffect(() => {
+        if (lowStockCurrentPage !== queryLowStockPage) {
+            handleLowStockPageChange(queryLowStockPage);
+        }
+    }, [queryLowStockPage]);
+
+    useEffect(() => {
+        if (historySearchValue !== queryHistorySearch) {
+            handleHistorySearchChange(queryHistorySearch);
+        }
+    }, [queryHistorySearch]);
+
+    useEffect(() => {
+        if (historySortValue !== queryHistorySort) {
+            handleHistorySortChange(queryHistorySort);
+        }
+    }, [queryHistorySort]);
+
+    useEffect(() => {
+        if (historyCurrentPage !== queryHistoryPage) {
+            handleHistoryPageChange(queryHistoryPage);
+        }
+    }, [queryHistoryPage]);
 
     return (
         <div className={styles['wrapper']}>
@@ -226,6 +282,131 @@ const Stocks = () => {
                     </div>
                 </div>
             </div>
+
+            <div className={styles['divider-horizontal']}></div>
+
+            <div className={styles['section']}>
+                <div className={styles['section-header']}>
+                    <h2>Stock Analytics</h2>
+                    <div className={styles['chart-controls']}>
+                        <Button
+                            id='stocks-report-dropdown'
+                            type='secondary'
+                            label={`Report: ${selectedReportLabel}`}
+                            icon='fa-solid fa-chart-column'
+                            dropdownPosition='right'
+                            options={[
+                                {
+                                    label: 'All Reports',
+                                    action: () => {
+                                        setSelectedReports(['all']);
+                                        setSelectedReportLabel('All Reports');
+                                    }
+                                },
+                                {
+                                    label: 'Stock Level Trends',
+                                    action: () => {
+                                        setSelectedReports(['levels']);
+                                        setSelectedReportLabel('Stock Level Trends');
+                                    }
+                                },
+                                {
+                                    label: 'Category Stock Analysis',
+                                    action: () => {
+                                        setSelectedReports(['categories']);
+                                        setSelectedReportLabel('Category Stock Analysis');
+                                    }
+                                },
+                                {
+                                    label: 'Reorder Analysis',
+                                    action: () => {
+                                        setSelectedReports(['reorder']);
+                                        setSelectedReportLabel('Reorder Analysis');
+                                    }
+                                },
+                                {
+                                    label: 'Quick Statistics',
+                                    action: () => {
+                                        setSelectedReports(['statistics']);
+                                        setSelectedReportLabel('Quick Statistics');
+                                    }
+                                }
+                            ]}
+                        />
+                        <Button
+                            type='secondary'
+                            label={`Chart Type: ${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`}
+                            icon='fa-solid fa-chart-line'
+                            disabled={true}
+                        />
+                    </div>
+                </div>
+                
+                <div className={styles['analytics-container']}>
+                    {shouldShowReport('levels') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Stock Level Trends (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={stockLevelTrendsData && stockLevelTrendsData.labels ? stockLevelTrendsData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('categories') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Category Stock Analysis (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={categoryStockData && categoryStockData.labels ? categoryStockData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('reorder') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Reorder Analysis (Last 6 Months)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={reorderAnalysisData && reorderAnalysisData.labels ? reorderAnalysisData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>  
+                        </div>
+                    )}
+
+                    {shouldShowReport('statistics') && (
+                        <div className={`${styles['analytics-card']} ${styles['stats-card']}`}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Quick Statistics</h3>
+                            </div>
+                            <div className={styles['quick-stats']}>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.stockLevels.reduce((sum, item) => sum + item.inStock, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total In Stock Items (7 days avg)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.stockLevels.reduce((sum, item) => sum + item.lowStock, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total Low Stock Items (7 days avg)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.stockLevels.reduce((sum, item) => sum + item.outOfStock, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total Out of Stock Items (7 days avg)</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className={styles['divider-horizontal']}></div>
 
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
@@ -437,85 +618,161 @@ const Stocks = () => {
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    resetProductSearch();
+                }}
                 label="Add Stock"
             >
-                {selectedProduct ? (
-                    <div className={styles['modal-infos']}>
-                        <h3>{selectedProduct.label}</h3>
-                        <span>
-                            <p>Current Stock: {selectedProduct.stock_quantity}</p>
-                            <p>Stock Threshold: {selectedProduct.stock_threshold}</p>
-                        </span>
+                {!selectedProduct ? (
+                    <div className={styles.inputGroup}>
+                        <label>Select Product</label>
+                        <div className={styles.productSelector}>
+                            {/* Product Search Input */}
+                            <div className={styles.productSearchContainer}>
+                                <div className={styles.searchInputWrapper}>
+                                    <i className="fa-solid fa-search"></i>
+                                    <input
+                                        type="text"
+                                        placeholder="Search products by name, price, or category..."
+                                        value={productSearchQuery}
+                                        onChange={(e) => setProductSearchQuery(e.target.value)}
+                                        className={styles.productSearchInput}
+                                    />
+                                    {productSearchQuery && (
+                                        <Button
+                                            type='icon'
+                                            icon='fa-solid fa-times'
+                                            action={() => setProductSearchQuery('')}
+                                        />
+                                    )}
+                                </div>
+                                {productSearchQuery && (
+                                    <div className={styles.searchInfo}>
+                                        Showing {filteredProducts.length} of {products?.length || 0} products
+                                    </div>
+                                )}
+                            </div>
+
+                            {filteredProducts && filteredProducts.length > 0 ? (
+                                <div className={styles.productGrid}>
+                                    {filteredProducts.map((product) => (
+                                        <div 
+                                            key={product.id || product.product_id} 
+                                            className={styles.productOption}
+                                            onClick={() => setSelectedProduct(product)}
+                                        >
+                                            <div className={styles.productLabel}>
+                                                <img
+                                                    src={`https://res.cloudinary.com/dfvy7i4uc/image/upload/${product.image_url}.webp`}
+                                                    alt={product.label}
+                                                    className={styles.productImage}
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://res.cloudinary.com/dfvy7i4uc/image/upload/placeholder_vcj6hz.webp';
+                                                    }}
+                                                />
+                                                <div className={styles.productInfo}>
+                                                    <span className={styles.productName}>{product.label}</span>
+                                                    <span className={styles.productPrice}>₱{product.price}</span>
+                                                    <span className={styles.productStock}>
+                                                        Stock: {product.stock_quantity} / Threshold: {product.stock_threshold}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : productSearchQuery ? (
+                                <div className={styles.noProductsFound}>
+                                    <p>No products found matching "{productSearchQuery}"</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setProductSearchQuery('')}
+                                        className={styles.clearSearchLink}
+                                    >
+                                        Clear search
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className={styles.noProductsSelected}>
+                                    No products available
+                                </p>
+                            )}
+                        </div>
                     </div>
                 ) : (
-                    <div className={styles['input-wrapper']}>
-                        <label>Select Product</label>
-                        <select 
-                            value={selectedProduct?.id || selectedProduct?.product_id || ''} 
-                            onChange={(e) => {
-                                const product = products.find(p => (p.id || p.product_id).toString() === e.target.value);
-                                setSelectedProduct(product);
-                            }}
-                        >
-                            <option value="">Choose a product...</option>
-                            {products?.map(product => (
-                                <option key={product.id || product.product_id} value={product.id || product.product_id}>
-                                    {product.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <>
+                        <div className={styles['modal-infos']}>
+                            <h3>{selectedProduct.label}</h3>
+                            <span>
+                                <p>Current Stock: {selectedProduct.stock_quantity}</p>
+                                <p>Stock Threshold: {selectedProduct.stock_threshold}</p>
+                            </span>
+                            <Button
+                                type="secondary"
+                                label="Change Product"
+                                action={() => {
+                                    setSelectedProduct(null);
+                                    setQuantityToAdd(1);
+                                    setNewThreshold('');
+                                    setNotes('');
+                                }}
+                            />
+                        </div>
+
+                        <div className={styles['inputs-container']}>
+                            <div className={styles['input-wrapper']}>
+                                <label>Quantity to Add/Remove</label>
+                                <input
+                                    type="number"
+                                    name="quantityToAdd"
+                                    placeholder="Use negative values to remove stock"
+                                    value={quantityToAdd}
+                                    onChange={(e) => setQuantityToAdd(parseInt(e.target.value) || 0)}
+                                    className={styles['input-unnested']}
+                                />
+                            </div>
+                            
+                            <div className={styles['input-wrapper']}>
+                                <label>New Stock Threshold (Optional)</label>
+                                <input
+                                    type="number"
+                                    name="newThreshold"
+                                    placeholder="Leave empty to keep current threshold"
+                                    value={newThreshold}
+                                    onChange={(e) => setNewThreshold(e.target.value)}
+                                    className={styles['input-unnested']}
+                                />
+                            </div>
+
+                            <div className={styles['input-wrapper']}>
+                                <label>Notes</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Add notes about this stock change..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles['modal-ctas']}>
+                            <Button
+                                type="secondary"
+                                label="Cancel"
+                                action={() => {
+                                    setIsModalOpen(false);
+                                    resetProductSearch();
+                                }}
+                            />
+                            <Button
+                                type="primary"
+                                label="Update Stock"
+                                action={handleAddStock}
+                                disabled={!selectedProduct}
+                            />
+                        </div>
+                    </>
                 )}
-
-                <div className={styles['inputs-container']}>
-                    <div className={styles['input-wrapper']}>
-                        <label>Quantity to Add/Remove</label>
-                        <InputField
-                            type="number"
-                            name="quantityToAdd"
-                            hint="Use negative values to remove stock"
-                            value={quantityToAdd}
-                            onChange={(name, value) => setQuantityToAdd(parseInt(value) || 0)}
-                            isSubmittable={false}
-                        />
-                    </div>
-                    
-                    <div className={styles['input-wrapper']}>
-                        <label>New Stock Threshold (Optional)</label>
-                        <InputField
-                            type="number"
-                            name="newThreshold"
-                            hint="Leave empty to keep current threshold"
-                            value={newThreshold}
-                            onChange={(name, value) => setNewThreshold(value)}
-                            isSubmittable={false}
-                        />
-                    </div>
-
-                    <div className={styles['input-wrapper']}>
-                        <label>Notes</label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Add notes about this stock change..."
-                        />
-                    </div>
-                </div>
-
-                <div className={styles['modal-ctas']}>
-                    <Button
-                        type="secondary"
-                        label="Cancel"
-                        action={() => setIsModalOpen(false)}
-                    />
-                    <Button
-                        type="primary"
-                        label="Update Stock"
-                        action={handleAddStock}
-                        disabled={!selectedProduct}
-                    />
-                </div>
             </Modal>
         </div>
     );

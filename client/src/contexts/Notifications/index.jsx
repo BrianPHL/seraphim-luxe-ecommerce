@@ -160,6 +160,39 @@ export const NotificationsProvider = ({ children }) => {
             markAsRead,
             markAllAsRead,
             deleteNotification
+            sseConnected,
+            
+            // Notification preferences
+            notificationPreferences,
+            hasNotificationChanges,
+            loadingNotifications,
+
+        // * Exposed functions
+            fetchNotifications,
+            readAllNotifications,
+            readSpecificNotification,
+            clearAllNotifications,
+            clearSpecificNotification,
+            setNotification,
+            setIsInboxOpen,
+            
+            // Notification preferences functions
+            fetchNotificationPreferences,
+            updateNotificationPreferences,
+            handleNotificationToggle,
+            handleSaveNotifications,
+            handleResetNotifications,
+
+            // Customer notification helpers
+            notifyCartAction,
+            notifyWishlistAction,
+            notifyOrderUpdate,
+            notifyAccountChange,
+
+            // Admin notification helpers
+            notifyAdminNewOrder,
+            notifyAdminLowStock
+
         }}>
             {children}
         </NotificationsContext.Provider>

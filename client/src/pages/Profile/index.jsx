@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { InputField, Button, Anchor, ReturnButton, Accordion, Modal, Dropdown, Banner } from '@components';
-import { useToast, useAuth, useSettings, useBanners } from '@contexts';
+import { useToast, useAuth, useSettings, useBanners, useNotifications } from '@contexts';
 import { useOAuth } from '@hooks';
 import { getErrorMessage } from '@utils';
 import styles from './Profile.module.css';
@@ -14,6 +14,15 @@ const Profile = ({}) => {
     const { sendChangePasswordVerificationLink, changePassword } = useOAuth()
     const { banners } = useBanners();
     const { showToast } = useToast();
+    const { 
+        notificationPreferences, 
+        hasNotificationChanges, 
+        loadingNotifications,
+        handleNotificationToggle,
+        handleSaveNotifications,
+        handleResetNotifications,
+        notifyAccountChange
+    } = useNotifications();
     const [ searchParams, setSearchParams ] = useSearchParams();
     const [ avatarFile, setAvatarFile ] = useState(null);
     const [ avatarPreview, setAvatarPreview ] = useState(null);
@@ -89,6 +98,9 @@ const Profile = ({}) => {
         is_default_billing: false,
         is_default_shipping: false,
     });
+
+    const [ addNewAddressValidationErrors, setAddNewAddressValidationErrors ] = useState({});
+    const [ editAddressValidationErrors, setEditAddressValidationErrors ] = useState({});
 
     const toggleDropdown = (dropdownName) => {
         setDropdownStates(prev => ({
@@ -357,34 +369,53 @@ const Profile = ({}) => {
     const handleAddNewAddressFormInputChange = (event) => {
 
         const { name, value, type, checked } = event.target;
-        setAddNewAddressFormData(prev => ({
-            ...prev,
+        const updatedData = {
+            ...addNewAddressFormData,
             [name]: type === 'checkbox' ? checked : value
-        }));
-
+        };
+        
+        setAddNewAddressFormData(updatedData);
+        
+        // Clear the specific field error when user starts typing
+        if (addNewAddressValidationErrors[name]) {
+            const newErrors = { ...addNewAddressValidationErrors };
+            delete newErrors[name];
+            setAddNewAddressValidationErrors(newErrors);
+        }
     };
 
     const handleEditAddressFormInputChange = (event) => {
 
         const { name, value, type, checked } = event.target;
-        setEditAddressFormData(prev => ({
-            ...prev,
+        const updatedData = {
+            ...editAddressFormData,
             [name]: type === 'checkbox' ? checked : value
-        }));
-
+        };
+        
+        setEditAddressFormData(updatedData);
+        
+        // Clear the specific field error when user starts typing
+        if (editAddressValidationErrors[name]) {
+            const newErrors = { ...editAddressValidationErrors };
+            delete newErrors[name];
+            setEditAddressValidationErrors(newErrors);
+        }
     };
 
     const handleAddNewAddressSubmit = async () => {
+        // Validate first
+        if (!validateAddNewAddress()) {
+            showToast('Please fix the errors before submitting', 'error');
+            return;
+        }
         
         try {
-
             const result = await addAddress(addNewAddressFormData);
-
             await getAddressBook();
             
             showToast('Address added successfully!', 'success');
             setIsModalOpen(false);
-
+            setAddNewAddressValidationErrors({}); // Clear errors
         } catch (err) {
             console.error("Profile page handleAddNewAddressSubmit function error: ", err);
             showToast('Failed to add the address! An error had occured.', 'error');
@@ -394,16 +425,19 @@ const Profile = ({}) => {
     };
 
     const handleEditAddressSubmit = async () => {
+        // Validate first
+        if (!validateEditAddress()) {
+            showToast('Please fix the errors before submitting', 'error');
+            return;
+        }
         
         try {
-
             const result = await updateAddress(editAddressFormData);
-
             await getAddressBook();
             
             showToast('Address modified successfully!', 'success');
             setIsModalOpen(false);
-
+            setEditAddressValidationErrors({}); // Clear errors
         } catch (err) {
             console.error("Profile page handleEditAddressSubmit function error: ", err);
             showToast('Failed to modify the address! An error had occured.', 'error');
@@ -428,7 +462,7 @@ const Profile = ({}) => {
 
         }
 
-    }
+    };
     const resetAddNewAddressFormData = () => {
         setAddNewAddressFormData({
             full_name: user.name,
@@ -459,18 +493,26 @@ const Profile = ({}) => {
     }
 
     const updatePersonalInfo = async () => {
-
-        const updatedPersonalInfo = {
-            ...personalInfo,
-            gender: personalInfo.gender === 'Prefer not to say' ? 'undisclosed' : personalInfo.gender
-        };
-
-        const result = await updatePersonalInfoAPI(updatedPersonalInfo);
+        
+        const emailChanged = personalInfo.email !== user.email;
+        const oldEmail = user.email;
+        const newEmail = personalInfo.email;
+        const fullName = `${personalInfo.first_name} ${personalInfo.last_name}`;
+        const result = await updatePersonalInfoAPI(personalInfo);
 
         if (result?.error) {
             showToast(`Failed to update personal info: ${result.error}`, 'error');
         } else {
             showToast('Personal information updated successfully', 'success');
+
+            if (emailChanged) {
+                await notifyAccountChange('email_changed', {
+                    name: fullName,
+                    oldEmail: oldEmail,
+                    newEmail: newEmail
+                });
+            }
+            
             setIsPersonalInfoChanged(false);
         }
     };
@@ -527,6 +569,8 @@ const Profile = ({}) => {
 
         try {
 
+            const fullName = user?.first_name + ' ' + user?.last_name;
+            const email = user?.email;
             const { newPassword, confirmNewPassword } = passwordInfo;
             const result = await changePassword(newPassword, queryToken);
 
@@ -534,6 +578,12 @@ const Profile = ({}) => {
                 showToast(`Failed to update password: ${ result.error }`, 'error');
             } else {
                 showToast('Password updated successfully', 'success');
+                
+                await notifyAccountChange('password_changed', {
+                    name: fullName,
+                    email: email
+                });
+
                 setPasswordInfo({ newPassword: '', confirmNewPassword: '' });
                 setIsPasswordInfoChanged(false);
                 setDoPasswordsMatch(true);
@@ -667,6 +717,111 @@ const Profile = ({}) => {
             setIsPasswordSet(true);
 
     };
+
+    // Validate Add New Address Form
+const validateAddNewAddress = () => {
+    const errors = {};
+    
+    // Full name validation
+    if (!addNewAddressFormData.full_name.trim()) {
+        errors.full_name = 'Full name is required';
+    } else if (addNewAddressFormData.full_name.trim().length < 3) {
+        errors.full_name = 'Full name must be at least 3 characters';
+    }
+    
+    // Phone validation (Philippine format: 10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    const cleanPhone = addNewAddressFormData.phone_number.replace(/\s/g, '').replace(/^\+63/, '').replace(/^0/, '');
+    if (!phoneRegex.test(cleanPhone)) {
+        errors.phone_number = 'Please enter a valid 10-digit phone number';
+    }
+    
+    // Province validation
+    if (!addNewAddressFormData.province.trim()) {
+        errors.province = 'Province is required';
+    } else if (addNewAddressFormData.province.trim().length < 3) {
+        errors.province = 'Province must be at least 3 characters';
+    }
+    
+    // City validation
+    if (!addNewAddressFormData.city.trim()) {
+        errors.city = 'City is required';
+    } else if (addNewAddressFormData.city.trim().length < 3) {
+        errors.city = 'City must be at least 3 characters';
+    }
+    
+    // Barangay validation
+    if (!addNewAddressFormData.barangay.trim()) {
+        errors.barangay = 'Barangay is required';
+    } else if (addNewAddressFormData.barangay.trim().length < 3) {
+        errors.barangay = 'Barangay must be at least 3 characters';
+    }
+    
+    // Street address validation
+    if (!addNewAddressFormData.street_address.trim()) {
+        errors.street_address = 'Street address is required';
+    } else if (addNewAddressFormData.street_address.trim().length < 5) {
+        errors.street_address = 'Street address must be at least 5 characters';
+    }
+    
+    // Postal code validation (Philippine format: 4 digits)
+    const postalRegex = /^\d{4}$/;
+    if (!postalRegex.test(addNewAddressFormData.postal_code)) {
+        errors.postal_code = 'Postal code must be exactly 4 digits';
+    }
+    
+    setAddNewAddressValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+};
+
+// Validate Edit Address Form
+const validateEditAddress = () => {
+    const errors = {};
+    
+    if (!editAddressFormData.full_name.trim()) {
+        errors.full_name = 'Full name is required';
+    } else if (editAddressFormData.full_name.trim().length < 3) {
+        errors.full_name = 'Full name must be at least 3 characters';
+    }
+    
+    const phoneRegex = /^[0-9]{10}$/;
+    const cleanPhone = editAddressFormData.phone_number.replace(/\s/g, '').replace(/^\+63/, '').replace(/^0/, '');
+    if (!phoneRegex.test(cleanPhone)) {
+        errors.phone_number = 'Please enter a valid 10-digit phone number';
+    }
+    
+    if (!editAddressFormData.province.trim()) {
+        errors.province = 'Province is required';
+    } else if (editAddressFormData.province.trim().length < 3) {
+        errors.province = 'Province must be at least 3 characters';
+    }
+    
+    if (!editAddressFormData.city.trim()) {
+        errors.city = 'City is required';
+    } else if (editAddressFormData.city.trim().length < 3) {
+        errors.city = 'City must be at least 3 characters';
+    }
+    
+    if (!editAddressFormData.barangay.trim()) {
+        errors.barangay = 'Barangay is required';
+    } else if (editAddressFormData.barangay.trim().length < 3) {
+        errors.barangay = 'Barangay must be at least 3 characters';
+    }
+    
+    if (!editAddressFormData.street_address.trim()) {
+        errors.street_address = 'Street address is required';
+    } else if (editAddressFormData.street_address.trim().length < 5) {
+        errors.street_address = 'Street address must be at least 5 characters';
+    }
+    
+    const postalRegex = /^\d{4}$/;
+    if (!postalRegex.test(editAddressFormData.postal_code)) {
+        errors.postal_code = 'Postal code must be exactly 4 digits';
+    }
+    
+    setEditAddressValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+};
 
     useEffect(() => {
 
@@ -971,14 +1126,15 @@ const Profile = ({}) => {
                                                                 label: 'Credit Card',
                                                                 action: () => handlePlatformSettingsChange('preferred_payment_method', 'credit_card')
                                                             }] : []),
-                                                            ...customPaymentMethods
-                                                                .filter(method => method.enabled)
-                                                                .map(method => ({
-                                                                    label: method.label,
-                                                                    action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
-                                                                }))
-                                                        ]}
-                                                    />
+                                                                ...customPaymentMethods
+                                                                    .filter(method => method.enabled)
+                                                                    .map(method => ({
+                                                                        label: method.label,
+                                                                        action: () => handlePlatformSettingsChange('preferred_payment_method', method.key)
+                                                                    }))
+                                                            ]}
+                                                        />
+
                                                 </div>
                                             </div>
                                         </div>
@@ -1024,6 +1180,7 @@ const Profile = ({}) => {
                                             label="Add new address"
                                             action={ () => {
                                                 resetAddNewAddressFormData();
+                                                setAddNewAddressValidationErrors({}); // ← Add this
                                                 setModalType('add-new-address-modal');
                                                 setIsModalOpen(true);
                                             }}
@@ -1059,17 +1216,17 @@ const Profile = ({}) => {
                                                                 </div>
                                                             </div>
                                                             <div className={styles['address-tags']}>
-                                                                    {(addressBook.defaults?.default_billing_address === address.id ||
-                                                                    addressBook.defaults?.default_shipping_address === address.id) && (
-                                                                    <div className={styles['address-tags']}>
-                                                                        {addressBook.defaults?.default_billing_address === address.id && (
-                                                                        <span className={styles['address-tag']}>Default Billing</span>
-                                                                        )}
-                                                                        {addressBook.defaults?.default_shipping_address === address.id && (
-                                                                        <span className={styles['address-tag']}>Default Shipping</span>
-                                                                        )}
-                                                                    </div>
+                                                                {(addressBook.defaults?.default_billing_address === address.id ||
+                                                                addressBook.defaults?.default_shipping_address === address.id) && (
+                                                                <div className={styles['address-tags']}>
+                                                                    {addressBook.defaults?.default_billing_address === address.id && (
+                                                                    <span className={styles['address-tag']}>Default Billing</span>
                                                                     )}
+                                                                    {addressBook.defaults?.default_shipping_address === address.id && (
+                                                                    <span className={styles['address-tag']}>Default Shipping</span>
+                                                                    )}
+                                                                </div>
+                                                                )}
                                                             </div>
                                                         </div>
 
@@ -1091,6 +1248,7 @@ const Profile = ({}) => {
                                                                             is_default_billing: address.id === addressBook.defaults?.default_billing_address,
                                                                             is_default_shipping: address.id === addressBook.defaults?.default_shipping_address,
                                                                         });
+                                                                        setEditAddressValidationErrors({}); // ← Add this
                                                                         setModalType('edit-address-modal');
                                                                         setIsModalOpen(true);
                                                                     }}
@@ -1221,6 +1379,283 @@ const Profile = ({}) => {
                                 />
                             </div>
                         </section>
+
+                        <div className={ styles['divider-horizontal'] }></div>
+
+                        <section className={ styles['info-notifications'] }>
+                            <div className={ styles['settings-section-header'] }>
+                                <h2>Notification Preferences</h2>
+                                <p>Manage your in-app and email notification preferences</p>
+                            </div>
+                                                        
+                            <div className={ styles['notifications-grid'] }>
+                                {!isAdmin && (
+                                    <div className={ styles['notification-category'] }>
+                                        <h3 className={ styles['category-title'] }>Shopping Activity</h3>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Cart Updates</h4>
+                                                    <p>In-app Notifications when items are added or removed from cart</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.cart_updates}
+                                                            onChange={() => handleNotificationToggle('cart_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.cart_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.cart_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Wishlist Updates</h4>
+                                                    <p>In-app Notifications when items are added or removed from wishlist</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.wishlist_updates}
+                                                            onChange={() => handleNotificationToggle('wishlist_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.wishlist_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.wishlist_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                        
+                                {!isAdmin && (
+                                    <div className={ styles['notification-category'] }>
+                                        <h3 className={ styles['category-title'] }>Orders & Transactions</h3>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Order Status Updates</h4>
+                                                    <p>Get in-app notifications about order status changes</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.order_updates}
+                                                            onChange={() => handleNotificationToggle('order_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.order_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.order_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        {/* Email notification toggle for orders */}
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Order Email Notifications</h4>
+                                                    <p>Receive email updates for order status changes</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences?.email_order_updates ?? true}
+                                                            onChange={() => handleNotificationToggle('email_order_updates')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences?.email_order_updates ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences?.email_order_updates ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                        
+                                {isAdmin && (
+                                    <div className={ styles['notification-category'] }>
+                                        <h3 className={ styles['category-title'] }>Admin Notifications</h3>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>New Orders</h4>
+                                                    <p>Get in-app notifications when customers place new orders</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.admin_new_orders}
+                                                            onChange={() => handleNotificationToggle('admin_new_orders')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.admin_new_orders ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.admin_new_orders ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Customer Messages</h4>
+                                                    <p>In-app notifications for new customer support messages</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.admin_customer_messages}
+                                                            onChange={() => handleNotificationToggle('admin_customer_messages')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.admin_customer_messages ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.admin_customer_messages ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                
+                                        <div className={ styles['notification-card'] }>
+                                            <div className={ styles['notification-header'] }>
+                                                <div className={ styles['notification-info'] }>
+                                                    <h4>Low Stock Alerts</h4>
+                                                    <p>Get in-app alerts when product inventory is running low</p>
+                                                </div>
+                                                <div className={ styles['toggle-container'] }>
+                                                    <label className={ styles['toggle-switch'] }>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={notificationPreferences.admin_low_stock_alerts}
+                                                            onChange={() => handleNotificationToggle('admin_low_stock_alerts')}
+                                                            disabled={loadingNotifications}
+                                                        />
+                                                        <span className={ styles['toggle-slider'] }></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className={ styles['notification-status'] }>
+                                                <span className={`${styles['status-badge']} ${notificationPreferences.admin_low_stock_alerts ? styles['enabled'] : styles['disabled']}`}>
+                                                    {notificationPreferences.admin_low_stock_alerts ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                        
+                                <div className={ styles['notification-category'] }>
+                                    <h3 className={ styles['category-title'] }>Security & Account</h3>
+                            
+                                    <div className={ styles['notification-card'] }>
+                                        <div className={ styles['notification-header'] }>
+                                            <div className={ styles['notification-info'] }>
+                                                <h4>Account Security</h4>
+                                                <p>Critical in-app alerts about account changes and security</p>
+                                            </div>
+                                            <div className={ styles['toggle-container'] }>
+                                                <label className={ styles['toggle-switch'] }>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={notificationPreferences.account_security}
+                                                        onChange={() => handleNotificationToggle('account_security')}
+                                                        disabled={true}
+                                                    />
+                                                    <span className={ styles['toggle-slider'] }></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className={ styles['notification-status'] }>
+                                            <span className={`${styles['status-badge']} ${styles['enabled']}`}>
+                                                Always Enabled
+                                            </span>
+                                            <span className={ styles['required-badge'] }>Required</span>
+                                        </div>
+                                    </div>
+                            
+                                    <div className={ styles['notification-card'] }>
+                                        <div className={ styles['notification-header'] }>
+                                            <div className={ styles['notification-info'] }>
+                                                <h4>Account Security Emails</h4>
+                                                <p>Receive emails for password and email changes</p>
+                                            </div>
+                                            <div className={ styles['toggle-container'] }>
+                                                <label className={ styles['toggle-switch'] }>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={notificationPreferences?.email_account_security ?? true}
+                                                        onChange={() => handleNotificationToggle('email_account_security')}
+                                                        disabled={true}
+                                                    />
+                                                    <span className={ styles['toggle-slider'] }></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className={ styles['notification-status'] }>
+                                            <span className={`${styles['status-badge']} ${styles['enabled']}`}>
+                                                Always Enabled
+                                            </span>
+                                            <span className={ styles['required-badge'] }>Required</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={ styles['notification-actions'] }>
+                                <Button
+                                    type="secondary"
+                                    label="Reset Changes"
+                                    action={handleResetNotifications}
+                                    disabled={!hasNotificationChanges || loadingNotifications}
+                                />
+                                <Button
+                                    type="primary"
+                                    label={loadingNotifications ? 'Saving...' : 'Save Preferences'}
+                                    action={handleSaveNotifications}
+                                    disabled={!hasNotificationChanges || loadingNotifications}
+                                />
+                            </div>
+                        </section>
+
                         <div className={ styles['divider-horizontal'] }></div>
                         <section className={ styles['info-danger'] }>
                             <h2>Danger Zone</h2>
@@ -1612,9 +2047,15 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            ) : modalType === 'delete-account-confirmation' && (
+            ) : modalType === 'delete-account-confirmation' ? (
                 <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your account</strong>. This will remove all your data including profile information, reservation history, and saved preferences. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
+                    <p className={ styles['modal-info'] }>
+                        You are about to <strong>permanently delete your account</strong>. 
+                        {isAdmin 
+                            ? " This will remove all your data including profile information and admin privileges."
+                            : " This will remove all your data including profile information, reservation history, and saved preferences."
+                        } This action cannot be reversed. Are you absolutely sure you want to proceed?
+                    </p>
                     <div className={ styles['modal-ctas'] }>
                         <Button
                             label='Confirm'
@@ -1634,34 +2075,45 @@ const Profile = ({}) => {
                         />
                     </div>
                 </Modal>
-            )}
+            ) : null}
 
             <Modal
                 isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
                 onClose={ () => setIsModalOpen(false) }
                 label={ 'Add new address' }
             >
-
                 <div className={ styles['notice'] }>
                     <i className='fa-solid fa-triangle-exclamation'></i>
                     <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
                 </div>
 
+                {/* Display validation errors in banner */}
+                {Object.keys(addNewAddressValidationErrors).length > 0 && (
+                    <div className={ styles['validation-error-banner'] }>
+                        <i className='fa-solid fa-circle-exclamation'></i>
+                        <div>
+                            {Object.values(addNewAddressValidationErrors).map((error, index) => (
+                                <p key={index}>{error}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className={ styles['inputs-container'] }>
 
-                    <div className={ styles['input-wrapper-horizontal'] }>
+                                <div className={ styles['input-wrapper-horizontal'] }>
 
-                        <div className={styles['input-wrapper']}>
-                            <label>Full name</label>
-                            <InputField
-                                name="full_name"
-                                hint="Your full name..."
-                                value={ addNewAddressFormData.full_name }
-                                onChange={ handleAddNewAddressFormInputChange }
-                                isSubmittable={ false }
-                                type="text"
-                            />
-                        </div>
+                    <div className={styles['input-wrapper']}>
+                        <label>Full name</label>
+                        <InputField
+                            name="full_name"
+                            hint="Your full name..."
+                            value={ addNewAddressFormData.full_name }
+                            onChange={ handleAddNewAddressFormInputChange }
+                            isSubmittable={ false }
+                            type="text"
+                        />
+                    </div>
 
                         <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
                             <label>Phone number</label>
@@ -1789,7 +2241,8 @@ const Profile = ({}) => {
                             !addNewAddressFormData.barangay ||
                             !addNewAddressFormData.street_address ||
                             !addNewAddressFormData.phone_number ||
-                            !addNewAddressFormData.postal_code
+                            !addNewAddressFormData.postal_code ||
+                            Object.keys(addNewAddressValidationErrors).length > 0
                         }
                     />
                 </div>
@@ -1800,11 +2253,22 @@ const Profile = ({}) => {
                 onClose={ () => setIsModalOpen(false) }
                 label={ 'Edit address' }
             >
-
                 <div className={ styles['notice'] }>
                     <i className='fa-solid fa-triangle-exclamation'></i>
                     <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
                 </div>
+
+                {/* Display validation errors in banner */}
+                {Object.keys(editAddressValidationErrors).length > 0 && (
+                    <div className={ styles['validation-error-banner'] }>
+                        <i className='fa-solid fa-circle-exclamation'></i>
+                        <div>
+                            {Object.values(editAddressValidationErrors).map((error, index) => (
+                                <p key={index}>{error}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className={ styles['inputs-container'] }>
 
@@ -1950,7 +2414,8 @@ const Profile = ({}) => {
                             !editAddressFormData.barangay ||
                             !editAddressFormData.street_address ||
                             !editAddressFormData.phone_number ||
-                            !editAddressFormData.postal_code
+                            !editAddressFormData.postal_code ||
+                            Object.keys(editAddressValidationErrors).length > 0
                         }
                     />
                 </div>
@@ -1977,379 +2442,6 @@ const Profile = ({}) => {
                     />
                 </div>
             </Modal>
-            {modalType === 'delete-account-confirmation' && (
-                <Modal label='Delete Account Confirmation' isOpen={ isModalOpen } onClose={ () => setIsModalOpen(false) }>
-                    <p className={ styles['modal-info'] }>
-                        You are about to <strong>permanently delete your account</strong>. 
-                        {isAdmin 
-                            ? " This will remove all your data including profile information and admin privileges."
-                            : " This will remove all your data including profile information, reservation history, and saved preferences."
-                        } This action cannot be reversed. Are you absolutely sure you want to proceed?
-                    </p>
-                    <div className={ styles['modal-ctas'] }>
-                        <Button
-                            label='Confirm'
-                            type='secondary'
-                            action={ () => {
-                                setIsModalOpen(false);
-                                remove(user?.id);
-                            }}
-                        />
-                        <Button
-                            label='Cancel'
-                            type='primary'
-                            action={ () => {
-                                setModalType('');
-                                setIsModalOpen(false);
-                            }}
-                        />
-                    </div>
-                </Modal>
-            )}
-            {!isAdmin && (
-                <>
-                    <Modal
-                        isOpen={ isModalOpen && modalType === 'add-new-address-modal' }
-                        onClose={ () => setIsModalOpen(false) }
-                        label={ 'Add new address' }
-                    >
-                        <div className={ styles['notice'] }>
-                            <i className='fa-solid fa-triangle-exclamation'></i>
-                            <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
-                        </div>
-
-                        <div className={ styles['inputs-container'] }>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Full name</label>
-                                    <InputField
-                                        name="full_name"
-                                        hint="Your full name..."
-                                        value={ addNewAddressFormData.full_name }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
-                                    <label>Phone number</label>
-                                    <InputField
-                                        name="phone_number"
-                                        hint="Your phone number..."
-                                        value={ addNewAddressFormData.phone_number }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>Province</label>
-                                    <InputField
-                                        name="province"
-                                        hint="Your province..."
-                                        value={ addNewAddressFormData.province }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>City</label>
-                                    <InputField
-                                        name="city"
-                                        hint="Your city..."
-                                        value={ addNewAddressFormData.city }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-                                    
-                                <div className={styles['input-wrapper']}>
-                                    <label>Barangay</label>
-                                    <InputField
-                                        name="barangay"
-                                        hint="Your barangay..."
-                                        value={ addNewAddressFormData.barangay }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Street address</label>
-                                    <InputField
-                                        name="street_address"
-                                        hint="Your street address..."
-                                        value={ addNewAddressFormData.street_address }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
-                                    <label>Postal code</label>
-                                    <InputField
-                                        name="postal_code"
-                                        hint=" "
-                                        value={ addNewAddressFormData.postal_code }
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_billing"
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default billing address
-                                </label>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_shipping"
-                                        onChange={ handleAddNewAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default shipping address
-                                </label>
-                            
-                        </div>
-                        
-                        <div className={ styles['modal-ctas'] }>
-                            <Button 
-                                type="secondary" 
-                                label="Cancel" 
-                                action={() => {
-                                    setIsModalOpen(false);
-                                    resetAddNewAddressFormData();
-                                }} 
-                            />
-                            <Button 
-                                type="primary" 
-                                label={ 'Add new address' } 
-                                action={ handleAddNewAddressSubmit }
-                                disabled={
-                                    !addNewAddressFormData.full_name ||
-                                    !addNewAddressFormData.province ||
-                                    !addNewAddressFormData.city ||
-                                    !addNewAddressFormData.barangay ||
-                                    !addNewAddressFormData.street_address ||
-                                    !addNewAddressFormData.phone_number ||
-                                    !addNewAddressFormData.postal_code
-                                }
-                            />
-                        </div>
-                    </Modal>
-
-                    <Modal
-                        isOpen={ isModalOpen && modalType === 'edit-address-modal' }
-                        onClose={ () => setIsModalOpen(false) }
-                        label={ 'Edit address' }
-                    >
-                        <div className={ styles['notice'] }>
-                            <i className='fa-solid fa-triangle-exclamation'></i>
-                            <p>Setting this address as your default billing or shipping will replace your current default. Only one address can be set as default for each.</p>
-                        </div>
-
-                        <div className={ styles['inputs-container'] }>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Full name</label>
-                                    <InputField
-                                        name="full_name"
-                                        hint="Your full name..."
-                                        value={ editAddressFormData.full_name }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={styles['input-wrapper']} style={{ width: '24rem' }}>
-                                    <label>Phone number</label>
-                                    <InputField
-                                        name="phone_number"
-                                        hint="Your phone number..."
-                                        value={ editAddressFormData.phone_number }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>Province</label>
-                                    <InputField
-                                        name="province"
-                                        hint="Your province..."
-                                        value={ editAddressFormData.province }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] }>
-                                    <label>City</label>
-                                    <InputField
-                                        name="city"
-                                        hint="Your city..."
-                                        value={ editAddressFormData.city }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-                                    
-                                <div className={styles['input-wrapper']}>
-                                    <label>Barangay</label>
-                                    <InputField
-                                        name="barangay"
-                                        hint="Your barangay..."
-                                        value={ editAddressFormData.barangay }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className={ styles['input-wrapper-horizontal'] }>
-
-                                <div className={styles['input-wrapper']}>
-                                    <label>Street address</label>
-                                    <InputField
-                                        name="street_address"
-                                        hint="Your street address..."
-                                        value={ editAddressFormData.street_address }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className={ styles['input-wrapper'] } style={{ width: '8rem' }}>
-                                    <label>Postal code</label>
-                                    <InputField
-                                        name="postal_code"
-                                        hint=" "
-                                        value={ editAddressFormData.postal_code }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        isSubmittable={ false }
-                                        type="text"
-                                    />
-                                </div>
-
-                            </div>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_billing"
-                                        checked={ editAddressFormData.is_default_billing }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default billing address
-                                </label>
-
-                                <label className={ styles['checkbox-container'] }>
-                                    <input
-                                        type="checkbox"
-                                        name="is_default_shipping"
-                                        checked={ editAddressFormData.is_default_shipping }
-                                        onChange={ handleEditAddressFormInputChange }
-                                        className={ styles['checkbox'] }
-                                    />
-                                    <span className={ styles['checkmark'] }></span>
-                                    Set as default shipping address
-                                </label>
-                            
-                        </div>
-                        
-                        <div className={ styles['modal-ctas'] }>
-                            <Button 
-                                type="secondary" 
-                                label="Cancel" 
-                                action={() => {
-                                    setIsModalOpen(false);
-                                    resetEditAddressFormData();
-                                }} 
-                            />
-                            <Button 
-                                type="primary" 
-                                label={ 'Update address' } 
-                                action={ handleEditAddressSubmit }
-                                disabled={
-                                    !editAddressFormData.full_name ||
-                                    !editAddressFormData.province ||
-                                    !editAddressFormData.city ||
-                                    !editAddressFormData.barangay ||
-                                    !editAddressFormData.street_address ||
-                                    !editAddressFormData.phone_number ||
-                                    !editAddressFormData.postal_code
-                                }
-                            />
-                        </div>
-                    </Modal>
-
-                    <Modal label='Delete Address Confirmation' isOpen={ isModalOpen && modalType === 'delete-address-confirmation' } onClose={ () => setIsModalOpen(false) }>
-                        <p className={ styles['modal-info'] }>You are about to <strong>permanently delete your address</strong>. This action cannot be reversed. Are you absolutely sure you want to proceed?</p>
-                        <div className={ styles['modal-ctas'] }>
-                            <Button
-                                label='Confirm'
-                                type='secondary'
-                                action={ () => {
-                                    setIsModalOpen(false);
-                                    handleAddressRemoval();
-                                }}
-                            />
-                            <Button
-                                label='Cancel'
-                                type='primary'
-                                action={ () => {
-                                    setModalType('');
-                                    setIsModalOpen(false);
-                                }}
-                            />
-                        </div>
-                    </Modal>
-                </>
-            )}
-
         </>
     );
 };

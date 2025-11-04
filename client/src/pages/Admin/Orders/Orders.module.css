@@ -799,3 +799,125 @@
 .status-cancelled { color: #ef4444; }
 .status-returned { color: #f97316; }
 .status-refunded { color: #6b7280; }
+
+.divider-horizontal {
+    background-color: var(--bg-outline);
+    height: 1px;
+    width: 100%;
+    margin: 2rem 0;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.analytics-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.analytics-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--bg-outline);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.analytics-card-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--bg-outline);
+    padding-bottom: 1rem;
+}
+
+.analytics-card-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--tg-primary);
+    margin: 0;
+}
+
+.chart-container {
+    flex: 1;
+    height: 280px;
+    width: 100%;
+    position: relative;
+}
+
+.stats-card {
+    min-height: 280px;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    height: 250px;
+    align-content: start;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tg-primary);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--tg-secondary);
+    font-weight: 500;
+}
+
+@media only screen and (max-width: 1024px) {
+    .analytics-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .quick-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .analytics-card {
+        padding: 1rem;
+        min-height: 300px;
+    }
+    
+    .chart-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .chart-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .analytics-card-header h3 {
+        font-size: 1rem;
+    }
+}

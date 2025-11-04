@@ -23,7 +23,7 @@ export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
     const { showToast } = useToast();
     const { clearSelectedCartItems } = useCart();
     const { products, refreshProducts } = useProducts();
-    const { setNotification } = useNotifications();
+    const { notifyOrderUpdate } = useNotifications();
     const { logOrderCreate } = auditLoggers;
 
     const generateOrderNumber = () => {
@@ -121,11 +121,13 @@ export const CheckoutProvider = ({ children, auditLoggers = {} }) => {
 
             setCurrentOrder(data);
             showToast(`Order ${data.order_number} placed successfully!`, 'success');
-
-            await setNotification({
-                type: 'orders',
-                title: 'Order Successful',
-                message: `Your new order is ${ data.order_number }. It is now pending.`
+            
+            await notifyOrderUpdate({
+                action: "order_pending",
+                orderNumber: data.order_number,
+                additionalDetails: {
+                    amount: totalAmount
+                }
             });
 
             const productNames = orderData.items

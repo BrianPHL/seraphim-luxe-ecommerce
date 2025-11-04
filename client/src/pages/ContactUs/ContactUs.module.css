@@ -1,39 +1,43 @@
 @import url('../../index.css');
 
 .wrapper {
+    display: flex;
     flex-direction: column;
     padding: 12rem 16rem 6rem 16rem;
-    display: flex;
     gap: 4rem;
 }
 
 .header {
+    display: flex;
     flex-direction: column;
     align-self: flex-start;
-    display: flex;
     gap: 1rem;
-    & > button {
-        align-self: flex-start;
-    }
-    & > h1 {
-        font-weight: 700;
-        font-size: 1.25rem;
-        color: var(--tg-primary);
-    }
+}
+
+.header > button {
+    align-self: flex-start;
+}
+
+.header > h1 {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--tg-primary);
 }
 
 .content {
-    grid-template-columns: 1fr;
     display: grid;
+    grid-template-columns: 1fr;
     width: 100%;
     gap: 3rem;
     margin: 0 auto;
+    align-items: center;
 }
 
-@media (min-width: 992px) {
-    .content {
-        grid-template-columns: 1fr 1fr;
-    }
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%; 
 }
 
 .contact-info h2 {
@@ -41,17 +45,11 @@
     font-size: 1.8rem;
     color: var(--tg-primary);
     margin-bottom: 1rem;
-    position: relative;
-    left: 10px; 
 }
-
 .contact-info > p {
     color: var(--tg-secondary);
     font-size: 1.1rem;
-    margin-bottom: 2rem;
-    line-height: 1.6;
-    position: relative;
-    left: 10px; 
+    margin-bottom: 1.5rem;
 }
 
 .contact-details {
@@ -71,27 +69,29 @@
     font-weight: 600;
     font-size: 1.2rem;
     color: var(--tg-primary);
-    margin: 0 0 0.5rem 0;
+    
 }
 
 .contact-item p {
     color: var(--tg-secondary);
-    margin: 0;
     line-height: 1.5;
+    white-space: pre-line;
 }
 
 .form-section {
     background: var(--bg-secondary);
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--bg-outline);
+    height: fit-content;
 }
 
 .form-section h2 {
     font-weight: 600;
     font-size: 1.8rem;
     color: var(--tg-primary);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     position: relative;
     left: 10px;
 }
@@ -136,25 +136,6 @@
     min-height: 120px;
 }
 
-.submit-btn {
-    background: var(--accent-base);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 1rem;
-    position: relative;
-    left: 20px; 
-}
-
-.submit-btn:hover {
-    background: var(--accent-hover);
-}
-
 .loading {
     display: flex;
     flex-direction: column;
@@ -173,34 +154,74 @@
     margin-bottom: 1rem;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.errorBanner {
-    background: #ffebee;
+.error {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: #ffebee;
     color: #c62828;
     padding: 1rem;
     border-radius: 8px;
-    text-align: center;
-    margin-bottom: 2rem;
     border: 1px solid #f44336;
+    margin-bottom: 1.5rem;
 }
 
-@media only screen and (max-width: 1575px) {
+.error i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.error p {
+    margin: 0;
+    font-weight: 500;
+}
+
+.form-notice {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--accent-base);
+    border-radius: 0.5rem;
+    align-items: center;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    & > i {
+        color: var(--accent-base);
+    }
+    & > p {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--tg-primary);
+    }
+}
+
+@media (min-width: 992px) {
+    .content {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+    
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-self: center;
+    }
+}
+
+@media only screen and (max-width: 1690px) {
 
     .wrapper { padding: 12rem 8rem 6rem 8rem; }
 
 }
 
-@media only screen and (max-width: 1320px) {
+@media only screen and (max-width: 1430px) {
 
     .wrapper { padding: 8rem 4rem 4rem 4rem; }
 
 }
 
-@media only screen and (max-width: 1230px) {
+@media only screen and (max-width: 1300px) {
 
     .wrapper { padding: 14rem 2rem 2rem 2rem; }
 
@@ -211,29 +232,12 @@
         padding: 1rem;
     }
     
-    .banner {
-        height: 200px;
+    .content {
+        align-items: stretch;
     }
     
-    .header h1 {
-        font-size: 2rem;
-    }
-    
-    .contact-info h2 {
-        font-size: 1.5rem;
-    }
-    
-    .form-section {
-        padding: 1.5rem;
-    }
-    
-    
-    .header,
-    .contact-info h2,
-    .contact-info > p,
-    .form-section h2,
-    .submit-btn {
-        left: 0;
+    .contact-info {
+        justify-content: flex-start;
     }
 }
 

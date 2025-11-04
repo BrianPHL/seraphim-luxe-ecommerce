@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Accounts.module.css';
 import { Button, Modal, InputField, TableHeader, TableFooter } from '@components';
-import { useAuth, useToast } from '@contexts';
+import { useAuth, useToast, useAnalytics } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { CUSTOMER_FILTER_CONFIG, ADMIN_FILTER_CONFIG, getErrorMessage } from '@utils';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -16,13 +20,16 @@ const Accounts = () => {
     const queryAdminPage = parseInt(searchParams.get('adminPage') || '1', 10);
     const queryAdminSort = searchParams.get('adminSort') || 'Sort by: Name (A-Z)';
     const queryAdminSearch = searchParams.get('adminSearch') || '';
-    const { user, userList, fetchUsers, suspendAccount, editAccount, signUp, remove, updatePersonalInfo } = useAuth();
+    
+    const { user, userList, fetchUsers, suspendAccount, signUp, remove, updatePersonalInfo } = useAuth();
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('');
     const [selectedAccount, setSelectedAccount] = useState(null);
+    const [selectedReportLabel, setSelectedReportLabel] = useState('All Reports');
+    
     const [accountDetails, setAccountDetails] = useState({
         id: '',
         first_name: '',
@@ -35,6 +42,20 @@ const Accounts = () => {
 
     const customerAccounts = userList.filter(account => account.role === 'customer');
     const adminAccounts = userList.filter(account => account.role === 'admin');
+
+    const { 
+        chartType,
+        selectedReports, 
+        setSelectedReports,
+        chartOptions,
+        shouldShowReport,
+        generateAccountsAnalyticsData,
+        analyticsData,
+        userRegistrationsData,
+        accountTypesData,
+        accountStatusAnalyticsData
+    } = useAnalytics();
+    
 
     const {
         data: filteredCustomers,
@@ -88,19 +109,19 @@ const Accounts = () => {
 
     const handleAddAdmin = async () => {
 
-            const result = await signUp({
-                email: accountDetails.email,
-                firstName: accountDetails.first_name,
-                lastName: accountDetails.last_name,
-                phoneNumber: accountDetails.phone_number,
-                password: accountDetails.password,
-                role: accountDetails.role
-            });
-            
-            if (result.error)
-                showToast(getErrorMessage(result.error.code), 'error');
-            
-            closeModal();
+        const result = await signUp({
+            email: accountDetails.email,
+            firstName: accountDetails.first_name,
+            lastName: accountDetails.last_name,
+            phoneNumber: accountDetails.phone_number,
+            password: accountDetails.password,
+            role: accountDetails.role
+        });
+        
+        if (result.error)
+            showToast(getErrorMessage(result.error.code), 'error');
+        
+        closeModal();
     };
 
     const handleDeleteAdmin = async () => {
@@ -110,42 +131,6 @@ const Accounts = () => {
             closeModal();
         }
     };
-
-    useEffect(() => {
-        if (customerSearchValue !== queryCustomerSearch) {
-            handleCustomerSearchChange(queryCustomerSearch);
-        }
-    }, [queryCustomerSearch]);
-
-    useEffect(() => {
-        if (customerSortValue !== queryCustomerSort) {
-            handleCustomerSortChange(queryCustomerSort);
-        }
-    }, [queryCustomerSort]);
-
-    useEffect(() => {
-        if (customerCurrentPage !== queryCustomerPage) {
-            handleCustomerPageChange(queryCustomerPage);
-        }
-    }, [queryCustomerPage]);
-
-    useEffect(() => {
-        if (adminSearchValue !== queryAdminSearch) {
-            handleAdminSearchChange(queryAdminSearch);
-        }
-    }, [queryAdminSearch]);
-
-    useEffect(() => {
-        if (adminSortValue !== queryAdminSort) {
-            handleAdminSortChange(queryAdminSort);
-        }
-    }, [queryAdminSort]);
-
-    useEffect(() => {
-        if (adminCurrentPage !== queryAdminPage) {
-            handleAdminPageChange(queryAdminPage);
-        }
-    }, [queryAdminPage]);
 
     const updateCustomerSearchParams = ({ page, sort, search }) => {
         const params = new URLSearchParams(searchParams);
@@ -197,10 +182,6 @@ const Accounts = () => {
         updateAdminSearchParams({ page });
     };
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
     const openModal = (type, account = null) => {
         setModalType(type);
         setSelectedAccount(account);
@@ -250,6 +231,52 @@ const Accounts = () => {
             day: 'numeric'
         });
     };
+
+    useEffect(() => {
+        if (customerSearchValue !== queryCustomerSearch) {
+            handleCustomerSearchChange(queryCustomerSearch);
+        }
+    }, [queryCustomerSearch]);
+
+    useEffect(() => {
+        if (customerSortValue !== queryCustomerSort) {
+            handleCustomerSortChange(queryCustomerSort);
+        }
+    }, [queryCustomerSort]);
+
+    useEffect(() => {
+        if (customerCurrentPage !== queryCustomerPage) {
+            handleCustomerPageChange(queryCustomerPage);
+        }
+    }, [queryCustomerPage]);
+
+    useEffect(() => {
+        if (adminSearchValue !== queryAdminSearch) {
+            handleAdminSearchChange(queryAdminSearch);
+        }
+    }, [queryAdminSearch]);
+
+    useEffect(() => {
+        if (adminSortValue !== queryAdminSort) {
+            handleAdminSortChange(queryAdminSort);
+        }
+    }, [queryAdminSort]);
+
+    useEffect(() => {
+        if (adminCurrentPage !== queryAdminPage) {
+            handleAdminPageChange(queryAdminPage);
+        }
+    }, [queryAdminPage]);
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    useEffect(() => {
+        if (userList.length > 0) {
+            generateAccountsAnalyticsData(userList, customerAccounts, adminAccounts);
+        }
+    }, [userList, customerAccounts, adminAccounts, generateAccountsAnalyticsData]);
 
     const renderModal = () => {
         if (!isModalOpen) return null;
@@ -317,12 +344,12 @@ const Accounts = () => {
                                     <p><strong>Last Login:</strong> {formatDate(selectedAccount.last_login)}</p>
                                 )}
                                 <p>
-                                <strong>Status:</strong>{' '}
-                                {selectedAccount.is_suspended === 1 ? (
-                                    <span style={{ color: 'var(--error-foreground)' }}>Suspended</span>
-                                ) : (
-                                    <span style={{ color: 'var(--success-foreground)' }}>Active</span>
-                                )}
+                                    <strong>Status:</strong>{' '}
+                                    {selectedAccount.is_suspended === 1 ? (
+                                        <span style={{ color: 'var(--error-foreground)' }}>Suspended</span>
+                                    ) : (
+                                        <span style={{ color: 'var(--success-foreground)' }}>Active</span>
+                                    )}
                                 </p>
                             </span>
                         </div>
@@ -527,18 +554,18 @@ const Accounts = () => {
                             <Button
                                 type="icon"
                                 icon="fa-solid fa-ban"
-                                action={() => handleSuspendAccount(account.id, true) }
+                                action={() => handleSuspendAccount(account.id, true)}
                                 externalStyles={styles['modal-warn']}
                                 title="Suspend account"
-                                disabled={ user.email === account.email }
+                                disabled={user.email === account.email}
                             />
                         ) : (
                             <Button
                                 type="icon"
                                 icon="fa-solid fa-circle-check"
-                                action={() => handleSuspendAccount(account.id, false) }
+                                action={() => handleSuspendAccount(account.id, false)}
                                 title="Re-activate account"
-                                disabled={ user.email === account.email }
+                                disabled={user.email === account.email}
                             />
                         )
 
@@ -550,7 +577,7 @@ const Accounts = () => {
                             action={() => openModal('delete-admin-confirmation', account)}
                             title="Delete admin account"
                             externalStyles={styles['modal-warn']}
-                            disabled={ user.email === account.email }
+                            disabled={user.email === account.email}
                         />
                     )}
                 </div>
@@ -560,39 +587,161 @@ const Accounts = () => {
 
     return (
         <div className={styles['wrapper']}>
-
-            <div className={ styles['section'] }>
-
+            <div className={styles['section']}>
                 <h2>Overview</h2>
-
-                <div className={ styles['overview'] }>
-
-                    <div className={ styles['overview-item'] }>
-                        <div className={ styles['overview-item-header'] }>
+                <div className={styles['overview']}>
+                    <div className={styles['overview-item']}>
+                        <div className={styles['overview-item-header']}>
                             <h3>Accounts</h3>
                         </div>
-                        <h2>{ userList.length }</h2>
+                        <h2>{userList.length}</h2>
                     </div>
-
-                    <div className={ styles['overview-item'] }>
-                        <div className={ styles['overview-item-header'] }>
+                    <div className={styles['overview-item']}>
+                        <div className={styles['overview-item-header']}>
                             <h3>Customers</h3>
                         </div>
-                        <h2>{ userList.filter(user => user.role === 'customer').length }</h2>
+                        <h2>{userList.filter(user => user.role === 'customer').length}</h2>
                     </div>
-
-                    <div className={ styles['overview-item'] }>
-                        <div className={ styles['overview-item-header'] }>
+                    <div className={styles['overview-item']}>
+                        <div className={styles['overview-item-header']}>
                             <h3>Admins</h3>
                         </div>
-                        <h2>{ userList.filter(user => user.role === 'admin').length }</h2>
+                        <h2>{userList.filter(user => user.role === 'admin').length}</h2>
                     </div>
-
                 </div>
-
             </div>
 
-            <div className={ styles['divider-horizontal'] }></div>
+            <div className={styles['divider-horizontal']}></div>
+
+            {/* Analytics Section */}
+            <div className={styles['section']}>
+                <div className={styles['section-header']}>
+                    <h2>Account Analytics</h2>
+                    <div className={styles['chart-controls']}>
+                        <Button
+                            id='accounts-report-dropdown'
+                            type='secondary'
+                            label={`Report: ${selectedReportLabel}`}
+                            icon='fa-solid fa-chart-column'
+                            dropdownPosition='right'
+                            options={[
+                                {
+                                    label: 'All Reports',
+                                    action: () => {
+                                        setSelectedReports(['all']);
+                                        setSelectedReportLabel('All Reports');
+                                    }
+                                },
+                                {
+                                    label: 'User Registrations',
+                                    action: () => {
+                                        setSelectedReports(['registrations']);
+                                        setSelectedReportLabel('User Registrations');
+                                    }
+                                },
+                                {
+                                    label: 'Account Types',
+                                    action: () => {
+                                        setSelectedReports(['types']);
+                                        setSelectedReportLabel('Account Types');
+                                    }
+                                },
+                                {
+                                    label: 'Account Status',
+                                    action: () => {
+                                        setSelectedReports(['status']);
+                                        setSelectedReportLabel('Account Status');
+                                    }
+                                },
+                                {
+                                    label: 'Quick Statistics',
+                                    action: () => {
+                                        setSelectedReports(['statistics']);
+                                        setSelectedReportLabel('Quick Statistics');
+                                    }
+                                }
+                            ]}
+                        />
+                        <Button
+                            type='secondary'
+                            label={`Chart Type: ${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`}
+                            icon='fa-solid fa-chart-line'
+                            disabled={true}
+                        />
+                    </div>
+                </div>
+                
+                <div className={styles['analytics-container']}>
+                    {shouldShowReport('registrations') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>User Registrations (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={userRegistrationsData && userRegistrationsData.labels ? userRegistrationsData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('types') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Account Types Distribution</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={accountTypesData && accountTypesData.labels ? accountTypesData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+                    
+                    {shouldShowReport('status') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Account Status Overview</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={accountStatusAnalyticsData && accountStatusAnalyticsData.labels ? accountStatusAnalyticsData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('statistics') && (
+                        <div className={`${styles['analytics-card']} ${styles['stats-card']}`}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Quick Statistics</h3>
+                            </div>
+                            <div className={styles['quick-stats']}>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {analyticsData.userRegistrations.reduce((sum, item) => sum + item.customers + item.admins, 0)}
+                                    </span>
+                                    <span className={styles['stat-label']}>New Users (7 days)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {userList.filter(user => user.email_verified).length}
+                                    </span>
+                                    <span className={styles['stat-label']}>Verified Accounts</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {((userList.filter(user => user.email_verified).length / Math.max(userList.length, 1)) * 100).toFixed(1)}%
+                                    </span>
+                                    <span className={styles['stat-label']}>Verification Rate</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {userList.filter(user => !user.is_suspended).length}
+                                    </span>
+                                    <span className={styles['stat-label']}>Active Accounts</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className={styles['divider-horizontal']}></div>
 
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
@@ -645,7 +794,7 @@ const Accounts = () => {
                 />
             </div>
 
-            <div className={ styles['divider-horizontal'] }></div>
+            <div className={styles['divider-horizontal']}></div>
 
             <div className={styles['section']}>
                 <div className={styles['section-header']}>

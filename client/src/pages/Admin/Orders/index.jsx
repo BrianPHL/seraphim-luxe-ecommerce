@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import styles from './Orders.module.css';
 import { Button, Modal, TableHeader, TableFooter } from '@components';
-import { useOrders, useToast, useAuth } from '@contexts';
+import { useOrders, useToast, useAuth, useAnalytics } from '@contexts';
+import { useDropdown } from '@contexts';
 import { useDataFilter, usePagination } from '@hooks';
 import { ORDER_FILTER_CONFIG } from '@utils';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register( CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend );
 
 const ITEMS_PER_PAGE = 10;
 
@@ -39,6 +44,7 @@ const Orders = () => {
     } = useOrders();
 
     const { showToast } = useToast();
+    const { setOpenDropdownId } = useDropdown();
 
     const {
         data: filteredOrders,
@@ -67,7 +73,30 @@ const Orders = () => {
     const [dateRange, setDateRange] = useState({
         startDate: '',
         endDate: ''
-    })
+    });
+    const [selectedReportLabel, setSelectedReportLabel] = useState('All Reports');
+
+
+    const { 
+        chartType, 
+        setChartType, 
+        selectedReports, 
+        setSelectedReports,
+        chartOptions,
+        colorPalettes,
+        handleReportFilterChange,
+        shouldShowReport,
+        generateAnalyticsData,
+        generateOrdersAnalyticsData,
+        todaySalesData,
+        dailySalesData,
+        orderStatusData,       
+        monthlyRevenueData,
+        paymentMethodsData
+    } = useAnalytics();
+
+    // REMOVE: Local analyticsData state - using context now
+    // const [analyticsData, setAnalyticsData] = useState({...});
 
     useEffect(() => {
         if (searchValue !== querySearch) {
@@ -669,6 +698,29 @@ const Orders = () => {
         }
     };
 
+    useEffect(() => {
+        if (recentOrders) {
+            
+            generateAnalyticsData([], []); 
+            
+            generateOrdersAnalyticsData(recentOrders);
+        }
+    }, [recentOrders, generateOrdersAnalyticsData, generateAnalyticsData]);
+
+    const quickStats = useMemo(() => {
+        const totalSales7Days = todaySalesData.datasets?.[0]?.data?.reduce((sum, val) => sum + val, 0) || 0;
+        const totalOrders7Days = todaySalesData.datasets?.[1]?.data?.reduce((sum, val) => sum + val, 0) || 0;
+        const todaysSales = todaySalesData.datasets?.[0]?.data?.reduce((sum, val) => sum + val, 0) || 0;
+        const averageOrderValue = totalOrders7Days > 0 ? totalSales7Days / totalOrders7Days : 0;
+
+        return {
+            totalSales7Days,
+            totalOrders7Days,
+            todaysSales,
+            averageOrderValue
+        };
+    }, [todaySalesData]);
+
     if (loading) {
         return (
             <div className={styles['wrapper']}>
@@ -713,6 +765,183 @@ const Orders = () => {
                     </div>
                 </div>
             </div>
+
+            <div className={styles['divider-horizontal']}></div>
+
+            <div className={styles['section']}>
+                <div className={styles['section-header']}>
+                    <h2>Order Analytics</h2>
+                    <div className={styles['chart-controls']}>
+                        <Button
+                            id='orders-report-dropdown'
+                            type='secondary'
+                            label={`Report: ${selectedReportLabel}`}
+                            icon='fa-solid fa-chart-column'
+                            dropdownPosition='right'
+                            options={[
+                                {
+                                    label: 'All Reports',
+                                    action: () => {
+                                        setSelectedReports(['all']);
+                                        setSelectedReportLabel('All Reports');
+                                    }
+                                },
+                                {
+                                    label: 'Today Sales',
+                                    action: () => {
+                                        setSelectedReports(['today']);
+                                        setSelectedReportLabel('Today Sales');
+                                    }
+                                },
+                                {
+                                    label: 'Daily Sales',
+                                    action: () => {
+                                        setSelectedReports(['sales']);
+                                        setSelectedReportLabel('Daily Sales');
+                                    }
+                                },
+                                {
+                                    label: 'Order Status Trends',
+                                    action: () => {
+                                        setSelectedReports(['status']);
+                                        setSelectedReportLabel('Order Status Trends');
+                                    }
+                                },
+                                {
+                                    label: 'Monthly Revenue',
+                                    action: () => {
+                                        setSelectedReports(['revenue']);
+                                        setSelectedReportLabel('Monthly Revenue');
+                                    }
+                                },
+                                {
+                                    label: 'Quick Statistics',
+                                    action: () => {
+                                        setSelectedReports(['statistics']);
+                                        setSelectedReportLabel('Quick Statistics');
+                                    }
+                                },
+                                {
+                                    label: 'Payment Methods',
+                                    action: () => {
+                                        setSelectedReports(['payment']);
+                                        setSelectedReportLabel('Payment Methods');
+                                    }
+                                }
+                            ]}
+                        />
+                        <Button
+                            type='secondary'
+                            label={`Chart Type: ${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`}
+                            icon='fa-solid fa-chart-line'
+                            disabled={true}
+                        />
+                    </div>
+                </div>
+                
+                <div className={styles['analytics-container']}>
+
+                    {shouldShowReport('today') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Today's Sales by Hour</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={todaySalesData && todaySalesData.labels ? todaySalesData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('sales') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Daily Sales & Orders (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={dailySalesData && dailySalesData.labels ? dailySalesData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('status') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Order Status Timeline</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={orderStatusData && orderStatusData.labels ? orderStatusData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('revenue') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Monthly Revenue Trends</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={monthlyRevenueData && monthlyRevenueData.labels ? monthlyRevenueData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('payment') && (
+                        <div className={styles['analytics-card']}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Payment Methods Usage (Last 7 Days)</h3>
+                            </div>
+                            <div className={styles['chart-container']}>
+                                <Line data={paymentMethodsData && paymentMethodsData.labels ? paymentMethodsData : { labels: [], datasets: [] }} options={chartOptions} />
+                            </div>
+                        </div>
+                    )}
+
+                    {shouldShowReport('statistics') && (
+                        <div className={`${styles['analytics-card']} ${styles['stats-card']}`}>
+                            <div className={styles['analytics-card-header']}>
+                                <h3>Quick Statistics</h3>
+                            </div>
+                            <div className={styles['quick-stats']}>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        ₱{quickStats.totalSales7Days.toLocaleString('en-PH', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total Sales (7 days)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        {quickStats.totalOrders7Days}
+                                    </span>
+                                    <span className={styles['stat-label']}>Total Orders (7 days)</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        ₱{quickStats.averageOrderValue.toLocaleString('en-PH', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}
+                                    </span>
+                                    <span className={styles['stat-label']}>Average Order Value</span>
+                                </div>
+                                <div className={styles['stat-item']}>
+                                    <span className={styles['stat-value']}>
+                                        ₱{quickStats.todaysSales.toLocaleString('en-PH', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}
+                                    </span>
+                                    <span className={styles['stat-label']}>Today's Sales</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className={styles['divider-horizontal']}></div>
 
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
@@ -1064,51 +1293,51 @@ const Orders = () => {
                         </div>
                         <div className={styles['modal-ctas']}>
                             <div className={styles['button-group-horizontal']}>
-                                <Button
-                                    type="secondary"
-                                    label="Close"
-                                    action={() => setIsModalOpen(false)}
-                                />
-                                <Button
-                                    type="secondary"
-                                    label="Print Invoice"
-                                    action={() => handlePrintInvoice(selectedOrder)}
-                                />
-                                <Button
-                                    type="secondary"
-                                    label="Print Packing Slip"
-                                    action={() => handlePrintPackingSlip(selectedOrder)}
-                                />
+                            <Button
+                                type="secondary"
+                                label="Close"
+                                action={() => setIsModalOpen(false)}
+                            />
+                            <Button
+                                type="secondary"
+                                label="Print Invoice"
+                                action={() => handlePrintInvoice(selectedOrder)}
+                            />
+                            <Button
+                                type="secondary"
+                                label="Print Packing Slip"
+                                action={() => handlePrintPackingSlip(selectedOrder)}
+                            />
+                        </div>
+                        {(selectedOrder.status === 'delivered' || selectedOrder.status === 'cancelled') && (
+                            <Button
+                                type="primary"
+                                label="Process Refund"
+                                action={() => {
+                                    setIsModalOpen(false);
+                                    handleRefund(selectedOrder);
+                                }}
+                                externalStyles={styles['modal-warn']}
+                            />
+                        )}
+                        {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'refunded' && (
+                            <div className={styles['status-buttons']}>
+                                {orderStatuses
+                                    .filter(status => status !== selectedOrder.status)
+                                    .map(status => (
+                                        <Button
+                                            key={status}
+                                            type="primary"
+                                            label={`Mark as ${status.charAt(0).toUpperCase() + status.slice(1)}`}
+                                            action={() => {
+                                                setIsModalOpen(false);
+                                                handleUpdateStatus(selectedOrder, status);
+                                            }}
+                                            disabled={ !ORDER_STATUS_CHAIN[selectedOrder.status]?.includes(status) }
+                                        />
+                                    ))}
                             </div>
-                            {(selectedOrder.status === 'delivered' || selectedOrder.status === 'cancelled') && (
-                                <Button
-                                    type="primary"
-                                    label="Process Refund"
-                                    action={() => {
-                                        setIsModalOpen(false);
-                                        handleRefund(selectedOrder);
-                                    }}
-                                    externalStyles={styles['modal-warn']}
-                                />
-                            )}
-                            {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'refunded' && (
-                                <div className={styles['status-buttons']}>
-                                    {orderStatuses
-                                        .filter(status => status !== selectedOrder.status)
-                                        .map(status => (
-                                            <Button
-                                                key={status}
-                                                type="primary"
-                                                label={`Mark as ${status.charAt(0).toUpperCase() + status.slice(1)}`}
-                                                action={() => {
-                                                    setIsModalOpen(false);
-                                                    handleUpdateStatus(selectedOrder, status);
-                                                }}
-                                                disabled={ !ORDER_STATUS_CHAIN[selectedOrder.status]?.includes(status) }
-                                            />
-                                        ))}
-                                </div>
-                            )}
+                        )}
                         </div>
                     </>
                 )}
