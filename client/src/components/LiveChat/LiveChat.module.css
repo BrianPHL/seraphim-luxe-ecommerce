@@ -213,11 +213,9 @@
 }
 
 .chat-item-label {
-    font-weight: 800;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05rem;
-    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--tg-secondary);
 }
 
 @media only screen and (max-width: 720px) {

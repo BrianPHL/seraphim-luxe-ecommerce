@@ -284,7 +284,7 @@ const LiveChat = () => {
                                         data-role={isCustomer ? 'customer' : 'agent'}
                                     >
                                         <span className={styles['chat-item-label']}>
-                                            {isCustomer ? 'Customer' : (isAI ? 'Seraphim AI' : 'You')}
+                                            {isCustomer ? 'Customer' : (isAI ? 'Seraphim Luxe AI' : 'You')}
                                         </span>
                                         {msg.message}
                                     </p>
