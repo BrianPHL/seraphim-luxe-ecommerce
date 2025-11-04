@@ -1,0 +1,234 @@
+@import url('../../index.css');
+
+.wrapper {
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    display: flex;
+    height: 60vh;
+    border: 1px solid var(--bg-outline);
+}
+
+.list {
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: scroll;
+    display: flex;
+    border-right: 1px solid var(--bg-outline);
+    width: 16rem;
+}
+
+.list-header {
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 1rem;
+    color: var(--tg-primary);
+}
+
+.list-container {
+    flex-direction: column;
+    display: flex;
+}
+
+.list-item {
+    flex-direction: column;
+    transition: 0.25s ease all;
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.list-item.active {
+    background-color: var(--bg-hover);
+}
+
+.list-item:hover {
+    background-color: var(--bg-outline);
+    cursor: pointer;
+}
+
+.list-item-header {
+    justify-content: space-between;
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.list-item-name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 800;
+    overflow: hidden;
+    font-size: 0.875rem;
+    color: var(--tg-primary);
+}
+
+.list-item-status {
+    border-radius: 1rem;
+    flex-shrink: 0;
+    height: 0.8rem;
+    width: 0.8rem;
+}
+
+.list-item-status.active {
+    background-color: var(--success-foreground);
+}
+
+.list-item-status.idle {
+    background-color: transparent;
+    border: 2px solid var(--success-foreground);
+}
+
+.list-item-status.concluded {
+    background-color: var(--error-foreground);
+}
+
+.list-item-message {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.875rem;
+    overflow: hidden;
+    color: var(--tg-secondary);
+}
+
+.list-item-date {
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--tg-secondary);
+}
+
+.chat {
+    flex-direction: column;
+    display: flex;
+    width: 100%;
+}
+
+.chat-header {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--bg-outline);
+    align-items: center;
+    display: flex;
+    padding: 1rem;
+}
+
+.chat-header-info {
+    flex-direction: column;
+    display: flex;
+    gap: 0.25rem;
+}
+
+.chat-header-info-name {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--tg-primary);
+}
+
+.chat-header-info-status {
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    align-self: flex-start;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.chat-header-info-status.active {
+    background-color: var(--success-background);
+    color: var(--success-foreground);
+}
+
+.chat-header-info-status.idle {
+    background-color: transparent;
+    border: 2px solid var(--success-background);
+    color: var(--success-foreground);
+}
+
+.chat-header-info-status.concluded {
+    background-color: var(--error-background);
+    color: var(--error-foreground);
+}
+
+.chat-container {
+    flex-direction: column;
+    overflow-y: scroll;
+    padding: 1rem;
+    display: flex;
+    height: 100%;
+    gap: 1rem;
+}
+
+.chat-item {
+    border-radius: 0.25rem;
+    font-weight: 600;
+    align-items: center;
+    font-size: 0.875rem;
+    display: flex;
+    padding: 0.5rem;
+    border: 1px solid var(--bg-outline);
+    width: 75%;
+    color: var(--tg-primary);
+    gap: 0.5rem;
+}
+
+.chat-item[data-role='agent'] {
+    align-self: flex-start;
+}
+
+.chat-item[data-role='customer'] {
+    background-color: var(--bg-outline);
+    flex-direction: row-reverse;
+    align-self: flex-end;
+}
+
+.chat-controls {
+    border-top: 1px solid var(--bg-outline);
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+@media only screen and (max-width: 720px) {
+
+    .list {
+        width: 100%;
+    }
+
+    .wrapper {
+        flex-direction: column;
+    }
+
+}
+
+/* Add to the end of the file */
+
+.chat-placeholder {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    display: flex;
+    height: 100%;
+    gap: 1rem;
+    padding: 2rem;
+    color: var(--tg-secondary);
+}
+
+.chat-placeholder h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--tg-primary);
+}
+
+.chat-placeholder p {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.chat-item-label {
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    flex-shrink: 0;
+}
