@@ -160,7 +160,6 @@ export const NotificationsProvider = ({ children }) => {
             markAsRead,
             markAllAsRead,
             deleteNotification,
-            sseConnected,
             
             // Notification preferences
             notificationPreferences,
