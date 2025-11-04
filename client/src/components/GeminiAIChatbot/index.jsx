@@ -32,7 +32,7 @@ const GeminiAIChatbot = () => {
                 originalId: msg.id,
                 source: 'seraphim-ai',
                 role: msg.message_type === 'user' ? 'user' : 'agent',
-                senderLabel: msg.message_type === 'user' ? 'You' : 'AI',
+                senderLabel: msg.message_type === 'user' ? 'You' : 'Seraphim Luxe AI',
                 message: msg.message,
                 timestamp: new Date(msg.created_at).getTime(),
                 created_at: msg.created_at
@@ -614,7 +614,7 @@ const GeminiAIChatbot = () => {
                                             {
                                                 (isLoading || isTyping) && chatbotState === 'seraphim-ai' && (
                                                     <p className={ styles['message'] } data-role="agent">
-                                                        <span className={ styles['message-label'] }>AI</span>
+                                                        <span className={ styles['message-label'] }>Seraphim Luxe AI</span>
                                                         <em>Typing...</em>
                                                     </p>
                                                 )
