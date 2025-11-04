@@ -65,7 +65,7 @@ export const SSEProvider = ({ children }) => {
             return;
         }
     
-        if (['contact_submitted', 'contact_replied'].includes(eventType)) {
+        if (['new_support_ticket', 'support_ticket_message', 'ticket_agent_assigned', 'ticket_status_updated'].includes(eventType)) {
             broadcast('contacts', data);
             return;
         }
