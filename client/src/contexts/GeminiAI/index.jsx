@@ -222,39 +222,47 @@ export const GeminiAIProvider = ({ children }) => {
     }, [user, products, cartItems, wishlistItems, orders, categories, promotions, WEBSITE_KNOWLEDGE]);
 
     const sendGeminiAICustomerChat = async (message) => {
-
         try {
-
             const context = await aggregateCustomerContext();
-            
             if (!context) {
-                throw new Error('Failed to aggregate customer context');
+                throw new Error('Failed to load context');
             }
 
-            const response = await fetch(`/api/gemini-ai/${ user.id }/customer`, {
+            const response = await fetchWithTimeout(`/api/gemini-ai/${user.id}/customer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     context: context,
                     message: message,
                     session_id: Date.now()
-                })
+                }),
+                timeout: 35000
             });
 
             if (!response.ok) {
-                throw new Error('Failed to send customer chat message');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error?.message || errorData.message || 'Failed to send message');
             }
 
             const data = await response.json();
             return data;
 
         } catch (err) {
+            console.error('Send customer chat error:', err);
 
-            console.error('GeminiAI context sendGeminiAICustomerChat function error: ', err);
+            if (err.message.includes('high demand') || err.message.includes('quota')) {
+                showToast('AI assistant is busy. Please wait a moment and try again.', 'warning');
+            } else if (err.message.includes('timeout')) {
+                showToast('Request timed out. Please try a shorter question.', 'error');
+            } else {
+                showToast('Unable to reach AI assistant. Please try again.', 'error');
+            }
+
             throw err;
 
-        } finally { setIsLoading(false) }
-
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const aggregateAdminContext = useCallback(async () => {
@@ -356,52 +364,59 @@ export const GeminiAIProvider = ({ children }) => {
                 userType: 'admin'
             };
 
-    } catch (err) {
-        console.error('Aggregate admin context error:', err);
-        return {
-            contextBlob: `ERROR: Unable to aggregate admin context | TIMESTAMP: ${new Date().toISOString()}`,
-            timestamp: new Date().toISOString(),
-            userType: 'admin'
-        };
-    } finally {
-        setIsLoading(false);
-    }
-}, [products, allOrders, auditLogs, promotions, categories]);
+        } catch (err) {
+            console.error('Aggregate admin context error:', err);
+            return {
+                contextBlob: `ERROR: Unable to aggregate admin context | TIMESTAMP: ${new Date().toISOString()}`,
+                timestamp: new Date().toISOString(),
+                userType: 'admin'
+            };
+        } finally {
+            setIsLoading(false);
+        }
+    }, [products, allOrders, auditLogs, promotions, categories]);
 
     const sendGeminiAIAdminChat = async (message) => {
-
         try {
-
             const context = await aggregateAdminContext();
-
             if (!context) {
-                throw new Error('Failed to aggregate admin context');
+                throw new Error('Failed to load context');
             }
 
-            const response = await fetch(`/api/gemini-ai/${ user.id }/admin`, {
+            const response = await fetchWithTimeout(`/api/gemini-ai/${user.id}/admin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     context: context,
                     message: message,
                     session_id: Date.now()
-                })
+                }),
+                timeout: 35000
             });
 
             if (!response.ok) {
-                throw new Error('Failed to send admin chat message');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error?.message || errorData.message || 'Failed to send message');
             }
 
             const data = await response.json();
             return data;
 
         } catch (err) {
+            console.error('Send admin chat error:', err);
 
-            console.error('GeminiAI context sendGeminiAIAdminChat function error: ', err);
+            if (err.message.includes('high demand') || err.message.includes('quota')) {
+                showToast('AI assistant is busy. Please wait a moment and try again.', 'warning');
+            } else if (err.message.includes('timeout')) {
+                showToast('Request timed out. Please try a shorter question.', 'error');
+            } else {
+                showToast('Unable to reach AI assistant. Please try again.', 'error');
+            }
+
             throw err;
-
-        } finally { setIsLoading(false) }
-
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {

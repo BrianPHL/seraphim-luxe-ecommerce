@@ -76,52 +76,46 @@ router.get('/history/:user_id', async (req, res) => {
 });
 
 router.post('/:user_id/:user_type', async (req, res) => {
-
     const connection = await pool.getConnection();
 
     try {
-
         await connection.beginTransaction();
 
         const { user_id, user_type } = req.params;
         const { context, message, session_id } = req.body;
 
         await connection.query(
-            `
-                INSERT INTO
-                    chatbot_sessions
-                (user_id, session_id, user_type, message_type, message, context_blob)
-                VALUES (?, ?, ?, ?, ?, ?)
-            `,
-            [ user_id, session_id, user_type, 'user', message, context.contextBlob ]
+            `INSERT INTO chatbot_sessions (user_id, session_id, user_type, message_type, message, context_blob)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [user_id, session_id, user_type, 'user', message, context.contextBlob]
         );
 
         const AIResponse = await geminiAI(context, message, user_type);
 
         await connection.query(
-            `
-                INSERT INTO
-                    chatbot_sessions
-                (user_id, session_id, user_type, message_type, message, context_blob)
-                VALUES (?, ?, ?, ?, ?, ?)
-            `,
-            [ user_id, session_id, user_type, 'chatbot', AIResponse, context.contextBlob ]
+            `INSERT INTO chatbot_sessions (user_id, session_id, user_type, message_type, message, context_blob)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [user_id, session_id, user_type, 'chatbot', AIResponse, context.contextBlob]
         );
 
         await connection.commit();
 
         res.status(200).json({ data: AIResponse });
 
-    } catch(err) {
+    } catch (err) {
+        await connection.rollback();
+        console.error('Gemini AI route error:', err);
 
-        connection.rollback();
-        console.error('gemini-ai route GET /:user_id/:user_type endpoint error:', err);
-        res.status(500).json({ error: err });
+        res.status(err.status === 429 ? 429 : 500).json({ 
+            error: {
+                message: err.message || 'Failed to process your request',
+                code: err.status || 500
+            }
+        });
 
     } finally {
         connection.release();
     }
-
 });
 
 export default router;
