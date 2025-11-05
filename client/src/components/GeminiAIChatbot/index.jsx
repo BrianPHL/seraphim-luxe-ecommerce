@@ -565,12 +565,12 @@ const GeminiAIChatbot = () => {
                                                     let senderLabel = chat.senderLabel;
 
                                                     if (chat.source === 'seraphim-ai') {
-                                                        senderLabel = chat.role === 'user' ? (user?.name || 'You') : 'AI';
+                                                        senderLabel = chat.role === 'user' ? (user?.name || 'You') : 'Seraphim Luxe AI';
                                                     } else if (chat.source === 'live-agent') {
                                                         if (chat.role === 'user') {
-                                                            senderLabel = user?.name || 'You';
+                                                            senderLabel = 'You (Customer)';
                                                         } else if (chat.role === 'agent') {
-                                                            senderLabel = chat.senderName || agentName || 'Agent';
+                                                            senderLabel = `${ chat.senderName } (Agent)` || `${ agentName } (Agent)` || 'Agent';
                                                         }
                                                     }
 

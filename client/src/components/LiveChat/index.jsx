@@ -299,11 +299,11 @@ const LiveChat = () => {
                                     let senderLabel;
                                     if (isCustomer) {
                                         const customer = customers[selectedRoom?.customer_id];
-                                        senderLabel = customer?.name || 'Customer';
+                                        senderLabel = `${ customer?.name } (Customer)` || 'Customer';
                                     } else if (isAI) {
-                                        senderLabel = 'AI';
+                                        senderLabel = 'Seraphim Luxe AI';
                                     } else {
-                                        senderLabel = msg.sender_name || user?.name || 'Agent';
+                                        senderLabel = 'You (Agent)'
                                     }
                                     
                                     return (
@@ -311,7 +311,7 @@ const LiveChat = () => {
                                             key={`${msg.source || 'live'}-${msg.id}`}
                                             className={styles['chat-item']} 
                                             data-role={isCustomer ? 'customer' : 'agent'}
-                                            data-source={msg.source}
+                                            data-source={msg.source || 'live'}
                                         >
                                             <span className={styles['chat-item-label']}>
                                                 {senderLabel}

@@ -410,7 +410,8 @@ router.post('/room/:room_id/claim', async (req, res) => {
                 sender_type: 'system',
                 message: `Agent ${agentName} has joined the chat.`,
                 is_read: false,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                sender_name: agentName
             }
         });
 
@@ -480,6 +481,11 @@ router.post('/room/:room_id/message', async (req, res) => {
             [room_id, sender_id, sender_type, message]
         );
 
+        const [sender] = await connection.query(
+            `SELECT name FROM accounts WHERE id = ?`,
+            [sender_id]
+        );
+
         const messageData = {
             id: result.insertId,
             room_id: parseInt(room_id),
@@ -487,7 +493,8 @@ router.post('/room/:room_id/message', async (req, res) => {
             sender_type: sender_type,
             message: message,
             is_read: false,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            sender_name: sender[0]?.name || null
         };
 
         const recipientId = sender_type === 'customer' ? room.agent_id : room.customer_id;
