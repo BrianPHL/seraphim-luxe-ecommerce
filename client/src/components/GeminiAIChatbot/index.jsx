@@ -7,14 +7,14 @@ const GeminiAIChatbot = () => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ message, setMessage ] = useState('');
-    const [ unifiedChatHistory, setUnifiedChatHistory ] = useState([]); // NEW: Single source of truth
+    const [ unifiedChatHistory, setUnifiedChatHistory ] = useState([]);
     const [ isTyping, setIsTyping ] = useState(false);
     const [ chatbotState, setChatbotState ] = useState('seraphim-ai');
     const [ liveChatRoom, setLiveChatRoom ] = useState(null);
     const [ agentStatus, setAgentStatus ] = useState('waiting');
     const [ agentName, setAgentName ] = useState(null);
 
-    const chatBodyRef = useRef(null);
+    const messagesContainerRef = useRef(null); // CHANGED: More specific ref name
     const disconnectCalledRef = useRef(false);
     
     const { user, setIsPopupOpen } = useAuth();
@@ -43,7 +43,6 @@ const GeminiAIChatbot = () => {
                 created_at: msg.created_at
             };
         } else if (source === 'live-agent') {
-            // Check if it's a system message first
             const isSystem = msg.sender_type === 'system';
 
             return {
@@ -53,7 +52,7 @@ const GeminiAIChatbot = () => {
                 role: isSystem ? 'system' : (msg.sender_type === 'customer' ? 'user' : 'agent'),
                 senderLabel: isSystem ? 'System' : (msg.sender_type === 'customer' ? 'You' : 'Agent'),
                 senderName: msg.sender_name || null,
-                sender_type: msg.sender_type, // Preserve sender_type for system messages
+                sender_type: msg.sender_type,
                 message: msg.message,
                 timestamp: new Date(msg.created_at).getTime(),
                 created_at: msg.created_at,
@@ -62,14 +61,12 @@ const GeminiAIChatbot = () => {
         }
     };
 
-    // NEW: Merge and sort messages from both sources
     const mergeAndSortMessages = (aiMessages, liveMessages) => {
         const normalizedAI = aiMessages.map(msg => normalizeMessage(msg, 'ai'));
         const normalizedLive = liveMessages.map(msg => normalizeMessage(msg, 'live-agent'));
         
         const combined = [...normalizedAI, ...normalizedLive];
         
-        // Sort by timestamp (oldest first)
         return combined.sort((a, b) => a.timestamp - b.timestamp);
     };
 
@@ -138,7 +135,6 @@ const GeminiAIChatbot = () => {
                 const room = existingRoomData.data;
                 setLiveChatRoom(room);
 
-                // Store agent name if present
                 if (room.agent_name) {
                     setAgentName(room.agent_name);
                 }
@@ -200,22 +196,18 @@ const GeminiAIChatbot = () => {
             const result = await response.json();
             const liveMessages = result.data || [];
         
-            // DEBUG: Log the messages to see what we're getting
             console.log('🔍 Live messages from backend:', liveMessages);
             liveMessages.forEach(msg => {
                 console.log(`Message: "${msg.message}" | sender_type: "${msg.sender_type}"`);
             });
         
-            // Extract agent name from messages if present
             const agentMessage = liveMessages.find(msg => msg.sender_type === 'agent' || msg.sender_type === 'system');
             if (agentMessage && agentMessage.sender_name) {
                 setAgentName(agentMessage.sender_name);
             }
         
-            // Merge with existing AI messages
             const merged = mergeAndSortMessages(chatHistory, liveMessages);
             
-            // DEBUG: Log the normalized messages
             console.log('🔍 Normalized merged messages:', merged);
             merged.forEach(msg => {
                 console.log(`Message: "${msg.message}" | role: "${msg.role}" | sender_type: "${msg.sender_type}"`);
@@ -248,7 +240,6 @@ const GeminiAIChatbot = () => {
                 created_at: new Date().toISOString()
             };
 
-            // Add to unified history
             const normalizedTemp = normalizeMessage(tempMessage, 'live-agent');
             setUnifiedChatHistory(prev => [...prev, normalizedTemp]);
             setTimeout(scrollToBottom, 100);
@@ -270,7 +261,6 @@ const GeminiAIChatbot = () => {
             const result = await response.json();
             const normalizedResult = normalizeMessage(result.data, 'live-agent');
             
-            // Replace temp message with real one
             setUnifiedChatHistory(prev => 
                 prev.map(msg => 
                     msg.id === normalizedTemp.id ? normalizedResult : msg
@@ -281,7 +271,6 @@ const GeminiAIChatbot = () => {
             console.error('[GeminiChatbot] Send live chat message error:', err);
             showToast('Failed to send message. Please try again.', 'error');
 
-            // Remove failed temp message
             setUnifiedChatHistory(prev => 
                 prev.filter(msg => !msg.id.toString().startsWith('temp-'))
             );
@@ -302,9 +291,10 @@ const GeminiAIChatbot = () => {
         }
     };
 
+    // UPDATED: Scroll to bottom function - now targets the messages container
     const scrollToBottom = () => {
-        if (chatBodyRef.current) {
-            chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
     };
 
@@ -372,7 +362,6 @@ const GeminiAIChatbot = () => {
             showToast('An error occured when processing your Chatbot request. Please try again later.', 'error');
 
             setIsTyping(false);
-            // Remove last user message on error
             setUnifiedChatHistory(prev => prev.slice(0, -1));
         }
     };
@@ -396,27 +385,22 @@ const GeminiAIChatbot = () => {
         }
     };
 
-    // NEW: Sync AI chat history to unified store
     useEffect(() => {
         if (chatHistory.length > 0 && chatbotState === 'seraphim-ai') {
-            // Load live chat messages if room exists
             if (liveChatRoom) {
                 loadLiveChatMessages(liveChatRoom.id);
             } else {
-                // Only AI messages
                 const normalized = chatHistory.map(msg => normalizeMessage(msg, 'ai'));
                 setUnifiedChatHistory(normalized);
             }
         }
     }, [chatHistory]);
 
-    // Load both histories on modal open
     useEffect(() => {
         if (isOpen && user) {
             fetchChatHistory();
             fetchPredefinedQuestions();
             
-            // Check for active live chat room
             if (isCustomer) {
                 fetch(`/api/live-chat/room/active/${user.id}`, {
                     method: 'GET',
@@ -439,7 +423,6 @@ const GeminiAIChatbot = () => {
                             setAgentStatus('waiting');
                         }
                         
-                        // Load and merge live messages
                         fetch(`/api/live-chat/room/${room.id}/messages?user_id=${user.id}`)
                             .then(res => res.json())
                             .then(result => {
@@ -455,9 +438,10 @@ const GeminiAIChatbot = () => {
         }
     }, [isOpen, user]);
 
+    // UPDATED: Auto-scroll when messages change
     useEffect(() => {
         scrollToBottom();
-    }, [unifiedChatHistory, isTyping]);
+    }, [unifiedChatHistory]);
 
     useEffect(() => {
         if (isOpen) {
@@ -466,7 +450,6 @@ const GeminiAIChatbot = () => {
         }
     }, [isOpen, message, isLoading, isTyping, chatbotState]);
 
-    // SSE subscription for live chat updates
     useEffect(() => {
         if (!user?.id || !isCustomer) return;
 
@@ -494,7 +477,7 @@ const GeminiAIChatbot = () => {
             } else if (data.type === 'agent_joined') {
                 console.log('Agent joined event received:', data);
                 setAgentStatus('connected');
-                setAgentName(data.agent_name); // Store agent name
+                setAgentName(data.agent_name);
                 setLiveChatRoom(prev => {
                     if (!prev) return prev;
                     return { ...prev, agent_id: data.agent_id, agent_name: data.agent_name, status: 'active' };
@@ -510,9 +493,6 @@ const GeminiAIChatbot = () => {
                     });
                     setTimeout(scrollToBottom, 100);
                 }
-
-            } else if (data.type === 'room_reactivated') {
-                // ... rest of existing code
             }
         });
 
@@ -563,15 +543,14 @@ const GeminiAIChatbot = () => {
                         />
                     </div>
                     <div className={ styles['chat-body'] }>
-                        <div className={ styles['chat-body-upper'] } ref={ chatBodyRef }>
+                        <div className={ styles['chat-body-upper'] }>
                             <>
                                 {
                                     hasMessages ? (
-                                        <div className={ styles['messages'] }>
+                                        <div className={ styles['messages'] } ref={ messagesContainerRef }>
                                                 { unifiedChatHistory.map((chat) => {
                                                     const isSystemMessage = chat.sender_type === 'system';
 
-                                                    // Render system messages differently
                                                     if (isSystemMessage) {
                                                         return (
                                                             <div 
@@ -583,17 +562,14 @@ const GeminiAIChatbot = () => {
                                                         );
                                                     }
 
-                                                    // Regular chat messages
                                                     let senderLabel = chat.senderLabel;
 
-                                                    // Customize label based on source and role
                                                     if (chat.source === 'seraphim-ai') {
                                                         senderLabel = chat.role === 'user' ? (user?.name || 'You') : 'AI';
                                                     } else if (chat.source === 'live-agent') {
                                                         if (chat.role === 'user') {
                                                             senderLabel = user?.name || 'You';
                                                         } else if (chat.role === 'agent') {
-                                                            // Use the stored sender name from the message
                                                             senderLabel = chat.senderName || agentName || 'Agent';
                                                         }
                                                     }
