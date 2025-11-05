@@ -105,7 +105,7 @@ router.post('/:user_id/:user_type', async (req, res) => {
                 (user_id, session_id, user_type, message_type, message, context_blob)
                 VALUES (?, ?, ?, ?, ?, ?)
             `,
-            [ user_id, session_id, user_type, 'seraphim-ai', AIResponse, context.contextBlob ]
+            [ user_id, session_id, user_type, 'chatbot', AIResponse, context.contextBlob ]
         );
 
         await connection.commit();
