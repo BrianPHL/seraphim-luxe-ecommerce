@@ -695,43 +695,47 @@ const GeminiAIChatbot = () => {
                                 {
                                     hasMessages ? (
                                         <div className={ styles['messages'] } ref={ messagesContainerRef }>
-                                                { unifiedChatHistory.map((chat) => {
+                                                {unifiedChatHistory.map((chat) => {
                                                     const isSystemMessage = chat.sender_type === 'system';
-
+                                                
                                                     if (isSystemMessage) {
                                                         return (
                                                             <div 
-                                                                key={ chat.id } 
-                                                                className={ styles['system-message'] }
+                                                                key={chat.id} 
+                                                                className={styles['system-message']}
                                                             >
-                                                                { chat.message }
+                                                                {chat.message}
                                                             </div>
                                                         );
                                                     }
-
+                                                
                                                     let senderLabel = chat.senderLabel;
-
+                                                
                                                     if (chat.source === 'seraphim-ai') {
                                                         senderLabel = chat.role === 'user' ? (user?.name || 'You') : 'Seraphim Luxe AI';
                                                     } else if (chat.source === 'live-agent') {
                                                         if (chat.role === 'user') {
                                                             senderLabel = 'You (Customer)';
                                                         } else if (chat.role === 'agent') {
-                                                            senderLabel = `${ chat.senderName } (Agent)` || `${ agentName } (Agent)` || 'Agent';
+                                                            senderLabel = `${chat.senderName} (Agent)` || `${agentName} (Agent)` || 'Agent';
                                                         }
                                                     }
-
+                                                
                                                     return (
                                                         <p 
-                                                            key={ chat.id } 
-                                                            className={ styles['message'] } 
-                                                            data-role={ chat.role }
-                                                            data-source={ chat.source }
+                                                            key={chat.id} 
+                                                            className={styles['message']} 
+                                                            data-role={chat.role}
+                                                            data-source={chat.source}
                                                         >
-                                                            <span className={ styles['message-label'] }>
-                                                                { senderLabel }
+                                                            <span className={styles['message-label']}>
+                                                                {senderLabel}
                                                             </span>
-                                                            { chat.message }
+                                                            {chat.source === 'seraphim-ai' && chat.role === 'agent' ? (
+                                                                <span dangerouslySetInnerHTML={{ __html: chat.message }} />
+                                                            ) : (
+                                                                chat.message
+                                                            )}
                                                         </p>
                                                     );
                                                 })}
