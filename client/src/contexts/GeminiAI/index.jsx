@@ -148,67 +148,78 @@ export const GeminiAIProvider = ({ children }) => {
 
     }, [ user ]);
 
-    const aggregateCustomerContext = useCallback(async () => {
+const aggregateCustomerContext = useCallback(async () => {
+    try {
+        setIsLoading(true);
 
-        try {
+        const [productsResult, cartResult, wishlistResult, ordersResult, promotionsResult, categoriesResult] = await Promise.all([
+            refreshProducts(),
+            refreshCart(),
+            fetchWishlistItems(),
+            fetchOrders(),
+            fetchPromotions(),
+            fetchCategories()
+        ]);
 
-            setIsLoading(true);
+        const freshProducts = productsResult || products;
+        const freshCart = cartResult || cartItems;
+        const freshWishlist = wishlistResult || wishlistItems;
+        const freshOrders = ordersResult || orders;
+        const freshPromotions = promotionsResult || promotions;
+        const freshCategories = categoriesResult || categories;
 
-            const [ productsResult, cartResult, wishlistResult, ordersResult, promotionsResult, categoriesResult, auditLogsResult ] = await Promise.all([
-                refreshProducts(),
-                refreshCart(),
-                fetchWishlistItems(),
-                fetchOrders(),
-                fetchPromotions(),
-                fetchCategories(),
-                fetchAuditLogs({ limit: 100 })
-            ]);
+        const inStockProducts = freshProducts?.filter(p => p.stock_quantity > 0) || [];
+        const featuredProducts = inStockProducts.filter(p => p.is_featured);
+        const lowStockProducts = freshProducts?.filter(p => p.stock_quantity > 0 && p.stock_quantity <= p.stock_threshold) || [];
 
-            const freshProducts = productsResult || products;
-            const freshCart = cartResult || cartItems;
-            const freshWishlist = wishlistResult || wishlistItems;
-            const freshOrders = ordersResult || orders;
-            const freshPromotions = promotionsResult || promotions;
-            const freshCategories = categoriesResult || categories;
-            const freshAuditLogs = auditLogsResult?.logs || [];
+        const compactProductList = inStockProducts.map(p => 
+            `${p.label}|₱${p.price}|stock:${p.stock_quantity}|cat:${p.category_name || 'N/A'}`
+        ).join(';;');
 
-            const contextBlob = [
-                `USER_INFORMATION: ${ user?.name || 'Guest' } (${ user?.email || 'N/A' }) | Role: ${ user?.role || 'customer' } | Currency: ${ user?.currency || 'PHP' } | Gender: ${ user?.gender === 'undisclosed' ? 'Prefer not to say' : user?.gender }`,
-                `CART: ${freshCart?.length || 0} items - ${freshCart?.slice(0, 5)?.map(item => `${item.label}(qty:${item.quantity})`).join(', ') || 'Empty'}`,
-                `WISHLIST: ${freshWishlist?.length || 0} items - ${freshWishlist?.slice(0, 10)?.map(item => item.label).join(', ') || 'Empty'}`,
-                `ORDERS: ${freshOrders?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status})`).join(' | ') || 'None'}`,
-                `ORDER_STATUS_BREAKDOWN: Pending:${freshOrders?.filter(o => o.status === 'pending').length || 0} | Processing:${freshOrders?.filter(o => o.status === 'processing').length || 0} | Shipped:${freshOrders?.filter(o => o.status === 'shipped').length || 0} | Delivered:${freshOrders?.filter(o => o.status === 'delivered').length || 0} | Cancelled:${freshOrders?.filter(o => o.status === 'cancelled').length || 0}`,
-                `FEATURED_PRODUCTS: ${freshProducts?.filter(p => p.is_featured)?.slice(0, 8)?.map(p => `${p.label}(₱${p.price},stock:${p.stock_quantity})`).join(' | ') || 'None'}`,
-                `CATEGORIES: ${freshCategories?.filter(c => c.is_active)?.map(c => c.name).join(', ') || 'None'}`,
-                `ACTIVE_PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off)`).join(' | ') || 'None'}`,
-                `RECENT_ACTIVITY: ${freshAuditLogs?.filter(log => log.user_id === Number(user?.id))?.slice(0, 15)?.map(log => `${log.action_type}:${log.details?.substring(0, 30) || ''}`).join(' | ') || 'No activity'}`,
-                `ALL_PRODUCTS: ${freshProducts?.map(p => `${p.label}(₱${p.price},stock:${p.stock_quantity},sold:${p.orders_count || 0})`).join(' | ') || 'None'}`,
-                `LOW_STOCK: ${freshProducts?.filter(p => p.stock_quantity <= p.stock_threshold)?.slice(0, 5)?.map(p => `${p.label}(${p.stock_quantity} left)`).join(' | ') || 'None'}`,
-                `WEBSITE_NAVIGATION: ${Object.entries(WEBSITE_KNOWLEDGE.navigation).map(([key, value]) => `${key}: ${value}`).join(' | ')}`,
-                `ORDER_TRACKING_STEPS: ${WEBSITE_KNOWLEDGE.orderTracking.steps.join(' → ')}`,
-                `ORDER_STATUS_MEANINGS: ${Object.entries(WEBSITE_KNOWLEDGE.orderTracking.statusMeanings).map(([status, meaning]) => `${status}: ${meaning}`).join(' | ')}`,
-                `PAYMENT_METHODS: ${WEBSITE_KNOWLEDGE.paymentMethods.join(', ')}`,
-                `SHIPPING_INFO: ${WEBSITE_KNOWLEDGE.shippingInfo}`,
-                `RETURN_POLICY: ${WEBSITE_KNOWLEDGE.returnPolicy}`,
-                `SUPPORT_CONTACT: ${WEBSITE_KNOWLEDGE.supportContact}`
+        const detailedFeatured = featuredProducts.slice(0, 8).map(p => 
+            `${p.label}(₱${p.price}, stock:${p.stock_quantity}, ${p.description?.substring(0, 50) || ''})`
+        ).join(' | ');
 
-            ].join(' || ');
+        const orderSummary = freshOrders?.map(o => 
+            `#${o.order_number}|₱${o.total_amount}|${o.status}|${new Date(o.created_at).toLocaleDateString()}`
+        ).join(';;') || 'None';
 
-            return {
-                contextBlob,
-                timestamp: new Date().toISOString(),
-                userType: 'customer'
-            };
+        const contextBlob = [
+            `USER: ${user?.name || 'Guest'}(${user?.email || 'N/A'}) | ${user?.role || 'customer'}`,
+            `CART: ${freshCart?.length || 0} items - ${freshCart?.map(i => `${i.label}(x${i.quantity})`).join(', ') || 'Empty'}`,
+            `WISHLIST: ${freshWishlist?.length || 0} items - ${freshWishlist?.map(i => i.label).join(', ') || 'Empty'}`,
+            `ORDERS: ${orderSummary}`,
+            `FEATURED: ${detailedFeatured}`,
+            `ALL_IN_STOCK_PRODUCTS: ${compactProductList}`, // ALL products but compact
+            `LOW_STOCK: ${lowStockProducts.slice(0, 10).map(p => `${p.label}(${p.stock_quantity} left)`).join(' | ')}`,
+            `CATEGORIES: ${freshCategories?.filter(c => c.is_active)?.map(c => c.name).join(', ')}`,
+            `PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off)`).join(' | ')}`,
+            `NAVIGATION: ${Object.entries(WEBSITE_KNOWLEDGE.navigation).map(([k, v]) => `${k}: ${v.split(' - ')[1]}`).join(' | ')}`,
+            `ORDER_TRACKING: ${WEBSITE_KNOWLEDGE.orderTracking.steps.join(' → ')}`,
+            `STATUS_INFO: ${Object.entries(WEBSITE_KNOWLEDGE.orderTracking.statusMeanings).map(([k, v]) => `${k}: ${v}`).join(' | ')}`,
+            `PAYMENT: ${WEBSITE_KNOWLEDGE.paymentMethods.join(', ')}`,
+            `SHIPPING: ${WEBSITE_KNOWLEDGE.shippingInfo}`,
+            `RETURNS: ${WEBSITE_KNOWLEDGE.returnPolicy}`,
+            `SUPPORT: ${WEBSITE_KNOWLEDGE.supportContact}`
+        ].join(' || ');
 
-        } catch (err) {
-            console.error('GeminiAI context aggregateCustomerContext function error: ', err);
-            return {
-                contextBlob: `ERROR: Unable to aggregate context | USER: ${user?.name || 'Unknown'} | TIMESTAMP: ${new Date().toISOString()}`,
-                timestamp: new Date().toISOString(),
-                userType: 'customer'
-            };
-        }
-    }, [ user, cartItems, wishlistItems, orders, products, categories, promotions, auditLogs ]);
+        return {
+            contextBlob,
+            timestamp: new Date().toISOString(),
+            userType: 'customer'
+        };
+
+    } catch (err) {
+        console.error('Aggregate customer context error:', err);
+        return {
+            contextBlob: `ERROR: Context load failed | USER: ${user?.name}`,
+            timestamp: new Date().toISOString(),
+            userType: 'customer'
+        };
+    } finally {
+        setIsLoading(false);
+    }
+}, [user, products, cartItems, wishlistItems, orders, categories, promotions, WEBSITE_KNOWLEDGE]);
 
     const sendGeminiAICustomerChat = async (message) => {
 
@@ -246,66 +257,116 @@ export const GeminiAIProvider = ({ children }) => {
 
     };
 
-    const aggregateAdminContext = useCallback(async () => {
+const aggregateAdminContext = useCallback(async () => {
+    try {
+        setIsLoading(true);
 
-        try {
+        const [productsResult, ordersResult, promotionsResult, categoriesResult, hierarchyResult, auditLogsResult] = await Promise.all([
+            refreshProducts(),
+            fetchAllOrders(),
+            fetchPromotions(),
+            fetchCategories(),
+            fetchHierarchy(),
+            fetchAuditLogs({ limit: 100 })
+        ]);
 
-            const [ productsResult, ordersResult, promotionsResult, categoriesResult, hierarchyResult, auditLogsResult ] = await Promise.all([
-                refreshProducts(),
-                fetchAllOrders(),
-                fetchPromotions(),
-                fetchCategories(),
-                fetchHierarchy(),
-                fetchAuditLogs({ limit: 100 })
-            ]);
-    
-            const freshProducts = productsResult || products;
-            const freshOrders = ordersResult || allOrders;
-            const freshPromotions = promotionsResult || promotions;
-            const freshCategories = categoriesResult || categories;
-            const freshAuditLogs = auditLogsResult?.logs || [];
+        const freshProducts = productsResult || products;
+        const freshOrders = ordersResult || allOrders;
+        const freshPromotions = promotionsResult || promotions;
+        const freshCategories = categoriesResult || categories;
+        const freshAuditLogs = auditLogsResult?.logs || [];
 
-            const contextBlob = [
+        const pendingOrders = freshOrders?.filter(o => o.status === 'pending') || [];
+        const processingOrders = freshOrders?.filter(o => o.status === 'processing') || [];
+        const shippedOrders = freshOrders?.filter(o => o.status === 'shipped') || [];
+        const deliveredOrders = freshOrders?.filter(o => o.status === 'delivered') || [];
+        const cancelledOrders = freshOrders?.filter(o => o.status === 'cancelled') || [];
 
-                `ALL_ORDERS: ${freshOrders?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status},${order.payment_method})`).join(' | ') || 'None'}`,
-                `RECENT_ORDERS: ${freshOrders?.slice(0, 15)?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.status},${order.payment_method})`).join(' | ') || 'None'}`,
-                `PENDING_ORDERS: ${freshOrders?.filter(o => o.status === 'pending')?.slice(0, 10)?.map(order => `Order#${order.order_number}(₱${order.total_amount},${order.payment_method})`).join(' | ') || 'None'}`,
-                `PROCESSING_ORDERS: ${freshOrders?.filter(o => o.status === 'processing')?.slice(0, 10)?.map(order => `Order#${order.order_number}(₱${order.total_amount})`).join(' | ') || 'None'}`,
-                `ORDER_STATUS_BREAKDOWN: Pending:${freshOrders?.filter(o => o.status === 'pending').length || 0} | Processing:${freshOrders?.filter(o => o.status === 'processing').length || 0} | Shipped:${freshOrders?.filter(o => o.status === 'shipped').length || 0} | Delivered:${freshOrders?.filter(o => o.status === 'delivered').length || 0} | Cancelled:${freshOrders?.filter(o => o.status === 'cancelled').length || 0}`,
-                `TOP_PRODUCTS: ${freshProducts?.sort((a, b) => (b.orders_count || 0) - (a.orders_count || 0))?.slice(0, 10)?.map(p => `${p.label}(sold:${p.orders_count || 0},₱${parseFloat(p.total_revenue || 0).toFixed(2)})`).join(' | ') || 'None'}`,
-                `LOW_STOCK_ALERTS: ${freshProducts?.filter(p => p.stock_status === 'low_stock' || p.stock_quantity <= p.stock_threshold)?.map(p => `${p.label}(${p.stock_quantity}/${p.stock_threshold})`).join(' | ') || 'None'}`,
-                `NEEDS_RESTOCKING: ${freshProducts?.filter(p => p.stock_quantity === 0 || p.stock_quantity <= (p.stock_threshold * 0.5))?.map(p => `${p.label}(${p.stock_quantity} left, threshold:${p.stock_threshold})`).join(' | ') || 'None'}`,
-                `ALL_PRODUCTS: ${freshProducts?.map(p => `${p.label}(₱${p.price},stock:${p.stock_quantity},sold:${p.orders_count || 0},views:${p.views_count || 0})`).join(' | ') || 'None'}`,
-                `RECENT_ADMIN_ACTIVITY: ${freshAuditLogs?.filter(log => log.action_type?.includes('admin_'))?.slice(0, 20)?.map(log => `${log.action_type}:${log.details?.substring(0, 40) || ''}`).join(' | ') || 'No admin activity'}`,
-                `USER_ACTIVITY: ${freshAuditLogs?.slice(0, 30)?.map(log => `${log.user_id || 'Guest'}:${log.action_type}:${log.resource_type || ''}`).join(' | ') || 'No activity'}`,
-                `ACTIVE_PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off,products:${p.products?.length || 0})`).join(' | ') || 'None'}`,
-                `CATEGORIES: ${freshCategories?.map(c => `${c.name}(active:${c.is_active})`).join(', ') || 'None'}`,
-                `CATEGORY_PERFORMANCE: ${freshCategories?.map(cat => {
-                    const catProducts = freshProducts?.filter(p => p.category_id === cat.id);
-                    const revenue = catProducts?.reduce((sum, p) => sum + parseFloat(p.total_revenue || 0), 0);
-                    const totalSold = catProducts?.reduce((sum, p) => sum + (p.orders_count || 0), 0);
-                    return `${cat.name}(products:${catProducts?.length || 0},sold:${totalSold},revenue:₱${revenue.toFixed(2)})`;
-                }).join(' | ') || 'None'}`,
-                `REVENUE_DATA: Total:₱${freshProducts?.reduce((sum, p) => sum + (parseFloat(p.total_revenue) || 0), 0).toFixed(2) || '0.00'} | Top Revenue:${freshProducts?.sort((a, b) => (parseFloat(b.total_revenue) || 0) - (parseFloat(a.total_revenue) || 0))?.slice(0, 5)?.map(p => `${p.label}:₱${parseFloat(p.total_revenue || 0).toFixed(2)}`).join(',') || 'None'}`,
-                `TODAYS_METRICS: Orders:${freshOrders?.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString())?.length || 0} | Revenue:₱${freshOrders?.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString())?.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0).toFixed(2)}`
+        const compactAllOrders = freshOrders?.map(o => 
+            `#${o.order_number}|₱${o.total_amount}|${o.status}|${o.payment_method}|${new Date(o.created_at).toLocaleDateString()}`
+        ).join(';;') || 'None';
 
-            ].join(' || ');
+        const recentOrdersDetailed = freshOrders?.slice(0, 20).map(o => 
+            `Order#${o.order_number}(₱${o.total_amount}, ${o.status}, ${o.payment_method}, ${new Date(o.created_at).toLocaleDateString()})`
+        ).join(' | ') || 'None';
 
-            return {
-                contextBlob,
-                timestamp: new Date().toISOString(),
-                userType: 'admin'
-            };
+        const compactProductList = freshProducts?.map(p => 
+            `${p.label}|₱${p.price}|stock:${p.stock_quantity}|sold:${p.orders_count || 0}|rev:₱${parseFloat(p.total_revenue || 0).toFixed(2)}`
+        ).join(';;') || 'None';
 
-        } catch (err) {
-            console.error('GeminiAI context aggregateAdminContext function error: ', err);
-            return {
-                contextBlob: `ERROR: Unable to aggregate admin context | TIMESTAMP: ${new Date().toISOString()}`,
-                timestamp: new Date().toISOString(),
-                userType: 'admin'
-            };
-        }
-    }, [products, allOrders, auditLogs, promotions, categories]);
+        const topProducts = freshProducts?.sort((a, b) => (b.orders_count || 0) - (a.orders_count || 0))?.slice(0, 15) || [];
+        const topProductsDetailed = topProducts.map(p => 
+            `${p.label}(sold:${p.orders_count || 0}, revenue:₱${parseFloat(p.total_revenue || 0).toFixed(2)}, stock:${p.stock_quantity})`
+        ).join(' | ');
+
+        const lowStockItems = freshProducts?.filter(p => p.stock_quantity > 0 && p.stock_quantity <= p.stock_threshold) || [];
+        const outOfStock = freshProducts?.filter(p => p.stock_quantity === 0) || [];
+        const needsRestocking = freshProducts?.filter(p => p.stock_quantity <= (p.stock_threshold * 0.5)) || [];
+
+        const totalRevenue = freshProducts?.reduce((sum, p) => sum + (parseFloat(p.total_revenue) || 0), 0) || 0;
+        const todaysOrders = freshOrders?.filter(o => 
+            new Date(o.created_at).toDateString() === new Date().toDateString()
+        ) || [];
+        const todaysRevenue = todaysOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+        const topRevenueProducts = freshProducts?.sort((a, b) => 
+            (parseFloat(b.total_revenue) || 0) - (parseFloat(a.total_revenue) || 0)
+        ).slice(0, 10);
+
+        const categoryPerformance = freshCategories?.map(cat => {
+            const catProducts = freshProducts?.filter(p => p.category_id === cat.id) || [];
+            const revenue = catProducts.reduce((sum, p) => sum + parseFloat(p.total_revenue || 0), 0);
+            const totalSold = catProducts.reduce((sum, p) => sum + (p.orders_count || 0), 0);
+            return `${cat.name}|products:${catProducts.length}|sold:${totalSold}|rev:₱${revenue.toFixed(2)}|${cat.is_active ? 'active' : 'inactive'}`;
+        }).join(';;') || 'None';
+
+        const compactAuditLogs = freshAuditLogs?.slice(0, 50).map(log => 
+            `${log.user_id || 'System'}|${log.action_type}|${log.resource_type || 'N/A'}|${new Date(log.created_at).toLocaleDateString()}`
+        ).join(';;') || 'None';
+
+        const adminActivity = freshAuditLogs?.filter(log => 
+            log.action_type?.includes('admin_') || log.action_type?.includes('update_') || log.action_type?.includes('create_')
+        ).slice(0, 30).map(log => 
+            `${log.action_type}: ${log.details?.substring(0, 40) || 'N/A'}`
+        ).join(' | ') || 'No admin activity';
+
+        const contextBlob = [
+            `ALL_ORDERS_COMPACT: ${compactAllOrders}`,
+            `RECENT_ORDERS_DETAILED: ${recentOrdersDetailed}`,
+            `PENDING_ORDERS: ${pendingOrders.slice(0, 15).map(o => `#${o.order_number}(₱${o.total_amount}, ${o.payment_method})`).join(' | ') || 'None'}`,
+            `PROCESSING_ORDERS: ${processingOrders.slice(0, 15).map(o => `#${o.order_number}(₱${o.total_amount})`).join(' | ') || 'None'}`,
+            `ORDER_STATUS_COUNT: Pending:${pendingOrders.length} | Processing:${processingOrders.length} | Shipped:${shippedOrders.length} | Delivered:${deliveredOrders.length} | Cancelled:${cancelledOrders.length}`,
+            `ALL_PRODUCTS_COMPACT: ${compactProductList}`,
+            `TOP_PRODUCTS_DETAILED: ${topProductsDetailed}`,
+            `LOW_STOCK_ALERTS: ${lowStockItems.map(p => `${p.label}(${p.stock_quantity}/${p.stock_threshold})`).join(' | ') || 'None'}`,
+            `OUT_OF_STOCK: ${outOfStock.map(p => p.label).join(', ') || 'None'}`,
+            `NEEDS_RESTOCKING: ${needsRestocking.map(p => `${p.label}(${p.stock_quantity} left, threshold:${p.stock_threshold})`).join(' | ') || 'None'}`,
+            `CATEGORY_PERFORMANCE: ${categoryPerformance}`,
+            `CATEGORIES: ${freshCategories?.map(c => `${c.name}(${c.is_active ? 'active' : 'inactive'})`).join(', ') || 'None'}`,
+            `ACTIVE_PROMOTIONS: ${freshPromotions?.filter(p => p.is_active)?.map(p => `${p.title}(${p.discount}% off, products:${p.products?.length || 0})`).join(' | ') || 'None'}`,
+            `REVENUE_TOTAL: ₱${totalRevenue.toFixed(2)}`,
+            `TOP_REVENUE_PRODUCTS: ${topRevenueProducts.map(p => `${p.label}:₱${parseFloat(p.total_revenue || 0).toFixed(2)}`).join(', ')}`,
+            `TODAYS_METRICS: Orders:${todaysOrders.length} | Revenue:₱${todaysRevenue.toFixed(2)}`,
+            `ADMIN_ACTIVITY: ${adminActivity}`,
+            `USER_ACTIVITY_COMPACT: ${compactAuditLogs}`
+        ].join(' || ');
+
+        return {
+            contextBlob,
+            timestamp: new Date().toISOString(),
+            userType: 'admin'
+        };
+
+    } catch (err) {
+        console.error('Aggregate admin context error:', err);
+        return {
+            contextBlob: `ERROR: Unable to aggregate admin context | TIMESTAMP: ${new Date().toISOString()}`,
+            timestamp: new Date().toISOString(),
+            userType: 'admin'
+        };
+    } finally {
+        setIsLoading(false);
+    }
+}, [products, allOrders, auditLogs, promotions, categories]);
 
     const sendGeminiAIAdminChat = async (message) => {
 
