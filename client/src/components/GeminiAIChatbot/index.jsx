@@ -108,56 +108,47 @@ const GeminiAIChatbot = () => {
         const newState = chatbotState === 'seraphim-ai' ? 'live-agent' : 'seraphim-ai';
 
         if (chatbotState === 'live-agent' && newState === 'seraphim-ai' && liveChatRoom) {
-            // Send "switched to AI" system message
+            // Send TWO system messages: one for customer, one for admin
             try {
-                try {
-                    const switchMessageResponse = await fetch(`/api/live-chat/room/${liveChatRoom.id}/message`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            sender_id: user.id,
-                            sender_type: 'system',
-                            target_audience: 'customer',
-                            message: 'You switched to Seraphim Luxe AI Chatbot.'
-                        })
-                    });
+                // Customer message: "You switched to Seraphim Luxe AI Chatbot"
+                const customerMessageResponse = await fetch(`/api/live-chat/room/${liveChatRoom.id}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sender_id: user.id,
+                        sender_type: 'system',
+                        target_audience: 'customer',
+                        message: 'You switched to Seraphim Luxe AI Chatbot.'
+                    })
+                });
+            
+                if (customerMessageResponse.ok) {
+                    const customerResult = await customerMessageResponse.json();
                 
-                    if (switchMessageResponse.ok) {
-                        const switchResult = await switchMessageResponse.json();
-                    
-                        // Immediately add the system message to customer's chat
-                        const normalizedSwitch = normalizeMessage(switchResult.data, 'live-agent');
-                        setUnifiedChatHistory(prev => {
-                            const exists = prev.some(msg => msg.id === normalizedSwitch.id);
-                            if (exists) return prev;
-                            return [...prev, normalizedSwitch];
-                        });
-                        setTimeout(scrollToBottom, 100);
-                    }
-                
-                    // Wait to ensure SSE message is delivered to admin
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                
-                } catch (err) {
-                    console.error('[GeminiChatbot] Failed to send switch message:', err);
-                }
-
-                if (switchMessageResponse.ok) {
-                    const switchResult = await switchMessageResponse.json();
-
-                    // Immediately add the system message to customer's chat
-                    const normalizedSwitch = normalizeMessage(switchResult.data, 'live-agent');
+                    // Immediately add the customer message to customer's chat
+                    const normalizedCustomer = normalizeMessage(customerResult.data, 'live-agent');
                     setUnifiedChatHistory(prev => {
-                        const exists = prev.some(msg => msg.id === normalizedSwitch.id);
+                        const exists = prev.some(msg => msg.id === normalizedCustomer.id);
                         if (exists) return prev;
-                        return [...prev, normalizedSwitch];
+                        return [...prev, normalizedCustomer];
                     });
-                    setTimeout(scrollToBottom, 100);
                 }
+
+                // Admin message: "Customer switched to Seraphim Luxe AI Chatbot"
+                const adminMessageResponse = await fetch(`/api/live-chat/room/${liveChatRoom.id}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sender_id: user.id,
+                        sender_type: 'system',
+                        target_audience: 'admin',
+                        message: 'Customer switched to Seraphim Luxe AI Chatbot.'
+                    })
+                });
 
                 // Wait to ensure SSE message is delivered to admin
                 await new Promise(resolve => setTimeout(resolve, 300));
-
+            
             } catch (err) {
                 console.error('[GeminiChatbot] Failed to send switch message:', err);
             }
@@ -199,15 +190,18 @@ const GeminiAIChatbot = () => {
         } else {
             await fetchChatHistory();
             await fetchPredefinedQuestions();
+            setTimeout(scrollToBottom, 100);
         }
 
-        setIsSwitching(false);
+        setTimeout(() => {
+            setIsSwitching(false);
+        }, 500);
     };
 
     const initializeLiveChat = async () => {
         try {
             disconnectCalledRef.current = false;
-
+        
             const existingRoomResponse = await fetch(`/api/live-chat/room/active/${user.id}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
@@ -216,14 +210,14 @@ const GeminiAIChatbot = () => {
             if (existingRoomResponse.ok) {
                 const existingRoomData = await existingRoomResponse.json();
                 console.log('[GeminiChatbot] Found existing room:', existingRoomData.data);
-
+            
                 const room = existingRoomData.data;
                 setLiveChatRoom(room);
-
+            
                 if (room.agent_name) {
                     setAgentName(room.agent_name);
                 }
-
+            
                 if (room.agent_id && room.status === 'active') {
                     setAgentStatus('connected');
                     showToast('Reconnected to your chat session', 'success');
@@ -231,7 +225,46 @@ const GeminiAIChatbot = () => {
                     setAgentStatus('waiting');
                     showToast('Waiting for an agent...', 'info');
                 }
-
+            
+                // Send system messages when returning to existing room
+                try {
+                    // Customer message: "You switched to Live Agent mode"
+                    const customerMessageResponse = await fetch(`/api/live-chat/room/${room.id}/message`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sender_id: user.id,
+                            sender_type: 'system',
+                            target_audience: 'customer',
+                            message: 'You switched to Live Agent mode.'
+                        })
+                    });
+                
+                    if (customerMessageResponse.ok) {
+                        const customerResult = await customerMessageResponse.json();
+                        const normalizedCustomer = normalizeMessage(customerResult.data, 'live-agent');
+                        setUnifiedChatHistory(prev => {
+                            const exists = prev.some(msg => msg.id === normalizedCustomer.id);
+                            if (exists) return prev;
+                            return [...prev, normalizedCustomer];
+                        });
+                    }
+                
+                    // Admin message: "Customer switched to Live Agent mode"
+                    await fetch(`/api/live-chat/room/${room.id}/message`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sender_id: user.id,
+                            sender_type: 'system',
+                            target_audience: 'admin',
+                            message: 'Customer switched to Live Agent mode.'
+                        })
+                    });
+                } catch (err) {
+                    console.error('[GeminiChatbot] Failed to send switch message:', err);
+                }
+            
                 return;
             }
         
@@ -254,7 +287,7 @@ const GeminiAIChatbot = () => {
             console.log('[GeminiChatbot] Created new room:', result.data);
             setLiveChatRoom(result.data);
             setAgentStatus('waiting');
-
+        
             await loadLiveChatMessages(result.data.id);
         
             showToast('Connecting you with an agent...', 'info');

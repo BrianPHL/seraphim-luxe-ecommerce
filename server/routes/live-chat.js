@@ -477,7 +477,7 @@ router.post('/room/:room_id/message', async (req, res) => {
         await connection.beginTransaction();
         
         const { room_id } = req.params;
-        const { sender_id, sender_type, message, target_audience } = req.body;
+        const { sender_id, sender_type, message, target_audience } = req.body; // Add target_audience
 
         const [rooms] = await connection.query(
             `SELECT customer_id, agent_id, status FROM live_chat_rooms WHERE id = ?`,
@@ -529,7 +529,7 @@ router.post('/room/:room_id/message', async (req, res) => {
             room_id: parseInt(room_id),
             sender_id: parseInt(sender_id),
             sender_type: sender_type,
-            target_audience: messageAudience, // Include in response
+            target_audience: messageAudience,
             message: message,
             is_read: false,
             created_at: new Date().toISOString(),
