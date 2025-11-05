@@ -55,52 +55,59 @@
 .chat-body-upper {
     flex-direction: column;
     border-radius: 0.25rem;
+    position: relative;
     display: flex;
     height: 50vh;
     border: 1px solid var(--bg-outline);
     width: 100%;
     gap: 0rem;
-    position: relative;
 }
 
 .chat-body-upper .messages {
     flex-direction: column;
+    padding-bottom: 4rem;
     overflow-y: auto;
     padding: 0.5rem;
     display: flex;
     width: 100%;
-    gap: 0.5rem;
-    padding-bottom: 4rem;
+    gap: 1rem;
 }
 
 .chat-body-upper .message {
+    background-color: var(--bg-primary);
+    flex-direction: column;
     border-radius: 0.25rem;
-    font-weight: 600;
-    align-items: center;
+    font-weight: 500;
+    align-items: flex-start;
     font-size: 0.875rem;
     display: flex;
     padding: 0.5rem;
     border: 1px solid var(--bg-outline);
     width: 75%;
-    color: var(--tg-primary);
+    color: var(--tg-secondary);
     gap: 0.5rem;
 }
 
-.messages .message[data-role='agent'] {
-    background-color: var(--bg-hover);
+.messages .message[data-role='agent'][data-source='seraphim-ai'] {
+    border-left: 4px solid var(--success-foreground);
+    align-self: flex-start;
+}
+
+.messages .message[data-role='agent'][data-source='live-agent'] {
+    border-left: 4px solid var(--accent-base);
     align-self: flex-start;
 }
 
 .messages .message[data-role='user'] {
-    background-color: var(--bg-outline);
-    flex-direction: row-reverse;
+    border-right: 4px solid var(--accent-base);
+    align-items: flex-end;
     align-self: flex-end;
 }
 
 .chat-body-upper .message-label {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.875rem;
-    color: var(--tg-secondary);
+    color: var(--tg-primary);
 }
 
 .chat-body-upper .placeholder {

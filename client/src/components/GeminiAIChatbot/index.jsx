@@ -613,8 +613,8 @@ const GeminiAIChatbot = () => {
                                             ))}
                                             {
                                                 (isLoading || isTyping) && chatbotState === 'seraphim-ai' && (
-                                                    <p className={ styles['message'] } data-role="agent">
-                                                        <span className={ styles['message-label'] }>Seraphim Luxe AI</span>
+                                                    <p className={ styles['message'] } data-role="agent" data-source="seraphim-ai">
+                                                        <span className={ styles['message-label'] }>AI</span>
                                                         <em>Typing...</em>
                                                     </p>
                                                 )
