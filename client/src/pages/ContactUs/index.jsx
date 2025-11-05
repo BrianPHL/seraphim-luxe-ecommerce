@@ -275,7 +275,7 @@ const ContactUs = () => {
                                 e.preventDefault();
                                 handleSubmit(e);
                             }}
-                            disabled={!formData.name || !formData.email || !formData.subject || !formData.message}
+                            disabled={!user || !formData.name || !formData.email || !formData.subject || !formData.message}
                         />
                     </form>
                     {createdTicketId && (
