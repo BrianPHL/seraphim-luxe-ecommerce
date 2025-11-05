@@ -85,7 +85,7 @@
 .chat-body-upper .messages {
     flex-direction: column;
     padding: 0.5rem;
-    padding-bottom: 6rem;
+    padding-bottom: 4rem;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
@@ -155,7 +155,7 @@
     height: 100%;
     gap: 0.5rem;
     padding: 0.5rem;
-    padding-bottom: 6rem;
+    padding-bottom: 4rem;
 }
 
 .chat-body-upper .placeholder .placeholder-title {
