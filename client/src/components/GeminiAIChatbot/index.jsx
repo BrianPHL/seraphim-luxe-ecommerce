@@ -108,9 +108,87 @@ const GeminiAIChatbot = () => {
         const newState = chatbotState === 'seraphim-ai' ? 'live-agent' : 'seraphim-ai';
 
         if (chatbotState === 'live-agent' && newState === 'seraphim-ai' && liveChatRoom) {
-            await disconnectFromLiveChat(liveChatRoom.id);
-            disconnectCalledRef.current = false;
+            // Send "switched to AI" system message
+            try {
+                try {
+                    const switchMessageResponse = await fetch(`/api/live-chat/room/${liveChatRoom.id}/message`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sender_id: user.id,
+                            sender_type: 'system',
+                            target_audience: 'customer',
+                            message: 'You switched to Seraphim Luxe AI Chatbot.'
+                        })
+                    });
+                
+                    if (switchMessageResponse.ok) {
+                        const switchResult = await switchMessageResponse.json();
+                    
+                        // Immediately add the system message to customer's chat
+                        const normalizedSwitch = normalizeMessage(switchResult.data, 'live-agent');
+                        setUnifiedChatHistory(prev => {
+                            const exists = prev.some(msg => msg.id === normalizedSwitch.id);
+                            if (exists) return prev;
+                            return [...prev, normalizedSwitch];
+                        });
+                        setTimeout(scrollToBottom, 100);
+                    }
+                
+                    // Wait to ensure SSE message is delivered to admin
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                
+                } catch (err) {
+                    console.error('[GeminiChatbot] Failed to send switch message:', err);
+                }
 
+                if (switchMessageResponse.ok) {
+                    const switchResult = await switchMessageResponse.json();
+
+                    // Immediately add the system message to customer's chat
+                    const normalizedSwitch = normalizeMessage(switchResult.data, 'live-agent');
+                    setUnifiedChatHistory(prev => {
+                        const exists = prev.some(msg => msg.id === normalizedSwitch.id);
+                        if (exists) return prev;
+                        return [...prev, normalizedSwitch];
+                    });
+                    setTimeout(scrollToBottom, 100);
+                }
+
+                // Wait to ensure SSE message is delivered to admin
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+            } catch (err) {
+                console.error('[GeminiChatbot] Failed to send switch message:', err);
+            }
+
+            // Disconnect and send disconnect message
+            try {
+                const disconnectResponse = await fetch(`/api/live-chat/room/${liveChatRoom.id}/disconnect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customer_id: user.id })
+                });
+
+                if (disconnectResponse.ok) {
+                    const disconnectResult = await disconnectResponse.json();
+
+                    // Add disconnect message to customer's chat immediately
+                    if (disconnectResult.data) {
+                        const normalizedDisconnect = normalizeMessage(disconnectResult.data, 'live-agent');
+                        setUnifiedChatHistory(prev => {
+                            const exists = prev.some(msg => msg.id === normalizedDisconnect.id);
+                            if (exists) return prev;
+                            return [...prev, normalizedDisconnect];
+                        });
+                        setTimeout(scrollToBottom, 100);
+                    }
+                }
+            } catch (err) {
+                console.error('[GeminiChatbot] Disconnect error:', err);
+            }
+
+            disconnectCalledRef.current = false;
             await new Promise(resolve => setTimeout(resolve, 300));
         }
 
@@ -154,7 +232,6 @@ const GeminiAIChatbot = () => {
                     showToast('Waiting for an agent...', 'info');
                 }
 
-                await loadLiveChatMessages(room.id);
                 return;
             }
         
@@ -491,6 +568,36 @@ const GeminiAIChatbot = () => {
                 });
                 showToast(`${data.agent_name} has joined the chat`, 'success');
 
+                if (data.message) {
+                    const normalized = normalizeMessage(data.message, 'live-agent');
+                    setUnifiedChatHistory(prev => {
+                        const exists = prev.some(msg => msg.id === normalized.id);
+                        if (exists) return prev;
+                        return [...prev, normalized];
+                    });
+                    setTimeout(scrollToBottom, 100);
+                }
+            } else if (data.type === 'agent_concluded') {
+                console.log('Agent concluded chat, room returned to waiting');
+                setAgentStatus('disconnected');
+                setAgentName('');
+                setLiveChatRoom(prev => {
+                    if (!prev) return prev;
+                    return { ...prev, agent_id: null, status: 'waiting' };
+                });
+                showToast('Agent has concluded the session. Waiting for another agent...', 'info');
+
+                if (data.message) {
+                    const normalized = normalizeMessage(data.message, 'live-agent');
+                    setUnifiedChatHistory(prev => {
+                        const exists = prev.some(msg => msg.id === normalized.id);
+                        if (exists) return prev;
+                        return [...prev, normalized];
+                    });
+                    setTimeout(scrollToBottom, 100);
+                }
+            } else if (data.type === 'customer_disconnected') {
+                console.log('Customer disconnected event received');
                 if (data.message) {
                     const normalized = normalizeMessage(data.message, 'live-agent');
                     setUnifiedChatHistory(prev => {

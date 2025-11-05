@@ -100,13 +100,18 @@ router.get('/room/:room_id/messages', async (req, res) => {
             });
         }
 
-        // UPDATED: Include sender names
+        // Determine if user is customer or admin
+        const isCustomer = room.customer_id === parseInt(user_id);
+        const userRole = isCustomer ? 'customer' : 'admin';
+
+        // Filter messages based on target_audience
         const [messages] = await pool.query(
             `SELECT 
                 lcm.id, 
                 lcm.room_id, 
                 lcm.sender_id, 
                 lcm.sender_type, 
+                lcm.target_audience,
                 lcm.message, 
                 lcm.is_read, 
                 lcm.created_at,
@@ -114,8 +119,9 @@ router.get('/room/:room_id/messages', async (req, res) => {
             FROM live_chat_messages lcm
             LEFT JOIN accounts a ON lcm.sender_id = a.id
             WHERE lcm.room_id = ? 
+            AND (lcm.target_audience = 'all' OR lcm.target_audience = ?)
             ORDER BY lcm.created_at ASC`,
-            [room_id]
+            [room_id, userRole]
         );
 
         await pool.query(
@@ -152,7 +158,7 @@ router.get('/room/:room_id/unified-messages', async (req, res) => {
         }
 
         const [rooms] = await pool.query(
-            'SELECT customer_id FROM live_chat_rooms WHERE id = ?',
+            'SELECT customer_id, agent_id FROM live_chat_rooms WHERE id = ?',
             [room_id]
         );
 
@@ -163,7 +169,12 @@ router.get('/room/:room_id/unified-messages', async (req, res) => {
             });
         }
 
-        const customer_id = rooms[0].customer_id;
+        const room = rooms[0];
+        const customer_id = room.customer_id;
+        
+        // Determine if user is customer or admin
+        const isCustomer = room.customer_id === parseInt(user_id);
+        const userRole = isCustomer ? 'customer' : 'admin';
 
         const [aiMessages] = await pool.query(
             `SELECT id, message_type, message, created_at
@@ -173,11 +184,12 @@ router.get('/room/:room_id/unified-messages', async (req, res) => {
             [customer_id]
         );
 
-        // UPDATED: Include sender names in live messages
+        // Filter messages based on target_audience
         const [liveMessages] = await pool.query(
             `SELECT 
                 lcm.id, 
                 lcm.sender_type, 
+                lcm.target_audience,
                 lcm.message, 
                 lcm.sender_id, 
                 lcm.is_read, 
@@ -186,8 +198,9 @@ router.get('/room/:room_id/unified-messages', async (req, res) => {
             FROM live_chat_messages lcm
             LEFT JOIN accounts a ON lcm.sender_id = a.id
             WHERE lcm.room_id = ?
+            AND (lcm.target_audience = 'all' OR lcm.target_audience = ?)
             ORDER BY lcm.created_at ASC`,
-            [room_id]
+            [room_id, userRole]
         );
 
         res.json({
@@ -256,9 +269,9 @@ router.post('/room/create', async (req, res) => {
         
             // Send system message
             const [messageResult] = await connection.query(
-                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-                 VALUES (?, ?, ?, ?)`,
-                [concludedRooms[0].id, customer_id, 'system', 'Reconnected. An agent will be with you shortly...']
+                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [concludedRooms[0].id, customer_id, 'system', 'customer', 'Reconnected. An agent will be with you shortly...']
             );
 
             const messageData = {
@@ -314,9 +327,9 @@ router.post('/room/create', async (req, res) => {
         console.log(`[Server] New room created: ${roomId}`);
 
         await connection.query(
-            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-             VALUES (?, ?, ?, ?)`,
-            [roomId, customer_id, 'system', 'You are now connected. An agent will be with you shortly...']
+            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [roomId, customer_id, 'system', 'customer', 'You are now connected. An agent will be with you shortly...']
         );
 
         const [agents] = await connection.query(
@@ -391,28 +404,50 @@ router.post('/room/:room_id/claim', async (req, res) => {
             [agent_id, agentName, room_id]
         );
 
-        // Insert system message
-        const [messageResult] = await connection.query(
-            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-             VALUES (?, ?, 'system', ?)`,
-            [room_id, agent_id, `Agent ${agentName} has joined the chat.`]
+        // Customer sees: "Agent [Name] has joined the chat."
+        const [customerMessageResult] = await connection.query(
+            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [room_id, agent_id, 'system', 'customer', `Agent ${agentName} has joined the chat.`]
         );
 
+        const customerMessageData = {
+            id: customerMessageResult.insertId,
+            room_id: parseInt(room_id),
+            sender_id: agent_id,
+            sender_type: 'system',
+            target_audience: 'customer',
+            message: `Agent ${agentName} has joined the chat.`,
+            is_read: false,
+            created_at: new Date().toISOString(),
+            sender_name: agentName
+        };
+
+        // Admin sees: "You have joined the chat."
+        const [adminMessageResult] = await connection.query(
+            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [room_id, agent_id, 'system', 'admin', 'You have joined the chat.']
+        );
+
+        const adminMessageData = {
+            id: adminMessageResult.insertId,
+            room_id: parseInt(room_id),
+            sender_id: agent_id,
+            sender_type: 'system',
+            target_audience: 'admin',
+            message: 'You have joined the chat.',
+            is_read: false,
+            created_at: new Date().toISOString()
+        };
+
+        // Send customer message to customer
         pingUser(rooms[0].customer_id, {
             type: 'agent_joined',
             room_id: room_id,
             agent_id: agent_id,
             agent_name: agentName,
-            message: {
-                id: messageResult.insertId,
-                room_id: parseInt(room_id),
-                sender_id: agent_id,
-                sender_type: 'system',
-                message: `Agent ${agentName} has joined the chat.`,
-                is_read: false,
-                created_at: new Date().toISOString(),
-                sender_name: agentName
-            }
+            message: customerMessageData
         });
 
         await connection.commit();
@@ -442,7 +477,7 @@ router.post('/room/:room_id/message', async (req, res) => {
         await connection.beginTransaction();
         
         const { room_id } = req.params;
-        const { sender_id, sender_type, message } = req.body;
+        const { sender_id, sender_type, message, target_audience } = req.body;
 
         const [rooms] = await connection.query(
             `SELECT customer_id, agent_id, status FROM live_chat_rooms WHERE id = ?`,
@@ -475,10 +510,13 @@ router.post('/room/:room_id/message', async (req, res) => {
             });
         }
 
+        // Use provided target_audience or default to 'all'
+        const messageAudience = target_audience || 'all';
+
         const [result] = await connection.query(
-            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-             VALUES (?, ?, ?, ?)`,
-            [room_id, sender_id, sender_type, message]
+            `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [room_id, sender_id, sender_type, messageAudience, message]
         );
 
         const [sender] = await connection.query(
@@ -491,6 +529,7 @@ router.post('/room/:room_id/message', async (req, res) => {
             room_id: parseInt(room_id),
             sender_id: parseInt(sender_id),
             sender_type: sender_type,
+            target_audience: messageAudience, // Include in response
             message: message,
             is_read: false,
             created_at: new Date().toISOString(),
@@ -577,41 +616,64 @@ router.post('/room/:room_id/close', async (req, res) => {
                  WHERE id = ?`,
                 [room_id]
             );
+        
+            const customerMessage = 'Agent has concluded the session. Waiting for another agent...';
 
-            const systemMessage = 'Agent has concluded the session. Waiting for another agent...';
-
-            const [messageResult] = await connection.query(
-                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-                 VALUES (?, ?, ?, ?)`,
-                [room_id, user_id, 'system', systemMessage]
+            const [customerMessageResult] = await connection.query(
+                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [room_id, user_id, 'system', 'customer', customerMessage]
             );
 
-            const messageData = {
-                id: messageResult.insertId,
+            const customerMessageData = {
+                id: customerMessageResult.insertId,
                 room_id: parseInt(room_id),
                 sender_id: user_id,
                 sender_type: 'system',
-                message: systemMessage,
+                target_audience: 'customer',
+                message: customerMessage,
+                is_read: false,
+                created_at: new Date().toISOString()
+            };
+
+            // Admin sees: "You have concluded the session. Chat returned to waiting queue."
+            const adminMessage = 'You have concluded the session. Chat returned to waiting queue.';
+
+            const [adminMessageResult] = await connection.query(
+                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [room_id, user_id, 'system', 'admin', adminMessage]
+            );
+
+            const adminMessageData = {
+                id: adminMessageResult.insertId,
+                room_id: parseInt(room_id),
+                sender_id: user_id,
+                sender_type: 'system',
+                target_audience: 'admin',
+                message: adminMessage,
                 is_read: false,
                 created_at: new Date().toISOString()
             };
         
+            // Send customer message to customer
             pingUser(room.customer_id, {
                 type: 'agent_concluded',
                 room_id: room_id,
-                message: messageData
+                message: customerMessageData
             });
-
+        
+            // Send admin message to all admins
             const [agents] = await connection.query(
                 `SELECT id FROM accounts WHERE role = 'admin' AND is_suspended = 0`
             );
-
+        
             agents.forEach(agent => {
                 pingUser(agent.id, {
                     type: 'room_returned_to_waiting',
                     room_id: parseInt(room_id),
                     customer_id: room.customer_id,
-                    message: messageData
+                    message: adminMessageData
                 });
             });
         
@@ -720,12 +782,51 @@ router.post('/room/:room_id/disconnect', async (req, res) => {
                 [room_id]
             );
 
+            const customerMessage = 'You have disconnected from the Live Agent chat.';
+
+            const [customerMessageResult] = await connection.query(
+                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [room_id, customer_id, 'system', 'customer', customerMessage]
+            );
+
+            const customerMessageData = {
+                id: customerMessageResult.insertId,
+                room_id: parseInt(room_id),
+                sender_id: customer_id,
+                sender_type: 'system',
+                target_audience: 'customer',
+                message: customerMessage,
+                is_read: false,
+                created_at: new Date().toISOString()
+            };
+
+            const adminMessage = 'Customer has disconnected from the Live Agent chat.';
+
+            const [adminMessageResult] = await connection.query(
+                `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, target_audience, message) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [room_id, customer_id, 'system', 'admin', adminMessage]
+            );
+
+            const adminMessageData = {
+                id: adminMessageResult.insertId,
+                room_id: parseInt(room_id),
+                sender_id: customer_id,
+                sender_type: 'system',
+                target_audience: 'admin',
+                message: adminMessage,
+                is_read: false,
+                created_at: new Date().toISOString()
+            };
+
             if (room.agent_id) {
                 pingUser(room.agent_id, {
                     type: 'customer_disconnected',
                     room_id: room_id,
                     customer_id: customer_id,
-                    agent_id: room.agent_id
+                    agent_id: room.agent_id,
+                    message: adminMessageData
                 });
             } else {
                 const [agents] = await connection.query(
@@ -737,18 +838,28 @@ router.post('/room/:room_id/disconnect', async (req, res) => {
                         type: 'customer_disconnected',
                         room_id: room_id,
                         customer_id: customer_id,
-                        agent_id: null
+                        agent_id: null,
+                        message: adminMessageData
                     });
                 });
             }
+
+            await connection.commit();
+
+            res.status(200).json({
+                success: true,
+                message: 'Customer disconnected',
+                data: customerMessageData
+            });
+
+        } else {
+            await connection.commit();
+            
+            res.status(200).json({
+                success: true,
+                message: 'Already disconnected'
+            });
         }
-
-        await connection.commit();
-
-        res.status(200).json({
-            success: true,
-            message: 'Customer disconnected'
-        });
 
     } catch (err) {
         await connection.rollback();

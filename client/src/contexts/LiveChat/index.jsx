@@ -98,13 +98,12 @@ export const LiveChatProvider = ({ children }) => {
     const fetchMessages = async (roomId) => {
         try {
             const room = [...activeRooms, ...waitingRooms, ...closedRooms].find(r => r.id === roomId);
-            const customerId = room?.customer_id;
-        
-            if (!customerId) {
-                throw new Error('Customer ID not found');
+
+            if (!room) {
+                throw new Error('Room not found');
             }
-        
-            const response = await fetch(`/api/live-chat/room/${roomId}/unified-messages?user_id=${customerId}`, {
+
+            const response = await fetch(`/api/live-chat/room/${roomId}/unified-messages?user_id=${user.id}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -112,10 +111,10 @@ export const LiveChatProvider = ({ children }) => {
             if (!response.ok) throw new Error('Failed to fetch messages');
         
             const result = await response.json();
-            
+
             const aiMsgs = result.data.aiMessages || [];
             const liveMsgs = result.data.liveMessages || [];
-            
+
             const allMessages = [
                 ...aiMsgs.map(msg => ({
                     ...msg,
@@ -125,7 +124,7 @@ export const LiveChatProvider = ({ children }) => {
                 ...liveMsgs.map(msg => ({
                     ...msg,
                     source: 'live',
-                    sender_name: msg.sender_name, // Include sender name
+                    sender_name: msg.sender_name,
                     timestamp: new Date(msg.created_at).getTime()
                 }))
             ].sort((a, b) => a.timestamp - b.timestamp);
@@ -406,29 +405,37 @@ export const LiveChatProvider = ({ children }) => {
                     )
                 );
 
-                if (selectedRoomIdRef.current && data.room_id === selectedRoomIdRef.current) {
+                if (selectedRoomIdRef.current && parseInt(data.room_id) === selectedRoomIdRef.current) {
                     showToast('Chat session concluded', 'info');
                     setSelectedRoom(null);
                     setMessages([]);
                 }
                 
             } else if (data.type === 'customer_disconnected') {
-                console.log('[LiveChat] Customer disconnected from room:', data.room_id);
+                console.log('[LiveChat] ✅ Customer disconnected from room:', data.room_id);
             
-                setRooms(prevRooms => 
-                    prevRooms.map(room => 
+                setRooms(prevRooms =>
+                    prevRooms.map(room =>
                         room.id === parseInt(data.room_id)
                             ? { ...room, status: 'concluded' }
                             : room
                     )
                 );
-
-                if (selectedRoomIdRef.current && data.room_id === selectedRoomIdRef.current) {
+            
+                // Add system message to chat if this room is currently selected
+                if (selectedRoomIdRef.current === parseInt(data.room_id) && data.message) {
+                    setMessages(prevMessages => [...prevMessages, {
+                        ...data.message,
+                        source: 'live',
+                        timestamp: new Date(data.message.created_at).getTime()
+                    }]);
+                }
+            
+                if (selectedRoomIdRef.current === parseInt(data.room_id)) {
                     showToast('Customer has disconnected', 'info');
                     setSelectedRoom(null);
                     setMessages([]);
                 }
-
             }
         });
         
