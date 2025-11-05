@@ -257,15 +257,13 @@ const LiveChat = () => {
                                         type='secondary'
                                         icon='fa-solid fa-plug-circle-xmark'
                                         iconPosition='left'
-                                        label='Conclude & Return to Queue'
+                                        label='Return to Queue'
                                         action={handleCloseRoom}
                                     />
                                 )}
                                 <Button
-                                    type='secondary'
+                                    type='icon-outlined'
                                     icon='fa-solid fa-times'
-                                    iconPosition='left'
-                                    label='Exit'
                                     action={handleExitChat}
                                 />
                             </div>
@@ -273,18 +271,18 @@ const LiveChat = () => {
 
                         <div className={styles['chat-container']} ref={chatContainerRef}>
                             {messages.map(msg => {
-                                // CHANGED: AI messages should appear on the left (agent role)
                                 const isAI = msg.source === 'ai';
                                 const isCustomer = isAI ? msg.message_type === 'user' : msg.sender_type === 'customer';
-
+                                
                                 return (
                                     <p 
                                         key={`${msg.source || 'live'}-${msg.id}`}
                                         className={styles['chat-item']} 
                                         data-role={isCustomer ? 'customer' : 'agent'}
+                                        data-source={msg.source}
                                     >
                                         <span className={styles['chat-item-label']}>
-                                            {isCustomer ? 'Customer' : (isAI ? 'Seraphim Luxe AI' : 'You')}
+                                            {isCustomer ? 'Customer' : (isAI ? 'AI' : 'You')}
                                         </span>
                                         {msg.message}
                                     </p>
