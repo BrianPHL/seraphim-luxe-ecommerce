@@ -89,17 +89,17 @@
 }
 
 .messages .message[data-role='agent'][data-source='seraphim-ai'] {
-    border-left: 4px solid var(--success-foreground);
+    border-left: 3px solid var(--success-foreground);
     align-self: flex-start;
 }
 
 .messages .message[data-role='agent'][data-source='live-agent'] {
-    border-left: 4px solid var(--accent-base);
+    border-left: 3px solid var(--accent-base);
     align-self: flex-start;
 }
 
 .messages .message[data-role='user'] {
-    border-right: 4px solid var(--accent-base);
+    border-right: 3px solid var(--accent-base);
     align-items: flex-end;
     align-self: flex-end;
 }
