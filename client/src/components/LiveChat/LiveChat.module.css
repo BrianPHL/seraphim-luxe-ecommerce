@@ -174,25 +174,38 @@
 }
 
 .chat-item[data-role='agent'][data-source='ai'] {
-    border-left: 3px solid var(--success-foreground);
+    border-left: 4px solid var(--success-foreground);
     align-self: flex-start;
 }
 
 .chat-item[data-role='agent'][data-source='live'] {
-    border-left: 3px solid var(--accent-base);
-    align-self: flex-start;
-}
-
-.chat-item[data-role='customer'] {
-    border-right: 3px solid var(--accent-base);
+    border-right: 4px solid var(--accent-base);
     align-items: flex-end;
     align-self: flex-end;
+}
+
+/* Customer messages - accent right border */
+.chat-item[data-role='customer'] {
+    border-left: 4px solid var(--accent-base);
+    align-self: flex-start;
 }
 
 .chat-item-label {
     font-weight: 700;
     font-size: 0.875rem;
     color: var(--tg-primary);
+}
+
+.system-message {
+    background-color: transparent;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-style: italic;
+    padding: 0.5rem 1rem;
+    color: var(--tg-secondary);
+    opacity: 0.7;
+    width: 100%;
 }
 
 .chat-controls {
@@ -223,12 +236,6 @@
 .chat-placeholder p {
     font-size: 1rem;
     font-weight: 500;
-}
-
-.chat-item-label {
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: var(--tg-secondary);
 }
 
 @media only screen and (max-width: 720px) {

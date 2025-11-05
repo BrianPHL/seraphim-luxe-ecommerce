@@ -12,6 +12,7 @@ const GeminiAIChatbot = () => {
     const [ chatbotState, setChatbotState ] = useState('seraphim-ai');
     const [ liveChatRoom, setLiveChatRoom ] = useState(null);
     const [ agentStatus, setAgentStatus ] = useState('waiting');
+    const [ agentName, setAgentName ] = useState(null);
 
     const chatBodyRef = useRef(null);
     const disconnectCalledRef = useRef(false);
@@ -24,7 +25,11 @@ const GeminiAIChatbot = () => {
     const isCustomer = user?.role === 'customer';
     const isAdmin = user?.role === 'admin';
 
-    // NEW: Normalize message format for unified display
+    const getFirstName = (fullName) => {
+        if (!fullName) return '';
+        return fullName.split(' ')[0];
+    };
+
     const normalizeMessage = (msg, source) => {
         if (source === 'ai') {
             return {
@@ -32,18 +37,23 @@ const GeminiAIChatbot = () => {
                 originalId: msg.id,
                 source: 'seraphim-ai',
                 role: msg.message_type === 'user' ? 'user' : 'agent',
-                senderLabel: msg.message_type === 'user' ? 'You' : 'Seraphim Luxe AI',
+                senderLabel: msg.message_type === 'user' ? 'You' : 'AI',
                 message: msg.message,
                 timestamp: new Date(msg.created_at).getTime(),
                 created_at: msg.created_at
             };
         } else if (source === 'live-agent') {
+            // Check if it's a system message first
+            const isSystem = msg.sender_type === 'system';
+
             return {
                 id: `live-${msg.id}`,
                 originalId: msg.id,
                 source: 'live-agent',
-                role: msg.sender_type === 'customer' ? 'user' : 'agent',
-                senderLabel: msg.sender_type === 'customer' ? 'You' : 'Agent',
+                role: isSystem ? 'system' : (msg.sender_type === 'customer' ? 'user' : 'agent'),
+                senderLabel: isSystem ? 'System' : (msg.sender_type === 'customer' ? 'You' : 'Agent'),
+                senderName: msg.sender_name || null,
+                sender_type: msg.sender_type, // Preserve sender_type for system messages
                 message: msg.message,
                 timestamp: new Date(msg.created_at).getTime(),
                 created_at: msg.created_at,
@@ -115,7 +125,7 @@ const GeminiAIChatbot = () => {
     const initializeLiveChat = async () => {
         try {
             disconnectCalledRef.current = false;
-            
+
             const existingRoomResponse = await fetch(`/api/live-chat/room/active/${user.id}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
@@ -124,34 +134,15 @@ const GeminiAIChatbot = () => {
             if (existingRoomResponse.ok) {
                 const existingRoomData = await existingRoomResponse.json();
                 console.log('[GeminiChatbot] Found existing room:', existingRoomData.data);
-                
+
                 const room = existingRoomData.data;
-                
-                if (room.status === 'concluded') {
-                    console.log('[GeminiChatbot] Room is concluded, reactivating...');
-                    
-                    const reactivateResponse = await fetch('/api/live-chat/room/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            customer_id: user.id,
-                            priority: 'low'
-                        })
-                    });
-                    
-                    if (reactivateResponse.ok) {
-                        const reactivatedData = await reactivateResponse.json();
-                        console.log('[GeminiChatbot] Room reactivated:', reactivatedData.data);
-                        setLiveChatRoom(reactivatedData.data);
-                        setAgentStatus('waiting');
-                        await loadLiveChatMessages(reactivatedData.data.id);
-                        showToast('Reconnecting to chat. Waiting for an agent...', 'info');
-                        return;
-                    }
-                }
-                
                 setLiveChatRoom(room);
-                
+
+                // Store agent name if present
+                if (room.agent_name) {
+                    setAgentName(room.agent_name);
+                }
+
                 if (room.agent_id && room.status === 'active') {
                     setAgentStatus('connected');
                     showToast('Reconnected to your chat session', 'success');
@@ -159,7 +150,7 @@ const GeminiAIChatbot = () => {
                     setAgentStatus('waiting');
                     showToast('Waiting for an agent...', 'info');
                 }
-                
+
                 await loadLiveChatMessages(room.id);
                 return;
             }
@@ -183,7 +174,7 @@ const GeminiAIChatbot = () => {
             console.log('[GeminiChatbot] Created new room:', result.data);
             setLiveChatRoom(result.data);
             setAgentStatus('waiting');
-            
+
             await loadLiveChatMessages(result.data.id);
         
             showToast('Connecting you with an agent...', 'info');
@@ -201,20 +192,39 @@ const GeminiAIChatbot = () => {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
-
+        
             if (!response.ok) {
                 throw new Error('Failed to load messages');
             }
-
+        
             const result = await response.json();
             const liveMessages = result.data || [];
-            
+        
+            // DEBUG: Log the messages to see what we're getting
+            console.log('🔍 Live messages from backend:', liveMessages);
+            liveMessages.forEach(msg => {
+                console.log(`Message: "${msg.message}" | sender_type: "${msg.sender_type}"`);
+            });
+        
+            // Extract agent name from messages if present
+            const agentMessage = liveMessages.find(msg => msg.sender_type === 'agent' || msg.sender_type === 'system');
+            if (agentMessage && agentMessage.sender_name) {
+                setAgentName(agentMessage.sender_name);
+            }
+        
             // Merge with existing AI messages
             const merged = mergeAndSortMessages(chatHistory, liveMessages);
-            setUnifiedChatHistory(merged);
             
+            // DEBUG: Log the normalized messages
+            console.log('🔍 Normalized merged messages:', merged);
+            merged.forEach(msg => {
+                console.log(`Message: "${msg.message}" | role: "${msg.role}" | sender_type: "${msg.sender_type}"`);
+            });
+            
+            setUnifiedChatHistory(merged);
+        
             setTimeout(scrollToBottom, 100);
-
+        
         } catch (err) {
             console.error('[GeminiChatbot] Load live chat messages error:', err);
             showToast('Failed to load chat history', 'error');
@@ -467,9 +477,9 @@ const GeminiAIChatbot = () => {
         
             if (data.type === 'new_message') {
                 console.log('🔔 New message received:', data.data);
-                
+
                 const normalized = normalizeMessage(data.data, 'live-agent');
-                
+
                 setUnifiedChatHistory(prev => {
                     const exists = prev.some(msg => msg.id === normalized.id);
                     if (exists) {
@@ -480,34 +490,17 @@ const GeminiAIChatbot = () => {
                     return [...prev, normalized];
                 });
                 setTimeout(scrollToBottom, 100);
-                
-            } else if (data.type === 'room_reactivated') {
-                console.log('Room reactivated:', data);
-                setLiveChatRoom(prev => {
-                    if (!prev || prev.id !== data.room_id) return prev;
-                    return { ...prev, status: 'waiting', agent_id: null };
-                });
-                setAgentStatus('waiting');
-                
-                if (data.message) {
-                    const normalized = normalizeMessage(data.message, 'live-agent');
-                    setUnifiedChatHistory(prev => {
-                        const exists = prev.some(msg => msg.id === normalized.id);
-                        if (exists) return prev;
-                        return [...prev, normalized];
-                    });
-                    setTimeout(scrollToBottom, 100);
-                }
-                
+
             } else if (data.type === 'agent_joined') {
                 console.log('Agent joined event received:', data);
                 setAgentStatus('connected');
+                setAgentName(data.agent_name); // Store agent name
                 setLiveChatRoom(prev => {
                     if (!prev) return prev;
-                    return { ...prev, agent_id: data.agent_id, status: 'active' };
+                    return { ...prev, agent_id: data.agent_id, agent_name: data.agent_name, status: 'active' };
                 });
                 showToast(`${data.agent_name} has joined the chat`, 'success');
-                
+
                 if (data.message) {
                     const normalized = normalizeMessage(data.message, 'live-agent');
                     setUnifiedChatHistory(prev => {
@@ -517,32 +510,9 @@ const GeminiAIChatbot = () => {
                     });
                     setTimeout(scrollToBottom, 100);
                 }
-                
-            } else if (data.type === 'agent_concluded') {
-                console.log('Agent concluded session');
-                setAgentStatus('waiting');
-                setLiveChatRoom(prev => {
-                    if (!prev) return prev;
-                    return { ...prev, agent_id: null, status: 'waiting' };
-                });
-                showToast('Agent has concluded the session. Waiting for another agent...', 'info');
-            
-                if (data.message) {
-                    const normalized = normalizeMessage(data.message, 'live-agent');
-                    setUnifiedChatHistory(prev => {
-                        const exists = prev.some(msg => msg.id === normalized.id);
-                        if (exists) return prev;
-                        return [...prev, normalized];
-                    });
-                    setTimeout(scrollToBottom, 100);
-                }
-                
-            } else if (data.type === 'chat_closed') {
-                console.log('Chat closed by admin');
-                setAgentStatus('disconnected');
-                setLiveChatRoom(null);
-                showToast('Chat session has ended', 'info');
-                setChatbotState('seraphim-ai');
+
+            } else if (data.type === 'room_reactivated') {
+                // ... rest of existing code
             }
         });
 
@@ -598,19 +568,50 @@ const GeminiAIChatbot = () => {
                                 {
                                     hasMessages ? (
                                         <div className={ styles['messages'] }>
-                                            { unifiedChatHistory.map((chat) => (
-                                                <p 
-                                                    key={ chat.id } 
-                                                    className={ styles['message'] } 
-                                                    data-role={ chat.role }
-                                                    data-source={ chat.source }
-                                                >
-                                                    <span className={ styles['message-label'] }>
-                                                        { chat.senderLabel }
-                                                    </span>
-                                                    { chat.message }
-                                                </p>
-                                            ))}
+                                                { unifiedChatHistory.map((chat) => {
+                                                    const isSystemMessage = chat.sender_type === 'system';
+
+                                                    // Render system messages differently
+                                                    if (isSystemMessage) {
+                                                        return (
+                                                            <div 
+                                                                key={ chat.id } 
+                                                                className={ styles['system-message'] }
+                                                            >
+                                                                { chat.message }
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    // Regular chat messages
+                                                    let senderLabel = chat.senderLabel;
+
+                                                    // Customize label based on source and role
+                                                    if (chat.source === 'seraphim-ai') {
+                                                        senderLabel = chat.role === 'user' ? (user?.name || 'You') : 'AI';
+                                                    } else if (chat.source === 'live-agent') {
+                                                        if (chat.role === 'user') {
+                                                            senderLabel = user?.name || 'You';
+                                                        } else if (chat.role === 'agent') {
+                                                            // Use the stored sender name from the message
+                                                            senderLabel = chat.senderName || agentName || 'Agent';
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <p 
+                                                            key={ chat.id } 
+                                                            className={ styles['message'] } 
+                                                            data-role={ chat.role }
+                                                            data-source={ chat.source }
+                                                        >
+                                                            <span className={ styles['message-label'] }>
+                                                                { senderLabel }
+                                                            </span>
+                                                            { chat.message }
+                                                        </p>
+                                                    );
+                                                })}
                                             {
                                                 (isLoading || isTyping) && chatbotState === 'seraphim-ai' && (
                                                     <p className={ styles['message'] } data-role="agent" data-source="seraphim-ai">

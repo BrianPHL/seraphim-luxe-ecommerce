@@ -97,7 +97,6 @@ export const LiveChatProvider = ({ children }) => {
 
     const fetchMessages = async (roomId) => {
         try {
-            // Get customer_id from the room
             const room = [...activeRooms, ...waitingRooms, ...closedRooms].find(r => r.id === roomId);
             const customerId = room?.customer_id;
         
@@ -105,7 +104,6 @@ export const LiveChatProvider = ({ children }) => {
                 throw new Error('Customer ID not found');
             }
         
-            // Fetch unified messages (AI + Live Chat)
             const response = await fetch(`/api/live-chat/room/${roomId}/unified-messages?user_id=${customerId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
@@ -115,7 +113,6 @@ export const LiveChatProvider = ({ children }) => {
         
             const result = await response.json();
             
-            // Merge AI and live messages, then sort by timestamp
             const aiMsgs = result.data.aiMessages || [];
             const liveMsgs = result.data.liveMessages || [];
             
@@ -123,12 +120,12 @@ export const LiveChatProvider = ({ children }) => {
                 ...aiMsgs.map(msg => ({
                     ...msg,
                     source: 'ai',
-                    room_id: roomId,
                     timestamp: new Date(msg.created_at).getTime()
                 })),
                 ...liveMsgs.map(msg => ({
                     ...msg,
                     source: 'live',
+                    sender_name: msg.sender_name, // Include sender name
                     timestamp: new Date(msg.created_at).getTime()
                 }))
             ].sort((a, b) => a.timestamp - b.timestamp);

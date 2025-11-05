@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './LiveChat.module.css';
 import { Button, InputField, Accordion } from '@components';
-import { useLiveChat } from '@contexts';
+import { useLiveChat, useAuth } from '@contexts';
 
 const LiveChat = () => {
 
@@ -9,6 +9,8 @@ const LiveChat = () => {
     const [ showTransitionPlaceholder, setShowTransitionPlaceholder ] = useState(false);
     
     const chatContainerRef = useRef(null);
+
+    const { user } = useAuth();
 
     const {
         activeRooms,
@@ -24,6 +26,11 @@ const LiveChat = () => {
         setSelectedRoom,
         fetchMessages
     } = useLiveChat();
+
+    const getFirstName = (fullName) => {
+        if (!fullName) return '';
+        return fullName.split(' ')[0];
+    };
 
     // Send message
     const sendMessage = async () => {
@@ -268,26 +275,51 @@ const LiveChat = () => {
                                 />
                             </div>
                         </div>
-
+                                                    
                         <div className={styles['chat-container']} ref={chatContainerRef}>
-                            {messages.map(msg => {
-                                const isAI = msg.source === 'ai';
-                                const isCustomer = isAI ? msg.message_type === 'user' : msg.sender_type === 'customer';
-                                
-                                return (
-                                    <p 
-                                        key={`${msg.source || 'live'}-${msg.id}`}
-                                        className={styles['chat-item']} 
-                                        data-role={isCustomer ? 'customer' : 'agent'}
-                                        data-source={msg.source}
-                                    >
-                                        <span className={styles['chat-item-label']}>
-                                            {isCustomer ? 'Customer' : (isAI ? 'AI' : 'You')}
-                                        </span>
-                                        {msg.message}
-                                    </p>
-                                );
-                            })}
+                                {messages.map(msg => {
+                                    const isSystemMessage = msg.sender_type === 'system';
+                                    
+                                    // Render system messages differently
+                                    if (isSystemMessage) {
+                                        return (
+                                            <div 
+                                                key={`${msg.source || 'live'}-${msg.id}`}
+                                                className={styles['system-message']}
+                                            >
+                                                {msg.message}
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    // Regular chat messages
+                                    const isAI = msg.source === 'ai';
+                                    const isCustomer = isAI ? msg.message_type === 'user' : msg.sender_type === 'customer';
+                                    
+                                    let senderLabel;
+                                    if (isCustomer) {
+                                        const customer = customers[selectedRoom?.customer_id];
+                                        senderLabel = customer?.name || 'Customer';
+                                    } else if (isAI) {
+                                        senderLabel = 'AI';
+                                    } else {
+                                        senderLabel = msg.sender_name || user?.name || 'Agent';
+                                    }
+                                    
+                                    return (
+                                        <p 
+                                            key={`${msg.source || 'live'}-${msg.id}`}
+                                            className={styles['chat-item']} 
+                                            data-role={isCustomer ? 'customer' : 'agent'}
+                                            data-source={msg.source}
+                                        >
+                                            <span className={styles['chat-item-label']}>
+                                                {senderLabel}
+                                            </span>
+                                            {msg.message}
+                                        </p>
+                                    );
+                                })}
                         </div>
 
                         <div className={styles['chat-controls']}>

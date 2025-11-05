@@ -45,10 +45,11 @@ router.get('/room/active/:customer_id', async (req, res) => {
         const { customer_id } = req.params;
 
         const [rooms] = await pool.query(
-            `SELECT id, customer_id, agent_id, status, created_at 
-             FROM live_chat_rooms 
-             WHERE customer_id = ? AND status IN ('waiting', 'active', 'concluded') 
-             ORDER BY created_at DESC 
+            `SELECT lcr.id, lcr.customer_id, lcr.agent_id, lcr.status, lcr.created_at, a.name as agent_name
+             FROM live_chat_rooms lcr
+             LEFT JOIN accounts a ON lcr.agent_id = a.id
+             WHERE lcr.customer_id = ? AND lcr.status IN ('waiting', 'active') 
+             ORDER BY lcr.created_at DESC 
              LIMIT 1`,
             [customer_id]
         );
@@ -66,7 +67,7 @@ router.get('/room/active/:customer_id', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('[Server] Live chat active room fetch error:', err);
+        console.error('Live chat active room fetch error:', err);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch active room'
@@ -99,11 +100,21 @@ router.get('/room/:room_id/messages', async (req, res) => {
             });
         }
 
+        // UPDATED: Include sender names
         const [messages] = await pool.query(
-            `SELECT id, room_id, sender_id, sender_type, message, is_read, created_at 
-             FROM live_chat_messages 
-             WHERE room_id = ? 
-             ORDER BY created_at ASC`,
+            `SELECT 
+                lcm.id, 
+                lcm.room_id, 
+                lcm.sender_id, 
+                lcm.sender_type, 
+                lcm.message, 
+                lcm.is_read, 
+                lcm.created_at,
+                a.name as sender_name
+            FROM live_chat_messages lcm
+            LEFT JOIN accounts a ON lcm.sender_id = a.id
+            WHERE lcm.room_id = ? 
+            ORDER BY lcm.created_at ASC`,
             [room_id]
         );
 
@@ -120,7 +131,7 @@ router.get('/room/:room_id/messages', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('[Server] Live chat messages fetch error:', err);
+        console.error('Live chat messages fetch error:', err);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch messages'
@@ -162,11 +173,20 @@ router.get('/room/:room_id/unified-messages', async (req, res) => {
             [customer_id]
         );
 
+        // UPDATED: Include sender names in live messages
         const [liveMessages] = await pool.query(
-            `SELECT id, sender_type, message, sender_id, is_read, created_at
-            FROM live_chat_messages
-            WHERE room_id = ?
-            ORDER BY created_at ASC`,
+            `SELECT 
+                lcm.id, 
+                lcm.sender_type, 
+                lcm.message, 
+                lcm.sender_id, 
+                lcm.is_read, 
+                lcm.created_at,
+                a.name as sender_name
+            FROM live_chat_messages lcm
+            LEFT JOIN accounts a ON lcm.sender_id = a.id
+            WHERE lcm.room_id = ?
+            ORDER BY lcm.created_at ASC`,
             [room_id]
         );
 
@@ -237,15 +257,15 @@ router.post('/room/create', async (req, res) => {
             // Send system message
             const [messageResult] = await connection.query(
                 `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-                 VALUES (?, ?, 'agent', ?)`,
-                [concludedRooms[0].id, customer_id, 'Reconnected. An agent will be with you shortly...']
+                 VALUES (?, ?, ?, ?)`,
+                [concludedRooms[0].id, customer_id, 'system', 'Reconnected. An agent will be with you shortly...']
             );
-        
+
             const messageData = {
                 id: messageResult.insertId,
                 room_id: concludedRooms[0].id,
                 sender_id: customer_id,
-                sender_type: 'agent',
+                sender_type: 'system',
                 message: 'Reconnected. An agent will be with you shortly...',
                 is_read: false,
                 created_at: new Date().toISOString()
@@ -295,8 +315,8 @@ router.post('/room/create', async (req, res) => {
 
         await connection.query(
             `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-             VALUES (?, ?, 'agent', ?)`,
-            [roomId, customer_id, 'You are now connected. An agent will be with you shortly...']
+             VALUES (?, ?, ?, ?)`,
+            [roomId, customer_id, 'system', 'You are now connected. An agent will be with you shortly...']
         );
 
         const [agents] = await connection.query(
@@ -356,56 +376,55 @@ router.post('/room/:room_id/claim', async (req, res) => {
             });
         }
 
-        await connection.query(
-            `UPDATE live_chat_rooms 
-             SET agent_id = ?, status = 'active', modified_at = NOW() 
-             WHERE id = ?`,
-            [agent_id, room_id]
-        );
-
+        // Get agent name
         const [agent] = await connection.query(
             `SELECT name FROM accounts WHERE id = ?`,
             [agent_id]
         );
 
-        const systemMessage = `Agent ${agent[0]?.name || 'Support'} has joined the chat.`;
+        const agentName = agent[0]?.name || 'Agent';
+
+        await connection.query(
+            `UPDATE live_chat_rooms 
+             SET agent_id = ?, agent_name = ?, status = 'active' 
+             WHERE id = ?`,
+            [agent_id, agentName, room_id]
+        );
 
         // Insert system message
         const [messageResult] = await connection.query(
             `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-             VALUES (?, ?, 'agent', ?)`,
-            [room_id, agent_id, systemMessage]
+             VALUES (?, ?, 'system', ?)`,
+            [room_id, agent_id, `Agent ${agentName} has joined the chat.`]
         );
 
-        const messageData = {
-            id: messageResult.insertId,
-            room_id: parseInt(room_id),
-            sender_id: agent_id,
-            sender_type: 'agent',
-            message: systemMessage,
-            is_read: false,
-            created_at: new Date().toISOString()
-        };
-
-        // Notify customer with both status change AND the message
         pingUser(rooms[0].customer_id, {
             type: 'agent_joined',
             room_id: room_id,
             agent_id: agent_id,
-            agent_name: agent[0]?.name || 'Support',
-            message: messageData  // Include the actual message data
+            agent_name: agentName,
+            message: {
+                id: messageResult.insertId,
+                room_id: parseInt(room_id),
+                sender_id: agent_id,
+                sender_type: 'system',
+                message: `Agent ${agentName} has joined the chat.`,
+                is_read: false,
+                created_at: new Date().toISOString()
+            }
         });
 
         await connection.commit();
 
         res.status(200).json({
             success: true,
-            message: 'Room claimed successfully'
+            message: 'Room claimed successfully',
+            agent_name: agentName
         });
 
     } catch (err) {
         await connection.rollback();
-        console.error('[Server] Live chat room claim error:', err);
+        console.error('Live chat room claim error:', err);
         res.status(500).json({
             success: false,
             message: 'Failed to claim chat room'
@@ -556,15 +575,15 @@ router.post('/room/:room_id/close', async (req, res) => {
 
             const [messageResult] = await connection.query(
                 `INSERT INTO live_chat_messages (room_id, sender_id, sender_type, message) 
-                 VALUES (?, ?, 'agent', ?)`,
-                [room_id, user_id, systemMessage]
+                 VALUES (?, ?, ?, ?)`,
+                [room_id, user_id, 'system', systemMessage]
             );
 
             const messageData = {
                 id: messageResult.insertId,
                 room_id: parseInt(room_id),
                 sender_id: user_id,
-                sender_type: 'agent',
+                sender_type: 'system',
                 message: systemMessage,
                 is_read: false,
                 created_at: new Date().toISOString()
