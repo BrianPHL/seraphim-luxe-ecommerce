@@ -328,7 +328,7 @@ export const LiveChatProvider = ({ children }) => {
                         const existingRoom = prevRooms.find(r => r.id === data.room_id);
                         if (existingRoom) {
                             return prevRooms.map(room => 
-                                room.id === data.room_id
+                                room.id === parseInt(data.room_id)
                                     ? { ...room, status: 'waiting', agent_id: null }
                                     : room
                             );
@@ -363,7 +363,7 @@ export const LiveChatProvider = ({ children }) => {
 
                 setRooms(prevRooms => {
                     const updated = prevRooms.map(room => 
-                        room.id === data.room_id
+                        room.id === parseInt(data.room_id)
                             ? { ...room, status: 'waiting', agent_id: null }
                             : room
                     );
@@ -376,7 +376,7 @@ export const LiveChatProvider = ({ children }) => {
 
                 setRooms(prevRooms => 
                     prevRooms.map(room => 
-                        room.id === data.room_id
+                        room.id === parseInt(data.room_id)
                             ? { ...room, status: 'waiting', agent_id: null }
                             : room
                     )
@@ -393,7 +393,7 @@ export const LiveChatProvider = ({ children }) => {
             
                 setRooms(prevRooms => 
                     prevRooms.map(room => 
-                        room.id === data.room_id
+                        room.id === parseInt(data.room_id)
                             ? { ...room, status: 'concluded' }
                             : room
                     )
@@ -425,7 +425,7 @@ export const LiveChatProvider = ({ children }) => {
             clearInterval(pollingInterval);
             unsubscribe();
         };
-    }, [user?.id, user?.role, subscribe, fetchRooms, fetchCustomerDetails, showToast]);
+    }, [user?.id, user?.role]);
     // Room categorization
     const { activeRooms, waitingRooms, closedRooms } = useMemo(() => {
         if (!user) return { activeRooms: [], waitingRooms: [], closedRooms: [] };

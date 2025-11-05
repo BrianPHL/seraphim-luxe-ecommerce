@@ -520,7 +520,7 @@ const GeminiAIChatbot = () => {
             console.log('[GeminiChatbot] Unsubscribing from SSE livechat events');
             unsubscribe();
         };
-    }, [user?.id, isCustomer, subscribe, showToast]);
+    }, [user?.id, isCustomer]);
 
     useEffect(() => {
         const handleBeforeUnload = (e) => {
