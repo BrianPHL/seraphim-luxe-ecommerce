@@ -324,22 +324,39 @@ export const LiveChatProvider = ({ children }) => {
                 }
                 
                 if (data.type === 'room_reactivated') {
+                    // Update existing room
                     setRooms(prevRooms => {
                         const existingRoom = prevRooms.find(r => r.id === data.room_id);
                         if (existingRoom) {
                             return prevRooms.map(room => 
                                 room.id === parseInt(data.room_id)
-                                    ? { ...room, status: 'waiting', agent_id: null }
+                                    ? { ...room, status: 'waiting', agent_id: null, modified_at: new Date().toISOString() }
                                     : room
                             );
                         }
                         return prevRooms;
                     });
+                } else if (data.type === 'new_chat_room') {
+                    // Add new room to state
+                    const newRoom = {
+                        id: data.room_id,
+                        customer_id: parseInt(data.customer_id),
+                        agent_id: null,
+                        status: data.status || 'waiting',
+                        priority: data.priority || 'low',
+                        created_at: new Date().toISOString(),
+                        modified_at: new Date().toISOString()
+                    };
+                    
+                    setRooms(prevRooms => {
+                        // Check if room already exists
+                        const exists = prevRooms.some(r => r.id === data.room_id);
+                        if (exists) return prevRooms;
+                        return [...prevRooms, newRoom];
+                    });
                 }
-                
-                fetchRooms();
+            
                 showToast(data.type === 'new_chat_room' ? 'New chat request received' : 'Chat room reactivated', 'info');
-                
             } else if (data.type === 'new_message') {
                 console.log('[LiveChat] New message received');
                 
@@ -355,7 +372,14 @@ export const LiveChatProvider = ({ children }) => {
                         return [...prev, data.data];
                     });
                 }
-                fetchRooms(true);
+
+                setRooms(prevRooms => 
+                    prevRooms.map(room => 
+                        room.id === data.data.room_id
+                            ? { ...room, modified_at: new Date().toISOString() }
+                            : room
+                    )
+                );
 
             } else if (data.type === 'room_returned_to_waiting') {
                 console.log('[LiveChat] ✅ Room returned to waiting queue:', data.room_id);
@@ -398,15 +422,13 @@ export const LiveChatProvider = ({ children }) => {
                             : room
                     )
                 );
-            
-                // Use ref instead of closure variable
+
                 if (selectedRoomIdRef.current && data.room_id === selectedRoomIdRef.current) {
                     showToast('Customer has disconnected', 'info');
                     setSelectedRoom(null);
                     setMessages([]);
                 }
-            
-                fetchRooms(true);
+
             }
         });
         

@@ -712,7 +712,6 @@ router.post('/room/:room_id/disconnect', async (req, res) => {
             });
         }
 
-        // Only disconnect if not already concluded
         if (room.status !== 'concluded') {
             await connection.query(
                 `UPDATE live_chat_rooms 
@@ -721,13 +720,25 @@ router.post('/room/:room_id/disconnect', async (req, res) => {
                 [room_id]
             );
 
-            // Notify agent if present
             if (room.agent_id) {
                 pingUser(room.agent_id, {
                     type: 'customer_disconnected',
                     room_id: room_id,
                     customer_id: customer_id,
-                    agent_id: room.agent_id  // Add this so frontend knows
+                    agent_id: room.agent_id
+                });
+            } else {
+                const [agents] = await connection.query(
+                    `SELECT id FROM accounts WHERE role = 'admin' AND is_suspended = 0`
+                );
+
+                agents.forEach(agent => {
+                    pingUser(agent.id, {
+                        type: 'customer_disconnected',
+                        room_id: room_id,
+                        customer_id: customer_id,
+                        agent_id: null
+                    });
                 });
             }
         }

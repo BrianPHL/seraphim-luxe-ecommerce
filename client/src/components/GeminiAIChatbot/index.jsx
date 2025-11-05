@@ -13,6 +13,7 @@ const GeminiAIChatbot = () => {
     const [ liveChatRoom, setLiveChatRoom ] = useState(null);
     const [ agentStatus, setAgentStatus ] = useState('waiting');
     const [ agentName, setAgentName ] = useState(null);
+    const [ isSwitching, setIsSwitching ] = useState(false);
 
     const messagesContainerRef = useRef(null); // CHANGED: More specific ref name
     const disconnectCalledRef = useRef(false);
@@ -100,13 +101,17 @@ const GeminiAIChatbot = () => {
     };
 
     const switchChatbotState = async () => {
-        if (!isCustomer) return;
+        if (!isCustomer || isSwitching) return; // Prevent rapid switching
+
+        setIsSwitching(true);
 
         const newState = chatbotState === 'seraphim-ai' ? 'live-agent' : 'seraphim-ai';
 
         if (chatbotState === 'live-agent' && newState === 'seraphim-ai' && liveChatRoom) {
             await disconnectFromLiveChat(liveChatRoom.id);
             disconnectCalledRef.current = false;
+
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
 
         setChatbotState(newState);
@@ -117,6 +122,8 @@ const GeminiAIChatbot = () => {
             await fetchChatHistory();
             await fetchPredefinedQuestions();
         }
+
+        setIsSwitching(false);
     };
 
     const initializeLiveChat = async () => {
@@ -651,8 +658,9 @@ const GeminiAIChatbot = () => {
                                             icon={chatbotState === 'seraphim-ai' ? 'fa solid fa-headset' : 'fa solid fa-robot'}
                                             label={chatbotState === 'seraphim-ai' ? (liveChatRoom ? 'Return to Live Agent' : 'Switch to Live Agent') : 'Switch to Seraphim AI'}
                                             iconPosition='left'
-                                            action={ () => switchChatbotState() }
-                                            externalStyles={ styles['chat-options-switch_btn'] }
+                                            action={switchChatbotState}
+                                            disabled={isSwitching} // Add this
+                                            externalStyles={styles['chat-options-switch_btn']}
                                         />
                                     </div>
                                 )}
