@@ -90,7 +90,7 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
         }
     };
 
-    const removeFromWishlist = async (product_id) => {
+    const removeFromWishlist = async (product_id, options = {}) => {
         if (!user) return;
 
         try {
@@ -109,15 +109,16 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
             });
 
             if (response.ok) {
-                showToast('Item removed from wishlist!', 'success');
                 
-            await fetchWishlistItems();
-            await notifyWishlistAction({
-                action: "remove_from_wishlist",
-                productName: removedItem.label
-            });
-
+                if (!options.silent) {
+                    showToast('Item removed from wishlist!', 'success');
+                }
                 
+                await fetchWishlistItems();
+                await notifyWishlistAction({
+                    action: "remove_from_wishlist",
+                    productName: removedItem.label
+                });
             } else {
                 showToast("Failed to remove item from wishlist", "error");
                 fetchWishlistItems();
@@ -156,31 +157,27 @@ export const WishlistProvider = ({ children, auditLoggers = {} }) => {
         try {
             setLoading(true);
             
-            const itemCount = wishlistItems.length;
-            
-            // Optimistically update UI
-            setWishlistItems([]);
-            setSelectedWishlistItems([]);
+            const promises = wishlistItems.map(item =>
+                fetch(`/api/wishlist/${user.id}/${item.product_id}`, {
+                    method: 'DELETE'
+                })
+            );
 
-            const response = await fetch(`/api/wishlist/clear/${user['id']}`, {
-                method: 'DELETE'
-            });
+            const responses = await Promise.all(promises);
+            const allSuccessful = responses.every(response => response.ok);
 
-            if (response.ok) {
-                showToast('Wishlist cleared!', 'success');
-                
-                // Connect to inbox notification
-                if (notifyWishlistAction) {
-                    await notifyWishlistAction('cleared', `${itemCount} items`, null, true);
-                }
+            if (allSuccessful) {
+                setWishlistItems([]);
+                setSelectedWishlistItems([]);
+                showToast('Wishlist cleared successfully!', 'success');
             } else {
-                showToast("Failed to clear wishlist", "error");
-                fetchWishlistItems();
+                throw new Error('Failed to clear all items from wishlist');
             }
-        } catch (err) {
-            console.error("Error clearing wishlist:", err);
-            showToast("Failed to clear wishlist", "error");
-            fetchWishlistItems();
+        } catch (error) {
+            console.error('Error clearing wishlist:', error);
+            showToast('Failed to clear wishlist', 'error');
+            // Refresh the wishlist to get current state
+            await fetchWishlistItems();
         } finally {
             setLoading(false);
         }

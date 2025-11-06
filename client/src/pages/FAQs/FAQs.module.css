@@ -83,6 +83,7 @@
 
 .faq-question {
     background-color: var(--bg-primary);
+    color: var(--tg-primary);
     justify-content: space-between;
     padding: 1.25rem;
     border: none;
@@ -92,7 +93,6 @@
     display: flex;
     align-items: center;
     font-weight: 500;
-    color: var(--tg-primary);
     transition: all 0.3s ease;
     font-size: 1.1rem;
 }
@@ -103,7 +103,7 @@
 
 .faq-question.active {
     background-color: var(--accent-base);
-    color: white;
+    color: var(--bg-primary);
 }
 
 .faq-question .icon {
@@ -139,6 +139,9 @@
     text-align: center;
     margin-top: 3rem;
     border-left: 4px solid var(--accent-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .support-section h2 {
@@ -152,6 +155,10 @@
     margin-bottom: 1.5rem;
     color: var(--tg-secondary);
     font-size: 1.1rem;
+}
+
+.support-button {
+    align-self: center;
 }
 
 .support-link {

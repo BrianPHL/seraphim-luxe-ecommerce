@@ -411,13 +411,13 @@
     flex-wrap: wrap;
 }
 
-.status-buttons {
+/* .status-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 1rem;
     width: 100%;
-}
+} */
 
 .status-buttons > * {
     flex: 1;

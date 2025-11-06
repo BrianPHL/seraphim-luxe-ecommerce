@@ -9,24 +9,16 @@
 
 .tabButton {
     background: var(--bg-secondary);
-    border: 1px solid var(--bg-outline);
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
     color: var(--tg-secondary);
-    cursor: pointer;
-    transition: all 0.3s ease;
 }
 
 .tabButton:hover {
-    border-color: var(--accent-base);
-    color: var(--accent-base);
+    background: var(--accent-hovered);
 }
 
 .tabButton.active {
     background: var(--accent-base);
-    border-color: var(--accent-base);
-    color: var(--tg-inverted);
+    color: var(--bg-primary);
 }
 
 .editorContainer {

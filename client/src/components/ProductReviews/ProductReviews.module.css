@@ -1,5 +1,4 @@
 @import url('../../index.css');
-/* --------------- Main Layout --------------- */
 .product-reviews {
     width: 100%;
     padding-top: 3rem;
@@ -9,7 +8,6 @@
     gap: 2rem;
 }
 
-/* --------------- Review Summary --------------- */
 .review-summary-row {
     display: flex;
     align-items: center;
@@ -17,7 +15,6 @@
     gap: 3rem;
     background: var(--bg-primary);
     border-radius: 0.5rem;
-    box-shadow: none;
     padding: 2.5rem 0;
     border: none;
 }
@@ -43,7 +40,7 @@
 }
 
 .empty-star {
-    color: #ddd;
+    color: var(--tg-disabled);
     font-size: 1.5rem;
 }
 
@@ -134,22 +131,10 @@
 .summary-write-btn {
     min-width: 220px;
     font-size: 1.25rem;
-    background: var(--bg-secondary);
-    color: var(--tg-primary);
-    border-radius: 0.15rem;
-    padding: 1.25rem 0;
-    font-weight: 400;
     border: 2px solid var(--bg-outline);
-    box-shadow: none;
     transition: background 0.2s, color 0.2s;
 }
 
-.summary-write-btn:hover {
-    background: var(--accent-hovered);
-    color: #fff;
-}
-
-/* --------------- Filter & Sort Controls --------------- */
 .reviews-controls-row {
     display: flex;
     flex-wrap: wrap;
@@ -177,7 +162,6 @@
     color: var(--tg-primary);
     cursor: pointer;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .filter-controls-group {
@@ -192,19 +176,30 @@
 }
 .filter-active {
     background: var(--accent-base);
-    color: var(--tg-on-accent);
+    color: var(--tg-primary);
     border-color: var(--accent-base);
 }
 
 .filter-active .filter-star {
     color: var(--tg-primary);
-    /* text-shadow: 0 0 2px #fffbe6; */
+}
+
+
+.sort-button {
+    min-width: 140px;
+    justify-content: space-between;
 }
 
 .sort-controls-group {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
+}
+
+.sort-label {
+    font-size: 0.9rem;
+    color: var(--tg-secondary);
+    white-space: nowrap;
 }
 
 .sort-select {
@@ -226,7 +221,6 @@
     color: #fff;
 }
 
-/* --------------- Star Rating Component --------------- */
 .star-rating {
     display: flex;
     align-items: center;
@@ -274,7 +268,6 @@
     margin-left: 0.25rem;
 }
 
-/* --------------- Review Card --------------- */
 .review-card {
     padding: 1.5rem;
     border: 1px solid var(--bg-outline);
@@ -434,7 +427,6 @@
     border-radius: 0.5rem;
     color: var(--tg-secondary);
     font-size: 1.1rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .no-reviews-placeholder i {
@@ -450,14 +442,10 @@
     color: var(--tg-primary);
 }
 
-
-
-/* --------------- Review Form --------------- */
 .review-form-container {
     background: var(--bg-primary);
     border-radius: 1rem;
     padding: 2.5rem 2rem 2rem 2rem;
-    box-shadow: 0 8px 32px rgba(60, 40, 10, 0.18);
 }
 
 .form-header {
@@ -491,7 +479,7 @@
 }
 
 .required {
-    color: var(--error-foreground, #e57373);
+    color: var(--error-foreground);
 }
 
 .rating-input {
@@ -560,7 +548,6 @@
     font-size: 1rem;
     cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s;
-
 }
 
 .submit-btn:disabled {

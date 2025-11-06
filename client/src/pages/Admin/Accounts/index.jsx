@@ -613,7 +613,6 @@ const Accounts = () => {
 
             <div className={styles['divider-horizontal']}></div>
 
-            {/* Analytics Section */}
             <div className={styles['section']}>
                 <div className={styles['section-header']}>
                     <h2>Account Analytics</h2>

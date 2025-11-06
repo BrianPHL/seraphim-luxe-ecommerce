@@ -48,7 +48,6 @@ const Stocks = () => {
         reorderAnalysisData
     } = useAnalytics();
 
-
     const {
         data: filteredLowStockProducts,
         searchValue: lowStockSearchValue,
@@ -206,7 +205,6 @@ const Stocks = () => {
 
     const filteredProducts = getFilteredProducts();
 
-    // Generate stocks analytics when stock data changes
     useEffect(() => {
         if (products && products.length > 0) {
             generateAnalyticsData(products, lowStockProducts);

@@ -95,9 +95,6 @@ const Orders = () => {
         paymentMethodsData
     } = useAnalytics();
 
-    // REMOVE: Local analyticsData state - using context now
-    // const [analyticsData, setAnalyticsData] = useState({...});
-
     useEffect(() => {
         if (searchValue !== querySearch) {
             handleSearchChange(querySearch);
@@ -666,8 +663,7 @@ const Orders = () => {
             showToast('No orders found in the selected date range.', 'info');
             return;
         }
-
-        // Load items for all orders
+        
         const ordersWithItems = await Promise.all(
             ordersInRange.map(async (order) => {
                 if (!order.items || order.items.length === 0) {

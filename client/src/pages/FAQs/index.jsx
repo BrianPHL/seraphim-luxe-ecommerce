@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { useCMS, useBanners } from '@contexts';
-import { ReturnButton, Banner } from '@components';
+import { ReturnButton, Banner, Button } from '@components';
 import styles from './FAQs.module.css';
 
 
 const FAQs = () => {
+    const navigate = useNavigate(); 
     const { fetchSpecificPage, loading } = useCMS();
     const { banners } = useBanners();
     const [ content, setContent ] = useState('');
@@ -194,7 +196,12 @@ const FAQs = () => {
                 <div className={styles['support-section']}>
                     <h2>Still have questions?</h2>
                     <p>Contact our customer support team for assistance.</p>
-                    <a href="/contact" className={styles['support-link']}>Get Help</a>
+                    <Button
+                        type='primary'
+                        label='Get Help'
+                        action={() => navigate('/contact-us')}
+                        externalStyles={styles['support-button']}
+                    />
                 </div>
             </div>
         </div>

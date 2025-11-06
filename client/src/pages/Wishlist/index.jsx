@@ -44,20 +44,34 @@ const Wishlist = () => {
         setModalOpen(true);
     };
 
+    const addItemToCart = async (item) => {
+        return await addToCart({ 
+            product_id: item.product_id,
+            category: item.category, 
+            subcategory: item.subcategory, 
+            image_url: item.image_url, 
+            label: item.label, 
+            price: item.price,
+            quantity: 1
+        });
+    };
+
     const handleAddToCart = async (item) => {
         try {
-            await addToCart({ 
-                product_id: item.product_id,
-                category: item.category, 
-                subcategory: item.subcategory, 
-                image_url: item.image_url, 
-                label: item.label, 
-                price: item.price,
-                quantity: 1
-            });
+            await addItemToCart(item);
             showToast(`${item.label} added to cart!`, 'success');
         } catch (error) {
             showToast('Failed to add item to cart.', 'error');
+        }
+    };
+
+    const handleMoveToCart = async (item) => {
+        try {
+            await addItemToCart(item);
+            removeFromWishlist(item.product_id, { silent: true });
+            showToast(`${item.label} added to cart!`, 'success');
+        } catch (error) {
+            showToast('Failed to move item to cart.', 'error');
         }
     };
 
@@ -67,46 +81,36 @@ const Wishlist = () => {
             return;
         }
 
-        try {
-            let successCount = 0;
-            let failCount = 0;
+        let successCount = 0;
+        let failCount = 0;
 
-            for (const item of selectedWishlistItems) {
-                try {
-                    await addToCart({ 
-                        product_id: item.product_id,
-                        category: item.category, 
-                        subcategory: item.subcategory, 
-                        image_url: item.image_url, 
-                        label: item.label, 
-                        price: item.price,
-                        quantity: 1
-                    });
-                    successCount++;
-                } catch (error) {
-                    failCount++;
-                }
+        for (const item of selectedWishlistItems) {
+            try {
+                await addItemToCart(item);
+                successCount++;
+            } catch (error) {
+                failCount++;
             }
+        }
 
-            if (successCount > 0) {
-                showToast(`${successCount} item(s) added to cart!`, 'success');
-            }
-            if (failCount > 0) {
-                showToast(`${failCount} item(s) could not be added.`, 'warning');
-            }
-        } catch (error) {
-            showToast('Failed to add items to cart.', 'error');
+        if (successCount > 0) {
+            showToast(`${successCount} item(s) added to cart!`, 'success');
+        }
+        if (failCount > 0) {
+            showToast(`${failCount} item(s) could not be added.`, 'warning');
         }
     };
+    
+    const openModal = (type, item = null) => {
+        setModalType(type);
+        setSelectedItem(item);
+        setModalOpen(true);
+    };
 
-    const handleMoveToCart = async (item) => {
-        try {
-            await handleAddToCart(item);
-            removeFromWishlist(item.product_id);
-            showToast(`${item.label} moved to cart!`, 'success');
-        } catch (error) {
-            showToast('Failed to move item to cart.', 'error');
-        }
+    const closeModal = () => {
+        setModalType('');
+        setSelectedItem(null);
+        setModalOpen(false);
     };
 
     return (
@@ -160,6 +164,7 @@ const Wishlist = () => {
                                             iconPosition='left'
                                             action={handleBatchRemove}
                                             disabled={selectedWishlistItems.length <= 0}
+                                            externalStyles={styles['modal-warn']}
                                         />
                                     </div>
                                 </div>
@@ -202,41 +207,30 @@ const Wishlist = () => {
                                                     <div className={styles['wishlist-item-details-right']}>
                                                         <div className={styles['wishlist-item-actions']}>
                                                             <Button
-                                                                type='primary'
-                                                                label='Add to Cart'
-                                                                icon='fa-solid fa-cart-plus'
-                                                                iconPosition='left'
-                                                                action={() => handleAddToCart(item)}
-                                                            />
-                                                            <Button
                                                                 type='secondary'
-                                                                label='Move to Cart'
-                                                                icon='fa-solid fa-arrow-right'
-                                                                iconPosition='right'
+                                                                label='Add to Cart'
+                                                                icon='fa-solid fa-plus'
+                                                                iconPosition='left'
                                                                 action={() => handleMoveToCart(item)}
                                                             />
                                                         </div>
                                                         <div className={styles['wishlist-item-controls']}>
-                                                            <Button
-                                                                type='icon-outlined'
-                                                                icon='fa-solid fa-heart-crack'
-                                                                externalStyles={styles['wishlist-item-remove']}
-                                                                action={() => {
-                                                                    setSelectedItem(item);
-                                                                    setModalType('remove-confirmation');
-                                                                    setModalOpen(true);
-                                                                }}
-                                                            />
-                                                            <Button
-                                                                type='icon-outlined'
-                                                                icon='fa-solid fa-square-up-right'
-                                                                action={() => {
-                                                                    item.category.toLowerCase() === 'jewelry' 
-                                                                    ? navigate(`/jewelry/${item.product_id}`)
-                                                                    : navigate(`/collections/${item.product_id}`);
-                                                                }}
-                                                            />
-                                                        </div>
+                                                        <Button
+                                                            type='icon-outlined'
+                                                            icon='fa-solid fa-heart-crack'
+                                                            externalStyles={styles['wishlist-item-remove']}
+                                                            action={() => openModal('remove-confirmation', item)}
+                                                        />
+                                                        <Button
+                                                            type='icon-outlined'
+                                                            icon='fa-solid fa-square-up-right'
+                                                            action={() => {
+                                                                item.category.toLowerCase() === 'jewelry' 
+                                                                ? navigate(`/jewelry/${item.product_id}`)
+                                                                : navigate(`/collections/${item.product_id}`);
+                                                            }}
+                                                        />
+                                                    </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -295,90 +289,67 @@ const Wishlist = () => {
             </div>
 
             {modalType === 'remove-confirmation' && (
-                <Modal label='Remove from Wishlist' isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+                <Modal label='Remove from Wishlist' isOpen={modalOpen} onClose={closeModal}>
                     <p className={styles['modal-info']}>Are you sure you want to remove <strong>{selectedItem?.label}</strong> from your wishlist?</p>
                     <div className={styles['modal-ctas']}>
                         <Button
                             label='Remove'
                             type='primary'
                             action={() => {
-                                try {
-                                    removeFromWishlist(selectedItem.product_id);
-                                    showToast('Item removed from wishlist.', 'success');
-                                } catch (err) {
-                                    showToast('Failed to remove item from wishlist.', 'error');
-                                }
-                                setModalOpen(false);
+                                removeFromWishlist(selectedItem.product_id);
+                                closeModal();
                             }}
-                            externalStyles={styles['modal-warn']}
+                            externalStyles={styles['action-danger']}
                         />
                         <Button
                             label='Cancel'
                             type='secondary'
-                            action={() => {
-                                setModalType('');
-                                setModalOpen(false);
-                            }}
+                            action={closeModal}
                         />
                     </div>
                 </Modal>
             )}
 
             {modalType === 'clear-confirmation' && (
-                <Modal label='Clear Wishlist' isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+                <Modal label='Clear Wishlist' isOpen={modalOpen} onClose={closeModal}>
                     <p className={styles['modal-info']}>Are you sure you want to clear your entire wishlist?</p>
                     <div className={styles['modal-ctas']}>
                         <Button
                             label='Clear All'
                             type='primary'
                             action={() => {
-                                try {
-                                    clearWishlist();
-                                    showToast('Wishlist cleared successfully.', 'success');
-                                } catch (err) {
-                                    showToast('Failed to clear wishlist.', 'error');
-                                }
-                                setModalOpen(false);
+                                clearWishlist();
+                                clearSelectedItems();
+                                closeModal();
                             }}
                             externalStyles={styles['modal-warn']}
                         />
                         <Button
                             label='Cancel'
                             type='secondary'
-                            action={() => {
-                                setModalType('');
-                                setModalOpen(false);
-                            }}
+                            action={closeModal}
                         />
                     </div>
                 </Modal>
             )}
 
             {modalType === 'batch-remove-confirmation' && (
-                <Modal label='Remove Selected Items' isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+                <Modal label='Remove Selected Items' isOpen={modalOpen} onClose={closeModal}>
                     <p className={styles['modal-info']}>Are you sure you want to remove <strong>{selectedWishlistItems.length} selected item(s)</strong> from your wishlist?</p>
                     <div className={styles['modal-ctas']}>
                         <Button
                             label='Remove Selected'
-                            type='primary'
+                            type='secondary'
                             action={() => {
-                                try {
-                                    selectedWishlistItems.forEach(item => removeFromWishlist(item.product_id));
-                                    showToast('Selected items removed from wishlist.', 'success');
-                                } catch (err) {
-                                    showToast('Failed to remove selected items.', 'error');
-                                }
-                                setModalOpen(false);
+                                selectedWishlistItems.forEach(item => removeFromWishlist(item.product_id));
+                                closeModal();
                             }}
-                            externalStyles={styles['modal-warn']}
+                            externalStyles={styles['action-danger']}
                         />
                         <Button
                             label='Cancel'
                             type='secondary'
-                            action={() => {
-                                setModalType('');
-                                setModalOpen(false);
-                            }}
+                            action={closeModal}
                         />
                     </div>
                 </Modal>

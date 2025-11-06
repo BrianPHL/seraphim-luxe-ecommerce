@@ -429,7 +429,7 @@ const Products = () => {
                                             />
                                         ) : '—'}
                                     </div>
-                                    <div className={styles['table-cell']} style={{ display: 'flex', justifyContent: 'center' }}>
+                                    <div className={styles['star-cell']}>
                                         <div className={styles['table-cell']}>
                                         {
                                             !product.is_featured ? (
@@ -684,7 +684,7 @@ const Products = () => {
                 onClose={() => setAnalyticsModalOpen(false)}
                 label={`Sales Analytics: ${analyticsProduct?.label || ''}`}
             >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <div className={styles['analytics-header']}>
                     <h3>Filter by Time Range:</h3>
                     <Button
                         id="time-range-dropdown"
@@ -715,14 +715,14 @@ const Products = () => {
                 </div>
 
                 {analyticsLoading ? (
-                    <div style={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className={styles['analytics-loading']}>
                         <i className="fa-solid fa-spinner fa-spin"></i>
-                        <span style={{ marginLeft: '10px' }}>Loading analytics...</span>
+                        <span>Loading analytics...</span>
                     </div>
                 ) : analyticsError ? (
-                    <div style={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <i className="fa-solid fa-exclamation-triangle" style={{ color: '#dc3545', fontSize: '2rem' }}></i>
+                    <div className={styles['analytics-error']}>
+                        <div className={styles['analytics-error-content']}>
+                            <i className={`fa-solid fa-exclamation-triangle ${styles['analytics-error-icon']}`}></i>
                             <p>Error loading analytics: {analyticsError}</p>
                             <button onClick={() => handleOpenAnalyticsModal(analyticsProduct, selectedTimeRange)}>
                                 Retry
@@ -730,7 +730,7 @@ const Products = () => {
                         </div>
                     </div>
                 ) : analyticsProduct ? (
-                    <div style={{ minHeight: 300 }}>
+                    <div className={styles['analytics-chart']}>
                         <Line
                             data={getProductAnalyticsData(analyticsProduct.id || analyticsProduct.product_id) || { labels: [], datasets: [] }}
                             options={chartOptions}

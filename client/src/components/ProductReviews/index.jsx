@@ -93,7 +93,7 @@ const ProductReviews = ({
     useEffect(() => {
         if (!productId) return;
         setLoading(true);
-        fetch(`/api/reviews/${productId}?user_id=${currentUserId}`)
+        fetch(`/api/reviews/${productId}`)
             .then(res => res.json())
             .then(data => {
                 setReviews(data.reviews || []);
@@ -137,7 +137,9 @@ const ProductReviews = ({
         .then(() => {
             setShowReviewModal(false);
             setFormData({ rating: 0, review_title: '', review_text: '' });
-            return fetch(`/api/reviews/${productId}?user_id=${currentUserId}`).then(res => res.json());
+            showToast('Review submitted successfully!', 'success');
+
+            return fetch(`/api/reviews/${productId}`).then(res => res.json());
         })
         .then(data => {
             setReviews(data.reviews || []);
@@ -156,6 +158,11 @@ const ProductReviews = ({
                     totalReviews: stats.totalReviews
                 });
             }
+            setLoading(false);
+        })
+        .catch(error => {
+            console.error('Error submitting review:', error);
+            showToast('Failed to submit review. Please try again.', 'error');
             setLoading(false);
         });
     };
@@ -315,13 +322,27 @@ const ProductReviews = ({
 
     const reviewsToShow = reviews.length > 0 ? processedReviews : [];
 
+    const getSortOptions = () => [
+        { label: 'Newest', value: 'newest' },
+        { label: 'Oldest', value: 'oldest' },
+        { label: 'Highest Rated', value: 'highest' },
+        { label: 'Lowest Rated', value: 'lowest' },
+        { label: 'Most Helpful', value: 'helpful' }
+    ];
+
+    const getCurrentSortLabel = (currentSort) => {
+        const sortOption = getSortOptions().find(option => option.value === currentSort);
+        return sortOption ? sortOption.label : 'Sort by';
+    };
+
+    const handleSortChange = (sortValue) => {
+        setSortBy(sortValue);
+    };
+
     return (
         <div className={styles['product-reviews']}>
             <ReviewSummary />
-            
-            {/* Filter & Sort Controls */}
             <div className={styles['reviews-controls-row']}>
-                {/* Filter by rating */}
                 <div className={styles['filter-controls-group']}>
                     <span className={styles['filter-label']}>Filter by rating:</span>
                     <button
@@ -339,29 +360,28 @@ const ProductReviews = ({
                             {[...Array(rating)].map((_,i) => (
                                 <i key={i} className={`fa-solid fa-star ${styles['filter-star']}`}></i>
                             ))}
-                            
                         </button>
                     ))}
                 </div>
-                
-                {/* Sort by */}
+
                 <div className={styles['sort-controls-group']}>
                     <span className={styles['sort-label']}>Sort by:</span>
-                    <select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value)}
-                        className={styles['sort-select']}
-                    >
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                        <option value="highest">Highest Rated</option>
-                        <option value="lowest">Lowest Rated</option>
-                        <option value="helpful">Most Helpful</option>
-                    </select>
+                    <Button
+                        id="reviews-sort-dropdown"
+                        type='secondary'
+                        label={getCurrentSortLabel(sortBy)}
+                        icon='fa-solid fa-chevron-down'
+                        iconPosition='right'
+                        dropdownPosition='right'
+                        options={getSortOptions().map(option => ({
+                            label: option.label,
+                            action: () => handleSortChange(option.value)
+                        }))}
+                        externalStyles={styles['sort-button']}
+                    />
                 </div>
             </div>
             
-            {/* Review Form Modal */}
             <Modal
                 isOpen={showReviewModal}
                 onClose={handleCloseReviewModal}
@@ -438,7 +458,6 @@ const ProductReviews = ({
                 </div>
             </Modal>
             
-            {/* Reviews List */}
             {reviewsToShow.length > 0 ? (
                 <div className={styles['reviews-list-section']}>
                     {reviewsToShow.map((review) => (

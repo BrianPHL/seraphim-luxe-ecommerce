@@ -118,23 +118,14 @@
 .wishlist-item {
     background-color: var(--bg-secondary);
     border-radius: 0.5rem;
-    align-items: flex-start;
-    transition: all 0.2s ease;
-    min-width: 0;
     padding: 1.5rem;
     display: flex;
     border: 1px solid var(--bg-outline);
     gap: 1rem;
 }
 
-.wishlist-item:hover {
-    border-color: var(--accent-base);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
 .wishlist-item-selected {
     border-color: var(--accent-base);
-    background-color: var(--bg-primary);
 }
 
 .wishlist-item-checkbox {
@@ -175,7 +166,6 @@
 
 .wishlist-item-details-left {
     justify-content: space-between;
-    flex-direction: column;
     overflow: hidden;
     display: flex;
     flex: 1;
@@ -236,9 +226,13 @@
     gap: 0.75rem;
 }
 
-.wishlist-item-remove:hover {
+.action-danger {
+    background-color: var(--error-background);
     color: var(--error-foreground);
-    border-color: var(--error-foreground);
+    &:hover {
+        background-color: var(--error-hover);
+        color: var(--error-foreground);
+    }
 }
 
 .summary {
@@ -416,35 +410,17 @@
     margin-top: 1rem;
 }
 
-.modal-warn {
-    background-color: var(--error-foreground) !important;
-}
-
 .modal-warn:hover {
-    background-color: var(--error-hover) !important;
-}
-
-@media only screen and (max-width: 1290px) {
-    .container {
-        flex-direction: column-reverse;
-    }
-    
-    .summary {
-        width: 100%;
-        position: static;
-    }
+    background-color: var(--error-hover);
+    color: var(--error-foreground);
 }
 
 @media only screen and (max-width: 1690px) {
-    .wrapper { 
-        padding: 12rem 8rem 6rem 8rem; 
-    }
+    .wrapper { padding: 12rem 8rem 6rem 8rem; }
 }
 
 @media only screen and (max-width: 1430px) {
-    .wrapper { 
-        padding: 8rem 4rem 4rem 4rem; 
-    }
+    .wrapper { padding-left: 4rem; padding-right: 4rem; padding-top: 8rem; padding-bottom: 4rem; }
 }
 
 @media only screen and (max-width: 1300px) {
