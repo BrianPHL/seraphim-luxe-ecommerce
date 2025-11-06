@@ -73,18 +73,6 @@ const SupportTicketChat = ({ ticketId }) => {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: '2-digit',
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-        });
-    };
-
     if (!currentTicket) {
         return (
             <div className={styles['wrapper']}>
@@ -137,9 +125,6 @@ const SupportTicketChat = ({ ticketId }) => {
                                     <strong className={styles['sender']}>You</strong>
                                 )}
                                 <p>{msg.message}</p>
-                                <span className={styles['time']}>
-                                    {formatDate(msg.created_at)}
-                                </span>
                             </div>
                         </div>
                     ))

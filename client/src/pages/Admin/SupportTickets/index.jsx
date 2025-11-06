@@ -66,19 +66,6 @@ const SupportTickets = () => {
         }
     };
 
-    // Format date
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: '2-digit',
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-        });
-    };
-
     // Select ticket
     const handleSelectTicket = async (ticket) => {
         setSelectedTicket(ticket);
@@ -141,9 +128,6 @@ const SupportTickets = () => {
                                         <label className={styles['list-item-category']}>
                                             {ticket.category}
                                         </label>
-                                        <label className={styles['list-item-date']}>
-                                            {formatDate(ticket.created_at)}
-                                        </label>
                                     </div>
                                 </div>
                             ))
@@ -184,9 +168,6 @@ const SupportTickets = () => {
                                                 {ticket.unread_count}
                                             </span>
                                         )}
-                                        <label className={styles['list-item-date']}>
-                                            {formatDate(ticket.updated_at)}
-                                        </label>
                                     </div>
                                 </div>
                             ))
@@ -222,9 +203,6 @@ const SupportTickets = () => {
                                         <label className={styles['list-item-category']}>
                                             {ticket.category}
                                         </label>
-                                        <label className={styles['list-item-date']}>
-                                            {formatDate(ticket.updated_at)}
-                                        </label>
                                     </div>
                                 </div>
                             ))
@@ -255,9 +233,6 @@ const SupportTickets = () => {
                                     <p className={styles['list-item-message']}>
                                         {ticket.subject}
                                     </p>
-                                    <label className={styles['list-item-date']}>
-                                        {formatDate(ticket.resolved_at)}
-                                    </label>
                                 </div>
                             ))
                         ) : (
@@ -288,9 +263,6 @@ const SupportTickets = () => {
                                     <p className={styles['list-item-message']}>
                                         {ticket.subject}
                                     </p>
-                                    <label className={styles['list-item-date']}>
-                                        {formatDate(ticket.closed_at)}
-                                    </label>
                                 </div>
                             ))
                         ) : (

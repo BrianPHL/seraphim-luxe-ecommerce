@@ -75,19 +75,6 @@ const LiveChat = () => {
         }
     };
 
-    // Format date
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: '2-digit',
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-        });
-    };
-
     // Get last message for room
     const getLastMessage = (roomId) => {
         const roomMessages = messages.filter(m => m.room_id === roomId);
@@ -140,9 +127,6 @@ const LiveChat = () => {
                                         <p className={styles['list-item-message']}>
                                             {getLastMessage(room.id)}
                                         </p>
-                                        <label className={styles['list-item-date']}>
-                                            {formatDate(room.modified_at)}
-                                        </label>
                                     </div>
                                 );
                             })
@@ -176,9 +160,6 @@ const LiveChat = () => {
                                         <p className={styles['list-item-message']}>
                                             Waiting for agent...
                                         </p>
-                                        <label className={styles['list-item-date']}>
-                                            {formatDate(room.created_at)}
-                                        </label>
                                     </div>
                                 );
                             })
@@ -213,9 +194,6 @@ const LiveChat = () => {
                                         <p className={styles['list-item-message']}>
                                             {getLastMessage(room.id)}
                                         </p>
-                                        <label className={styles['list-item-date']}>
-                                            {formatDate(room.closed_at || room.modified_at)}
-                                        </label>
                                     </div>
                                 );
                             })
