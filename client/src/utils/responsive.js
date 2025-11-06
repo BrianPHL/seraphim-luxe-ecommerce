@@ -10,6 +10,11 @@ export const equalizeChildrenHeightInContainer = (container) => {
 
     const referenceHeight = containerChildren[0].offsetHeight;
 
-    containerChildren.forEach(containerChild => containerChild.style.height = `${ referenceHeight }px`)
+    containerChildren.forEach(containerChild => {
+
+        if (containerChild.matches('form')) return;
+
+        containerChild.style.height = `${ referenceHeight }px`
+    })
 
 };
