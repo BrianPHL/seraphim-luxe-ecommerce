@@ -16,6 +16,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
     const [ isRemovingAvatar, setIsRemovingAvatar ] = useState(false);
     const [ isPopupOpen, setIsPopupOpen ] = useState(false);
     const [ userCount, setUserCount ] = useState(0);
+    const [lastLoggedSessionId, setLastLoggedSessionId ] = useState(null);
     const [ otpModalData, setOtpModalData ] = useState({
         show: false,
         data: {
@@ -55,7 +56,37 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
 
                 }
 
-                setUser(session.data.user);
+                const sessionId = sessionData?.id || `${sessionUser.id}_${sessionData?.createdAt || Date.now()}`;
+                const isNewSession = sessionId !== lastLoggedSessionId;
+
+                setUser(sessionUser);
+
+                if (isNewSession && logSignIn) {
+                    await logSignIn(
+                        `User signed in: ${sessionUser.email}`,
+                        {
+                            user_id: sessionUser.id,
+                            first_name: sessionUser.first_name,
+                            last_name: sessionUser.last_name,
+                            name: sessionUser.name || `${sessionUser.first_name || ''} ${sessionUser.last_name || ''}`.trim(),
+                            email: sessionUser.email,
+                            role: sessionUser.role
+                        },
+                        {
+                            user_id: sessionUser.id,
+                            first_name: sessionUser.first_name,
+                            last_name: sessionUser.last_name,
+                            email: sessionUser.email,
+                            role: sessionUser.role
+                        }
+                    );
+
+                    setLastLoggedSessionId(sessionId);
+                }
+
+                localStorage.setItem('user', JSON.stringify(sessionUser));
+
+                // setUser(session.data.user);
 
             } catch (err) {
                 console.error("Auth context initializeAuth function error: ", err);
@@ -339,6 +370,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             await signOut(); 
             localStorage.removeItem('user');
             setUser(null);
+            setLastLoggedSessionId(null);
             showToast('Logged out successfully.', 'success');
             navigate('/sign-in');
 
@@ -346,6 +378,7 @@ export const AuthProvider = ({ children, auditLoggers = {} }) => {
             console.error('Auth context logout function error:', err);
             localStorage.removeItem('user');
             setUser(null);
+            setLastLoggedSessionId(null);
             showToast('Logged out successfully.', 'success');
             navigate('/sign-in');
         }
