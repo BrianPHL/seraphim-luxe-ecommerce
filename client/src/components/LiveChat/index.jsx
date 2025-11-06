@@ -27,12 +27,6 @@ const LiveChat = () => {
         fetchMessages
     } = useLiveChat();
 
-    const getFirstName = (fullName) => {
-        if (!fullName) return '';
-        return fullName.split(' ')[0];
-    };
-
-    // Send message
     const sendMessage = async () => {
         if (!selectedRoom || !message.trim() || isLoading) return;
 
@@ -48,26 +42,22 @@ const LiveChat = () => {
         setTimeout(scrollToBottom, 100);
     };
 
-    // Close chat room
     const handleCloseRoom = async () => {
         if (!selectedRoom) return;
         await closeRoom(selectedRoom.id);
     };
 
-    // Exit current chat view
     const handleExitChat = () => {
         setSelectedRoom(null);
         setShowTransitionPlaceholder(false);
     };
 
-    // Scroll to bottom of chat
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     };
 
-    // Handle key press
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey && message.trim()) {
             e.preventDefault();
@@ -75,20 +65,17 @@ const LiveChat = () => {
         }
     };
 
-    // Get last message for room
     const getLastMessage = (roomId) => {
         const roomMessages = messages.filter(m => m.room_id === roomId);
         return roomMessages[roomMessages.length - 1]?.message || 'No messages yet';
     };
 
-    // Select room
     const handleSelectRoom = async (room) => {
         setShowTransitionPlaceholder(false);
         setSelectedRoom(room);
         await fetchMessages(room.id);
     };
 
-    // Auto-scroll when messages change
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -104,7 +91,6 @@ const LiveChat = () => {
                     Chats ({totalChats})
                 </h3>
                 <div className={ styles['list-container'] }>
-                    {/* Active Rooms */}
                     <Accordion
                         label={`Active (${activeRooms.length})`}
                         isOpenByDefault={true}
@@ -137,7 +123,6 @@ const LiveChat = () => {
                         )}
                     </Accordion>
 
-                    {/* Waiting Rooms */}
                     <Accordion
                         label={`Waiting (${waitingRooms.length})`}
                         isOpenByDefault={true}
@@ -170,7 +155,6 @@ const LiveChat = () => {
                         )}
                     </Accordion>
 
-                    {/* Closed Rooms */}
                     <Accordion
                         label={`Concluded (${closedRooms.length})`}
                         isOpenByDefault={false}
@@ -207,7 +191,6 @@ const LiveChat = () => {
             </div>
 
             <div className={styles['chat']}>
-                {/* Transition Placeholder - Shows when status changes */}
                 {showTransitionPlaceholder && (
                     <div className={styles['chat-placeholder']}>
                         <i className="fa-solid fa-hourglass-half" style={{ fontSize: '4rem', opacity: 0.3 }}></i>
@@ -224,7 +207,6 @@ const LiveChat = () => {
                     </div>
                 )}
 
-                {/* Active Chat Interface */}
                 {shouldShowChat && (
                     <>
                         <div className={styles['chat-header']}>
@@ -255,49 +237,47 @@ const LiveChat = () => {
                         </div>
                                                     
                         <div className={styles['chat-container']} ref={chatContainerRef}>
-                                {messages.map(msg => {
-                                    const isSystemMessage = msg.sender_type === 'system';
-                                    
-                                    // Render system messages differently
-                                    if (isSystemMessage) {
-                                        return (
-                                            <div 
-                                                key={`${msg.source || 'live'}-${msg.id}`}
-                                                className={styles['system-message']}
-                                            >
-                                                {msg.message}
-                                            </div>
-                                        );
-                                    }
-                                    
-                                    // Regular chat messages
-                                    const isAI = msg.source === 'ai';
-                                    const isCustomer = isAI ? msg.message_type === 'user' : msg.sender_type === 'customer';
-                                    
-                                    let senderLabel;
-                                    if (isCustomer) {
-                                        const customer = customers[selectedRoom?.customer_id];
-                                        senderLabel = `${ customer?.name } (Customer)` || 'Customer';
-                                    } else if (isAI) {
-                                        senderLabel = 'Seraphim Luxe AI';
-                                    } else {
-                                        senderLabel = 'You (Agent)'
-                                    }
-                                    
+                            {messages.map(msg => {
+                                const isSystemMessage = msg.sender_type === 'system';
+                                
+                                if (isSystemMessage) {
                                     return (
-                                        <p 
+                                        <div 
                                             key={`${msg.source || 'live'}-${msg.id}`}
-                                            className={styles['chat-item']} 
-                                            data-role={isCustomer ? 'customer' : 'agent'}
-                                            data-source={msg.source || 'live'}
+                                            className={styles['system-message']}
                                         >
-                                            <span className={styles['chat-item-label']}>
-                                                {senderLabel}
-                                            </span>
                                             {msg.message}
-                                        </p>
+                                        </div>
                                     );
-                                })}
+                                }
+                                
+                                const isAI = msg.source === 'ai';
+                                const isCustomer = isAI ? msg.message_type === 'user' : msg.sender_type === 'customer';
+                                
+                                let senderLabel;
+                                if (isCustomer) {
+                                    const customer = customers[selectedRoom?.customer_id];
+                                    senderLabel = `${ customer?.name } (Customer)` || 'Customer';
+                                } else if (isAI) {
+                                    senderLabel = 'Seraphim Luxe AI';
+                                } else {
+                                    senderLabel = 'You (Agent)'
+                                }
+                                
+                                return (
+                                    <p 
+                                        key={`${msg.source || 'live'}-${msg.id}`}
+                                        className={styles['chat-item']} 
+                                        data-role={isCustomer ? 'customer' : 'agent'}
+                                        data-source={msg.source || 'live'}
+                                    >
+                                        <span className={styles['chat-item-label']}>
+                                            {senderLabel}
+                                        </span>
+                                        {msg.message}
+                                    </p>
+                                );
+                            })}
                         </div>
 
                         <div className={styles['chat-controls']}>
@@ -320,7 +300,6 @@ const LiveChat = () => {
                     </>
                 )}
 
-                {/* Default Placeholder - No chat selected */}
                 {shouldShowDefaultPlaceholder && (
                     <div className={styles['chat-placeholder']}>
                         <i className="fa-solid fa-comments" style={{ fontSize: '4rem', opacity: 0.3 }}></i>
