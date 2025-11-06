@@ -399,7 +399,6 @@ router.put('/tickets/:ticket_id/claim', async (req, res) => {
     }
 });
 
-// Update ticket status
 router.put('/tickets/:ticket_id/status', async (req, res) => {
     const connection = await pool.getConnection();
     
@@ -408,6 +407,8 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
         
         const { ticket_id } = req.params;
         const { status, agent_id } = req.body;
+        
+        console.log(`[Server] Updating ticket ${ticket_id} status to ${status} by agent ${agent_id}`);
         
         const [tickets] = await connection.query(
             `SELECT customer_id, agent_id FROM support_tickets WHERE id = ?`,
@@ -423,6 +424,7 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
         }
         
         const ticket = tickets[0];
+        console.log(`[Server] Ticket info - customer_id: ${ticket.customer_id}, agent_id: ${ticket.agent_id}`);
         
         const updateFields = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
         const updateValues = [status];
@@ -470,35 +472,54 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
                 created_at: new Date().toISOString()
             };
             
-            // Send the system message via SSE too
+            // Send the system message via SSE to customer
             if (ticket.customer_id) {
-                pingUser(ticket.customer_id, {
+                console.log(`[Server] Sending system message SSE to customer ${ticket.customer_id}`);
+                const sent = pingUser(ticket.customer_id, {
                     type: 'support_ticket_message',
                     ticket_id: parseInt(ticket_id),
                     data: systemMessageData
                 });
+                console.log(`[Server] System message SSE sent to customer: ${sent}`);
             }
         }
         
         await connection.commit();
         
-        // Notify customer of status change
+        // Collect all users to notify
+        const usersToNotify = new Set();
+        
+        // Always notify customer
         if (ticket.customer_id) {
-            pingUser(ticket.customer_id, {
-                type: 'ticket_status_updated',
-                ticket_id: parseInt(ticket_id),
-                status: status
-            });
+            usersToNotify.add(ticket.customer_id);
         }
         
-        // Also notify agent if different from the one who changed it
-        if (ticket.agent_id && agent_id !== ticket.agent_id) {
-            pingUser(ticket.agent_id, {
+        // Notify the assigned agent (if different from the one making the change)
+        if (ticket.agent_id && ticket.agent_id !== agent_id) {
+            usersToNotify.add(ticket.agent_id);
+        }
+        
+        // Get all admins and notify them too
+        const [admins] = await pool.query(
+            `SELECT id FROM accounts WHERE role = 'admin' AND is_suspended = 0`
+        );
+        
+        admins.forEach(admin => {
+            usersToNotify.add(admin.id);
+        });
+        
+        console.log(`[Server] Notifying users about status change:`, Array.from(usersToNotify));
+        
+        // Send SSE notifications to all users
+        usersToNotify.forEach(userId => {
+            console.log(`[Server] Sending ticket_status_updated SSE to user ${userId}`);
+            const sent = pingUser(userId, {
                 type: 'ticket_status_updated',
                 ticket_id: parseInt(ticket_id),
                 status: status
             });
-        }
+            console.log(`[Server] SSE sent to user ${userId}: ${sent}`);
+        });
         
         res.status(200).json({
             success: true,
