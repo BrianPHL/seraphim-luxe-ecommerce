@@ -6,7 +6,6 @@ import { useLiveChat, useAuth } from '@contexts';
 const LiveChat = () => {
 
     const [ message, setMessage ] = useState('');
-    const [ showTransitionPlaceholder, setShowTransitionPlaceholder ] = useState(false);
     
     const chatContainerRef = useRef(null);
 
@@ -49,7 +48,6 @@ const LiveChat = () => {
 
     const handleExitChat = () => {
         setSelectedRoom(null);
-        setShowTransitionPlaceholder(false);
     };
 
     const scrollToBottom = () => {
@@ -71,7 +69,6 @@ const LiveChat = () => {
     };
 
     const handleSelectRoom = async (room) => {
-        setShowTransitionPlaceholder(false);
         setSelectedRoom(room);
         await fetchMessages(room.id);
     };
@@ -81,7 +78,7 @@ const LiveChat = () => {
     }, [messages]);
 
     const totalChats = activeRooms.length + waitingRooms.length + closedRooms.length;
-    const shouldShowChat = selectedRoom && !showTransitionPlaceholder;
+    const shouldShowChat = selectedRoom;
     const shouldShowDefaultPlaceholder = !selectedRoom;
 
     return (
@@ -191,22 +188,6 @@ const LiveChat = () => {
             </div>
 
             <div className={styles['chat']}>
-                {showTransitionPlaceholder && (
-                    <div className={styles['chat-placeholder']}>
-                        <i className="fa-solid fa-hourglass-half" style={{ fontSize: '4rem', opacity: 0.3 }}></i>
-                        <h2>Chat Status Changed</h2>
-                        <p>This chat session has been concluded. Please select it again from the Concluded category to view history.</p>
-                        <Button
-                            type='primary'
-                            label='Exit Chat View'
-                            icon='fa-solid fa-times'
-                            iconPosition='left'
-                            action={handleExitChat}
-                            externalStyles={{ marginTop: '1rem' }}
-                        />
-                    </div>
-                )}
-
                 {shouldShowChat && (
                     <>
                         <div className={styles['chat-header']}>

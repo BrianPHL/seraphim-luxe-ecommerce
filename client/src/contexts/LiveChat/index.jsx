@@ -395,7 +395,7 @@ export const LiveChatProvider = ({ children }) => {
                 });
                 
             } else if (data.type === 'agent_concluded') {
-                console.log('[LiveChat] Agent concluded chat, room back to waiting');
+                console.log('[LiveChat] ✅ Agent concluded, room returned to waiting:', data.room_id);
 
                 setRooms(prevRooms => 
                     prevRooms.map(room => 
@@ -406,11 +406,17 @@ export const LiveChatProvider = ({ children }) => {
                 );
 
                 if (selectedRoomIdRef.current && parseInt(data.room_id) === selectedRoomIdRef.current) {
+                    setSelectedRoom(prev => prev ? { ...prev, status: 'waiting', agent_id: null } : null);
                     showToast('Chat session concluded', 'info');
-                    setSelectedRoom(null);
-                    setMessages([]);
                 }
-                
+
+                if (selectedRoomIdRef.current === parseInt(data.room_id) && data.message) {
+                    setMessages(prevMessages => [...prevMessages, {
+                        ...data.message,
+                        source: 'live',
+                        timestamp: new Date(data.message.created_at).getTime()
+                    }]);
+                }
             } else if (data.type === 'customer_disconnected') {
                 console.log('[LiveChat] ✅ Customer disconnected from room:', data.room_id);
             
@@ -422,19 +428,17 @@ export const LiveChatProvider = ({ children }) => {
                     )
                 );
             
-                // Add system message to chat if this room is currently selected
+                if (selectedRoomIdRef.current === parseInt(data.room_id)) {
+                    setSelectedRoom(prev => prev ? { ...prev, status: 'concluded' } : null);
+                    showToast('Customer has disconnected', 'info');
+                }
+            
                 if (selectedRoomIdRef.current === parseInt(data.room_id) && data.message) {
                     setMessages(prevMessages => [...prevMessages, {
                         ...data.message,
                         source: 'live',
                         timestamp: new Date(data.message.created_at).getTime()
                     }]);
-                }
-            
-                if (selectedRoomIdRef.current === parseInt(data.room_id)) {
-                    showToast('Customer has disconnected', 'info');
-                    setSelectedRoom(null);
-                    setMessages([]);
                 }
             }
         });
