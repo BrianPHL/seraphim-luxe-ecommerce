@@ -142,9 +142,22 @@ router.get('/:account_id', async (req, res) => {
 
         const [orders] = await pool.query(
             `
-                SELECT o.*, a.first_name, a.last_name, a.email, a.phone_number
+                SELECT 
+                    o.*, 
+                    a.first_name, 
+                    a.last_name, 
+                    a.email, 
+                    a.phone_number,
+                    sa.street_address AS shipping_street,
+                    sa.city AS shipping_city,
+                    sa.province AS shipping_province,
+                    sa.barangay AS shipping_barangay,
+                    sa.postal_code AS shipping_postal_code,
+                    sa.phone_number AS shipping_phone,
+                    sa.full_name AS shipping_recipient_name
                 FROM orders o 
                 JOIN accounts a ON o.account_id = a.id
+                LEFT JOIN account_addresses sa ON o.shipping_address_id = sa.id
                 WHERE o.account_id = ?
                 ORDER BY o.created_at DESC
             `,

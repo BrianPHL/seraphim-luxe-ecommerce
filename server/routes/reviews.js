@@ -3,69 +3,86 @@ import pool from '../apis/db.js';
 const router = express.Router();
 
 router.get('/:productId', async (req, res) => {
-    const { productId } = req.params;
-    const userId = req.query.user_id;
+    try {
+        const { productId } = req.params;
+        const userId = req.query.user_id;
 
-    const [reviews] = await pool.query(
-        `SELECT 
-            r.*, 
-            a.first_name AS reviewer_name, 
-            a.image_url AS reviewer_image_url 
-         FROM product_reviews r 
-         JOIN accounts a ON r.user_id = a.id 
-         WHERE r.product_id = ? 
-         ORDER BY r.created_at DESC 
-         LIMIT 10`,
-        [productId]
-    );
-
-    let userHelpfulVotes = [];
-    if (userId) {
-        const [votes] = await pool.query(
-            'SELECT review_id FROM product_review_helpful WHERE user_id = ?',
-            [userId]
+        const [reviews] = await pool.query(
+            `SELECT 
+                r.*, 
+                a.first_name AS reviewer_name, 
+                a.image_url AS reviewer_image_url 
+             FROM product_reviews r 
+             JOIN accounts a ON r.user_id = a.id 
+             WHERE r.product_id = ? 
+             ORDER BY r.created_at DESC 
+             LIMIT 10`,
+            [productId]
         );
-        userHelpfulVotes = votes.map(v => v.review_id);
-    }
 
-    const [[{ avg }]] = await pool.query(
-        'SELECT AVG(rating) as avg FROM product_reviews WHERE product_id = ?',
-        [productId]
-    );
-    res.json({ reviews, average: avg || 0, userHelpfulVotes });
+        let userHelpfulVotes = [];
+        if (userId) {
+            const [votes] = await pool.query(
+                'SELECT review_id FROM product_review_helpful WHERE user_id = ?',
+                [userId]
+            );
+            userHelpfulVotes = votes.map(v => v.review_id);
+        }
+
+        const [[{ avg }]] = await pool.query(
+            'SELECT AVG(rating) as avg FROM product_reviews WHERE product_id = ?',
+            [productId]
+        );
+
+        res.json({
+            reviews: reviews || [],
+            average: avg || 0,
+            userHelpfulVotes
+        });
+    } catch (error) {
+        console.error('Error fetching reviews:', error);
+        res.status(500).json({ error: 'Failed to fetch reviews' });
+    }
 });
 
-// Add a review
 router.post('/', async (req, res) => {
-    const { product_id, user_id, rating, review_text, review_title } = req.body;
-    if (!product_id || !user_id || !rating) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
-        return res.status(400).json({ error: 'Invalid rating' });
-    }
+    try {
+        const { product_id, user_id, rating, review_text, review_title } = req.body;
 
-    if (review_text && review_text.length > 2000) {
-        return res.status(400).json({ error: 'Review text must be less than 2000 characters' });
-    }
-    if (review_title && review_title.length > 100) {
-        return res.status(400).json({ error: 'Review title must be less than 100 characters' });
-    }
+        if (!product_id || !user_id || !rating) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: product_id, user_id, and rating are required' 
+            });
+        }
 
-    await pool.query(
-        'INSERT INTO product_reviews (product_id, user_id, rating, review_text, review_title) VALUES (?, ?, ?, ?, ?)',
-        [product_id, user_id, rating, review_text, review_title]
-    );
-    res.json({ success: true });
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ 
+                error: 'Rating must be between 1 and 5' 
+            });
+        }
+        const [result] = await pool.query(
+            'INSERT INTO product_reviews (product_id, user_id, rating, review_text, review_title) VALUES (?, ?, ?, ?, ?)',
+            [product_id, user_id, rating, review_text || null, review_title || null]
+        );
+
+        res.json({ 
+            success: true, 
+            reviewId: result.insertId,
+            message: 'Review submitted successfully!' 
+        });
+    } catch (error) {
+        console.error('Error submitting review:', error);
+        res.status(500).json({ 
+            error: 'Failed to submit review. Please try again later.' 
+        });
+    }
 });
 
-// Mark a review as helpful
 router.post('/helpful', async (req, res) => {
     try {
         const { review_id, user_id } = req.body;
         if (!review_id || !user_id) return res.status(400).json({ error: 'Missing review_id or user_id' });
 
-        // Check if user already voted
         const [rows] = await pool.query(
             'SELECT id FROM product_review_helpful WHERE review_id = ? AND user_id = ?',
             [review_id, user_id]
@@ -102,7 +119,6 @@ router.post('/helpful', async (req, res) => {
     }
 });
 
-// Edit a review
 router.put('/:reviewId', async (req, res) => {
     const { reviewId } = req.params;
     const { user_id, rating, review_text } = req.body;
@@ -131,13 +147,11 @@ router.put('/:reviewId', async (req, res) => {
     res.json({ success: true });
 });
 
-// Delete a review
 router.delete('/:reviewId', async (req, res) => {
     const { reviewId } = req.params;
     const { user_id } = req.body;
     if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
 
-    // Only allow the review owner to delete
     const [rows] = await pool.query(
         'SELECT user_id FROM product_reviews WHERE id = ?',
         [reviewId]
