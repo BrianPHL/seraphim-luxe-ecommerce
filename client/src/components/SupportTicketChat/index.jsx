@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './SupportTicketChat.module.css';
-import { Button } from '@components';
+import { Button, InputField } from '@components';
 import { useSupportTickets } from '@contexts';
 
 const SupportTicketChat = ({ ticketId }) => {
@@ -21,7 +21,6 @@ const SupportTicketChat = ({ ticketId }) => {
 
     const currentTicket = tickets.find(t => t.id === ticketId);
 
-    // Initial load - fetch tickets if not found
     useEffect(() => {
         const loadTicket = async () => {
             if (!currentTicket && isInitialLoad) {
@@ -34,7 +33,6 @@ const SupportTicketChat = ({ ticketId }) => {
         loadTicket();
     }, [ticketId, currentTicket, isInitialLoad, fetchTickets]);
 
-    // Load messages when ticket is available
     useEffect(() => {
         if (ticketId && currentTicket) {
             console.log('[SupportTicketChat] Loading ticket:', ticketId);
@@ -92,7 +90,7 @@ const SupportTicketChat = ({ ticketId }) => {
         <div className={styles['wrapper']}>
             <div className={styles['header']}>
                 <div>
-                    <h3>Support Ticket #{ticketId}</h3>
+                    <h3>Ticket #{ticketId}</h3>
                     <p>{currentTicket.subject}</p>
                 </div>
                 <span className={styles['status']}>{currentTicket.status.replace('_', ' ')}</span>
@@ -105,42 +103,44 @@ const SupportTicketChat = ({ ticketId }) => {
                         <p>Your message has been received! An agent will respond shortly.</p>
                     </div>
                 ) : (
-                    messages.map(msg => (
-                        <div 
-                            key={msg.id} 
-                            className={`${styles['message']} ${
-                                msg.sender_type === 'agent' ? styles['agent'] : 
-                                msg.sender_type === 'system' ? styles['system'] : 
-                                styles['customer']
-                            }`}
-                        >
-                            <div className={styles['message-content']}>
-                                {msg.sender_type === 'agent' && (
-                                    <strong className={styles['sender']}>Support Agent</strong>
-                                )}
-                                {msg.sender_type === 'system' && (
-                                    <strong className={styles['sender']}>System</strong>
-                                )}
-                                {msg.sender_type === 'customer' && (
-                                    <strong className={styles['sender']}>You</strong>
-                                )}
-                                <p>{msg.message}</p>
+                    messages.map(msg => {
+                        const isSystem = msg.sender_type === 'system';
+                        
+                        if (isSystem) {
+                            return (
+                                <div key={msg.id} className={styles['system-message']}>
+                                    {msg.message}
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div 
+                                key={msg.id} 
+                                className={`${styles['message']} ${
+                                    msg.sender_type === 'agent' ? styles['agent'] : styles['customer']
+                                }`}
+                            >
+                                <span className={styles['sender']}>
+                                    {msg.sender_type === 'agent' ? 'Support Agent' : 'You'}
+                                </span>
+                                {msg.message}
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
             {isTicketActive ? (
                 <div className={styles['input-area']}>
-                    <textarea
-                        className={styles['input']}
-                        placeholder="Type your message..."
+                    <InputField
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={event => setMessage(event.target.value)}
                         onKeyDown={handleKeyDown}
-                        disabled={isLoading}
-                        rows={2}
+                        hint={currentTicket.status === 'closed' || currentTicket.status === 'resolved' ? 'Ticket is closed - read only' : 'Type your message...'}
+                        type='text'
+                        isSubmittable={false}
+                        disabled={!isTicketActive}
                     />
                     <Button 
                         type='icon-outlined'

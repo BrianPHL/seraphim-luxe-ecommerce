@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCMS, useBanners, useToast, useSupportTickets, useAuth } from '@contexts';
-import { ReturnButton, Banner, Button, SupportTicketChat } from '@components';
+import { ReturnButton, Banner, Button, SupportTicketChat, Accordion } from '@components';
 import { getErrorMessage } from '@utils';
 import styles from './ContactUs.module.css';
 
@@ -8,9 +8,8 @@ const ContactUs = () => {
     const { fetchSpecificPage, loading: cmsLoading } = useCMS();
     const { banners } = useBanners();
     const { showToast } = useToast();
-    const { createTicket } = useSupportTickets();
+    const { createTicket, tickets, fetchMessages, setSelectedTicket, selectedTicket } = useSupportTickets();
     const { user } = useAuth();
-    const [createdTicketId, setCreatedTicketId] = useState(null);
     const [contactContent, setContactContent] = useState('');
     const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
@@ -138,9 +137,14 @@ const ContactUs = () => {
             });
 
             if (result.success) {
-                showToast('Support ticket created! Continue the conversation below.', 'success');
-                setCreatedTicketId(result.data.ticket_id);
+                showToast('Support ticket created successfully!', 'success');
                 setFormData({ name: '', email: '', subject: '', message: '' });
+                
+                // Auto-select the newly created ticket
+                const newTicket = tickets.find(t => t.id === result.data.ticket_id);
+                if (newTicket) {
+                    handleSelectTicket(newTicket);
+                }
             } else {
                 throw new Error(result.message || 'Failed to create ticket');
             }
@@ -157,7 +161,39 @@ const ContactUs = () => {
         }
     };
 
+    const handleSelectTicket = async (ticket) => {
+        setSelectedTicket(ticket);
+        await fetchMessages(ticket.id);
+    };
+
+    const handleExitTicket = () => {
+        setSelectedTicket(null);
+    };
+
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'open':
+            case 'in_progress':
+                return 'active';
+            case 'waiting_customer':
+                return 'idle';
+            default:
+                return 'concluded';
+        }
+    };
+
     const contactData = parseContactContent(contactContent);
+
+    // Filter tickets (max 5 most recent)
+    const recentTickets = user ? tickets
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+        .slice(0, 5) : [];
+
+    const activeTickets = recentTickets.filter(t => t.status === 'open' || t.status === 'in_progress');
+    const otherTickets = recentTickets.filter(t => t.status !== 'open' && t.status !== 'in_progress');
+
+    const hasTickets = user && recentTickets.length > 0;
+    const canCreateMore = !user || tickets.length < 5;
 
     if (cmsLoading) {
         return (
@@ -215,10 +251,18 @@ const ContactUs = () => {
 
                 <div className={styles['form-section']}>
                     <h2>Send us a Message</h2>
-                    <div className={styles['form-notice']}>
-                        <i className="fa-solid fa-info-circle"></i>
-                        <p>After submitting this form, a support chat will open at the bottom of the page where you can continue the conversation with our team.</p>
-                    </div>
+                    {!canCreateMore && (
+                        <div className={styles['form-notice']} style={{ backgroundColor: 'var(--warning-background)', borderColor: 'var(--warning-foreground)' }}>
+                            <i className="fa-solid fa-exclamation-triangle"></i>
+                            <p>You have reached the maximum of 5 open tickets. Please resolve existing tickets before creating new ones.</p>
+                        </div>
+                    )}
+                    {canCreateMore && (
+                        <div className={styles['form-notice']}>
+                            <i className="fa-solid fa-info-circle"></i>
+                            <p>After submitting, you can view and manage your tickets below. Maximum 5 tickets allowed.</p>
+                        </div>
+                    )}
                     <form className={styles['contact-form']} onSubmit={handleSubmit}>
                         <div className={styles['form-group']}>
                             <label htmlFor="name">Name</label>
@@ -229,6 +273,7 @@ const ContactUs = () => {
                                 value={formData.name}
                                 onChange={handleInputChange}
                                 required
+                                disabled={!canCreateMore}
                             />
                         </div>
 
@@ -241,6 +286,7 @@ const ContactUs = () => {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 required
+                                disabled={!canCreateMore}
                             />
                         </div>
 
@@ -253,6 +299,7 @@ const ContactUs = () => {
                                 value={formData.subject}
                                 onChange={handleInputChange}
                                 required
+                                disabled={!canCreateMore}
                             />
                         </div>
 
@@ -265,26 +312,117 @@ const ContactUs = () => {
                                 value={formData.message}
                                 onChange={handleInputChange}
                                 required
+                                disabled={!canCreateMore}
                             ></textarea>
                         </div>
 
                         <Button 
                             type="primary" 
-                            label="Send Message & Open Chat" 
+                            label={canCreateMore ? "Create Support Ticket" : "Ticket Limit Reached"}
                             action={(e) => {
                                 e.preventDefault();
                                 handleSubmit(e);
                             }}
-                            disabled={!user || !formData.name || !formData.email || !formData.subject || !formData.message}
+                            disabled={!user || !canCreateMore || !formData.name || !formData.email || !formData.subject || !formData.message}
                         />
                     </form>
-                    {createdTicketId && (
-                        <div className={styles['ticket-chat-section']}>
-                            <SupportTicketChat ticketId={createdTicketId} />
-                        </div>
-                    )}
                 </div>
             </div>
+
+            {/* Support Tickets Section - Shows if user has tickets */}
+            {hasTickets && (
+                <div className={styles['tickets-section']}>
+                    <h2>Your Support Tickets</h2>
+                    <p>View and manage your recent support tickets (showing up to 5 most recent)</p>
+                    
+                    <div className={styles['tickets-container']}>
+                        {/* Sidebar - Ticket List */}
+                        <div className={styles['tickets-list']}>
+                            <h3 className={styles['tickets-list-header']}>
+                                Tickets ({recentTickets.length}/5)
+                            </h3>
+                            <div className={styles['tickets-list-container']}>
+                                <Accordion
+                                    label={`Active (${activeTickets.length})`}
+                                    isOpenByDefault={true}
+                                >
+                                    {activeTickets.length > 0 ? (
+                                        activeTickets.map(ticket => (
+                                            <div 
+                                                key={ticket.id}
+                                                className={`${styles['ticket-item']} ${selectedTicket?.id === ticket.id ? styles['active'] : ''}`}
+                                                onClick={() => handleSelectTicket(ticket)}
+                                            >
+                                                <div className={styles['ticket-item-header']}>
+                                                    <h4 className={styles['ticket-item-name']}>
+                                                        Ticket #{ticket.id}
+                                                    </h4>
+                                                    <div className={`${styles['ticket-item-status']} ${styles[getStatusColor(ticket.status)]}`}></div>
+                                                </div>
+                                                <p className={styles['ticket-item-message']}>
+                                                    {ticket.subject}
+                                                </p>
+                                                {ticket.unread_count > 0 && (
+                                                    <span className={styles['unread-badge']}>
+                                                        {ticket.unread_count} new
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className={styles['ticket-item']}>
+                                            <p className={styles['ticket-item-message']}>No active tickets</p>
+                                        </div>
+                                    )}
+                                </Accordion>
+
+                                <Accordion
+                                    label={`Other (${otherTickets.length})`}
+                                    isOpenByDefault={false}
+                                    externalStyles={styles['last-accordion']}
+                                >
+                                    {otherTickets.length > 0 ? (
+                                        otherTickets.map(ticket => (
+                                            <div 
+                                                key={ticket.id}
+                                                className={`${styles['ticket-item']} ${selectedTicket?.id === ticket.id ? styles['active'] : ''}`}
+                                                onClick={() => handleSelectTicket(ticket)}
+                                            >
+                                                <div className={styles['ticket-item-header']}>
+                                                    <h4 className={styles['ticket-item-name']}>
+                                                        Ticket #{ticket.id}
+                                                    </h4>
+                                                    <div className={`${styles['ticket-item-status']} ${styles[getStatusColor(ticket.status)]}`}></div>
+                                                </div>
+                                                <p className={styles['ticket-item-message']}>
+                                                    {ticket.subject}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className={styles['ticket-item']}>
+                                            <p className={styles['ticket-item-message']}>No other tickets</p>
+                                        </div>
+                                    )}
+                                </Accordion>
+                            </div>
+                        </div>
+
+                        {/* Chat Area */}
+                        <div className={styles['tickets-chat']}>
+                            {selectedTicket ? (
+                                <SupportTicketChat ticketId={selectedTicket.id} />
+                            ) : (
+                                <div className={styles['tickets-placeholder']}>
+                                    <i className="fa-solid fa-ticket" style={{ fontSize: '4rem', opacity: 0.3 }}></i>
+                                    <h2>Select a ticket to view conversation</h2>
+                                    <p>Choose a ticket from the list to continue the conversation</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

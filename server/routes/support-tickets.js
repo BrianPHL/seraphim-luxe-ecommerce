@@ -126,6 +126,13 @@ router.post('/tickets/create', async (req, res) => {
             VALUES (?, ?, 'customer', ?)
         `, [ticketId, customer_id || null, message]);
         
+        // Add welcome system message
+        await connection.query(`
+            INSERT INTO support_ticket_messages 
+            (ticket_id, sender_id, sender_type, message) 
+            VALUES (?, NULL, 'system', ?)
+        `, [ticketId, 'Thank you for contacting Seraphim Luxe support. A support agent will be with you shortly.']);
+        
         const messageData = {
             id: messageResult.insertId,
             ticket_id: ticketId,
@@ -249,12 +256,28 @@ router.post('/tickets/:ticket_id/message', async (req, res) => {
             created_at: new Date().toISOString()
         };
         
-        // Update ticket status if needed
+        // Update ticket status if needed and add system messages
         if (sender_type === 'customer' && ticket.status === 'waiting_customer') {
             await connection.query(
                 `UPDATE support_tickets SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                 [ticket_id]
             );
+            
+            // Add system message for status change
+            await connection.query(`
+                INSERT INTO support_ticket_messages 
+                (ticket_id, sender_id, sender_type, message) 
+                VALUES (?, NULL, 'system', ?)
+            `, [ticket_id, 'Customer has responded. Ticket status changed to In Progress.']);
+            
+            // Notify agent
+            if (ticket.agent_id) {
+                pingUser(ticket.agent_id, {
+                    type: 'ticket_status_updated',
+                    ticket_id: parseInt(ticket_id),
+                    status: 'in_progress'
+                });
+            }
         } else if (sender_type === 'agent' && ticket.status === 'open') {
             await connection.query(
                 `UPDATE support_tickets SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
@@ -277,7 +300,7 @@ router.post('/tickets/:ticket_id/message', async (req, res) => {
                 console.log(`[Server] Sending support_ticket_message to user ${recipientId}`);
                 const sent = pingUser(recipientId, {
                     type: 'support_ticket_message',
-                    ticket_id: ticket_id,
+                    ticket_id: parseInt(ticket_id),
                     data: messageData
                 });
                 console.log(`[Server] support_ticket_message sent: ${sent}`);
@@ -336,7 +359,10 @@ router.put('/tickets/:ticket_id/claim', async (req, res) => {
             [agent_id]
         );
         
-        const systemMessage = `${agent[0]?.name || 'Support agent'} has been assigned to your ticket.`;
+        const agentName = agent[0]?.name || 'Support agent';
+        
+        // System message for customer
+        const systemMessage = `${agentName} has been assigned to your ticket and will assist you shortly.`;
         
         await connection.query(`
             INSERT INTO support_ticket_messages 
@@ -350,9 +376,9 @@ router.put('/tickets/:ticket_id/claim', async (req, res) => {
         if (tickets[0].customer_id) {
             pingUser(tickets[0].customer_id, {
                 type: 'ticket_agent_assigned',
-                ticket_id: ticket_id,
-                agent_id: agent_id,
-                agent_name: agent[0]?.name || 'Support agent'
+                ticket_id: parseInt(ticket_id),
+                agent_id: parseInt(agent_id),
+                agent_name: agentName
             });
         }
         
@@ -384,7 +410,7 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
         const { status, agent_id } = req.body;
         
         const [tickets] = await connection.query(
-            `SELECT customer_id FROM support_tickets WHERE id = ?`,
+            `SELECT customer_id, agent_id FROM support_tickets WHERE id = ?`,
             [ticket_id]
         );
         
@@ -395,6 +421,8 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
                 message: 'Ticket not found'
             });
         }
+        
+        const ticket = tickets[0];
         
         const updateFields = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
         const updateValues = [status];
@@ -410,29 +438,64 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
             [...updateValues, ticket_id]
         );
         
-        // Add system message
+        // Get agent name for system messages
+        const [agent] = await connection.query(
+            `SELECT name FROM accounts WHERE id = ?`,
+            [agent_id || ticket.agent_id]
+        );
+        const agentName = agent[0]?.name || 'Support agent';
+        
+        // Add appropriate system messages
         const statusMessages = {
-            'in_progress': 'Ticket status changed to In Progress',
-            'waiting_customer': 'Waiting for customer response',
-            'resolved': 'This ticket has been marked as resolved',
-            'closed': 'This ticket has been closed'
+            'in_progress': `${agentName} has resumed working on your ticket.`,
+            'waiting_customer': `${agentName} is waiting for your response. Please reply to continue.`,
+            'resolved': `${agentName} has marked this ticket as resolved. If you need further assistance, please reply to reopen the ticket.`,
+            'closed': `This ticket has been closed. Thank you for contacting Seraphim Luxe support. If you need further assistance, please create a new ticket.`
         };
         
         if (statusMessages[status]) {
-            await connection.query(`
+            const [messageResult] = await connection.query(`
                 INSERT INTO support_ticket_messages 
                 (ticket_id, sender_id, sender_type, message) 
                 VALUES (?, ?, 'system', ?)
             `, [ticket_id, agent_id, statusMessages[status]]);
+            
+            const systemMessageData = {
+                id: messageResult.insertId,
+                ticket_id: parseInt(ticket_id),
+                sender_id: agent_id,
+                sender_type: 'system',
+                message: statusMessages[status],
+                is_read: false,
+                created_at: new Date().toISOString()
+            };
+            
+            // Send the system message via SSE too
+            if (ticket.customer_id) {
+                pingUser(ticket.customer_id, {
+                    type: 'support_ticket_message',
+                    ticket_id: parseInt(ticket_id),
+                    data: systemMessageData
+                });
+            }
         }
         
         await connection.commit();
         
-        // Notify customer
-        if (tickets[0].customer_id) {
-            pingUser(tickets[0].customer_id, {
+        // Notify customer of status change
+        if (ticket.customer_id) {
+            pingUser(ticket.customer_id, {
                 type: 'ticket_status_updated',
-                ticket_id: ticket_id,
+                ticket_id: parseInt(ticket_id),
+                status: status
+            });
+        }
+        
+        // Also notify agent if different from the one who changed it
+        if (ticket.agent_id && agent_id !== ticket.agent_id) {
+            pingUser(ticket.agent_id, {
+                type: 'ticket_status_updated',
+                ticket_id: parseInt(ticket_id),
                 status: status
             });
         }

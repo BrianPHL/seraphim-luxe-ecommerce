@@ -1,14 +1,11 @@
 @import url('../../index.css');
 
 .wrapper {
-    background-color: var(--bg-secondary);
     border-radius: 0.5rem;
-    border: 1px solid var(--bg-outline);
     display: flex;
     flex-direction: column;
-    height: 500px;
+    height: 100%;
     width: 100%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .header {
@@ -17,27 +14,33 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--bg-hover);
     flex-shrink: 0;
+}
+
+.header > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .header h3 {
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--tg-primary);
     margin: 0;
 }
 
 .header p {
     font-size: 0.875rem;
+    font-weight: 600;
     color: var(--tg-secondary);
-    margin: 0.25rem 0 0 0;
+    margin: 0;
 }
 
 .status {
     background-color: var(--success-background);
     color: var(--success-foreground);
-    padding: 0.25rem 0.75rem;
+    padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-weight: 700;
@@ -48,107 +51,65 @@
 .messages {
     flex: 1;
     overflow-y: auto;
+    scroll-behavior: smooth;
     padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     min-height: 0;
 }
 
 .message {
+    background-color: var(--bg-primary);
+    flex-direction: column;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    align-items: flex-start;
+    font-size: 0.875rem;
     display: flex;
-    max-width: 75%;
+    padding: 0.5rem;
+    border: 1px solid var(--bg-outline);
+    width: 75%;
+    color: var(--tg-secondary);
+    gap: 0.5rem;
 }
 
 .message.customer {
+    border-right: 4px solid var(--accent-base);
+    align-items: flex-end;
     align-self: flex-end;
 }
 
 .message.agent {
+    border-left: 4px solid var(--accent-base);
     align-self: flex-start;
 }
 
-.message.system {
-    align-self: center;
-    max-width: 90%;
-}
-
-.message-content {
-    background-color: var(--bg-hover);
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    word-wrap: break-word;
-    border: 1px solid var(--bg-outline);
-}
-
-.message.customer .message-content {
-    background-color: var(--bg-outline);
-    border-color: var(--bg-outline);
-}
-
-.message.system .message-content {
+.system-message {
     background-color: transparent;
     text-align: center;
+    font-size: 0.75rem;
+    font-weight: 500;
     font-style: italic;
+    padding: 0.5rem 1rem;
     color: var(--tg-secondary);
-    border: none;
+    opacity: 0.7;
+    width: 100%;
+    align-self: center;
 }
 
 .sender {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    color: var(--tg-secondary);
-}
-
-.message-content p {
-    margin: 0;
     font-size: 0.875rem;
-    line-height: 1.4;
+    font-weight: 700;
     color: var(--tg-primary);
-    font-weight: 600;
-}
-
-.time {
-    display: block;
-    font-size: 0.7rem;
-    margin-top: 0.25rem;
-    color: var(--tg-tertiary);
-    font-weight: 500;
 }
 
 .input-area {
     border-top: 1px solid var(--bg-outline);
     padding: 1rem;
     display: flex;
-    gap: 0.5rem;
-    align-items: flex-end;
-    background-color: var(--bg-hover);
-    flex-shrink: 0;
-}
-
-.input {
-    flex: 1;
-    padding: 0.75rem;
-    border: 2px solid var(--bg-outline);
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-family: inherit;
-    resize: none;
-    background-color: var(--bg-primary);
-    color: var(--tg-primary);
-    transition: border-color 0.2s;
-}
-
-.input:focus {
-    outline: none;
-    border-color: var(--accent-base);
-}
-
-.input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    gap: 1rem;
 }
 
 .loading {
@@ -164,6 +125,7 @@
 
 .loading p {
     margin-top: 0.5rem;
+    font-size: 0.875rem;
 }
 
 .empty-state {
@@ -188,7 +150,6 @@
     display: flex;
     gap: 0.75rem;
     align-items: center;
-    background-color: var(--bg-hover);
     color: var(--tg-secondary);
     flex-shrink: 0;
 }
