@@ -24,7 +24,6 @@ const SupportTickets = () => {
         fetchMessages
     } = useSupportTickets();
 
-    // Send message
     const sendMessage = async () => {
         if (!selectedTicket || !message.trim() || isLoading) return;
 
@@ -40,25 +39,21 @@ const SupportTickets = () => {
         setTimeout(scrollToBottom, 100);
     };
 
-    // Update ticket status
     const handleStatusChange = async (newStatus) => {
         if (!selectedTicket) return;
         await updateTicketStatus(selectedTicket.id, newStatus);
     };
 
-    // Exit current ticket view
     const handleExitTicket = () => {
         setSelectedTicket(null);
     };
 
-    // Scroll to bottom of chat
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     };
 
-    // Handle key press
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey && message.trim()) {
             e.preventDefault();
@@ -66,13 +61,11 @@ const SupportTickets = () => {
         }
     };
 
-    // Select ticket
     const handleSelectTicket = async (ticket) => {
         setSelectedTicket(ticket);
         await fetchMessages(ticket.id);
     };
 
-    // Get priority badge color
     const getPriorityColor = (priority) => {
         switch(priority) {
             case 'urgent': return '#ef4444';
@@ -83,7 +76,6 @@ const SupportTickets = () => {
         }
     };
 
-    // Auto-scroll when messages change
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -98,7 +90,6 @@ const SupportTickets = () => {
                     Support Tickets ({totalTickets})
                 </h3>
                 <div className={ styles['list-container'] }>
-                    {/* Open Tickets */}
                     <Accordion
                         label={`Open (${openTickets.length})`}
                         isOpenByDefault={true}
@@ -138,7 +129,6 @@ const SupportTickets = () => {
                         )}
                     </Accordion>
 
-                    {/* In Progress */}
                     <Accordion
                         label={`In Progress (${inProgressTickets.length})`}
                         isOpenByDefault={true}
@@ -178,7 +168,6 @@ const SupportTickets = () => {
                         )}
                     </Accordion>
 
-                    {/* Waiting Customer */}
                     <Accordion
                         label={`Waiting Customer (${waitingCustomerTickets.length})`}
                         isOpenByDefault={true}
@@ -213,7 +202,6 @@ const SupportTickets = () => {
                         )}
                     </Accordion>
 
-                    {/* Resolved */}
                     <Accordion
                         label={`Resolved (${resolvedTickets.length})`}
                         isOpenByDefault={false}
@@ -242,7 +230,6 @@ const SupportTickets = () => {
                         )}
                     </Accordion>
 
-                    {/* Closed */}
                     <Accordion
                         label={`Closed (${closedTickets.length})`}
                         isOpenByDefault={false}
@@ -346,14 +333,22 @@ const SupportTickets = () => {
                                 const isSystem = msg.sender_type === 'system';
                                 const isCustomer = msg.sender_type === 'customer';
                                 
+                                if (isSystem) {
+                                    return (
+                                        <div key={msg.id} className={styles['system-message']}>
+                                            {msg.message}
+                                        </div>
+                                    );
+                                }
+                                
                                 return (
                                     <p 
                                         key={msg.id} 
                                         className={styles['chat-item']} 
-                                        data-role={isSystem ? 'system' : (isCustomer ? 'customer' : 'agent')}
+                                        data-role={isCustomer ? 'customer' : 'agent'}
                                     >
                                         <span className={styles['chat-item-label']}>
-                                            {isSystem ? 'System' : (isCustomer ? 'Customer' : 'You')}
+                                            {isCustomer ? 'Customer' : 'You'}
                                         </span>
                                         {msg.message}
                                     </p>
