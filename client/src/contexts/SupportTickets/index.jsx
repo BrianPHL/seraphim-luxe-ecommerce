@@ -250,6 +250,47 @@ export const SupportTicketsProvider = ({ children }) => {
         }
     }, [user, selectedTicket, showToast]);
 
+    const reopenTicket = useCallback(async (ticketId) => {
+        if (!user || user.role !== 'customer') {
+            return { success: false, message: 'Unauthorized' };
+        }
+
+        try {
+            const response = await fetchWithTimeout(`/api/support-tickets/tickets/${ticketId}/reopen`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customer_id: user.id })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to reopen ticket');
+            }
+
+            showToast('Ticket reopened successfully', 'success');
+
+            // Update local state
+            setTickets(prevTickets => 
+                prevTickets.map(ticket => 
+                    ticket.id === ticketId 
+                        ? { ...ticket, status: 'in_progress' }
+                        : ticket
+                )
+            );
+
+            if (selectedTicket?.id === ticketId) {
+                setSelectedTicket(prev => ({ ...prev, status: 'in_progress' }));
+            }
+
+            return { success: true };
+
+        } catch (err) {
+            console.error('[SupportTickets] reopenTicket error:', err);
+            showToast(err.message || 'Failed to reopen ticket', 'error');
+            return { success: false, message: err.message };
+        }
+    }, [user, selectedTicket, showToast]);
+
     // Update ref when selectedTicket changes
     useEffect(() => {
         selectedTicketIdRef.current = selectedTicket?.id || null;
@@ -376,6 +417,7 @@ export const SupportTicketsProvider = ({ children }) => {
             sendMessage,
             claimTicket,
             updateTicketStatus,
+            reopenTicket,
             setSelectedTicket,
             setMessages
         }}>

@@ -192,7 +192,7 @@ const ContactUs = () => {
     const activeTickets = recentTickets.filter(t => t.status === 'open' || t.status === 'in_progress');
     const otherTickets = recentTickets.filter(t => t.status !== 'open' && t.status !== 'in_progress');
 
-    const hasTickets = user && recentTickets.length > 0;
+    const hasTickets = user && tickets.length > 0;
     const canCreateMore = !user || tickets.length < 5;
 
     if (cmsLoading) {

@@ -16,7 +16,8 @@ const SupportTicketChat = ({ ticketId }) => {
         sendMessage: sendMessageContext,
         fetchMessages,
         fetchTickets,
-        setSelectedTicket
+        setSelectedTicket,
+        reopenTicket
     } = useSupportTickets();
 
     const currentTicket = tickets.find(t => t.id === ticketId);
@@ -58,6 +59,10 @@ const SupportTicketChat = ({ ticketId }) => {
         }
     };
 
+    const handleReopenTicket = async () => {
+        await reopenTicket(ticketId);
+    };
+
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -85,6 +90,8 @@ const SupportTicketChat = ({ ticketId }) => {
     const isTicketActive = currentTicket.status === 'open' || 
                            currentTicket.status === 'in_progress' || 
                            currentTicket.status === 'waiting_customer';
+    
+    const isTicketResolved = currentTicket.status === 'resolved';
 
     return (
         <div className={styles['wrapper']}>
@@ -137,7 +144,7 @@ const SupportTicketChat = ({ ticketId }) => {
                         value={message}
                         onChange={event => setMessage(event.target.value)}
                         onKeyDown={handleKeyDown}
-                        hint={currentTicket.status === 'closed' || currentTicket.status === 'resolved' ? 'Ticket is closed - read only' : 'Type your message...'}
+                        hint='Type your message...'
                         type='text'
                         isSubmittable={false}
                         disabled={!isTicketActive}
@@ -147,6 +154,21 @@ const SupportTicketChat = ({ ticketId }) => {
                         icon='fa-solid fa-paper-plane'
                         disabled={!message.trim() || isLoading}
                         action={sendMessage}
+                    />
+                </div>
+            ) : isTicketResolved ? (
+                <div className={styles['resolved-actions']}>
+                    <div className={styles['resolved-message']}>
+                        <i className="fa-solid fa-check-circle"></i>
+                        <p>This ticket has been resolved. If you need further assistance, you can reopen it.</p>
+                    </div>
+                    <Button 
+                        type='primary'
+                        icon='fa-solid fa-rotate-left'
+                        iconPosition='left'
+                        label='Reopen Ticket'
+                        action={handleReopenTicket}
+                        disabled={isLoading}
                     />
                 </div>
             ) : (

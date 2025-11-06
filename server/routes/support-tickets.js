@@ -59,20 +59,17 @@ router.get('/tickets', async (req, res) => {
     }
 });
 
-// Get customer's tickets
 router.get('/tickets/customer/:customer_id', async (req, res) => {
     try {
         const { customer_id } = req.params;
-        
-        // Get customer email first
+
         const [customerData] = await pool.query(
             `SELECT email FROM accounts WHERE id = ?`,
             [customer_id]
         );
         
         const customerEmail = customerData[0]?.email;
-        
-        // Then get tickets
+
         const [tickets] = await pool.query(`
             SELECT 
                 st.*,
@@ -82,7 +79,8 @@ router.get('/tickets/customer/:customer_id', async (req, res) => {
             FROM support_tickets st
             LEFT JOIN accounts a ON st.agent_id = a.id
             LEFT JOIN support_ticket_messages stm ON st.id = stm.ticket_id
-            WHERE st.customer_id = ? OR (st.customer_email = ? AND ? IS NOT NULL)
+            WHERE (st.customer_id = ? OR (st.customer_email = ? AND ? IS NOT NULL))
+            AND st.status != 'closed'
             GROUP BY st.id
             ORDER BY st.updated_at DESC
         `, [customer_id, customerEmail, customerEmail]);
@@ -532,6 +530,116 @@ router.put('/tickets/:ticket_id/status', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update ticket status'
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+// Reopen ticket (customer only)
+router.put('/tickets/:ticket_id/reopen', async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        await connection.beginTransaction();
+        
+        const { ticket_id } = req.params;
+        const { customer_id } = req.body;
+        
+        console.log(`[Server] Customer ${customer_id} attempting to reopen ticket ${ticket_id}`);
+        
+        const [tickets] = await connection.query(
+            `SELECT customer_id, agent_id, status FROM support_tickets WHERE id = ?`,
+            [ticket_id]
+        );
+        
+        if (tickets.length === 0) {
+            await connection.commit();
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+        
+        const ticket = tickets[0];
+        
+        // Only allow reopening if ticket is resolved and customer owns it
+        if (ticket.customer_id !== parseInt(customer_id)) {
+            await connection.commit();
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized'
+            });
+        }
+        
+        if (ticket.status !== 'resolved') {
+            await connection.commit();
+            return res.status(400).json({
+                success: false,
+                message: 'Only resolved tickets can be reopened'
+            });
+        }
+        
+        // Reopen ticket
+        await connection.query(
+            `UPDATE support_tickets 
+             SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP 
+             WHERE id = ?`,
+            [ticket_id]
+        );
+        
+        // Add system message
+        const [customerData] = await connection.query(
+            `SELECT name FROM accounts WHERE id = ?`,
+            [customer_id]
+        );
+        const customerName = customerData[0]?.name || 'Customer';
+        
+        const systemMessage = `${customerName} has reopened this ticket. An agent will assist you shortly.`;
+        
+        await connection.query(`
+            INSERT INTO support_ticket_messages 
+            (ticket_id, sender_id, sender_type, message) 
+            VALUES (?, ?, 'system', ?)
+        `, [ticket_id, customer_id, systemMessage]);
+        
+        await connection.commit();
+        
+        console.log(`[Server] Ticket ${ticket_id} reopened by customer ${customer_id}`);
+        
+        // Notify the assigned agent if exists
+        if (ticket.agent_id) {
+            pingUser(ticket.agent_id, {
+                type: 'ticket_status_updated',
+                ticket_id: parseInt(ticket_id),
+                status: 'in_progress'
+            });
+        }
+        
+        // Notify all admins
+        const [admins] = await pool.query(
+            `SELECT id FROM accounts WHERE role = 'admin' AND is_suspended = 0`
+        );
+        
+        admins.forEach(admin => {
+            pingUser(admin.id, {
+                type: 'ticket_status_updated',
+                ticket_id: parseInt(ticket_id),
+                status: 'in_progress'
+            });
+        });
+        
+        res.status(200).json({
+            success: true,
+            message: 'Ticket reopened successfully'
+        });
+        
+    } catch (err) {
+        await connection.rollback();
+        console.error('[Server] Ticket reopen error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to reopen ticket'
         });
     } finally {
         connection.release();
