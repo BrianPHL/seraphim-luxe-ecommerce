@@ -340,60 +340,12 @@ const GeminiAIChatbot = () => {
         }
     };
 
-    const sendLiveChatMessage = async () => {
-        if (!liveChatRoom || !message.trim()) return;
-
-        const userMessage = message.trim();
-        setMessage('');
-
-        try {
-            const tempMessage = {
-                id: `temp-${Date.now()}`,
-                room_id: liveChatRoom.id,
-                sender_id: user.id,
-                sender_type: 'customer',
-                message: userMessage,
-                is_read: false,
-                created_at: new Date().toISOString()
-            };
-
-            const normalizedTemp = normalizeMessage(tempMessage, 'live-agent');
-            setUnifiedChatHistory(prev => [...prev, normalizedTemp]);
-            setTimeout(scrollToBottom, 100);
-
-            const response = await fetch(`/api/live-chat/room/${liveChatRoom.id}/message`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sender_id: user.id,
-                    sender_type: 'customer',
-                    message: userMessage
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to send message');
-            }
-
-            const result = await response.json();
-            const normalizedResult = normalizeMessage(result.data, 'live-agent');
-            
-            setUnifiedChatHistory(prev => 
-                prev.map(msg => 
-                    msg.id === normalizedTemp.id ? normalizedResult : msg
-                )
-            );
-
-        } catch (err) {
-            console.error('[GeminiChatbot] Send live chat message error:', err);
-            showToast('Failed to send message. Please try again.', 'error');
-
-            setUnifiedChatHistory(prev => 
-                prev.filter(msg => !msg.id.toString().startsWith('temp-'))
-            );
-            setMessage(userMessage);
-        }
-    };
+const sendLiveChatMessage = async () => {
+    const userMessage = message.trim();
+    if (!userMessage) return;
+    
+    await sendLiveChatMessageWithText(userMessage);
+};
 
     const handleModalClose = async () => {
         if (chatbotState === 'live-agent' && liveChatRoom && isCustomer) {
@@ -449,39 +401,12 @@ const GeminiAIChatbot = () => {
         }
     };
 
-    const handleSubmitChatToGeminiAI = async () => {
-        try {
-            if (!user) return;
-
-            const userMessage = message.trim();
-            setMessage('');
-
-            addUserMessageToChat(userMessage);
-
-            setIsTyping(true);
-
-            const result = isCustomer
-                ? await sendGeminiAICustomerChat(userMessage)
-                : await sendGeminiAIAdminChat(userMessage);
-
-            setIsTyping(false);
-
-            if (result?.data) {
-                addAIResponseToChat(result.data);
-            }
-
-            setTimeout(() => {
-                fetchChatHistory();
-            }, 500);
-
-        } catch(err) {
-            console.error('[GeminiChatbot] handleSubmitChatToGeminiAI error:', err);
-            showToast('An error occured when processing your Chatbot request. Please try again later.', 'error');
-
-            setIsTyping(false);
-            setUnifiedChatHistory(prev => prev.slice(0, -1));
-        }
-    };
+const handleSubmitChatToGeminiAI = async () => {
+    const userMessage = message.trim();
+    if (!userMessage) return;
+    
+    await handleSubmitChatToGeminiAIWithText(userMessage);
+};
 
     const handleKeyDown = (e) => {
         if (e.key === 'Escape') {
@@ -491,17 +416,108 @@ const GeminiAIChatbot = () => {
             handleSubmitChat();
         }
     };
-
+    
     const handlePredefinedQuestionClick = (questionText) => {
-        setMessage(questionText);
-        
+        // Don't set message state - directly pass the question to the submit function
         if (chatbotState === 'live-agent') {
-            setTimeout(() => sendLiveChatMessage(), 100);
+            sendLiveChatMessageWithText(questionText);
         } else {
-            setTimeout(() => handleSubmitChatToGeminiAI(), 100);
+            handleSubmitChatToGeminiAIWithText(questionText);
+        }
+    };
+    
+    const handleSubmitChatToGeminiAIWithText = async (messageText) => {
+        try {
+            if (!user) return;
+        
+            const userMessage = messageText.trim();
+            if (!userMessage) return;
+        
+            // Clear the input field
+            setMessage('');
+        
+            addUserMessageToChat(userMessage);
+        
+            setIsTyping(true);
+        
+            const result = isCustomer
+                ? await sendGeminiAICustomerChat(userMessage)
+                : await sendGeminiAIAdminChat(userMessage);
+        
+            setIsTyping(false);
+        
+            if (result?.data) {
+                addAIResponseToChat(result.data);
+            }
+        
+            setTimeout(() => {
+                fetchChatHistory();
+            }, 500);
+        
+        } catch(err) {
+            console.error('[GeminiChatbot] handleSubmitChatToGeminiAIWithText error:', err);
+            showToast('An error occured when processing your Chatbot request. Please try again later.', 'error');
+        
+            setIsTyping(false);
+            setUnifiedChatHistory(prev => prev.slice(0, -1));
         }
     };
 
+const sendLiveChatMessageWithText = async (messageText) => {
+    if (!liveChatRoom || !messageText.trim()) return;
+
+    const userMessage = messageText.trim();
+    
+    // Clear the input field
+    setMessage('');
+
+    try {
+        const tempMessage = {
+            id: `temp-${Date.now()}`,
+            room_id: liveChatRoom.id,
+            sender_id: user.id,
+            sender_type: 'customer',
+            message: userMessage,
+            is_read: false,
+            created_at: new Date().toISOString()
+        };
+
+        const normalizedTemp = normalizeMessage(tempMessage, 'live-agent');
+        setUnifiedChatHistory(prev => [...prev, normalizedTemp]);
+        setTimeout(scrollToBottom, 100);
+
+        const response = await fetch(`/api/live-chat/room/${liveChatRoom.id}/message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sender_id: user.id,
+                sender_type: 'customer',
+                message: userMessage
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+
+        const result = await response.json();
+
+        setUnifiedChatHistory(prev => {
+            const filtered = prev.filter(msg => msg.id !== tempMessage.id);
+            const normalized = normalizeMessage(result.data, 'live-agent');
+            return [...filtered, normalized];
+        });
+
+        setTimeout(scrollToBottom, 100);
+
+    } catch (err) {
+        console.error('[GeminiChatbot] Send live chat message error:', err);
+        showToast('Failed to send message', 'error');
+
+        setUnifiedChatHistory(prev => prev.filter(msg => msg.id !== `temp-${Date.now()}`));
+    }
+};
+    
     useEffect(() => {
         if (chatHistory.length > 0 && chatbotState === 'seraphim-ai') {
             if (liveChatRoom) {

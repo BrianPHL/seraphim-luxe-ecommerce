@@ -41,7 +41,7 @@ const geminiAI = async (context, message, userType, retries = 3) => {
         console.log(`[Gemini AI] Sending request (attempt ${4 - retries}/3)...`);
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-2.0-flash-lite',
             contents: prompt,
             generationConfig: {
                 temperature: 0.7,
@@ -83,7 +83,7 @@ const geminiAI = async (context, message, userType, retries = 3) => {
             throw new Error('AI service quota exceeded. Please contact support or try again later.');
         }
 
-        throw new Error('Unable to process your request. Please try again.');
+        // throw new Error('Unable to process your request. Please try again.');
     }
 };
 
