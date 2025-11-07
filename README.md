@@ -272,20 +272,20 @@ mysql -u your_db_user -p seraphim_luxe < sql/products/products.sql
 ```
 
 ### Key Tables Overview
-- accounts - User authentication, profiles, preferences, and role management
-- products - Product catalog with categories, subcategories, and images
-- orders - Complete order lifecycle with items, status tracking, and refunds
-- carts / wishlist - Shopping cart and wishlist management
-- product_reviews - Customer reviews with helpfulness voting system
-- live_chat_rooms / live_chat_messages - Real-time agent support system
-- chatbot_sessions - AI chatbot conversation history
-- support_tickets / support_ticket_messages - Ticket-based support system
-- oauth_sessions / oauth_accounts / oauth_verifications - Authentication and session management
-- notifications - User notification system with preferences
-- cms / cms_banners / cms_promotions - Content management system
-- audit_trail - Comprehensive system activity logging for security and compliance
-- stocks_history - Product inventory tracking and changes
-- platform_settings - Global application configuration
+- **accounts** - User authentication, profiles, preferences, and role management
+- **products** - Product catalog with categories, subcategories, and images
+- **orders** - Complete order lifecycle with items, status tracking, and refunds
+- **carts / wishlist** - Shopping cart and wishlist management
+- **product_reviews** - Customer reviews with helpfulness voting system
+- **live_chat_rooms / live_chat_messages** - Real-time agent support system
+- **chatbot_sessions** - AI chatbot conversation history
+- **support_tickets / support_ticket_messages** - Ticket-based support system
+- **oauth_sessions / oauth_accounts / oauth_verifications** - Authentication and session management
+- **notifications** - User notification system with preferences
+- **cms / cms_banners / cms_promotions** - Content management system
+- **audit_trail** - Comprehensive system activity logging for security and compliance
+- **stocks_history** - Product inventory tracking and changes
+- **platform_settings** - Global application configuration
 
 The schema is designed with referential integrity, proper indexing, and optimized for both read and write operations to support the e-commerce platform's requirements.
 
