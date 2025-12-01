@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import  { resolve } from 'path';
 
 // https://vite.dev/config/
+const __dirname = import.meta.dirname;
 export default defineConfig({
   root: "./",
   plugins: [react()],
